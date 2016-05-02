@@ -1,5 +1,3 @@
-![image](https://cloud.githubusercontent.com/assets/11475177/13923967/396856d2-ef8b-11e5-89f9-1b79c4ea9fdd.png)
-
 Version 1.5.2. Use the Issues page to report bugs or send them directly to lasse@bonecode.com.
 
 <b>Note!</b> Current trunk should never be considered as a stable version. Use the latest <a href="https://github.com/bonecode/TBCEditor/releases">release</a> version instead. 
