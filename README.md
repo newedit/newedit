@@ -45,7 +45,12 @@ TBCEditor Control Demo v. 1.5.2.
 
 The latest update: 21.03.2016 17:33, UTC+02:00
 
-Demo source build requires <a href="http://www.alphaskins.com/">AlphaSkins</a> and <a href="http://www.ehlib.com/">EhLib</a>. 
+Demo source build requires 
+
+- <a href="http://www.alphaskins.com/">AlphaSkins</a>  
+- <a href="http://www.ehlib.com/">EhLib</a>
+- <a href="https://github.com/bonecode/Common">Common</a>
+
 <h3>Documentation</h3>
 
 Documentation will be written after the project stabilizes and dust settles. This project is developed in my spare time without sources of income and as long as this is the case there is no timetable for anything. 
