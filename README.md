@@ -9,7 +9,7 @@ A syntax highlighting edit control for RAD Studio (Delphi/C++ Builder) with code
 <h3>Build requirements</h3>
 
 * <a href="https://github.com/ahausladen/JsonDataObjects">Json Data Objects</a> (included)
-* Delphi versions XE4, XE5, XE6, XE7, XE8, and Seattle are supported 
+* Delphi versions XE4, XE5, XE6, XE7, XE8, Seattle, and Berlin are supported 
 * Delphi XE7: Update 1 required
 * C++ Builder versions XE7, XE8, and Seattle are supported
 
