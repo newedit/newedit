@@ -25,7 +25,7 @@ USE_VCL_STYLES | Use VCL styles. A set of graphical details that define the look
 <h3>Usage example</h3>
 
 ```objectpascal
-  with Editor do 
+  with BCEditor1 do 
   begin
     Highlighter.LoadFromFile('JSON.json');
     Highlighter.Colors.LoadFromFile('Default.json'); 
@@ -34,7 +34,7 @@ USE_VCL_STYLES | Use VCL styles. A set of graphical details that define the look
     Lines.Text := Highlighter.Info.General.Sample; 
   end;
 ```
-Note! LoadFromStream does not support multi-highlighters (for example HTML with Scripts.json). Override TBCBaseEditor.CreateFileStream function, if you want to load multi-highlighters from a stream. 
+<b>Note!</b> LoadFromStream does not support multi-highlighters (for example HTML with Scripts.json). Override TBCBaseEditor.CreateFileStream function, if you want to load multi-highlighters from a stream. 
 
 <h3>Demo</h3>
 
