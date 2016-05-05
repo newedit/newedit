@@ -42,7 +42,7 @@ implementation
 
 uses
   System.TypInfo, Vcl.Graphics, Vcl.Forms, BCEditor.Consts, BCEditor.Types, Vcl.Dialogs,
-  BCEditor.Highlighter.Token, Vcl.GraphUtil, BCEditor.Utils, BCEditor.Language;
+  BCEditor.Highlighter.Token, Vcl.GraphUtil, BCEditor.Language;
 
 function StringToColorDef(const AString: string; const DefaultColor: TColor): Integer;
 begin
