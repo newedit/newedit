@@ -8909,6 +8909,9 @@ var
     if LIsSyncEditBlock then
       Result := FSyncEdit.Colors.Background
     else
+    if AMinimap and (FMinimap.Colors.Background <> clNone) then
+      Result := FMinimap.Colors.Background
+    else
     begin
       Result := FBackgroundColor;
       if Assigned(FHighlighter) then
@@ -9300,7 +9303,10 @@ var
       if Assigned(LHighlighterAttribute) then
       begin
         LForegroundColor := LHighlighterAttribute.Foreground;
-        LBackgroundColor := LHighlighterAttribute.Background;
+        if AMinimap and (FMinimap.Colors.Background <> clNone) then
+          LBackgroundColor := FMinimap.Colors.Background
+        else
+          LBackgroundColor := LHighlighterAttribute.Background;
         LStyle := LHighlighterAttribute.Style;
 
         if Assigned(FOnCustomTokenAttribute) then
