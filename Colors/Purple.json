@@ -3,7 +3,7 @@
       "Info":{
          "General":{
             "Version":"1.5.2",
-            "Date":"21.03.2016"
+            "Date":"05.05.2016"
          },
          "Author":{
             "Name":"Lasse Rautiainen",
@@ -39,6 +39,7 @@
             "MatchingPairMatched":"clAqua",
             "MatchingPairUnderline":"$00B7B7B7",
             "MatchingPairUnmatched":"clYellow",
+						"MinimapBackground":"clNone",
             "MinimapBookmark":"$00999999",
             "MinimapVisibleLines":"$00C7EEF8",
             "RightMargin":"clSilver",
