@@ -200,6 +200,7 @@ type
     function GetCanUndo: Boolean;
     function GetCharAtCursor: Char;
     function GetClipboardText: string;
+    function GetCommentAtTextPosition(ATextPosition: TBCEditorTextPosition): string;
     function GetDisplayCaretPosition: TBCEditorDisplayPosition;
     function GetDisplayLineNumber(const ADisplayLineNumber: Integer): Integer;
     function GetDisplayPosition(AColumn, ARow: Integer): TBCEditorDisplayPosition;
@@ -227,6 +228,7 @@ type
     function GetWordAtCursor: string;
     function GetWordAtMouse: string;
     function GetWordAtTextPosition(ATextPosition: TBCEditorTextPosition): string;
+    function IsCommentAtCaretPosition: Boolean;
     function IsKeywordAtCaretPosition(APOpenKeyWord: PBoolean = nil; AHighlightAfterToken: Boolean = True): Boolean;
     function IsKeywordAtCaretPositionOrAfter(ACaretPosition: TBCEditorTextPosition): Boolean;
     function IsWordSelected: Boolean;
@@ -486,6 +488,7 @@ type
     function GetPositionOfMouse(out ATextPosition: TBCEditorTextPosition): Boolean;
     function GetWordAtPixels(X, Y: Integer): string;
     function IsBookmark(ABookmark: Integer): Boolean;
+    function IsCommentChar(AChar: Char): Boolean;
     function IsTextPositionInSelection(const ATextPosition: TBCEditorTextPosition): Boolean;
     function IsWordBreakChar(AChar: Char): Boolean;
     function IsWordChar(AChar: Char): Boolean;
@@ -1153,6 +1156,31 @@ begin
       Exit;
     if LTextPosition.Char <= LLength then
       Result := LTextLine[LTextPosition.Char];
+  end;
+end;
+
+function TBCBaseEditor.GetCommentAtTextPosition(ATextPosition: TBCEditorTextPosition): string;
+var
+  LTextLine: string;
+  LLength, LStop: Integer;
+begin
+  Result := '';
+  if (ATextPosition.Line >= 0) and (ATextPosition.Line < FLines.Count) then
+  begin
+    LTextLine := FLines[ATextPosition.Line];
+    LLength := Length(LTextLine);
+    if LLength = 0 then
+      Exit;
+    if (ATextPosition.Char >= 1) and (ATextPosition.Char <= LLength) and IsCommentChar(LTextLine[ATextPosition.Char]) then
+    begin
+      LStop := ATextPosition.Char;
+      while (LStop <= LLength) and IsCommentChar(LTextLine[LStop]) do
+        Inc(LStop);
+      while (ATextPosition.Char > 1) and IsCommentChar(LTextLine[ATextPosition.Char - 1]) do
+        Dec(ATextPosition.Char);
+      if LStop > ATextPosition.Char then
+        Result := Copy(LTextLine, ATextPosition.Char, LStop - ATextPosition.Char);
+    end;
   end;
 end;
 
@@ -2078,6 +2106,63 @@ begin
   end
 end;
 
+function TBCBaseEditor.IsCommentAtCaretPosition: Boolean;
+var
+  i: Integer;
+  LTextPosition: TBCEditorTextPosition;
+  LCommentAtCursor: string;
+
+  function CheckComment(AComment: string): Boolean;
+  var
+    LCommentPtr, LCommentAtCursorPtr: PChar;
+  begin
+    LCommentPtr := PChar(AComment);
+    LCommentAtCursorPtr := PChar(LCommentAtCursor);
+
+    while (LCommentPtr^ <> BCEDITOR_NONE_CHAR) and (LCommentAtCursorPtr^ <> BCEDITOR_NONE_CHAR) and
+      (UpCase(LCommentAtCursorPtr^) = LCommentPtr^) do
+    begin
+      Inc(LCommentPtr);
+      Inc(LCommentAtCursorPtr);
+    end;
+    Result := LCommentPtr^ = BCEDITOR_NONE_CHAR;
+  end;
+
+begin
+  Result := False;
+
+  if not FCodeFolding.Visible then
+    Exit;
+
+  if Assigned(FHighlighter) and (Length(FHighlighter.Comments.BlockComments) = 0)
+    and (Length(FHighlighter.Comments.LineComments) = 0) then
+    Exit;
+
+  if Assigned(FHighlighter) then
+  begin
+    LTextPosition := TextCaretPosition;
+
+      Dec(LTextPosition.Char);
+    LCommentAtCursor := GetCommentAtTextPosition(LTextPosition);
+
+    if LCommentAtCursor <> '' then
+    begin
+      i := 0;
+      while i < Length(FHighlighter.Comments.BlockComments) do
+      begin
+        if CheckComment(FHighlighter.Comments.BlockComments[i]) then
+          Exit(True);
+        if CheckComment(FHighlighter.Comments.BlockComments[i + 1]) then
+          Exit(True);
+        Inc(i, 2);
+      end;
+      for i := 0 to Length(FHighlighter.Comments.LineComments) - 1 do
+        if CheckComment(FHighlighter.Comments.LineComments[i]) then
+          Exit(True);
+    end;
+  end;
+end;
+
 function TBCBaseEditor.IsKeywordAtCaretPosition(APOpenKeyWord: PBoolean = nil; AHighlightAfterToken: Boolean = True): Boolean;
 var
   i, j: Integer;
@@ -2143,24 +2228,24 @@ begin
       LWordAtOneBeforeCursor := GetWordAtTextPosition(LTextPosition);
     end;
     if (LWordAtCursor <> '') or (LWordAtOneBeforeCursor <> '') then
-    for i := 0 to Length(FHighlighter.CodeFoldingRegions) - 1 do
-    begin
-      LFoldRegion := FHighlighter.CodeFoldingRegions[i];
-
-      for j := 0 to LFoldRegion.Count - 1 do
+      for i := 0 to Length(FHighlighter.CodeFoldingRegions) - 1 do
       begin
-        LFoldRegionItem := LFoldRegion.Items[j];
-        if CheckToken(LFoldRegionItem.OpenToken) then
-          Exit(True);
+        LFoldRegion := FHighlighter.CodeFoldingRegions[i];
 
-        if LFoldRegionItem.OpenTokenCanBeFollowedBy <> '' then
-          if CheckToken(LFoldRegionItem.OpenTokenCanBeFollowedBy) then
+        for j := 0 to LFoldRegion.Count - 1 do
+        begin
+          LFoldRegionItem := LFoldRegion.Items[j];
+          if CheckToken(LFoldRegionItem.OpenToken) then
             Exit(True);
 
-        if CheckToken(LFoldRegionItem.CloseToken) then
-          Exit(True);
+          if LFoldRegionItem.OpenTokenCanBeFollowedBy <> '' then
+            if CheckToken(LFoldRegionItem.OpenTokenCanBeFollowedBy) then
+              Exit(True);
+
+          if CheckToken(LFoldRegionItem.CloseToken) then
+            Exit(True);
+        end;
       end;
-    end;
   end;
 end;
 
@@ -2198,6 +2283,10 @@ begin
     Exit;
 
   LLineText := FLines.GetLineText(ACaretPosition.Line);
+
+  if Trim(LLineText) = '' then
+    Exit;
+
   LLinePtr := PChar(LLineText);
 
   Inc(LLinePtr, ACaretPosition.Char - 2);
@@ -3937,19 +4026,19 @@ var
     LCodeFoldingRange, LCodeFoldingRangeLast: TBCEditorCodeFoldingRange;
     LRegionItem: TBCEditorCodeFoldingRegionItem;
 
-    procedure SetCodeFoldingRangeToLine;
+    procedure SetCodeFoldingRangeToLine(ACodeFoldingRange: TBCEditorCodeFoldingRange);
     var
       i: Integer;
     begin
-      if LCodeFoldingRange.RegionItem.TokenEndIsPreviousLine then
+      if ACodeFoldingRange.RegionItem.TokenEndIsPreviousLine then
       begin
         i := LLine - 1;
         while (i > 0) and (FLines[i - 1] = '') do
           Dec(i);
-        LCodeFoldingRange.ToLine := i
+        ACodeFoldingRange.ToLine := i
       end
       else
-        LCodeFoldingRange.ToLine := LLine;
+        ACodeFoldingRange.ToLine := LLine;
     end;
 
   begin
@@ -3991,21 +4080,29 @@ var
                   LTextPtr := LBookmarkTextPtr;
                   Exit(True);
                 end;
-              SetCodeFoldingRangeToLine;
-              { Check if any shared close }
+              SetCodeFoldingRangeToLine(LCodeFoldingRange);
+              { Check if the code folding ranges have shared close }
               if LOpenTokenFoldRangeList.Count > 0 then
-              begin
-                LCodeFoldingRangeLast := LOpenTokenFoldRangeList.Last;
-                if Assigned(LCodeFoldingRangeLast.RegionItem) then
-                  if LCodeFoldingRange.RegionItem.SharedClose and
-                    (LCodeFoldingRange.RegionItem.OpenToken <> LCodeFoldingRangeLast.RegionItem.OpenToken) and
-                    (LCodeFoldingRange.RegionItem.CloseToken = LCodeFoldingRangeLast.RegionItem.CloseToken) then
+                for i := LOpenTokenFoldRangeList.Count - 1 downto 0 do
+                begin
+                  LCodeFoldingRangeLast := LOpenTokenFoldRangeList.Items[i];
+                  if Assigned(LCodeFoldingRangeLast.RegionItem) and LCodeFoldingRangeLast.RegionItem.SharedClose then
                   begin
-                    SetCodeFoldingRangeToLine;
-                    LOpenTokenFoldRangeList.Remove(LCodeFoldingRange);
-                    Dec(LFoldCount);
+                    LKeyWordPtr := PChar(LCodeFoldingRangeLast.RegionItem.CloseToken);
+                    LTextPtr := LBookmarkTextPtr;
+                    while (LTextPtr^ <> BCEDITOR_NONE_CHAR) and (LKeyWordPtr^ <> BCEDITOR_NONE_CHAR) and (UpCase(LTextPtr^) = LKeyWordPtr^) do
+                    begin
+                      Inc(LTextPtr);
+                      Inc(LKeyWordPtr);
+                    end;
+                    if LKeyWordPtr^ = BCEDITOR_NONE_CHAR then
+                    begin
+                      SetCodeFoldingRangeToLine(LCodeFoldingRangeLast);
+                      LOpenTokenFoldRangeList.Remove(LCodeFoldingRangeLast);
+                      Dec(LFoldCount);
+                    end;
                   end;
-              end;
+                end;
               { Check if the close token is one of the open tokens }
               LBookmarkTextPtr2 := LBookmarkTextPtr; { save Bookmark }
               LBookmarkTextPtr := LTextPtr; { set the Bookmark into current position }
@@ -4380,7 +4477,8 @@ begin
         begin
           Inc(LLine);
           LLine := Min(LLine, FLines.Count);
-          LLastFoldRange.ToLine := LLine;
+          if LLastFoldRange.RegionItem.OpenIsClose then
+            LLastFoldRange.ToLine := LLine;
           LOpenTokenFoldRangeList.Remove(LLastFoldRange);
           Dec(LFoldCount);
           RegionItemsClose;
@@ -10637,6 +10735,11 @@ begin
   Result := GetWordAtTextPosition(DisplayToTextPosition(PixelsToRowColumn(X, Y)));
 end;
 
+function TBCBaseEditor.IsCommentChar(AChar: Char): Boolean;
+begin
+  Result := Assigned(FHighlighter) and CharInSet(AChar, FHighlighter.Comments.Chars);
+end;
+
 function TBCBaseEditor.IsBookmark(ABookmark: Integer): Boolean;
 var
   LTextPosition: TBCEditorTextPosition;
@@ -11444,6 +11547,7 @@ begin
       SelectionAvailable and ((ACommand = ecLineBreak) or (ACommand = ecBackspace) or (ACommand = ecChar)) or
       ((ACommand = ecChar) or (ACommand = ecBackspace) or (ACommand = ecTab) or (ACommand = ecDeleteChar) or
       (ACommand = ecLineBreak)) and IsKeywordAtCaretPosition or
+      (ACommand = ecBackspace) and IsCommentAtCaretPosition or
       ((ACommand = ecChar) and CharInSet(AChar, FHighlighter.SkipOpenKeyChars + FHighlighter.SkipCloseKeyChars));
 
     if FCodeFolding.Visible then
