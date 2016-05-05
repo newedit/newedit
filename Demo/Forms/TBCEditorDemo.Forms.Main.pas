@@ -5,12 +5,11 @@ interface
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics, Vcl.Controls,
   BCCommon.Form.Base, Vcl.Forms, Vcl.Dialogs, Vcl.ExtCtrls, Vcl.ComCtrls, BCEditor.Editor, BCEditor.Highlighter,
-  BCEditor.Editor.Base, Vcl.Buttons, Vcl.AppEvnts, System.Actions, Vcl.ActnList, BCEditor.Print,
-  BCCommon.Images, BCComponent.SkinProvider, BCComponent.SkinManager, BCControl.Panel, BCControl.StatusBar,
-  BCComponent.TitleBar, Vcl.Menus, ToolCtrlsEh, DBGridEhToolCtrls, EhLibVCL, DBAxisGridsEh, ObjectInspectorEh,
-  BCControl.Splitter, GridsEh, BCCommon.Frame.Base, sPanel, BCComponent.MultiStringHolder, sSkinManager, sStatusBar,
-  sSplitter, acTitleBar, sSkinProvider, System.Win.TaskbarCore, Vcl.Taskbar, sDialogs, Vcl.StdCtrls, sButton,
-  BCControl.Button, System.Diagnostics, BCCommon.Dialog.Popup.Highlighter, BCCommon.Dialog.Popup.Highlighter.Color,
+  BCEditor.Editor.Base, Vcl.Buttons, Vcl.AppEvnts, System.Actions, Vcl.ActnList, BCEditor.Print, BCCommon.Images,
+  BCComponent.SkinProvider, BCComponent.SkinManager, BCControl.Panel, BCControl.StatusBar, BCComponent.TitleBar,
+  Vcl.Menus, ToolCtrlsEh, DBGridEhToolCtrls, EhLibVCL, DBAxisGridsEh, ObjectInspectorEh, BCControl.Splitter, GridsEh,
+  sPanel, BCComponent.MultiStringHolder, sSkinManager, sStatusBar, sSplitter, acTitleBar, sSkinProvider, sDialogs,
+  Vcl.StdCtrls, System.Diagnostics, BCCommon.Dialog.Popup.Highlighter, BCCommon.Dialog.Popup.Highlighter.Color,
   sSpeedButton, BCControl.SpeedButton, sComboBox, BCControl.ComboBox, sLabel;
 
 const
@@ -96,8 +95,8 @@ implementation
 {$R *.dfm}
 
 uses
-  BCCommon.Form.Print.Preview, BCEditor.Print.Types, BCCommon.StringUtils, BCCommon.Dialog.SkinSelect,
-  BCCommon.FileUtils, BCEditor.Types, BCCommon.Dialog.Options.Search;
+  BCCommon.Form.Print.Preview, BCEditor.Print.Types, BCCommon.Dialog.SkinSelect, BCCommon.FileUtils, BCEditor.Types,
+  BCCommon.Dialog.Options.Search;
 
 procedure TMainForm.ActionSkinsExecute(Sender: TObject);
 begin
