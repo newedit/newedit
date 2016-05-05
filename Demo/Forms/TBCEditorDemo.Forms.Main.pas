@@ -54,7 +54,6 @@ type
     ActionOptions: TAction;
     ActionClose: TAction;
     LabelSearchResultCount: TsLabel;
-    BBMonkey: TButton;
     procedure ActionFileOpenExecute(Sender: TObject);
     procedure ActionPreviewExecute(Sender: TObject);
     procedure ActionSearchExecute(Sender: TObject);

@@ -366,15 +366,6 @@ inherited MainForm: TMainForm
         end
       end
     end
-    object BBMonkey: TButton
-      Left = 476
-      Top = 540
-      Width = 105
-      Height = 25
-      Caption = 'Test monkey'
-      TabOrder = 2
-      Visible = False
-    end
   end
   inherited SkinManager: TBCSkinManager
     Effects.AllowGlowing = False
