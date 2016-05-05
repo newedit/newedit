@@ -11,7 +11,7 @@ uses
   BCControl.Splitter, GridsEh, BCCommon.Frame.Base, sPanel, BCComponent.MultiStringHolder, sSkinManager, sStatusBar,
   sSplitter, acTitleBar, sSkinProvider, System.Win.TaskbarCore, Vcl.Taskbar, sDialogs, Vcl.StdCtrls, sButton,
   BCControl.Button, System.Diagnostics, BCCommon.Dialog.Popup.Highlighter, BCCommon.Dialog.Popup.Highlighter.Color,
-  sSpeedButton, BCControl.SpeedButton, sComboBox, BCControl.ComboBox, sLabel, sMemo;
+  sSpeedButton, BCControl.SpeedButton, sComboBox, BCControl.ComboBox, sLabel;
 
 const
   BCEDITORDEMO_CAPTION = 'TBCEditor Control Demo v1.5.2';
@@ -96,9 +96,8 @@ implementation
 {$R *.dfm}
 
 uses
-  BCCommon.Language.Strings, BCCommon.Form.Print.Preview, BCEditor.Print.Types, BCCommon.StringUtils,
-  BCCommon.Dialog.SkinSelect, BCCommon.FileUtils, BCEditor.Types, BCCommon.Dialog.Options.Search,
-  BCEditor.Editor.Undo.Item, BCEditor.Editor.Undo.List, Vcl.Clipbrd;
+  BCCommon.Form.Print.Preview, BCEditor.Print.Types, BCCommon.StringUtils, BCCommon.Dialog.SkinSelect,
+  BCCommon.FileUtils, BCEditor.Types, BCCommon.Dialog.Options.Search;
 
 procedure TMainForm.ActionSkinsExecute(Sender: TObject);
 begin
@@ -117,18 +116,18 @@ begin
   else
     Editor.Margins.Bottom := 5;
   if Editor.Modified then
-    InfoText := LanguageDataModule.GetConstant('Modified')
+    InfoText := 'Modified'
   else
     InfoText := '';
   if StatusBar.Panels[2].Text <> InfoText then
     StatusBar.Panels[2].Text := InfoText;
   GetKeyboardState(KeyState);
   if KeyState[VK_INSERT] = 0 then
-    if StatusBar.Panels[1].Text <> LanguageDataModule.GetConstant('Insert') then
-      StatusBar.Panels[1].Text := LanguageDataModule.GetConstant('Insert');
+    if StatusBar.Panels[1].Text <> 'Insert' then
+      StatusBar.Panels[1].Text := 'Insert';
   if KeyState[VK_INSERT] = 1 then
-    if StatusBar.Panels[1].Text <> LanguageDataModule.GetConstant('Overwrite') then
-      StatusBar.Panels[1].Text := LanguageDataModule.GetConstant('Overwrite');
+    if StatusBar.Panels[1].Text <> 'Overwrite' then
+      StatusBar.Panels[1].Text := 'Overwrite';
 end;
 
 procedure TMainForm.ComboBoxSearchTextChange(Sender: TObject);
@@ -163,9 +162,9 @@ begin
   s := '';
 
   if Assigned(Editor) and (Editor.SearchResultCount > 1) then
-    s := LanguageDataModule.GetConstant('MatchFoundPluralExtension');
+    s := 'es';
   if Assigned(Editor) and (Editor.SearchResultCount > 0) then
-    s := Format(LanguageDataModule.GetConstant('MatchFound'), [Editor.SearchResultCount, s]);
+    s := Format('%d match%s found', [Editor.SearchResultCount, s]);
 
   LabelSearchResultCount.Caption := s;
 end;
@@ -224,8 +223,8 @@ begin
   EditorPrint.Header.Clear;
   EditorPrint.Footer.Clear;
 
-  SetHeaderFooter(0, Format(LanguageDataModule.GetConstant('PrintedBy'), [Application.Title]));
-  SetHeaderFooter(1, LanguageDataModule.GetConstant('PreviewDocumentPage'));
+  SetHeaderFooter(0, Format('Printed by', [Application.Title]));
+  SetHeaderFooter(1, 'Page: $PAGENUM$ of $PAGECOUNT$');
   SetHeaderFooter(2, Editor.DocumentName);
   SetHeaderFooter(3, '$DATE$ $TIME$');
 
