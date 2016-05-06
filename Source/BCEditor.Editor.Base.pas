@@ -1969,7 +1969,7 @@ begin
     SetLength(FLineNumbersCache, LLineNumbersCacheLength);
     j := 1;
     k := 1;
-    for i := 1 to Lines.Count do
+    for i := 1 to Lines.Count do //FI:W528 FixInsight ignore
     begin
       while (j <= Lines.Count) and LCollapsedCodeFolding[j] do { skip collapsed lines }
         Inc(j);
@@ -5607,7 +5607,7 @@ begin
 end;
 
 procedure TBCBaseEditor.WMIMEChar(var AMessage: TMessage);
-begin
+begin //FI:W519 FixInsight ignore
   { Do nothing here, the IME string is retrieved in WMIMEComposition
     Handling the WM_IME_CHAR message stops Windows from sending WM_CHAR messages while using the IME }
 end;
@@ -5880,7 +5880,7 @@ end;
 
 function TBCBaseEditor.DoSearchMatchNotFoundWraparoundDialog: Boolean;
 begin
-  Result := MessageDialog(Format(SBCEditorSearchMatchNotFound, [SLineBreak + SLineBreak]), mtConfirmation, [mbYes, mbNo]) = mrYes;
+  Result := MessageDialog(Format(SBCEditorSearchMatchNotFound, [SLineBreak + SLineBreak]), mtConfirmation, [mbYes, mbNo]) = mrYes; //FI:W510 FixInsight ignore
 end;
 
 function TBCBaseEditor.GetReadOnly: Boolean;
@@ -6107,7 +6107,7 @@ begin
       LSpaces := StringOfChar(BCEDITOR_SPACE_CHAR, FTabs.Width)
     else
       LSpaces := BCEDITOR_TAB_CHAR;
-    for i := LBlockBeginPosition.Line to LEndOfLine - 1 do
+    for i := LBlockBeginPosition.Line to LEndOfLine - 1 do //FI:W528 FixInsight ignore
       LStringToInsert := LStringToInsert + LSpaces + BCEDITOR_CARRIAGE_RETURN + BCEDITOR_LINEFEED;
     LStringToInsert := LStringToInsert + LSpaces;
 
@@ -6862,17 +6862,17 @@ begin
 end;
 
 procedure TBCBaseEditor.LinesBeforeDeleted(Sender: TObject; AIndex: Integer; ACount: Integer);
-begin
+begin //FI:W519 FixInsight ignore
   { Do nothing }
 end;
 
 procedure TBCBaseEditor.LinesBeforeInserted(Sender: TObject; AIndex: Integer; ACount: Integer);
-begin
+begin //FI:W519 FixInsight ignore
   { Do nothing }
 end;
 
 procedure TBCBaseEditor.LinesBeforePutted(Sender: TObject; AIndex: Integer; ACount: Integer);
-begin
+begin //FI:W519 FixInsight ignore
   { Do nothing }
 end;
 
@@ -7861,7 +7861,7 @@ begin
       { paint [...] }
       Y := LCollapseMarkRect.Top + (LCollapseMarkRect.Bottom - LCollapseMarkRect.Top) div 2;
       X := LCollapseMarkRect.Left + FCharWidth - 1;
-      for i := 1 to 3 do
+      for i := 1 to 3 do //FI:W528 FixInsight ignore
       begin
         Canvas.Rectangle(X, Y, X + 2, Y + 2);
         X := X + FCharWidth - 1;
@@ -8395,7 +8395,7 @@ var
   LLeft: Integer;
 begin
   FMinimapShadowBitmap.Height := 0;
-  FMinimapShadowBitmap.Height := AClipRect.Height;
+  FMinimapShadowBitmap.Height := AClipRect.Height; //FI:W508 FixInsight ignore
 
   for LRow := 0 to FMinimapShadowBitmap.Height - 1 do
   begin
@@ -12836,7 +12836,7 @@ begin
           LPChar := PChar(AData);
           LLength := Length(PChar(AData));
           LRealLength := 0;
-          for i := 0 to LLength - 1 do
+          for i := 0 to LLength - 1 do //FI:W528 FixInsight ignore
           begin
             if Ord(LPChar^) < 128 then
               LRealLength := LRealLength + 1

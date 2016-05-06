@@ -11,7 +11,7 @@ type
     FChars: TBCEditorCharSet;
     FBlockComments: TBCEditorArrayOfString;
     FLineComments: TBCEditorArrayOfString;
-    procedure AddChars(AToken: string);
+    procedure AddChars(const AToken: string);
   public
     destructor Destroy; override;
 
@@ -34,7 +34,7 @@ begin
   inherited Destroy;
 end;
 
-procedure TBCEditorHighlighterComments.AddChars(AToken: string);
+procedure TBCEditorHighlighterComments.AddChars(const AToken: string);
 var
   i: Integer;
 begin
