@@ -10805,7 +10805,6 @@ var
   LIsBackward, LIsFromCursor: Boolean;
   LIsPrompt: Boolean;
   LIsReplaceAll, LIsDeleteLine: Boolean;
-  LIsEndUndoBlock: Boolean;
   LActionReplace: TBCEditorReplaceAction;
   LResultOffset: Integer;
   LPaintLocked: Boolean;
@@ -10881,15 +10880,12 @@ begin
 
   LReplaceLength := 0;
   LPaintLocked := False;
+  BeginUndoBlock;
   if LIsReplaceAll and not LIsPrompt then
   begin
     IncPaintLock;
     LPaintLocked := True;
-    BeginUndoBlock;
-    LIsEndUndoBlock := True;
-  end
-  else
-    LIsEndUndoBlock := False;
+  end;
 
   try
     while (LCurrentTextPosition.Line >= LStartTextPosition.Line) and (LCurrentTextPosition.Line <= LEndTextPosition.Line) do
@@ -10943,9 +10939,6 @@ begin
             if not LIsReplaceAll or LIsPrompt then
               LIsReplaceAll := True;
             LIsPrompt := False;
-            if not LIsEndUndoBlock then
-              BeginUndoBlock;
-            LIsEndUndoBlock := True;
           end;
           if LIsDeleteLine then
           begin
@@ -10985,8 +10978,7 @@ begin
     InitCodeFolding;
     if LPaintLocked then
       DecPaintLock;
-    if LIsEndUndoBlock then
-      EndUndoBlock;
+    EndUndoBlock;
     if CanFocus then
       SetFocus;
   end;
