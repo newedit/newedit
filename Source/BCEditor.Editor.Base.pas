@@ -104,6 +104,7 @@ type
     FMouseMoveScrollingPoint: TPoint;
     FMouseMoveScrollTimer: TTimer;
     FMouseWheelAccumulator: Integer;
+    FMultiCarets: TList;
     FOldMouseMovePoint: TPoint;
     FOnAfterBookmarkPanelPaint: TBCEditorBookmarkPanelPaintEvent;
     FOnAfterBookmarkPlaced: TNotifyEvent;
@@ -283,6 +284,7 @@ type
     procedure FindAll(const ASearchText: string = '');
     procedure FindWords(const AWord: string; AList: TList; ACaseSensitive: Boolean; AWholeWordsOnly: Boolean);
     procedure FontChanged(Sender: TObject);
+    procedure FreeMultiCarets;
     procedure GetMinimapLeftRight(var ALeft: Integer; var ARight: Integer);
     procedure InitCodeFolding;
     procedure LinesChanging(Sender: TObject);
@@ -772,6 +774,7 @@ begin
   { Caret }
   FCaret := TBCEditorCaret.Create;
   FCaret.OnChange := CaretChanged;
+  FMultiCarets := TList.Create;
   { Text buffer }
   FLines := TBCEditorLines.Create(Self);
   FLines.OnBeforeSetText := BeforeSetText;
@@ -954,6 +957,8 @@ begin
   FLinespacing.Free;
   FSpecialChars.Free;
   FCaret.Free;
+  FreeMultiCarets;
+  FMultiCarets.Free;
   FMatchingPair.Free;
   FCompletionProposal.Free;
   FSyncEdit.Free;
@@ -3469,7 +3474,7 @@ begin
     LTextCaretPosition := GetTextCaretPosition;
     if LTextCaretPosition.Char <= FLines[LTextCaretPosition.Line].Length then
       LTempBitmap.Canvas.TextOut(X, 0, FLines[LTextCaretPosition.Line][LTextCaretPosition.Char]);
-    { Copy rect }
+
     ACanvas.CopyRect(Rect(LPoint.X + FCaret.Offsets.X, LPoint.Y + FCaret.Offsets.Y, LPoint.X + FCaret.Offsets.X + LCaretWidth,
       LPoint.Y + FCaret.Offsets.Y + LCaretHeight), LTempBitmap.Canvas, Rect(0, Y, LCaretWidth, Y + LCaretHeight));
   finally
@@ -3546,6 +3551,11 @@ begin
       Inc(LTextPtr);
     end;
   end;
+end;
+
+procedure TBCBaseEditor.FreeMultiCarets;
+begin
+  // TODO
 end;
 
 procedure TBCBaseEditor.FontChanged(Sender: TObject);
@@ -3981,8 +3991,8 @@ var
         LCodeFoldingRange := nil;
         if LOpenTokenFoldRangeList.Count > 0 then
           LCodeFoldingRange := LOpenTokenFoldRangeList.Last;
-        if Assigned(LCodeFoldingRange) and LCodeFoldingRange.RegionItem.NoSubs then
-          Exit;
+        //if Assigned(LCodeFoldingRange) and LCodeFoldingRange.RegionItem.NoSubs then
+        //  Exit;
 
         j := LCurrentCodeFoldingRegion.SkipRegions.Count - 1;
         for i := 0 to j do
@@ -7155,7 +7165,7 @@ begin
   begin
     if AButton = mbRight then
     begin
-      if (coRightMouseClickMovesCaret in FCaret.Options) and
+      if (coRightMouseClickMove in FCaret.Options) and
         (LSelectionAvailable and not IsTextPositionInSelection(DisplayToTextPosition(PixelsToRowColumn(X, Y))) or
         not LSelectionAvailable) then
       begin
@@ -7700,7 +7710,8 @@ begin
     BitBlt(FBufferBmp.Canvas.Handle, 0, 0, ClientRect.Width, ClientRect.Height, Canvas.Handle, 0, 0, SRCCOPY);
     FBufferBmp.Canvas.Handle := Canvas.Handle;
     Canvas.Handle := LHandle;
-    UpdateCaret;
+    if not FCaret.NonBlinking.Enabled then
+      UpdateCaret;
   end;
 end;
 
@@ -13921,7 +13932,6 @@ end;
 
 procedure TBCBaseEditor.UpdateCaret;
 var
-  X, Y: Integer;
   LClientRect: TRect;
   LCaretDisplayPosition: TBCEditorDisplayPosition;
   LCaretTextPosition: TBCEditorTextPosition;
@@ -13946,26 +13956,29 @@ begin
       if LCaretDisplayPosition.Column > FWordWrapLineLengths[LCaretDisplayPosition.Row] + 1 then
         LCaretDisplayPosition.Column := FWordWrapLineLengths[LCaretDisplayPosition.Row] + 1;
     end;
-    LCaretPoint := RowColumnToPixels(LCaretDisplayPosition);
-    X := LCaretPoint.X + FCaretOffset.X;
+
     if InsertMode then
       LCaretStyle := FCaret.Styles.Insert
     else
       LCaretStyle := FCaret.Styles.Overwrite;
+
+    LCaretPoint := RowColumnToPixels(LCaretDisplayPosition);
+    LCaretPoint.X := LCaretPoint.X + FCaretOffset.X;
     if LCaretStyle in [csHorizontalLine, csThinHorizontalLine, csHalfBlock, csBlock] then
-      X := X + 1;
-    Y := LCaretPoint.Y + FCaretOffset.Y;
+      LCaretPoint.X := LCaretPoint.X + 1;
+    LCaretPoint.Y := LCaretPoint.Y + FCaretOffset.Y;
+
     LClientRect := ClientRect;
     DeflateMinimapRect(LClientRect);
 
-    SetCaretPos(X, Y);
-    if (X >= LClientRect.Left + FLeftMargin.GetWidth + FCodeFolding.GetWidth) and (X < LClientRect.Right) and (Y >= LClientRect.Top) and (Y < LClientRect.Bottom) then
+    SetCaretPos(LCaretPoint.X, LCaretPoint.Y);
+    if LClientRect.Contains(LCaretPoint) then
       ShowCaret
     else
       HideCaret;
 
     LCompositionForm.dwStyle := CFS_POINT;
-    LCompositionForm.ptCurrentPos := Point(X, Y);
+    LCompositionForm.ptCurrentPos := LCaretPoint;
     ImmSetCompositionWindow(ImmGetContext(Handle), @LCompositionForm);
 
     if Assigned(FOnCaretChanged) then
