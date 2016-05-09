@@ -104,7 +104,7 @@ type
     FMouseMoveScrollingPoint: TPoint;
     FMouseMoveScrollTimer: TTimer;
     FMouseWheelAccumulator: Integer;
-    FMultiCarets: TList;
+    // TODO: FMultiCarets: TList;
     FOldMouseMovePoint: TPoint;
     FOnAfterBookmarkPanelPaint: TBCEditorBookmarkPanelPaintEvent;
     FOnAfterBookmarkPlaced: TNotifyEvent;
@@ -774,7 +774,7 @@ begin
   { Caret }
   FCaret := TBCEditorCaret.Create;
   FCaret.OnChange := CaretChanged;
-  FMultiCarets := TList.Create;
+  // TODO: FMultiCarets := TList.Create;
   { Text buffer }
   FLines := TBCEditorLines.Create(Self);
   FLines.OnBeforeSetText := BeforeSetText;
@@ -958,7 +958,7 @@ begin
   FSpecialChars.Free;
   FCaret.Free;
   FreeMultiCarets;
-  FMultiCarets.Free;
+  // TODO: FMultiCarets.Free;
   FMatchingPair.Free;
   FCompletionProposal.Free;
   FSyncEdit.Free;
@@ -3981,19 +3981,12 @@ var
   var
     i, j: Integer;
     LSkipRegionItem: TBCEditorSkipRegionItem;
-    LCodeFoldingRange: TBCEditorCodeFoldingRange;
   begin
     Result := False;
 
     if CharInSet(LTextPtr^, FHighlighter.SkipOpenKeyChars) then
       if LOpenTokenSkipFoldRangeList.Count = 0 then
       begin
-        LCodeFoldingRange := nil;
-        if LOpenTokenFoldRangeList.Count > 0 then
-          LCodeFoldingRange := LOpenTokenFoldRangeList.Last;
-        //if Assigned(LCodeFoldingRange) and LCodeFoldingRange.RegionItem.NoSubs then
-        //  Exit;
-
         j := LCurrentCodeFoldingRegion.SkipRegions.Count - 1;
         for i := 0 to j do
         begin
