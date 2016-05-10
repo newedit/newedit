@@ -30,7 +30,7 @@ type
     FBackgroundColor: TColor;
     FBookmarks: array [0 .. 8] of TBCEditorBookmark;
     FBorderStyle: TBorderStyle;
-    FBufferBmp: Vcl.Graphics.TBitmap;
+    FBufferBitmap: Vcl.Graphics.TBitmap;
     FCaret: TBCEditorCaret;
     FCaretOffset: TPoint;
     FDisplayCaretX: Integer;
@@ -87,7 +87,7 @@ type
     FMatchingPairMatchStack: array of TBCEditorMatchingPairTokenMatch;
     FMatchingPairOpenDuplicate, FMatchingPairCloseDuplicate: array of Integer;
     FMinimap: TBCEditorMinimap;
-    FMinimapBufferBmp: Vcl.Graphics.TBitmap;
+    FMinimapBufferBitmap: Vcl.Graphics.TBitmap;
     FMinimapClickOffsetY: Integer;
     FMinimapIndicatorBlendFunction: TBlendFunction;
     FMinimapIndicatorBitmap: Vcl.Graphics.TBitmap;
@@ -104,7 +104,7 @@ type
     FMouseMoveScrollingPoint: TPoint;
     FMouseMoveScrollTimer: TTimer;
     FMouseWheelAccumulator: Integer;
-    // TODO: FMultiCarets: TList;
+    FMultiCarets: TList;
     FOldMouseMovePoint: TPoint;
     FOnAfterBookmarkPanelPaint: TBCEditorBookmarkPanelPaintEvent;
     FOnAfterBookmarkPlaced: TNotifyEvent;
@@ -245,11 +245,11 @@ type
     function SearchText(const ASearchText: string; AChanged: Boolean = False): Integer;
     function StringWordEnd(const ALine: string; AStart: Integer): Integer;
     function StringWordStart(const ALine: string; AStart: Integer): Integer;
-    procedure ActiveLineChanged(Sender: TObject);
+    procedure ActiveLineChanged(ASender: TObject);
     procedure AssignSearchEngine;
-    procedure AfterSetText(Sender: TObject);
-    procedure BeforeSetText(Sender: TObject);
-    procedure CaretChanged(Sender: TObject);
+    procedure AfterSetText(ASender: TObject);
+    procedure BeforeSetText(ASender: TObject);
+    procedure CaretChanged(ASender: TObject);
     procedure CheckIfAtMatchingKeywords;
     procedure ClearCodeFolding;
     procedure CodeFoldingCollapse(AFoldRange: TBCEditorCodeFoldingRange);
@@ -257,7 +257,7 @@ type
     procedure CodeFoldingResetCaches;
     procedure CodeFoldingOnChange(AEvent: TBCEditorCodeFoldingChanges);
     procedure CodeFoldingUncollapse(AFoldRange: TBCEditorCodeFoldingRange);
-    procedure CompletionProposalTimerHandler(Sender: TObject);
+    procedure CompletionProposalTimerHandler(ASender: TObject);
     procedure ComputeCaret(X, Y: Integer);
     procedure ComputeScroll(X, Y: Integer);
     procedure CreateLineNumbersCache(AResetCache: Boolean = False);
@@ -283,24 +283,25 @@ type
     procedure DrawCursor(ACanvas: TCanvas);
     procedure FindAll(const ASearchText: string = '');
     procedure FindWords(const AWord: string; AList: TList; ACaseSensitive: Boolean; AWholeWordsOnly: Boolean);
-    procedure FontChanged(Sender: TObject);
+    procedure FontChanged(ASender: TObject);
+    procedure FreeMinimapBitmaps;
     procedure FreeMultiCarets;
     procedure GetMinimapLeftRight(var ALeft: Integer; var ARight: Integer);
     procedure InitCodeFolding;
-    procedure LinesChanging(Sender: TObject);
-    procedure MinimapChanged(Sender: TObject);
-    procedure MouseMoveScrollTimerHandler(Sender: TObject);
+    procedure LinesChanging(ASender: TObject);
+    procedure MinimapChanged(ASender: TObject);
+    procedure MouseMoveScrollTimerHandler(ASender: TObject);
     procedure MoveCaretAndSelection(const ABeforeTextPosition, AAfterTextPosition: TBCEditorTextPosition; ASelectionCommand: Boolean);
     procedure MoveCaretHorizontally(const X: Integer; ASelectionCommand: Boolean);
     procedure MoveCaretVertically(const Y: Integer; ASelectionCommand: Boolean);
     procedure OpenLink(AURI: string; ARangeType: TBCEditorRangeType);
     procedure PreviousSelectedWordPosition;
     procedure RefreshFind;
-    procedure RightMarginChanged(Sender: TObject);
-    procedure ScrollChanged(Sender: TObject);
-    procedure ScrollTimerHandler(Sender: TObject);
+    procedure RightMarginChanged(ASender: TObject);
+    procedure ScrollChanged(ASender: TObject);
+    procedure ScrollTimerHandler(ASender: TObject);
     procedure SearchChanged(AEvent: TBCEditorSearchChanges);
-    procedure SelectionChanged(Sender: TObject);
+    procedure SelectionChanged(ASender: TObject);
     procedure SetActiveLine(const AValue: TBCEditorActiveLine);
     procedure SetBackgroundColor(const AValue: TColor);
     procedure SetBorderStyle(AValue: TBorderStyle);
@@ -341,11 +342,11 @@ type
     procedure SetWordBlock(ATextPosition: TBCEditorTextPosition);
     procedure SetWordWrap(const AValue: TBCEditorWordWrap);
     procedure SizeOrFontChanged(const AFontChanged: Boolean);
-    procedure SpecialCharsChanged(Sender: TObject);
-    procedure SyncEditChanged(Sender: TObject);
+    procedure SpecialCharsChanged(ASender: TObject);
+    procedure SyncEditChanged(ASender: TObject);
     procedure SwapInt(var ALeft, ARight: Integer);
-    procedure TabsChanged(Sender: TObject);
-    procedure UndoRedoAdded(Sender: TObject);
+    procedure TabsChanged(ASender: TObject);
+    procedure UndoRedoAdded(ASender: TObject);
     procedure UpdateFoldRanges(ACurrentLine, ALineCount: Integer); overload;
     procedure UpdateFoldRanges(AFoldRanges: TBCEditorCodeFoldingRanges; ALineCount: Integer); overload;
     procedure UpdateModifiedStatus;
@@ -376,7 +377,7 @@ type
     procedure WMSize(var AMessage: TWMSize); message WM_SIZE;
     procedure WMUndo(var AMessage: TMessage); message WM_UNDO;
     procedure WMVScroll(var AMessage: TWMScroll); message WM_VSCROLL;
-    procedure WordWrapChanged(Sender: TObject);
+    procedure WordWrapChanged(ASender: TObject);
   protected
     function DoMouseWheel(AShift: TShiftState; AWheelDelta: Integer; AMousePos: TPoint): Boolean; override;
     function DoOnReplaceText(const ASearch, AReplace: string; ALine, AColumn: Integer; DeleteLine: Boolean): TBCEditorReplaceAction;
@@ -386,13 +387,13 @@ type
     function PixelsToNearestRowColumn(X, Y: Integer): TBCEditorDisplayPosition;
     function PixelsToRowColumn(X, Y: Integer): TBCEditorDisplayPosition;
     function RowColumnToPixels(const ADisplayPosition: TBCEditorDisplayPosition): TPoint;
-    procedure ChainLinesChanged(Sender: TObject);
-    procedure ChainLinesChanging(Sender: TObject);
-    procedure ChainLinesCleared(Sender: TObject);
-    procedure ChainLinesDeleted(Sender: TObject; AIndex: Integer; ACount: Integer);
-    procedure ChainLinesInserted(Sender: TObject; AIndex: Integer; ACount: Integer);
-    procedure ChainLinesPutted(Sender: TObject; AIndex: Integer; ACount: Integer);
-    procedure ChainUndoRedoAdded(Sender: TObject);
+    procedure ChainLinesChanged(ASender: TObject);
+    procedure ChainLinesChanging(ASender: TObject);
+    procedure ChainLinesCleared(ASender: TObject);
+    procedure ChainLinesDeleted(ASender: TObject; AIndex: Integer; ACount: Integer);
+    procedure ChainLinesInserted(ASender: TObject; AIndex: Integer; ACount: Integer);
+    procedure ChainLinesPutted(ASender: TObject; AIndex: Integer; ACount: Integer);
+    procedure ChainUndoRedoAdded(ASender: TObject);
     procedure CreateParams(var AParams: TCreateParams); override;
     procedure CreateWnd; override;
     procedure DblClick; override;
@@ -426,17 +427,17 @@ type
     procedure KeyDown(var AKey: Word; AShift: TShiftState); override;
     procedure KeyPressW(var AKey: Char);
     procedure KeyUp(var AKey: Word; AShift: TShiftState); override;
-    procedure LinesChanged(Sender: TObject);
+    procedure LinesChanged(ASender: TObject);
     procedure LinesHookChanged;
-    procedure LinesBeforeDeleted(Sender: TObject; AIndex: Integer; ACount: Integer);
-    procedure LinesBeforeInserted(Sender: TObject; AIndex: Integer; ACount: Integer);
-    procedure LinesBeforePutted(Sender: TObject; AIndex: Integer; ACount: Integer);
-    procedure LinesCleared(Sender: TObject);
-    procedure LinesDeleted(Sender: TObject; AIndex: Integer; ACount: Integer);
-    procedure LinesInserted(Sender: TObject; AIndex: Integer; ACount: Integer);
-    procedure LinesPutted(Sender: TObject; AIndex: Integer; ACount: Integer);
+    procedure LinesBeforeDeleted(ASender: TObject; AIndex: Integer; ACount: Integer);
+    procedure LinesBeforeInserted(ASender: TObject; AIndex: Integer; ACount: Integer);
+    procedure LinesBeforePutted(ASender: TObject; AIndex: Integer; ACount: Integer);
+    procedure LinesCleared(ASender: TObject);
+    procedure LinesDeleted(ASender: TObject; AIndex: Integer; ACount: Integer);
+    procedure LinesInserted(ASender: TObject; AIndex: Integer; ACount: Integer);
+    procedure LinesPutted(ASender: TObject; AIndex: Integer; ACount: Integer);
     procedure Loaded; override;
-    procedure MarkListChange(Sender: TObject);
+    procedure MarkListChange(ASender: TObject);
     procedure MouseDown(AButton: TMouseButton; AShift: TShiftState; X, Y: Integer); override;
     procedure MouseMove(AShift: TShiftState; X, Y: Integer); override;
     procedure MouseUp(AButton: TMouseButton; AShift: TShiftState; X, Y: Integer); override;
@@ -549,7 +550,7 @@ type
     procedure InvalidateLines(AFirstLine, ALastLine: Integer);
     procedure InvalidateMinimap;
     procedure InvalidateSelection;
-    procedure LeftMarginChanged(Sender: TObject);
+    procedure LeftMarginChanged(ASender: TObject);
     procedure LoadFromFile(const AFileName: string; AEncoding: System.SysUtils.TEncoding = nil);
     procedure LoadFromStream(AStream: TStream; AEncoding: System.SysUtils.TEncoding = nil);
     procedure LockUndo;
@@ -774,7 +775,6 @@ begin
   { Caret }
   FCaret := TBCEditorCaret.Create;
   FCaret.OnChange := CaretChanged;
-  // TODO: FMultiCarets := TList.Create;
   { Text buffer }
   FLines := TBCEditorLines.Create(Self);
   FLines.OnBeforeSetText := BeforeSetText;
@@ -800,8 +800,7 @@ begin
   Font.Assign(FFontDummy);
   Font.OnChange := FontChanged;
   { Painting }
-  FBufferBmp := Vcl.Graphics.TBitmap.Create;
-  FMinimapBufferBmp := Vcl.Graphics.TBitmap.Create;
+  FBufferBitmap := Vcl.Graphics.TBitmap.Create;
   FTextDrawer := TBCEditorTextDrawer.Create([fsBold], FFontDummy);
   ParentFont := False;
   ParentColor := False;
@@ -850,7 +849,6 @@ begin
   FScrollTimer.Enabled := False;
   FScrollTimer.Interval := 100;
   FScrollTimer.OnTimer := ScrollTimerHandler;
-  { Scroll }
   FMouseMoveScrollTimer := TTimer.Create(Self);
   FMouseMoveScrollTimer.Enabled := False;
   FMouseMoveScrollTimer.Interval := 100;
@@ -872,12 +870,9 @@ begin
   FMinimapIndicatorBlendFunction.BlendOp := AC_SRC_OVER;
   FMinimapIndicatorBlendFunction.BlendFlags := 0;
   FMinimapIndicatorBlendFunction.AlphaFormat := 0;
-  FMinimapIndicatorBitmap := Vcl.Graphics.TBitmap.Create;
   FMinimapShadowBlendFunction.BlendOp := AC_SRC_OVER;
   FMinimapShadowBlendFunction.BlendFlags := 0;
   FMinimapShadowBlendFunction.AlphaFormat := AC_SRC_ALPHA;
-  FMinimapShadowBitmap := Vcl.Graphics.TBitmap.Create;
-  FMinimapShadowBitmap.PixelFormat := pf32Bit;
   FMinimap := TBCEditorMinimap.Create;
   FMinimap.OnChange := MinimapChanged;
   { Active line }
@@ -937,16 +932,14 @@ begin
   FOriginalRedoList.Free;
   FLeftMargin.Free;
   FLeftMargin := nil; { notification has a check }
-  FMinimapIndicatorBitmap.Free;
-  FMinimapShadowBitmap.Free;
   FMinimap.Free;
   FWordWrap.Free;
   FTextDrawer.Free;
   FInternalBookmarkImage.Free;
   FFontDummy.Free;
   FOriginalLines.Free;
-  FBufferBmp.Free;
-  FMinimapBufferBmp.Free;
+  FBufferBitmap.Free;
+  FreeMinimapBitmaps;
   FActiveLine.Free;
   FRightMargin.Free;
   FScroll.Free;
@@ -958,7 +951,6 @@ begin
   FSpecialChars.Free;
   FCaret.Free;
   FreeMultiCarets;
-  // TODO: FMultiCarets.Free;
   FMatchingPair.Free;
   FCompletionProposal.Free;
   FSyncEdit.Free;
@@ -2766,13 +2758,13 @@ begin
   end;
 end;
 
-procedure TBCBaseEditor.ActiveLineChanged(Sender: TObject);
+procedure TBCBaseEditor.ActiveLineChanged(ASender: TObject);
 begin
   if not (csLoading in ComponentState) then
   begin
-    if Sender is TBCEditorActiveLine then
+    if ASender is TBCEditorActiveLine then
       InvalidateLine(DisplayCaretY);
-    if Sender is TBCEditorGlyph then
+    if ASender is TBCEditorGlyph then
       InvalidateLeftMargin;
   end;
 end;
@@ -2794,18 +2786,25 @@ begin
   end;
 end;
 
-procedure TBCBaseEditor.AfterSetText(Sender: TObject);
+procedure TBCBaseEditor.AfterSetText(ASender: TObject);
 begin
   InitCodeFolding;
 end;
 
-procedure TBCBaseEditor.BeforeSetText(Sender: TObject);
+procedure TBCBaseEditor.BeforeSetText(ASender: TObject);
 begin
   ClearCodeFolding;
 end;
 
-procedure TBCBaseEditor.CaretChanged(Sender: TObject);
+procedure TBCBaseEditor.CaretChanged(ASender: TObject);
 begin
+  if coMultiCaret in FCaret.Options then
+  begin
+    if not Assigned(FMultiCarets) then
+      FMultiCarets := TList.Create;
+  end
+  else
+    FreeMultiCarets;
   ResetCaret;
   RecalculateCharExtent;
 end;
@@ -2953,7 +2952,7 @@ begin
   UpdateScrollBars;
 end;
 
-procedure TBCBaseEditor.CompletionProposalTimerHandler(Sender: TObject);
+procedure TBCBaseEditor.CompletionProposalTimerHandler(ASender: TObject);
 begin
   FCompletionProposalTimer.Enabled := False;
   DoExecuteCompletionProposal;
@@ -3553,12 +3552,36 @@ begin
   end;
 end;
 
-procedure TBCBaseEditor.FreeMultiCarets;
+procedure TBCBaseEditor.FreeMinimapBitmaps;
 begin
-  // TODO
+  if Assigned(FMinimapBufferBitmap) then
+  begin
+    FMinimapBufferBitmap.Free;
+    FMinimapBufferBitmap := nil;
+  end;
+  if Assigned(FMinimapShadowBitmap) then
+  begin
+    FMinimapShadowBitmap.Free;
+    FMinimapShadowBitmap := nil;
+  end;
+  if Assigned(FMinimapIndicatorBitmap) then
+  begin
+    FMinimapIndicatorBitmap.Free;
+    FMinimapIndicatorBitmap := nil;
+  end;
 end;
 
-procedure TBCBaseEditor.FontChanged(Sender: TObject);
+procedure TBCBaseEditor.FreeMultiCarets;
+begin
+  // TODO remove items
+  if Assigned(FMultiCarets) then
+  begin
+    FMultiCarets.Free;
+    FMultiCarets := nil;
+  end;
+end;
+
+procedure TBCBaseEditor.FontChanged(ASender: TObject);
 begin
   RecalculateCharExtent;
   SizeOrFontChanged(True);
@@ -3588,41 +3611,59 @@ begin
   end;
 end;
 
-procedure TBCBaseEditor.LinesChanging(Sender: TObject);
+procedure TBCBaseEditor.LinesChanging(ASender: TObject);
 begin
   Include(FStateFlags, sfLinesChanging);
 end;
 
-procedure TBCBaseEditor.MinimapChanged(Sender: TObject);
+procedure TBCBaseEditor.MinimapChanged(ASender: TObject);
 var
   i: Integer;
 begin
-  FMinimapBufferBmp.Height := 0;
-  SizeOrFontChanged(True);
-
-  if FMinimap.Shadow.Visible then
+  if FMinimap.Visible then
   begin
-    FMinimapShadowBlendFunction.SourceConstantAlpha := FMinimap.Shadow.AlphaBlending;
-    FMinimapShadowBitmap.Canvas.Brush.Color := FMinimap.Shadow.Color;
-    FMinimapShadowBitmap.Width := FMinimap.Shadow.Width;
+    if not Assigned(FMinimapBufferBitmap) then
+      FMinimapBufferBitmap := Vcl.Graphics.TBitmap.Create;
+    FMinimapBufferBitmap.Height := 0;
 
-    SetLength(FMinimapShadowAlphaArray, FMinimapShadowBitmap.Width);
-    SetLength(FMinimapShadowAlphaByteArray, FMinimapShadowBitmap.Width);
-
-    for i := 0 to FMinimapShadowBitmap.Width - 1 do
+    if FMinimap.Shadow.Visible then
     begin
-      if FMinimap.Align = maLeft then
-        FMinimapShadowAlphaArray[i] := (FMinimapShadowBitmap.Width - i) / FMinimapShadowBitmap.Width
-      else
-        FMinimapShadowAlphaArray[i] := i / FMinimapShadowBitmap.Width;
-      FMinimapShadowAlphaByteArray[i] := Min(Round(Power(FMinimapShadowAlphaArray[i], 4) * 255.0), 255);
+      if not Assigned(FMinimapIndicatorBitmap) then
+        FMinimapIndicatorBitmap := Vcl.Graphics.TBitmap.Create;
+
+      FMinimapShadowBlendFunction.SourceConstantAlpha := FMinimap.Shadow.AlphaBlending;
+
+      if not Assigned(FMinimapShadowBitmap) then
+      begin
+        FMinimapShadowBitmap := Vcl.Graphics.TBitmap.Create;
+        FMinimapShadowBitmap.PixelFormat := pf32Bit;
+      end;
+
+      FMinimapShadowBitmap.Canvas.Brush.Color := FMinimap.Shadow.Color;
+      FMinimapShadowBitmap.Width := FMinimap.Shadow.Width;
+
+      SetLength(FMinimapShadowAlphaArray, FMinimapShadowBitmap.Width);
+      SetLength(FMinimapShadowAlphaByteArray, FMinimapShadowBitmap.Width);
+
+      for i := 0 to FMinimapShadowBitmap.Width - 1 do
+      begin
+        if FMinimap.Align = maLeft then
+          FMinimapShadowAlphaArray[i] := (FMinimapShadowBitmap.Width - i) / FMinimapShadowBitmap.Width
+        else
+          FMinimapShadowAlphaArray[i] := i / FMinimapShadowBitmap.Width;
+        FMinimapShadowAlphaByteArray[i] := Min(Round(Power(FMinimapShadowAlphaArray[i], 4) * 255.0), 255);
+      end;
     end;
-  end;
+  end
+  else
+    FreeMinimapBitmaps;
+
+  SizeOrFontChanged(True);
 
   Invalidate;
 end;
 
-procedure TBCBaseEditor.MouseMoveScrollTimerHandler(Sender: TObject);
+procedure TBCBaseEditor.MouseMoveScrollTimerHandler(ASender: TObject);
 var
   LCursorPoint: TPoint;
 begin
@@ -3856,7 +3897,7 @@ begin
         FindAll;
 end;
 
-procedure TBCBaseEditor.RightMarginChanged(Sender: TObject);
+procedure TBCBaseEditor.RightMarginChanged(ASender: TObject);
 begin
   if FWordWrap.Enabled then
     if FWordWrap.Style = wwsRightMargin then
@@ -4495,13 +4536,13 @@ begin
   end;
 end;
 
-procedure TBCBaseEditor.ScrollChanged(Sender: TObject);
+procedure TBCBaseEditor.ScrollChanged(ASender: TObject);
 begin
   UpdateScrollBars;
   Invalidate;
 end;
 
-procedure TBCBaseEditor.ScrollTimerHandler(Sender: TObject);
+procedure TBCBaseEditor.ScrollTimerHandler(ASender: TObject);
 var
   X, Y: Integer;
   LCursorPoint: TPoint;
@@ -4571,7 +4612,7 @@ begin
   Invalidate;
 end;
 
-procedure TBCBaseEditor.SelectionChanged(Sender: TObject);
+procedure TBCBaseEditor.SelectionChanged(ASender: TObject);
 begin
   InvalidateSelection;
 end;
@@ -5141,17 +5182,17 @@ begin
 
     Exclude(FStateFlags, sfScrollbarChanged);
 
-    FBufferBmp.Width := ClientRect.Width;
-    FBufferBmp.Height := ClientRect.Height;
+    FBufferBitmap.Width := ClientRect.Width;
+    FBufferBitmap.Height := ClientRect.Height;
   end;
 end;
 
-procedure TBCBaseEditor.SpecialCharsChanged(Sender: TObject);
+procedure TBCBaseEditor.SpecialCharsChanged(ASender: TObject);
 begin
   Invalidate;
 end;
 
-procedure TBCBaseEditor.SyncEditChanged(Sender: TObject);
+procedure TBCBaseEditor.SyncEditChanged(ASender: TObject);
 var
   i: Integer;
   LTextPosition: TBCEditorTextPosition;
@@ -5220,7 +5261,7 @@ begin
   ALeft := LTemp;
 end;
 
-procedure TBCBaseEditor.TabsChanged(Sender: TObject);
+procedure TBCBaseEditor.TabsChanged(ASender: TObject);
 begin
   FLines.TabWidth := FTabs.Width;
   FLines.Columns := toColumns in FTabs.Options;
@@ -5233,12 +5274,12 @@ begin
   end;
 end;
 
-procedure TBCBaseEditor.UndoRedoAdded(Sender: TObject);
+procedure TBCBaseEditor.UndoRedoAdded(ASender: TObject);
 var
   LUndoItem: TBCEditorUndoItem;
 begin
   LUndoItem := nil;
-  if Sender = FUndoList then
+  if ASender = FUndoList then
     LUndoItem := FUndoList.PeekItem;
 
   UpdateModifiedStatus;
@@ -5836,7 +5877,7 @@ begin
     OnScroll(Self, sbVertical);
 end;
 
-procedure TBCBaseEditor.WordWrapChanged(Sender: TObject);
+procedure TBCBaseEditor.WordWrapChanged(ASender: TObject);
 var
   LOldTextCaretPosition: TBCEditorTextPosition;
 begin
@@ -5926,54 +5967,54 @@ begin
   end;
 end;
 
-procedure TBCBaseEditor.ChainLinesChanged(Sender: TObject);
+procedure TBCBaseEditor.ChainLinesChanged(ASender: TObject);
 begin
   if Assigned(FOnChainLinesChanged) then
-    FOnChainLinesChanged(Sender);
-  FOriginalLines.OnChange(Sender);
+    FOnChainLinesChanged(ASender);
+  FOriginalLines.OnChange(ASender);
 end;
 
-procedure TBCBaseEditor.ChainLinesChanging(Sender: TObject);
+procedure TBCBaseEditor.ChainLinesChanging(ASender: TObject);
 begin
   if Assigned(FOnChainLinesChanging) then
-    FOnChainLinesChanging(Sender);
-  FOriginalLines.OnChanging(Sender);
+    FOnChainLinesChanging(ASender);
+  FOriginalLines.OnChanging(ASender);
 end;
 
-procedure TBCBaseEditor.ChainLinesCleared(Sender: TObject);
+procedure TBCBaseEditor.ChainLinesCleared(ASender: TObject);
 begin
   if Assigned(FOnChainLinesCleared) then
-    FOnChainLinesCleared(Sender);
-  FOriginalLines.OnCleared(Sender);
+    FOnChainLinesCleared(ASender);
+  FOriginalLines.OnCleared(ASender);
 end;
 
-procedure TBCBaseEditor.ChainLinesDeleted(Sender: TObject; AIndex: Integer; ACount: Integer);
+procedure TBCBaseEditor.ChainLinesDeleted(ASender: TObject; AIndex: Integer; ACount: Integer);
 begin
   if Assigned(FOnChainLinesDeleted) then
-    FOnChainLinesDeleted(Sender, AIndex, ACount);
-  FOriginalLines.OnDeleted(Sender, AIndex, ACount);
+    FOnChainLinesDeleted(ASender, AIndex, ACount);
+  FOriginalLines.OnDeleted(ASender, AIndex, ACount);
 end;
 
-procedure TBCBaseEditor.ChainLinesInserted(Sender: TObject; AIndex: Integer; ACount: Integer);
+procedure TBCBaseEditor.ChainLinesInserted(ASender: TObject; AIndex: Integer; ACount: Integer);
 begin
   if Assigned(FOnChainLinesInserted) then
-    FOnChainLinesInserted(Sender, AIndex, ACount);
-  FOriginalLines.OnInserted(Sender, AIndex, ACount);
+    FOnChainLinesInserted(ASender, AIndex, ACount);
+  FOriginalLines.OnInserted(ASender, AIndex, ACount);
 end;
 
-procedure TBCBaseEditor.ChainLinesPutted(Sender: TObject; AIndex: Integer; ACount: Integer);
+procedure TBCBaseEditor.ChainLinesPutted(ASender: TObject; AIndex: Integer; ACount: Integer);
 begin
   if Assigned(FOnChainLinesPutted) then
-    FOnChainLinesPutted(Sender, AIndex, ACount);
-  FOriginalLines.OnPutted(Sender, AIndex, ACount);
+    FOnChainLinesPutted(ASender, AIndex, ACount);
+  FOriginalLines.OnPutted(ASender, AIndex, ACount);
 end;
 
-procedure TBCBaseEditor.ChainUndoRedoAdded(Sender: TObject);
+procedure TBCBaseEditor.ChainUndoRedoAdded(ASender: TObject);
 var
   LUndoList: TBCEditorUndoList;
   LNotifyEvent: TNotifyEvent;
 begin
-  if Sender = FUndoList then
+  if ASender = FUndoList then
   begin
     LUndoList := FOriginalUndoList;
     LNotifyEvent := FOnChainUndoAdded;
@@ -5984,8 +6025,8 @@ begin
     LNotifyEvent := FOnChainRedoAdded;
   end;
   if Assigned(LNotifyEvent) then
-    LNotifyEvent(Sender);
-  LUndoList.OnAddedUndo(Sender);
+    LNotifyEvent(ASender);
+  LUndoList.OnAddedUndo(ASender);
 end;
 
 procedure TBCBaseEditor.CreateParams(var AParams: TCreateParams);
@@ -6832,7 +6873,7 @@ begin
   FKeyboardHandler.ExecuteKeyUp(Self, AKey, AShift);
 end;
 
-procedure TBCBaseEditor.LinesChanged(Sender: TObject);
+procedure TBCBaseEditor.LinesChanged(ASender: TObject);
 var
   LOldMode: TBCEditorSelectionMode;
 begin
@@ -6864,22 +6905,22 @@ begin
   UpdateScrollBars;
 end;
 
-procedure TBCBaseEditor.LinesBeforeDeleted(Sender: TObject; AIndex: Integer; ACount: Integer);
+procedure TBCBaseEditor.LinesBeforeDeleted(ASender: TObject; AIndex: Integer; ACount: Integer);
 begin //FI:W519 FixInsight ignore
   { Do nothing }
 end;
 
-procedure TBCBaseEditor.LinesBeforeInserted(Sender: TObject; AIndex: Integer; ACount: Integer);
+procedure TBCBaseEditor.LinesBeforeInserted(ASender: TObject; AIndex: Integer; ACount: Integer);
 begin //FI:W519 FixInsight ignore
   { Do nothing }
 end;
 
-procedure TBCBaseEditor.LinesBeforePutted(Sender: TObject; AIndex: Integer; ACount: Integer);
+procedure TBCBaseEditor.LinesBeforePutted(ASender: TObject; AIndex: Integer; ACount: Integer);
 begin //FI:W519 FixInsight ignore
   { Do nothing }
 end;
 
-procedure TBCBaseEditor.LinesCleared(Sender: TObject);
+procedure TBCBaseEditor.LinesCleared(ASender: TObject);
 begin
   CaretZero;
   ClearCodeFolding;
@@ -6893,7 +6934,7 @@ begin
   Modified := False;
 end;
 
-procedure TBCBaseEditor.LinesDeleted(Sender: TObject; AIndex: Integer; ACount: Integer);
+procedure TBCBaseEditor.LinesDeleted(ASender: TObject; AIndex: Integer; ACount: Integer);
 var
   i, LNativeIndex, LRunner: Integer;
   LMark: TBCEditorBookmark;
@@ -6934,7 +6975,7 @@ begin
   InvalidateLeftMarginLines(LNativeIndex + 1, LNativeIndex + FVisibleLines + 1);
 end;
 
-procedure TBCBaseEditor.LinesInserted(Sender: TObject; AIndex: Integer; ACount: Integer);
+procedure TBCBaseEditor.LinesInserted(ASender: TObject; AIndex: Integer; ACount: Integer);
 var
   i, LLength: Integer;
   LLastScan: Integer;
@@ -6984,7 +7025,7 @@ begin
   end;
 end;
 
-procedure TBCBaseEditor.LinesPutted(Sender: TObject; AIndex: Integer; ACount: Integer);
+procedure TBCBaseEditor.LinesPutted(ASender: TObject; AIndex: Integer; ACount: Integer);
 var
   LLength: Integer;
   LLineEnd: Integer;
@@ -7033,7 +7074,7 @@ begin
   UpdateScrollBars;
 end;
 
-procedure TBCBaseEditor.MarkListChange(Sender: TObject);
+procedure TBCBaseEditor.MarkListChange(ASender: TObject);
 begin
   InvalidateLeftMargin;
 end;
@@ -7059,7 +7100,7 @@ begin
     FMouseDownX := X;
     FMouseDownY := Y;
     if FMinimap.Visible then
-      FMinimapBufferBmp.Height := 0;
+      FMinimapBufferBitmap.Height := 0;
     FreeCompletionProposalPopupWindow;
   end;
 
@@ -7554,8 +7595,8 @@ begin
   HideCaret;
 
   LHandle := Canvas.Handle;
-  Canvas.Handle := FBufferBmp.Canvas.Handle;
-  FBufferBmp.Canvas.Handle := LHandle;
+  Canvas.Handle := FBufferBitmap.Canvas.Handle;
+  FBufferBitmap.Canvas.Handle := LHandle;
   LHandle := Canvas.Handle; { important, don't remove }
 
   FTextDrawer.BeginDrawing(LHandle);
@@ -7649,7 +7690,7 @@ begin
         LSelectionAvailable := SelectionAvailable;
 
         if not FMinimap.Dragging and
-          (DrawRect.Height = FMinimapBufferBmp.Height) and (FLastTopLine = FTopLine) and
+          (DrawRect.Height = FMinimapBufferBitmap.Height) and (FLastTopLine = FTopLine) and
           (FLastLineNumberCount = FLineNumbersCount) and (not LSelectionAvailable or
           LSelectionAvailable and
           (FSelectionBeginPosition.Line >= FTopLine) and (FSelectionEndPosition.Line <= FTopLine + FVisibleLines)) then
@@ -7657,7 +7698,7 @@ begin
           LLine1 := FTopLine;
           LLine2 := FTopLine + FVisibleLines;
           BitBlt(Canvas.Handle, DrawRect.Left, DrawRect.Top, DrawRect.Width, DrawRect.Height,
-            FMinimapBufferBmp.Canvas.Handle, 0, 0, SRCCOPY);
+            FMinimapBufferBitmap.Canvas.Handle, 0, 0, SRCCOPY);
         end
         else
         begin
@@ -7671,9 +7712,9 @@ begin
         if ioUseBlending in FMinimap.Indicator.Options then
           PaintMinimapIndicator(DrawRect);
 
-        FMinimapBufferBmp.Width := DrawRect.Width;
-        FMinimapBufferBmp.Height := DrawRect.Height;
-        BitBlt(FMinimapBufferBmp.Canvas.Handle, 0, 0, DrawRect.Width, DrawRect.Height, Canvas.Handle, DrawRect.Left,
+        FMinimapBufferBitmap.Width := DrawRect.Width;
+        FMinimapBufferBitmap.Height := DrawRect.Height;
+        BitBlt(FMinimapBufferBitmap.Canvas.Handle, 0, 0, DrawRect.Width, DrawRect.Height, Canvas.Handle, DrawRect.Left,
           DrawRect.Top, SRCCOPY);
         FTextDrawer.SetBaseFont(Font);
       end;
@@ -7700,8 +7741,8 @@ begin
     FLastTopLine := FTopLine;
     FLastLineNumberCount := FLineNumbersCount;
     FTextDrawer.EndDrawing;
-    BitBlt(FBufferBmp.Canvas.Handle, 0, 0, ClientRect.Width, ClientRect.Height, Canvas.Handle, 0, 0, SRCCOPY);
-    FBufferBmp.Canvas.Handle := Canvas.Handle;
+    BitBlt(FBufferBitmap.Canvas.Handle, 0, 0, ClientRect.Width, ClientRect.Height, Canvas.Handle, 0, 0, SRCCOPY);
+    FBufferBitmap.Canvas.Handle := Canvas.Handle;
     Canvas.Handle := LHandle;
     if not FCaret.NonBlinking.Enabled then
       UpdateCaret;
@@ -13176,7 +13217,7 @@ var
   LInvalidationRect: TRect;
   LRectLeft, LRectRight: Integer;
 begin
-  FMinimapBufferBmp.Height := 0;
+  FMinimapBufferBitmap.Height := 0;
 
   GetMinimapLeftRight(LRectLeft, LRectRight);
 
@@ -13189,7 +13230,7 @@ begin
   InvalidateLines(SelectionBeginPosition.Line, SelectionEndPosition.Line);
 end;
 
-procedure TBCBaseEditor.LeftMarginChanged(Sender: TObject);
+procedure TBCBaseEditor.LeftMarginChanged(ASender: TObject);
 var
   LWidth: Integer;
 begin

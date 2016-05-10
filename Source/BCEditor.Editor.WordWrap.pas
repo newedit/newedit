@@ -17,7 +17,7 @@ type
     FStyle: TBCEditorWordWrapStyle;
     procedure CreateInternalBitmap;
     procedure DoChange;
-    procedure OnColorsChange(Sender: TObject);
+    procedure OnColorsChange(ASender: TObject);
     procedure SetColors(const AValue: TBCEditorWordWrapColors);
     procedure SetEnabled(const AValue: Boolean);
     procedure SetIndicator(const AValue: TBCEditorGlyph);
@@ -167,7 +167,7 @@ begin
   FColors.Assign(AValue);
 end;
 
-procedure TBCEditorWordWrap.OnColorsChange(Sender: TObject);
+procedure TBCEditorWordWrap.OnColorsChange(ASender: TObject);
 begin
   CreateInternalBitmap;
 end;

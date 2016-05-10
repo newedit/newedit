@@ -8,9 +8,9 @@ uses
   BCEditor.Editor.LeftMargin.LineNumbers, BCEditor.Editor.LeftMargin.Colors;
 
 type
-  TLeftMarginGetTextEvent = procedure(Sender: TObject; ALine: Integer; var AText: string) of object;
-  TLeftMarginPaintEvent = procedure(Sender: TObject; ALine: Integer; X, Y: Integer) of object;
-  TLeftMarginClickEvent = procedure(Sender: TObject; Button: TMouseButton; X, Y, Line: Integer; Bookmark: TBCEditorBookmark) of object;
+  TLeftMarginGetTextEvent = procedure(ASender: TObject; ALine: Integer; var AText: string) of object;
+  TLeftMarginPaintEvent = procedure(ASender: TObject; ALine: Integer; X, Y: Integer) of object;
+  TLeftMarginClickEvent = procedure(ASender: TObject; AButton: TMouseButton; X, Y, ALine: Integer; ABookmark: TBCEditorBookmark) of object;
 
   TBCEditorLeftMargin = class(TPersistent)
   strict private

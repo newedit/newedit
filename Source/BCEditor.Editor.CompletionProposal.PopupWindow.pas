@@ -13,7 +13,7 @@ const
 {$ENDIF}
 
 type
-  TBCEditorValidateEvent = procedure(Sender: TObject; Shift: TShiftState; EndToken: Char) of object;
+  TBCEditorValidateEvent = procedure(ASender: TObject; Shift: TShiftState; EndToken: Char) of object;
 
   TBCEditorCompletionProposalPopupWindow = class(TBCEditorPopupWindow)
   strict private
@@ -40,10 +40,10 @@ type
     FTopLine: Integer;
     function GetItemList: TStrings;
     procedure AddKeyHandlers;
-    procedure EditorKeyDown(Sender: TObject; var AKey: Word; AShift: TShiftState);
-    procedure EditorKeyPress(Sender: TObject; var AKey: Char);
-    procedure HandleDblClick(Sender: TObject);
-    procedure HandleOnValidate(Sender: TObject; AShift: TShiftState; AEndToken: Char);
+    procedure EditorKeyDown(ASender: TObject; var AKey: Word; AShift: TShiftState);
+    procedure EditorKeyPress(ASender: TObject; var AKey: Char);
+    procedure HandleDblClick(ASender: TObject);
+    procedure HandleOnValidate(ASender: TObject; AShift: TShiftState; AEndToken: Char);
     procedure MoveLine(ALineCount: Integer);
     procedure MoveSelectedLine(ALineCount: Integer);
     procedure RemoveKeyHandlers;
@@ -183,7 +183,7 @@ begin
   end;
 end;
 
-procedure TBCEditorCompletionProposalPopupWindow.EditorKeyDown(Sender: TObject; var AKey: Word; AShift: TShiftState);
+procedure TBCEditorCompletionProposalPopupWindow.EditorKeyDown(ASender: TObject; var AKey: Word; AShift: TShiftState);
 var
   LChar: Char;
   LEditor: TBCBaseEditor;
@@ -276,7 +276,7 @@ begin
   Invalidate;
 end;
 
-procedure TBCEditorCompletionProposalPopupWindow.EditorKeyPress(Sender: TObject; var AKey: Char);
+procedure TBCEditorCompletionProposalPopupWindow.EditorKeyPress(ASender: TObject; var AKey: Char);
 begin
   case AKey of
     BCEDITOR_CARRIAGE_RETURN, BCEDITOR_ESCAPE:
@@ -595,7 +595,7 @@ begin
   end;
 end;
 
-procedure TBCEditorCompletionProposalPopupWindow.HandleOnValidate(Sender: TObject; AShift: TShiftState; AEndToken: Char);
+procedure TBCEditorCompletionProposalPopupWindow.HandleOnValidate(ASender: TObject; AShift: TShiftState; AEndToken: Char);
 var
   LEditor: TBCBaseEditor;
   LValue, LLine: string;
@@ -648,7 +648,7 @@ begin
   end;
 end;
 
-procedure TBCEditorCompletionProposalPopupWindow.HandleDblClick(Sender: TObject);
+procedure TBCEditorCompletionProposalPopupWindow.HandleDblClick(ASender: TObject);
 begin
   if Assigned(OnValidate) then
     OnValidate(Self, [], BCEDITOR_NONE_CHAR);

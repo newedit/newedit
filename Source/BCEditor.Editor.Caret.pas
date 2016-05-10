@@ -15,7 +15,7 @@ type
     FOptions: TBCEditorCaretOptions;
     FStyles: TBCEditorCaretStyles;
     FVisible: Boolean;
-    procedure DoChange(Sender: TObject);
+    procedure DoChange(ASender: TObject);
     procedure SetNonBlinking(AValue: TBCEditorCaretNonBlinking);
     procedure SetOffsets(AValue: TBCEditorCaretOffsets);
     procedure SetOnChange(AValue: TNotifyEvent);
@@ -82,10 +82,10 @@ begin
   FNonBlinking.OnChange := AValue;
 end;
 
-procedure TBCEditorCaret.DoChange(Sender: TObject);
+procedure TBCEditorCaret.DoChange(ASender: TObject);
 begin
   if Assigned(FOnChange) then
-    FOnChange(Sender);
+    FOnChange(ASender);
 end;
 
 procedure TBCEditorCaret.SetStyles(const AValue: TBCEditorCaretStyles);

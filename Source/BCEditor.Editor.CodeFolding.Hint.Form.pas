@@ -21,7 +21,7 @@ type
     FMargin: Integer;
     FVisibleLines: Integer;
     procedure AdjustMetrics;
-    procedure FontChange(Sender: TObject);
+    procedure FontChange(ASender: TObject);
     procedure RecalcItemHeight;
     procedure SetFont(const AValue: TFont);
     procedure SetItemHeight(const AValue: Integer);
@@ -237,7 +237,7 @@ begin
   AdjustMetrics;
 end;
 
-procedure TBCEditorCodeFoldingHintForm.FontChange(Sender: TObject);
+procedure TBCEditorCodeFoldingHintForm.FontChange(ASender: TObject);
 begin
   RecalcItemHeight;
   AdjustMetrics;

@@ -145,9 +145,9 @@ const
 type
   TBCEditorCommand = type Word;
 
-  TBCEditorHookedCommandEvent = procedure(Sender: TObject; AfterProcessing: Boolean; var AHandled: Boolean;
+  TBCEditorHookedCommandEvent = procedure(ASender: TObject; AAfterProcessing: Boolean; var AHandled: Boolean;
     var ACommand: TBCEditorCommand; var AChar: Char; Data: Pointer; AHandlerData: Pointer) of object;
-  TBCEditorProcessCommandEvent = procedure(Sender: TObject; var ACommand: TBCEditorCommand; var AChar: Char;
+  TBCEditorProcessCommandEvent = procedure(ASender: TObject; var ACommand: TBCEditorCommand; var AChar: Char;
     AData: Pointer) of object;
 
   TBCEditorHookedCommandHandler = class(TObject)
