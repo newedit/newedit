@@ -280,7 +280,7 @@ type
     procedure DoToggleSelectedCase(const ACommand: TBCEditorCommand);
     procedure DoTrimTrailingSpaces(ATextLine: Integer);
     procedure DragMinimap(Y: Integer);
-    procedure DrawCursor(ACanvas: TCanvas);
+    procedure DrawCaret(ACanvas: TCanvas);
     procedure FindAll(const ASearchText: string = '');
     procedure FindWords(const AWord: string; AList: TList; ACaseSensitive: Boolean; AWholeWordsOnly: Boolean);
     procedure FontChanged(ASender: TObject);
@@ -3402,7 +3402,7 @@ begin
   end;
 end;
 
-procedure TBCBaseEditor.DrawCursor(ACanvas: TCanvas);
+procedure TBCBaseEditor.DrawCaret(ACanvas: TCanvas);
 var
   LPoint: TPoint;
   LCaretStyle: TBCEditorCaretStyle;
@@ -3412,6 +3412,8 @@ var
 begin
   if GetSelectionLength > 0 then
     Exit;
+
+  // TODO: Multi-caret
 
   LPoint := RowColumnToPixels(GetDisplayCaretPosition);
   Y := 0;
@@ -3570,10 +3572,14 @@ begin
 end;
 
 procedure TBCBaseEditor.FreeMultiCarets;
+var
+  i: Integer;
 begin
-  // TODO remove items
   if Assigned(FMultiCarets) then
   begin
+    for i := FMultiCarets.Count - 1 downto 0 do
+      Dispose(PBCEditorTextPosition(FMultiCarets.Items[i]));
+    FMultiCarets.Clear;
     FMultiCarets.Free;
     FMultiCarets := nil;
   end;
@@ -7105,11 +7111,15 @@ begin
 
     if coMultiCaret in FCaret.Options then
     begin
-      if AShift = [ssShift, ssCtrl] then
-        AddMultipleCarets(PixelsToTextPosition(X, Y))
-      else
-      if AShift = [ssCtrl] then
-        AddCaret(PixelsToTextPosition(X, Y))
+      if ssCtrl in AShift then
+      begin
+        if ssShift in AShift then
+          AddMultipleCarets(PixelsToTextPosition(X, Y))
+        else
+          AddCaret(PixelsToTextPosition(X, Y));
+        Invalidate;
+        Exit;
+      end
       else
         FreeMultiCarets;
     end;
@@ -7313,10 +7323,10 @@ end;
 
 procedure TBCBaseEditor.MouseMove(AShift: TShiftState; X, Y: Integer);
 var
+  i, j, LScrolledXBy: Integer;
   LDisplayPosition: TBCEditorDisplayPosition;
   LFoldRange: TBCEditorCodeFoldingRange;
   LPoint: TPoint;
-  i, j, LScrolledXBy: Integer;
   LRect: TRect;
   LHintWindow: THintWindow;
   LPositionText: string;
@@ -7580,6 +7590,7 @@ var
   LHandle: HDC;
   LSelectionAvailable: Boolean;
   LTextLinesLeft, LTextLinesRight: Integer;
+  LCaretOwnerDraw: Boolean;
 begin
   if PaintLock <> 0 then
     Exit;
@@ -7604,6 +7615,7 @@ begin
   else
     Dec(LTextLinesRight, FSearch.Map.GetWidth);
 
+  LCaretOwnerDraw := FCaret.NonBlinking.Enabled or Assigned(FMultiCarets) and (FMultiCarets.Count > 0);
   HideCaret;
 
   LHandle := Canvas.Handle;
@@ -7631,8 +7643,8 @@ begin
         PaintMinimapShadow(DrawRect);
     end;
 
-    if FCaret.NonBlinking.Enabled then
-      DrawCursor(Canvas);
+    if LCaretOwnerDraw then
+      DrawCaret(Canvas);
 
     DoOnPaint;
 
@@ -7756,7 +7768,7 @@ begin
     BitBlt(FBufferBitmap.Canvas.Handle, 0, 0, ClientRect.Width, ClientRect.Height, Canvas.Handle, 0, 0, SRCCOPY);
     FBufferBitmap.Canvas.Handle := Canvas.Handle;
     Canvas.Handle := LHandle;
-    if not FCaret.NonBlinking.Enabled then
+    if not LCaretOwnerDraw then
       UpdateCaret;
   end;
 end;
@@ -11353,11 +11365,16 @@ begin
 end;
 
 procedure TBCBaseEditor.AddCaret(const ATextPosition: TBCEditorTextPosition);
+var
+  LPTextPosition: PBCEditorTextPosition;
 begin
   if not Assigned(FMultiCarets) then
     FMultiCarets := TList.Create;
 
-  // TODO
+  New(LPTextPosition);
+  LPTextPosition^.Char := ATextPosition.Char;
+  LPTextPosition^.Line := ATextPosition.Line;
+  FMultiCarets.Add(LPTextPosition);
 end;
 
 procedure TBCBaseEditor.AddKeyCommand(ACommand: TBCEditorCommand; AShift: TShiftState; AKey: Word;
@@ -11407,8 +11424,23 @@ begin
 end;
 
 procedure TBCBaseEditor.AddMultipleCarets(const ATextPosition: TBCEditorTextPosition);
+var
+  LBeginLine, LEndLine, LLine: Integer;
+  LTextPosition: TBCEditorTextPosition;
 begin
-  // TODO
+  if Assigned(FMultiCarets) and (FMultiCarets.Count > 0) then
+    LBeginLine := PBCEditorTextPosition(FMultiCarets.Last)^.Line
+  else
+    LBeginLine := ATextPosition.Line;
+  LEndLine := ATextPosition.Line;
+  if LBeginLine > LEndLine then
+    SwapInt(LBeginLine, LEndLine);
+  LTextPosition.Char := ATextPosition.Char;
+  for LLine := LBeginLine to LEndLine do
+  begin
+    LTextPosition.Line := LLine;
+    AddCaret(LTextPosition);
+  end;
 end;
 
 procedure TBCBaseEditor.BeginUndoBlock;
