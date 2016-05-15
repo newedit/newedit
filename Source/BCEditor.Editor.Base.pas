@@ -3493,12 +3493,10 @@ begin
     Exit;
 
   if Assigned(FMultiCarets) and (FMultiCarets.Count > 0) then
+  for i := 0 to FMultiCarets.Count - 1 do
   begin
-    for i := 0 to FMultiCarets.Count - 1 do
-    begin
-      LTextCaretPosition := PBCEditorTextPosition(FMultiCarets[i])^;
-      PaintBlock;
-    end;
+    LTextCaretPosition := PBCEditorTextPosition(FMultiCarets[i])^;
+    PaintBlock;
   end
   else
   begin
@@ -11400,6 +11398,28 @@ begin
   end;
 end;
 
+function SortMultiCarets(AItem1: Pointer; AItem2: Pointer): Integer;
+var
+  LPTextPosition1: PBCEditorTextPosition;
+  LPTextPosition2: PBCEditorTextPosition;
+begin
+  LPTextPosition1 := PBCEditorTextPosition(AItem1);
+  LPTextPosition2 := PBCEditorTextPosition(AItem2);
+  if LPTextPosition1^.Line < LPTextPosition2^.Line then
+    Result := -1
+  else
+  if LPTextPosition1^.Line > LPTextPosition2^.Line then
+    Result := 1
+  else
+  if LPTextPosition1^.Char < LPTextPosition2^.Char then
+    Result := -1
+  else
+  if LPTextPosition1^.Char > LPTextPosition2^.Char then
+    Result := 1
+  else
+    Result := 0;
+end;
+
 procedure TBCBaseEditor.AddCaret(const ATextPosition: TBCEditorTextPosition);
 
   procedure Add(ATextCaretPosition: TBCEditorTextPosition);
@@ -11410,6 +11430,7 @@ procedure TBCBaseEditor.AddCaret(const ATextPosition: TBCEditorTextPosition);
     LPTextPosition^.Char := ATextCaretPosition.Char;
     LPTextPosition^.Line := ATextCaretPosition.Line;
     FMultiCarets.Add(LPTextPosition);
+    FMultiCarets.Sort(SortMultiCarets);
   end;
 
 begin
@@ -11422,9 +11443,6 @@ begin
     FMultiCaretTimer.OnTimer := MultiCaretTimerHandler;
     FMultiCaretTimer.Enabled := True;
   end;
-
-  if FMultiCarets.Count = 0 then
-    Add(TextCaretPosition);
 
   Add(ATextPosition);
 end;
@@ -11670,7 +11688,7 @@ end;
 
 procedure TBCBaseEditor.CommandProcessor(ACommand: TBCEditorCommand; AChar: Char; AData: Pointer);
 var
-  i, LCollapsedCount: Integer;
+  i, j, LCollapsedCount, LLine: Integer;
   LOldSelectionBeginPosition, LOldSelectionEndPosition: TBCEditorTextPosition;
 
   function CodeFoldingUncollapseLine(ALine: Integer): Integer;
@@ -11731,7 +11749,34 @@ begin
       end;
     end;
 
-    { internal command handler }
+    if Assigned(FMultiCarets) and (FMultiCarets.Count > 0) then
+    for i := 0 to FMultiCarets.Count - 1 do
+    begin
+      case ACommand of
+        ecChar, ecBackspace:
+          begin
+            TextCaretPosition := PBCEditorTextPosition(FMultiCarets[i])^;
+            ExecuteCommand(ACommand, AChar, AData);
+            LLine := TextCaretPosition.Line;
+          end
+      end;
+      j := i;
+      case ACommand of
+        ecChar:
+          while (j < FMultiCarets.Count) and (PBCEditorTextPosition(FMultiCarets[j])^.Line = LLine) do
+          begin
+            Inc(PBCEditorTextPosition(FMultiCarets[j])^.Char);
+            Inc(j);
+          end;
+        ecBackspace:
+          while (j < FMultiCarets.Count) and (PBCEditorTextPosition(FMultiCarets[j])^.Line = LLine) do
+          begin
+            Dec(PBCEditorTextPosition(FMultiCarets[j])^.Char);
+            Inc(j);
+          end;
+      end
+    end
+    else
     if ACommand < ecUserFirst then
       ExecuteCommand(ACommand, AChar, AData);
 
