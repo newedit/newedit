@@ -11480,14 +11480,18 @@ var
   LBeginLine, LEndLine, LLine: Integer;
   LTextPosition: TBCEditorTextPosition;
 begin
+  LTextPosition := TextCaretPosition;
   if Assigned(FMultiCarets) and (FMultiCarets.Count > 0) then
-    LBeginLine := PBCEditorTextPosition(FMultiCarets.Last)^.Line
+  begin
+    LBeginLine := PBCEditorTextPosition(FMultiCarets.Last)^.Line;
+    LTextPosition.Char := PBCEditorTextPosition(FMultiCarets.Last)^.Char;
+  end
   else
-    LBeginLine := TextCaretPosition.Line;
+    LBeginLine := LTextPosition.Line;
   LEndLine := ATextPosition.Line;
   if LBeginLine > LEndLine then
     SwapInt(LBeginLine, LEndLine);
-  LTextPosition.Char := ATextPosition.Char;
+
   for LLine := LBeginLine to LEndLine do
   begin
     LTextPosition.Line := LLine;
