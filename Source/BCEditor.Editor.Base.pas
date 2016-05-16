@@ -107,6 +107,7 @@ type
     FMouseWheelAccumulator: Integer;
     FMultiCarets: TList;
     FMultiCaretTimer: TTimer;
+    FMultiCaretPosition: TBCEditorTextPosition;
     FOldMouseMovePoint: TPoint;
     FOnAfterBookmarkPanelPaint: TBCEditorBookmarkPanelPaintEvent;
     FOnAfterBookmarkPlaced: TNotifyEvent;
@@ -448,6 +449,7 @@ type
     procedure NotifyHookedCommandHandlers(AAfterProcessing: Boolean; var ACommand: TBCEditorCommand; var AChar: Char;
       AData: pointer);
     procedure Paint; override;
+    procedure PaintCaretBlock(ACanvas: TCanvas; ATextCaretPosition: TBCEditorTextPosition);
     procedure PaintCodeFolding(AClipRect: TRect; AFirstRow, ALastRow: Integer);
     procedure PaintCodeFoldingLine(AClipRect: TRect; ALine: Integer);
     procedure PaintCodeFoldingCollapsedLine(AFoldRange: TBCEditorCodeFoldingRange; ALineRect: TRect);
@@ -764,6 +766,7 @@ begin
   FSelectedCaseText := '';
   FURIOpener := False;
   FCodeFoldingLock := False;
+  FMultiCaretPosition.Line := -1;
 
   { Code folding }
   FAllCodeFoldingRanges := TBCEditorAllCodeFoldingRanges.Create;
@@ -3412,97 +3415,91 @@ begin
   end;
 end;
 
-procedure TBCBaseEditor.DrawCaret(ACanvas: TCanvas);
+procedure TBCBaseEditor.PaintCaretBlock(ACanvas: TCanvas; ATextCaretPosition: TBCEditorTextPosition);
 var
-  i: Integer;
   LPoint: TPoint;
   LCaretStyle: TBCEditorCaretStyle;
   LCaretWidth, LCaretHeight, X, Y: Integer;
   LTempBitmap: Vcl.Graphics.TBitmap;
-  LTextCaretPosition: TBCEditorTextPosition;
-
-  procedure PaintBlock;
-  begin
-    LPoint := TextPositionToPixels(LTextCaretPosition);
-    Y := 0;
-    X := 0;
-    LCaretHeight := 1;
-    LCaretWidth := FCharWidth;
-    if InsertMode then
-      LCaretStyle := FCaret.Styles.Insert
-    else
-      LCaretStyle := FCaret.Styles.Overwrite;
-    case LCaretStyle of
-      csHorizontalLine, csThinHorizontalLine:
-        begin
-          if LCaretStyle = csHorizontalLine then
-            LCaretHeight := 2;
-          Y := FLineHeight - LCaretHeight;
-          Inc(LPoint.Y, Y);
-          Inc(LPoint.X);
-        end;
-      csHalfBlock:
-        begin
-          LCaretHeight := FLineHeight div 2;
-          Y := FLineHeight div 2;
-          Inc(LPoint.Y, Y);
-          Inc(LPoint.X);
-        end;
-      csBlock:
-        begin
-          LCaretHeight := FLineHeight;
-          Inc(LPoint.X);
-        end;
-      csVerticalLine, csThinVerticalLine:
-        begin
-          LCaretWidth := 1;
-          if LCaretStyle = csVerticalLine then
-            LCaretWidth := 2;
-          LCaretHeight := FLineHeight;
-          X := 1;
-        end;
-    end;
-    LTempBitmap := Vcl.Graphics.TBitmap.Create;
-    try
-      { Background }
-      LTempBitmap.Canvas.Pen.Color := FCaret.NonBlinking.Colors.Background;
-      LTempBitmap.Canvas.Brush.Color := FCaret.NonBlinking.Colors.Background;
-      { Size }
-      LTempBitmap.Width := FCharWidth;
-      LTempBitmap.Height := FLineHeight;
-      { Character }
-      LTempBitmap.Canvas.Brush.Style := bsClear;
-      LTempBitmap.Canvas.Font.Name := Font.Name;
-      LTempBitmap.Canvas.Font.Color := FCaret.NonBlinking.Colors.Foreground;
-      LTempBitmap.Canvas.Font.Style := Font.Style;
-      LTempBitmap.Canvas.Font.Height := Font.Height;
-      LTempBitmap.Canvas.Font.Size := Font.Size;
-
-      if LTextCaretPosition.Char <= FLines[LTextCaretPosition.Line].Length then
-        LTempBitmap.Canvas.TextOut(X, 0, FLines[LTextCaretPosition.Line][LTextCaretPosition.Char]);
-
-      ACanvas.CopyRect(Rect(LPoint.X + FCaret.Offsets.X, LPoint.Y + FCaret.Offsets.Y, LPoint.X + FCaret.Offsets.X + LCaretWidth,
-        LPoint.Y + FCaret.Offsets.Y + LCaretHeight), LTempBitmap.Canvas, Rect(0, Y, LCaretWidth, Y + LCaretHeight));
-    finally
-      LTempBitmap.Free
-    end;
+begin
+  LPoint := TextPositionToPixels(ATextCaretPosition);
+  Y := 0;
+  X := 0;
+  LCaretHeight := 1;
+  LCaretWidth := FCharWidth;
+  if InsertMode then
+    LCaretStyle := FCaret.Styles.Insert
+  else
+    LCaretStyle := FCaret.Styles.Overwrite;
+  case LCaretStyle of
+    csHorizontalLine, csThinHorizontalLine:
+      begin
+        if LCaretStyle = csHorizontalLine then
+          LCaretHeight := 2;
+        Y := FLineHeight - LCaretHeight;
+        Inc(LPoint.Y, Y);
+        Inc(LPoint.X);
+      end;
+    csHalfBlock:
+      begin
+        LCaretHeight := FLineHeight div 2;
+        Y := FLineHeight div 2;
+        Inc(LPoint.Y, Y);
+        Inc(LPoint.X);
+      end;
+    csBlock:
+      begin
+        LCaretHeight := FLineHeight;
+        Inc(LPoint.X);
+      end;
+    csVerticalLine, csThinVerticalLine:
+      begin
+        LCaretWidth := 1;
+        if LCaretStyle = csVerticalLine then
+          LCaretWidth := 2;
+        LCaretHeight := FLineHeight;
+        X := 1;
+      end;
   end;
+  LTempBitmap := Vcl.Graphics.TBitmap.Create;
+  try
+    { Background }
+    // TODO: move colors
+    LTempBitmap.Canvas.Pen.Color := FCaret.NonBlinking.Colors.Background;
+    LTempBitmap.Canvas.Brush.Color := FCaret.NonBlinking.Colors.Background;
+    { Size }
+    LTempBitmap.Width := FCharWidth;
+    LTempBitmap.Height := FLineHeight;
+    { Character }
+    LTempBitmap.Canvas.Brush.Style := bsClear;
+    LTempBitmap.Canvas.Font.Name := Font.Name;
+    LTempBitmap.Canvas.Font.Color := FCaret.NonBlinking.Colors.Foreground;
+    LTempBitmap.Canvas.Font.Style := Font.Style;
+    LTempBitmap.Canvas.Font.Height := Font.Height;
+    LTempBitmap.Canvas.Font.Size := Font.Size;
 
+    if ATextCaretPosition.Char <= FLines[ATextCaretPosition.Line].Length then
+      LTempBitmap.Canvas.TextOut(X, 0, FLines[ATextCaretPosition.Line][ATextCaretPosition.Char]);
+
+    ACanvas.CopyRect(Rect(LPoint.X + FCaret.Offsets.X, LPoint.Y + FCaret.Offsets.Y, LPoint.X + FCaret.Offsets.X + LCaretWidth,
+      LPoint.Y + FCaret.Offsets.Y + LCaretHeight), LTempBitmap.Canvas, Rect(0, Y, LCaretWidth, Y + LCaretHeight));
+  finally
+    LTempBitmap.Free
+  end;
+end;
+
+procedure TBCBaseEditor.DrawCaret(ACanvas: TCanvas);
+var
+  i: Integer;
 begin
   if GetSelectionLength > 0 then
     Exit;
 
   if Assigned(FMultiCarets) and (FMultiCarets.Count > 0) then
   for i := 0 to FMultiCarets.Count - 1 do
-  begin
-    LTextCaretPosition := PBCEditorTextPosition(FMultiCarets[i])^;
-    PaintBlock;
-  end
+    PaintCaretBlock(ACanvas, PBCEditorTextPosition(FMultiCarets[i])^)
   else
-  begin
-    LTextCaretPosition := GetTextCaretPosition;
-    PaintBlock;
-  end;
+    PaintCaretBlock(ACanvas, GetTextCaretPosition);
 end;
 
 procedure TBCBaseEditor.FindAll(const ASearchText: string = '');
@@ -6908,6 +6905,12 @@ begin
     CheckIfAtMatchingKeywords;
 
   FKeyboardHandler.ExecuteKeyUp(Self, AKey, AShift);
+
+  if FMultiCaretPosition.Line <> -1 then
+  begin
+    FMultiCaretPosition.Line := -1;
+    Invalidate;
+  end;
 end;
 
 procedure TBCBaseEditor.LinesChanged(ASender: TObject);
@@ -7366,10 +7369,28 @@ var
   LLine: Integer;
   LWidth: Integer;
   LMinimapLeft, LMinimapRight: Integer;
-  LTextCaretPosition: TBCEditorTextPosition;
+  LTextCaretPosition, LMultiCaretPosition: TBCEditorTextPosition;
 begin
-  if Assigned(FMultiCarets) and (FMultiCarets.Count > 0) then
-    Exit;
+  if (coMultiCaret in FCaret.Options) and Focused then
+  begin
+    if (AShift = [ssCtrl, ssShift]) or (AShift = [ssCtrl]) then
+    begin
+      LMultiCaretPosition := PixelsToTextPosition(X, Y);
+
+      if (FMultiCaretPosition.Line <> LMultiCaretPosition.Line) or
+        (FMultiCaretPosition.Line = LMultiCaretPosition.Line) and
+        (FMultiCaretPosition.Char <> LMultiCaretPosition.Char) then
+      begin
+        FMultiCaretPosition := LMultiCaretPosition;
+        Invalidate;
+      end;
+    end;
+    //else
+    //  FMultiCaretPosition.Line := -1;
+
+    if Assigned(FMultiCarets) and (FMultiCarets.Count > 0) then
+      Exit;
+  end;
 
   if FMouseMoveScrolling then
   begin
@@ -7676,6 +7697,9 @@ begin
         ((FMinimap.Align = maRight) or (FMinimap.Align = maLeft) and not FLeftMargin.Visible and not FCodeFolding.Visible) then
         PaintMinimapShadow(DrawRect);
     end;
+
+    if (coMultiCaret in FCaret.Options) and (FMultiCaretPosition.Line <> -1) then
+      PaintCaretBlock(Canvas, FMultiCaretPosition);
 
     if FCaret.NonBlinking.Enabled or Assigned(FMultiCarets) and (FMultiCarets.Count > 0) and FDrawMultiCarets then
       DrawCaret(Canvas);
@@ -11398,28 +11422,6 @@ begin
   end;
 end;
 
-function SortMultiCarets(AItem1: Pointer; AItem2: Pointer): Integer;
-var
-  LPTextPosition1: PBCEditorTextPosition;
-  LPTextPosition2: PBCEditorTextPosition;
-begin
-  LPTextPosition1 := PBCEditorTextPosition(AItem1);
-  LPTextPosition2 := PBCEditorTextPosition(AItem2);
-  if LPTextPosition1^.Line < LPTextPosition2^.Line then
-    Result := -1
-  else
-  if LPTextPosition1^.Line > LPTextPosition2^.Line then
-    Result := 1
-  else
-  if LPTextPosition1^.Char < LPTextPosition2^.Char then
-    Result := -1
-  else
-  if LPTextPosition1^.Char > LPTextPosition2^.Char then
-    Result := 1
-  else
-    Result := 0;
-end;
-
 procedure TBCBaseEditor.AddCaret(const ATextPosition: TBCEditorTextPosition);
 
   procedure Add(ATextCaretPosition: TBCEditorTextPosition);
@@ -11430,7 +11432,6 @@ procedure TBCBaseEditor.AddCaret(const ATextPosition: TBCEditorTextPosition);
     LPTextPosition^.Char := ATextCaretPosition.Char;
     LPTextPosition^.Line := ATextCaretPosition.Line;
     FMultiCarets.Add(LPTextPosition);
-    FMultiCarets.Sort(SortMultiCarets);
   end;
 
 begin
@@ -11688,8 +11689,10 @@ end;
 
 procedure TBCBaseEditor.CommandProcessor(ACommand: TBCEditorCommand; AChar: Char; AData: Pointer);
 var
-  i, j, LCollapsedCount, LLine: Integer;
+  i, j, LCollapsedCount: Integer;
   LOldSelectionBeginPosition, LOldSelectionEndPosition: TBCEditorTextPosition;
+  LTextCaretPosition: TBCEditorTextPosition;
+  LPTextCaretPosition: PBCEditorTextPosition;
 
   function CodeFoldingUncollapseLine(ALine: Integer): Integer;
   var
@@ -11755,26 +11758,23 @@ begin
       case ACommand of
         ecChar, ecBackspace:
           begin
-            TextCaretPosition := PBCEditorTextPosition(FMultiCarets[i])^;
+            LTextCaretPosition := PBCEditorTextPosition(FMultiCarets[i])^;
+            TextCaretPosition := LTextCaretPosition;
             ExecuteCommand(ACommand, AChar, AData);
-            LLine := TextCaretPosition.Line;
           end
       end;
-      j := i;
-      case ACommand of
-        ecChar:
-          while (j < FMultiCarets.Count) and (PBCEditorTextPosition(FMultiCarets[j])^.Line = LLine) do
-          begin
-            Inc(PBCEditorTextPosition(FMultiCarets[j])^.Char);
-            Inc(j);
-          end;
-        ecBackspace:
-          while (j < FMultiCarets.Count) and (PBCEditorTextPosition(FMultiCarets[j])^.Line = LLine) do
-          begin
-            Dec(PBCEditorTextPosition(FMultiCarets[j])^.Char);
-            Inc(j);
-          end;
-      end
+
+      for j := 0 to FMultiCarets.Count - 1 do
+      begin
+        LPTextCaretPosition := PBCEditorTextPosition(FMultiCarets[j]);
+        if (LPTextCaretPosition^.Line = LTextCaretPosition.Line) and (LPTextCaretPosition^.Char >= LTextCaretPosition.Char) then
+        case ACommand of
+          ecChar:
+            Inc(LPTextCaretPosition^.Char);
+          ecBackspace:
+            Dec(LPTextCaretPosition^.Char);
+        end;
+      end;
     end
     else
     if ACommand < ecUserFirst then
