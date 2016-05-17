@@ -107,7 +107,7 @@ type
     FMouseWheelAccumulator: Integer;
     FMultiCarets: TList;
     FMultiCaretTimer: TTimer;
-    FMultiCaretPosition: TBCEditorTextPosition;
+    FMultiCaretPosition: TBCEditorDisplayPosition;
     FOldMouseMovePoint: TPoint;
     FOnAfterBookmarkPanelPaint: TBCEditorBookmarkPanelPaintEvent;
     FOnAfterBookmarkPlaced: TNotifyEvent;
@@ -391,7 +391,7 @@ type
     function GetSelectionLength: Integer;
     function PixelsToDisplayPosition(X, Y: Integer): TBCEditorDisplayPosition;
     function PixelsToRowColumn(X, Y: Integer): TBCEditorDisplayPosition;
-    function TextPositionToPixels(const ATextPosition: TBCEditorTextPosition): TPoint;
+    //function TextPositionToPixels(const ATextPosition: TBCEditorTextPosition): TPoint;
     procedure ChainLinesChanged(ASender: TObject);
     procedure ChainLinesChanging(ASender: TObject);
     procedure ChainLinesCleared(ASender: TObject);
@@ -449,7 +449,7 @@ type
     procedure NotifyHookedCommandHandlers(AAfterProcessing: Boolean; var ACommand: TBCEditorCommand; var AChar: Char;
       AData: pointer);
     procedure Paint; override;
-    procedure PaintCaretBlock(ACanvas: TCanvas; ATextCaretPosition: TBCEditorTextPosition);
+    procedure PaintCaretBlock(ACanvas: TCanvas; ADisplayCaretPosition: TBCEditorDisplayPosition);
     procedure PaintCodeFolding(AClipRect: TRect; AFirstRow, ALastRow: Integer);
     procedure PaintCodeFoldingLine(AClipRect: TRect; ALine: Integer);
     procedure PaintCodeFoldingCollapsedLine(AFoldRange: TBCEditorCodeFoldingRange; ALineRect: TRect);
@@ -507,7 +507,7 @@ type
     function WordEnd(const ATextPosition: TBCEditorTextPosition): TBCEditorTextPosition; overload;
     function WordStart: TBCEditorTextPosition; overload;
     function WordStart(const ATextPosition: TBCEditorTextPosition): TBCEditorTextPosition; overload;
-    procedure AddCaret(const ATextPosition: TBCEditorTextPosition);
+    procedure AddCaret(const ADisplayPosition: TBCEditorDisplayPosition);
     procedure AddKeyCommand(ACommand: TBCEditorCommand; AShift: TShiftState; AKey: Word; ASecondaryShift: TShiftState = []; ASecondaryKey: Word = 0);
     procedure AddKeyDownHandler(AHandler: TKeyEvent);
     procedure AddKeyPressHandler(AHandler: TBCEditorKeyPressWEvent);
@@ -515,7 +515,7 @@ type
     procedure AddMouseCursorHandler(AHandler: TBCEditorMouseCursorEvent);
     procedure AddMouseDownHandler(AHandler: TMouseEvent);
     procedure AddMouseUpHandler(AHandler: TMouseEvent);
-    procedure AddMultipleCarets(const ATextPosition: TBCEditorTextPosition);
+    procedure AddMultipleCarets(const ADisplayPosition: TBCEditorDisplayPosition);
     {$IFDEF USE_ALPHASKINS}
     procedure AfterConstruction; override;
     {$ENDIF}
@@ -766,7 +766,7 @@ begin
   FSelectedCaseText := '';
   FURIOpener := False;
   FCodeFoldingLock := False;
-  FMultiCaretPosition.Line := -1;
+  FMultiCaretPosition.Row := -1;
 
   { Code folding }
   FAllCodeFoldingRanges := TBCEditorAllCodeFoldingRanges.Create;
@@ -2513,6 +2513,7 @@ begin
     if FWordWrapLineLengths[LDisplayPosition.Row] <> 0 then
       LDisplayPosition.Column := MinMax(LDisplayPosition.Column, 1, FWordWrapLineLengths[LDisplayPosition.Row] + 1);
   Result := DisplayToTextPosition(LDisplayPosition);
+  {$IFDEF DEBUG}OutputDebugString(PChar(Format('Line = %d, Char = %d', [Result.Line, Result.Char])));{$ENDIF}
 end;
 
 function TBCBaseEditor.PixelsToRowColumn(X, Y: Integer): TBCEditorDisplayPosition;
@@ -2780,11 +2781,14 @@ begin
   end;
 end;
 
-function TBCBaseEditor.TextPositionToPixels(const ATextPosition: TBCEditorTextPosition): TPoint;
+{function TBCBaseEditor.TextPositionToPixels(const ATextPosition: TBCEditorTextPosition): TPoint;
+var
+  LDisplayPosition: TBCEditorDisplayPosition;
 begin
-  Result.X := (ATextPosition.Char - 1) * FCharWidth + FTextOffset;
-  Result.Y := (ATextPosition.Line - FTopLine + 1) * FLineHeight;
-end;
+  LDisplayPosition := TextToDisplayPosition(ATextPosition);
+  Result.X := (LDisplayPosition.Column - 1) * FCharWidth + FTextOffset;
+  Result.Y := (LDisplayPosition.Row - FTopLine) * FLineHeight;
+end;}
 
 procedure TBCBaseEditor.ActiveLineChanged(ASender: TObject);
 begin
@@ -3415,14 +3419,14 @@ begin
   end;
 end;
 
-procedure TBCBaseEditor.PaintCaretBlock(ACanvas: TCanvas; ATextCaretPosition: TBCEditorTextPosition);
+procedure TBCBaseEditor.PaintCaretBlock(ACanvas: TCanvas; ADisplayCaretPosition: TBCEditorDisplayPosition);
 var
   LPoint: TPoint;
   LCaretStyle: TBCEditorCaretStyle;
   LCaretWidth, LCaretHeight, X, Y: Integer;
   LTempBitmap: Vcl.Graphics.TBitmap;
 begin
-  LPoint := TextPositionToPixels(ATextCaretPosition);
+  LPoint := DisplayPositionToPixels(ADisplayCaretPosition);
   Y := 0;
   X := 0;
   LCaretHeight := 1;
@@ -3478,8 +3482,8 @@ begin
     LTempBitmap.Canvas.Font.Height := Font.Height;
     LTempBitmap.Canvas.Font.Size := Font.Size;
 
-    if ATextCaretPosition.Char <= FLines[ATextCaretPosition.Line].Length then
-      LTempBitmap.Canvas.TextOut(X, 0, FLines[ATextCaretPosition.Line][ATextCaretPosition.Char]);
+    if ADisplayCaretPosition.Column <= FLines[ADisplayCaretPosition.Row - 1].Length then
+      LTempBitmap.Canvas.TextOut(X, 0, FLines[ADisplayCaretPosition.Row - 1][ADisplayCaretPosition.Column]);
 
     ACanvas.CopyRect(Rect(LPoint.X + FCaret.Offsets.X, LPoint.Y + FCaret.Offsets.Y, LPoint.X + FCaret.Offsets.X + LCaretWidth,
       LPoint.Y + FCaret.Offsets.Y + LCaretHeight), LTempBitmap.Canvas, Rect(0, Y, LCaretWidth, Y + LCaretHeight));
@@ -3497,9 +3501,9 @@ begin
 
   if Assigned(FMultiCarets) and (FMultiCarets.Count > 0) then
   for i := 0 to FMultiCarets.Count - 1 do
-    PaintCaretBlock(ACanvas, PBCEditorTextPosition(FMultiCarets[i])^)
+    PaintCaretBlock(ACanvas, PBCEditorDisplayPosition(FMultiCarets[i])^)
   else
-    PaintCaretBlock(ACanvas, GetTextCaretPosition);
+    PaintCaretBlock(ACanvas, GetDisplayCaretPosition);
 end;
 
 procedure TBCBaseEditor.FindAll(const ASearchText: string = '');
@@ -3602,7 +3606,7 @@ begin
     FMultiCaretTimer.Free;
     FMultiCaretTimer := nil;
     for i := FMultiCarets.Count - 1 downto 0 do
-      Dispose(PBCEditorTextPosition(FMultiCarets.Items[i]));
+      Dispose(PBCEditorDisplayPosition(FMultiCarets.Items[i]));
     FMultiCarets.Clear;
     FMultiCarets.Free;
     FMultiCarets := nil;
@@ -6906,9 +6910,9 @@ begin
 
   FKeyboardHandler.ExecuteKeyUp(Self, AKey, AShift);
 
-  if FMultiCaretPosition.Line <> -1 then
+  if FMultiCaretPosition.Row <> -1 then
   begin
-    FMultiCaretPosition.Line := -1;
+    FMultiCaretPosition.Row := -1;
     Invalidate;
   end;
 end;
@@ -7150,9 +7154,9 @@ begin
       if ssCtrl in AShift then
       begin
         if ssShift in AShift then
-          AddMultipleCarets(PixelsToTextPosition(X, Y))
+          AddMultipleCarets(PixelsToDisplayPosition(X, Y))
         else
-          AddCaret(PixelsToTextPosition(X, Y));
+          AddCaret(PixelsToDisplayPosition(X, Y));
         Invalidate;
         Exit;
       end
@@ -7369,17 +7373,18 @@ var
   LLine: Integer;
   LWidth: Integer;
   LMinimapLeft, LMinimapRight: Integer;
-  LTextCaretPosition, LMultiCaretPosition: TBCEditorTextPosition;
+  LTextCaretPosition: TBCEditorTextPosition;
+  LMultiCaretPosition: TBCEditorDisplayPosition;
 begin
   if (coMultiCaret in FCaret.Options) and Focused then
   begin
     if (AShift = [ssCtrl, ssShift]) or (AShift = [ssCtrl]) then
     begin
-      LMultiCaretPosition := PixelsToTextPosition(X, Y);
+      LMultiCaretPosition := PixelsToDisplayPosition(X, Y);
 
-      if (FMultiCaretPosition.Line <> LMultiCaretPosition.Line) or
-        (FMultiCaretPosition.Line = LMultiCaretPosition.Line) and
-        (FMultiCaretPosition.Char <> LMultiCaretPosition.Char) then
+      if (FMultiCaretPosition.Row <> LMultiCaretPosition.Row) or
+        (FMultiCaretPosition.Row = LMultiCaretPosition.Row) and
+        (FMultiCaretPosition.Column <> LMultiCaretPosition.Column) then
       begin
         FMultiCaretPosition := LMultiCaretPosition;
         Invalidate;
@@ -7698,7 +7703,7 @@ begin
         PaintMinimapShadow(DrawRect);
     end;
 
-    if (coMultiCaret in FCaret.Options) and (FMultiCaretPosition.Line <> -1) then
+    if (coMultiCaret in FCaret.Options) and (FMultiCaretPosition.Row <> -1) then
       PaintCaretBlock(Canvas, FMultiCaretPosition);
 
     if FCaret.NonBlinking.Enabled or Assigned(FMultiCarets) and (FMultiCarets.Count > 0) and FDrawMultiCarets then
@@ -11422,16 +11427,24 @@ begin
   end;
 end;
 
-procedure TBCBaseEditor.AddCaret(const ATextPosition: TBCEditorTextPosition);
+procedure TBCBaseEditor.AddCaret(const ADisplayPosition: TBCEditorDisplayPosition);
 
-  procedure Add(ATextCaretPosition: TBCEditorTextPosition);
+  procedure Add(ADisplayCaretPosition: TBCEditorDisplayPosition);
   var
-    LPTextPosition: PBCEditorTextPosition;
+    i: Integer;
+    LPDisplayPosition: PBCEditorDisplayPosition;
   begin
-    New(LPTextPosition);
-    LPTextPosition^.Char := ATextCaretPosition.Char;
-    LPTextPosition^.Line := ATextCaretPosition.Line;
-    FMultiCarets.Add(LPTextPosition);
+    for i := 0 to FMultiCarets.Count - 1 do
+    begin
+      LPDisplayPosition := PBCEditorDisplayPosition(FMultiCarets[i]);
+      if (LPDisplayPosition^.Row = ADisplayCaretPosition.Row) and
+        (LPDisplayPosition^.Column = ADisplayCaretPosition.Column) then
+        Exit;
+    end;
+    New(LPDisplayPosition);
+    LPDisplayPosition^.Column := ADisplayCaretPosition.Column;
+    LPDisplayPosition^.Row := ADisplayCaretPosition.Row;
+    FMultiCarets.Add(LPDisplayPosition);
   end;
 
 begin
@@ -11445,7 +11458,7 @@ begin
     FMultiCaretTimer.Enabled := True;
   end;
 
-  Add(ATextPosition);
+  Add(ADisplayPosition);
 end;
 
 procedure TBCBaseEditor.AddKeyCommand(ACommand: TBCEditorCommand; AShift: TShiftState; AKey: Word;
@@ -11494,27 +11507,29 @@ begin
   FKeyboardHandler.AddMouseUpHandler(AHandler);
 end;
 
-procedure TBCBaseEditor.AddMultipleCarets(const ATextPosition: TBCEditorTextPosition);
+procedure TBCBaseEditor.AddMultipleCarets(const ADisplayPosition: TBCEditorDisplayPosition);
 var
-  LBeginLine, LEndLine, LLine: Integer;
-  LTextPosition: TBCEditorTextPosition;
+  LBeginRow, LEndRow, LRow: Integer;
+  LDisplayPosition: TBCEditorDisplayPosition;
+  LPLastCaretPosition: PBCEditorDisplayPosition;
 begin
-  LTextPosition := TextCaretPosition;
+  LDisplayPosition := DisplayCaretPosition;
   if Assigned(FMultiCarets) and (FMultiCarets.Count > 0) then
   begin
-    LBeginLine := PBCEditorTextPosition(FMultiCarets.Last)^.Line;
-    LTextPosition.Char := PBCEditorTextPosition(FMultiCarets.Last)^.Char;
+    LPLastCaretPosition :=  PBCEditorDisplayPosition(FMultiCarets.Last);
+    LBeginRow := LPLastCaretPosition^.Row;
+    LDisplayPosition.Column := LPLastCaretPosition^.Column;
   end
   else
-    LBeginLine := LTextPosition.Line;
-  LEndLine := ATextPosition.Line;
-  if LBeginLine > LEndLine then
-    SwapInt(LBeginLine, LEndLine);
+    LBeginRow := LDisplayPosition.Row;
+  LEndRow := LDisplayPosition.Row;
+  if LBeginRow > LEndRow then
+    SwapInt(LBeginRow, LEndRow);
 
-  for LLine := LBeginLine to LEndLine do
+  for LRow := LBeginRow to LEndRow do
   begin
-    LTextPosition.Line := LLine;
-    AddCaret(LTextPosition);
+    LDisplayPosition.Row := LRow;
+    AddCaret(LDisplayPosition);
   end;
 end;
 
@@ -11691,8 +11706,8 @@ procedure TBCBaseEditor.CommandProcessor(ACommand: TBCEditorCommand; AChar: Char
 var
   i, j, LCollapsedCount: Integer;
   LOldSelectionBeginPosition, LOldSelectionEndPosition: TBCEditorTextPosition;
-  LTextCaretPosition: TBCEditorTextPosition;
-  LPTextCaretPosition: PBCEditorTextPosition;
+  LDisplayCaretPosition: TBCEditorDisplayPosition;
+  LPDisplayCaretPosition: PBCEditorDisplayPosition;
 
   function CodeFoldingUncollapseLine(ALine: Integer): Integer;
   var
@@ -11758,21 +11773,21 @@ begin
       case ACommand of
         ecChar, ecBackspace:
           begin
-            LTextCaretPosition := PBCEditorTextPosition(FMultiCarets[i])^;
-            TextCaretPosition := LTextCaretPosition;
+            LDisplayCaretPosition := PBCEditorDisplayPosition(FMultiCarets[i])^;
+            DisplayCaretPosition := LDisplayCaretPosition;
             ExecuteCommand(ACommand, AChar, AData);
           end
       end;
 
       for j := 0 to FMultiCarets.Count - 1 do
       begin
-        LPTextCaretPosition := PBCEditorTextPosition(FMultiCarets[j]);
-        if (LPTextCaretPosition^.Line = LTextCaretPosition.Line) and (LPTextCaretPosition^.Char >= LTextCaretPosition.Char) then
+        LPDisplayCaretPosition := PBCEditorDisplayPosition(FMultiCarets[j]);
+        if (LPDisplayCaretPosition^.Row = LDisplayCaretPosition.Row) and (LPDisplayCaretPosition^.Column >= LDisplayCaretPosition.Column) then
         case ACommand of
           ecChar:
-            Inc(LPTextCaretPosition^.Char);
+            Inc(LPDisplayCaretPosition^.Column);
           ecBackspace:
-            Dec(LPTextCaretPosition^.Char);
+            Dec(LPDisplayCaretPosition^.Column);
         end;
       end;
     end

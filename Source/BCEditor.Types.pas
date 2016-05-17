@@ -174,6 +174,7 @@ type
     Column: Integer;
     Row: Integer;
   end;
+  PBCEditorDisplayPosition = ^TBCEditorDisplayPosition;
 
   TBCEditorMatchingPairTokenMatch = record
     Position: TBCEditorTextPosition;
