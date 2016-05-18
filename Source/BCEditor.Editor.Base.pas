@@ -2513,7 +2513,6 @@ begin
     if FWordWrapLineLengths[LDisplayPosition.Row] <> 0 then
       LDisplayPosition.Column := MinMax(LDisplayPosition.Column, 1, FWordWrapLineLengths[LDisplayPosition.Row] + 1);
   Result := DisplayToTextPosition(LDisplayPosition);
-  {$IFDEF DEBUG}OutputDebugString(PChar(Format('Line = %d, Char = %d', [Result.Line, Result.Char])));{$ENDIF}
 end;
 
 function TBCBaseEditor.PixelsToRowColumn(X, Y: Integer): TBCEditorDisplayPosition;
@@ -12749,7 +12748,7 @@ begin
                     else
                     begin
                       LSpaceBuffer := StringOfChar(BCEDITOR_TAB_CHAR, LSpaceCount1 div FTabs.Width);
-                      LSpaceBuffer := LSpaceBuffer + StringOfChar(BCEDITOR_TAB_CHAR, LSpaceCount1 mod FTabs.Width);
+                      LSpaceBuffer := LSpaceBuffer + StringOfChar(BCEDITOR_SPACE_CHAR, LSpaceCount1 mod FTabs.Width);
                     end;
 
                   FLines[LTextCaretPosition.Line] := Copy(LLineText, 1, LTextCaretPosition.Char - 1);
@@ -12870,7 +12869,7 @@ begin
               else
               if AllWhiteUpToCaret(LLineText, LLength) then
                 LSpaceBuffer := StringOfChar(BCEDITOR_TAB_CHAR, (LTextCaretPosition.Char - LLength - Ord(FInsertMode)) div FTabs.Width) +
-                  StringOfChar(BCEDITOR_TAB_CHAR, (LTextCaretPosition.Char - LLength - Ord(FInsertMode)) mod FTabs.Width)
+                  StringOfChar(BCEDITOR_SPACE_CHAR, (LTextCaretPosition.Char - LLength - Ord(FInsertMode)) mod FTabs.Width)
               else
                 LSpaceBuffer := StringOfChar(BCEDITOR_SPACE_CHAR, LTextCaretPosition.Char - LLength - Ord(FInsertMode));
               LSpaceCount1 := Length(LSpaceBuffer);
