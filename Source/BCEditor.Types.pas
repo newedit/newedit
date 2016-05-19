@@ -12,6 +12,8 @@ type
 
   TBCEditorCaretStyle = (csVerticalLine, csThinVerticalLine, csHorizontalLine, csThinHorizontalLine, csHalfBlock, csBlock);
 
+  TBCEditorCompletionProposalEvent = procedure(Sender: TObject; AItems: TStrings; const AInput: string) of object;
+
   TBCEditorDropFilesEvent = procedure(ASender: TObject; APos: TPoint; AFiles: TStrings) of object;
 
   TBCEditorPaintEvent = procedure(ASender: TObject; ACanvas: TCanvas) of object;

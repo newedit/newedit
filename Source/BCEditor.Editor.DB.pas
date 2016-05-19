@@ -78,6 +78,7 @@ type
     property OnBeforeBookmarkPanelPaint;
     property OnBeforeBookmarkPlaced;
     property OnBeforeClearBookmark;
+    property OnBeforeCompletionProposalExecute;
     property OnBookmarkPanelLinePaint;
     property OnCaretChanged;
     property OnChange;

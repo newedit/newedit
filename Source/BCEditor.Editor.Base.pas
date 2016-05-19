@@ -115,6 +115,7 @@ type
     FOnAfterLinePaint: TBCEditorLinePaintEvent;
     FOnBeforeBookmarkPanelPaint: TBCEditorBookmarkPanelPaintEvent;
     FOnBeforeBookmarkPlaced: TBCEditorBookmarkEvent;
+    FOnBeforeCompletionProposalExecute: TBCEditorCompletionProposalEvent;
     FOnBeforeClearBookmark: TBCEditorBookmarkEvent;
     FOnBookmarkPanelLinePaint: TBCEditorBookmarkPanelLinePaintEvent;
     FOnCaretChanged: TBCEditorCaretChangedEvent;
@@ -633,9 +634,10 @@ type
     property OnAfterBookmarkPlaced: TNotifyEvent read FOnAfterBookmarkPlaced write FOnAfterBookmarkPlaced;
     property OnAfterClearBookmark: TNotifyEvent read FOnAfterClearBookmark write FOnAfterClearBookmark;
     property OnAfterLinePaint: TBCEditorLinePaintEvent read FOnAfterLinePaint write FOnAfterLinePaint;
+    property OnBeforeBookmarkPanelPaint: TBCEditorBookmarkPanelPaintEvent read FOnBeforeBookmarkPanelPaint write FOnBeforeBookmarkPanelPaint;
     property OnBeforeBookmarkPlaced: TBCEditorBookmarkEvent read FOnBeforeBookmarkPlaced write FOnBeforeBookmarkPlaced;
     property OnBeforeClearBookmark: TBCEditorBookmarkEvent read FOnBeforeClearBookmark write FOnBeforeClearBookmark;
-    property OnBeforeBookmarkPanelPaint: TBCEditorBookmarkPanelPaintEvent read FOnBeforeBookmarkPanelPaint write FOnBeforeBookmarkPanelPaint;
+    property OnBeforeCompletionProposalExecute: TBCEditorCompletionProposalEvent read FOnBeforeCompletionProposalExecute write FOnBeforeCompletionProposalExecute;
     property OnBookmarkPanelLinePaint: TBCEditorBookmarkPanelLinePaintEvent read FOnBookmarkPanelLinePaint write FOnBookmarkPanelLinePaint;
     property OnCaretChanged: TBCEditorCaretChangedEvent read FOnCaretChanged write FOnCaretChanged;
     property OnChange: TNotifyEvent read FOnChange write FOnChange;
@@ -6347,6 +6349,7 @@ end;
 procedure TBCBaseEditor.DoExecuteCompletionProposal;
 var
   LPoint: TPoint;
+  LCurrentInput: string;
 begin
   Assert(FCompletionProposal.CompletionColumnIndex < FCompletionProposal.Columns.Count);
 
@@ -6361,8 +6364,11 @@ begin
     Parent := Self;
     Assign(FCompletionProposal);
     if cpoParseItemsFromText in FCompletionProposal.Options then
-      SplitTextIntoWords(ItemList, False);
-    Execute(GetCurrentInput, LPoint.X, LPoint.Y);
+      SplitTextIntoWords(Items, False);
+    LCurrentInput := GetCurrentInput;
+    if Assigned(FOnBeforeCompletionProposalExecute) then
+      FOnBeforeCompletionProposalExecute(Self, Items, LCurrentInput);
+    Execute(LCurrentInput, LPoint.X, LPoint.Y);
   end;
 end;
 
