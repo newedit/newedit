@@ -2831,7 +2831,7 @@ end;
 
 procedure TBCBaseEditor.CaretChanged(ASender: TObject);
 begin
-  if not (coMultiCaret in FCaret.Options) then
+  if FCaret.MultiEdit.Enabled then
     FreeMultiCarets;
   ResetCaret;
   RecalculateCharExtent;
@@ -7154,7 +7154,7 @@ begin
 
     FreeCompletionProposalPopupWindow;
 
-    if coMultiCaret in FCaret.Options then
+    if FCaret.MultiEdit.Enabled then
     begin
       if ssCtrl in AShift then
       begin
@@ -7381,7 +7381,7 @@ var
   LTextCaretPosition: TBCEditorTextPosition;
   LMultiCaretPosition: TBCEditorDisplayPosition;
 begin
-  if (coMultiCaret in FCaret.Options) and Focused then
+  if FCaret.MultiEdit.Enabled and Focused then
   begin
     if (AShift = [ssCtrl, ssShift]) or (AShift = [ssCtrl]) then
     begin
@@ -7708,7 +7708,7 @@ begin
         PaintMinimapShadow(DrawRect);
     end;
 
-    if (coMultiCaret in FCaret.Options) and (FMultiCaretPosition.Row <> -1) then
+    if FCaret.MultiEdit.Enabled and (FMultiCaretPosition.Row <> -1) then
       PaintCaretBlock(Canvas, FMultiCaretPosition);
 
     if FCaret.NonBlinking.Enabled or Assigned(FMultiCarets) and (FMultiCarets.Count > 0) and FDrawMultiCarets then

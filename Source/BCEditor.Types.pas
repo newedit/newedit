@@ -53,7 +53,6 @@ type
   TBCEditorOptions = set of TBCEditorOption;
 
   TBCEditorCaretOption = (
-    coMultiCaret,  { Ctrl + Click adds a caret and Ctrl + Shift + Click adds multiple carets to column. }
     coRightMouseClickMove { When clicking with the right mouse for a popup menu, move the cursor to that location }
   );
   TBCEditorCaretOptions = set of TBCEditorCaretOption;
