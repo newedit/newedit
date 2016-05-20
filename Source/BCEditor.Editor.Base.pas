@@ -3426,16 +3426,30 @@ var
   LCaretStyle: TBCEditorCaretStyle;
   LCaretWidth, LCaretHeight, X, Y: Integer;
   LTempBitmap: Vcl.Graphics.TBitmap;
+  LBackgroundColor, LForegroundColor: TColor;
 begin
   LPoint := DisplayPositionToPixels(ADisplayCaretPosition);
   Y := 0;
   X := 0;
   LCaretHeight := 1;
   LCaretWidth := FCharWidth;
-  if InsertMode then
-    LCaretStyle := FCaret.Styles.Insert
+
+  if Assigned(FMultiCarets) and (FMultiCarets.Count > 0) or (FMultiCaretPosition.Row <> -1) then
+  begin
+    LBackgroundColor := FCaret.MultiEdit.Colors.Background;
+    LForegroundColor := FCaret.MultiEdit.Colors.Foreground;
+    LCaretStyle := FCaret.MultiEdit.Style
+  end
   else
-    LCaretStyle := FCaret.Styles.Overwrite;
+  begin
+    LBackgroundColor := FCaret.NonBlinking.Colors.Background;
+    LForegroundColor := FCaret.NonBlinking.Colors.Foreground;
+    if InsertMode then
+      LCaretStyle := FCaret.Styles.Insert
+    else
+      LCaretStyle := FCaret.Styles.Overwrite;
+  end;
+
   case LCaretStyle of
     csHorizontalLine, csThinHorizontalLine:
       begin
@@ -3469,16 +3483,15 @@ begin
   LTempBitmap := Vcl.Graphics.TBitmap.Create;
   try
     { Background }
-    // TODO: move colors
-    LTempBitmap.Canvas.Pen.Color := FCaret.NonBlinking.Colors.Background;
-    LTempBitmap.Canvas.Brush.Color := FCaret.NonBlinking.Colors.Background;
+    LTempBitmap.Canvas.Pen.Color := LBackgroundColor;
+    LTempBitmap.Canvas.Brush.Color := LBackgroundColor;
     { Size }
     LTempBitmap.Width := FCharWidth;
     LTempBitmap.Height := FLineHeight;
     { Character }
     LTempBitmap.Canvas.Brush.Style := bsClear;
     LTempBitmap.Canvas.Font.Name := Font.Name;
-    LTempBitmap.Canvas.Font.Color := FCaret.NonBlinking.Colors.Foreground;
+    LTempBitmap.Canvas.Font.Color := LForegroundColor;
     LTempBitmap.Canvas.Font.Style := Font.Style;
     LTempBitmap.Canvas.Font.Height := Font.Height;
     LTempBitmap.Canvas.Font.Size := Font.Size;
