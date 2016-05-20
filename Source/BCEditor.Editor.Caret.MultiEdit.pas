@@ -11,10 +11,12 @@ type
     FColors: TBCEditorCaretMultiEditColors;
     FEnabled: Boolean;
     FOnChange: TNotifyEvent;
+    FOptions: TBCEditorCaretMultiEditOptions;
     FStyle: TBCEditorCaretStyle;
     procedure DoChange;
     procedure SetColors(AValue: TBCEditorCaretMultiEditColors);
     procedure SetEnabled(AValue: Boolean);
+    procedure SetOptions(const AValue: TBCEditorCaretMultiEditOptions);
     procedure SetStyle(const AValue: TBCEditorCaretStyle);
   public
     constructor Create;
@@ -24,6 +26,7 @@ type
     property Colors: TBCEditorCaretMultiEditColors read FColors write SetColors;
     property Enabled: Boolean read FEnabled write SetEnabled;
     property OnChange: TNotifyEvent read FOnChange write FOnChange;
+    property Options: TBCEditorCaretMultiEditOptions read FOptions write SetOptions default [meoShowActiveLine];
     property Style: TBCEditorCaretStyle read FStyle write SetStyle default csThinVerticalLine;
   end;
 
@@ -36,6 +39,7 @@ begin
   FColors := TBCEditorCaretMultiEditColors.Create;
   FEnabled := False;
   FStyle := csThinVerticalLine;
+  FOptions := [meoShowActiveLine];
 end;
 
 destructor TBCEditorCaretMultiEdit.Destroy;
@@ -52,6 +56,7 @@ begin
   begin
     Self.FColors.Assign(FColors);
     Self.FEnabled := FEnabled;
+    Self.FOptions := FOptions;
     Self.FStyle := FStyle;
     Self.DoChange;
   end
@@ -86,6 +91,15 @@ end;
 procedure TBCEditorCaretMultiEdit.SetColors(AValue: TBCEditorCaretMultiEditColors);
 begin
   FColors.Assign(AValue);
+end;
+
+procedure TBCEditorCaretMultiEdit.SetOptions(const AValue: TBCEditorCaretMultiEditOptions);
+begin
+  if FOptions <> AValue then
+  begin
+    FOptions := AValue;
+    DoChange;
+  end;
 end;
 
 end.

@@ -57,6 +57,11 @@ type
   );
   TBCEditorCaretOptions = set of TBCEditorCaretOption;
 
+  TBCEditorCaretMultiEditOption = (
+    meoShowActiveLine
+  );
+  TBCEditorCaretMultiEditOptions = set of TBCEditorCaretMultiEditOption;
+
   TBCEditorScrollOption = (
     soAutosizeMaxWidth, { Automatically resizes the MaxScrollWidth property when inserting text }
     soHalfPage, { When scrolling with page-up and page-down commands, only scroll a half page at a time }

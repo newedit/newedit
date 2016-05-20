@@ -236,6 +236,7 @@ type
     function IsCommentAtCaretPosition: Boolean;
     function IsKeywordAtCaretPosition(APOpenKeyWord: PBoolean = nil; AHighlightAfterToken: Boolean = True): Boolean;
     function IsKeywordAtCaretPositionOrAfter(ACaretPosition: TBCEditorTextPosition): Boolean;
+    function IsMultiEditCaretFound(ALine: Integer): Boolean;
     function IsWordSelected: Boolean;
     function LeftSpaceCount(const ALine: string; AWantTabs: Boolean = False): Integer;
     function NextSelectedWordPosition: Boolean;
@@ -392,7 +393,6 @@ type
     function GetSelectionLength: Integer;
     function PixelsToDisplayPosition(X, Y: Integer): TBCEditorDisplayPosition;
     function PixelsToRowColumn(X, Y: Integer): TBCEditorDisplayPosition;
-    //function TextPositionToPixels(const ATextPosition: TBCEditorTextPosition): TPoint;
     procedure ChainLinesChanged(ASender: TObject);
     procedure ChainLinesChanging(ASender: TObject);
     procedure ChainLinesCleared(ASender: TObject);
@@ -2375,6 +2375,23 @@ begin
   end;
 end;
 
+function TBCBaseEditor.IsMultiEditCaretFound(ALine: Integer): Boolean;
+var
+  i: Integer;
+begin
+  Result := False;
+  if Assigned(FMultiCarets) and (FMultiCarets.Count > 0) then
+  begin
+    if meoShowActiveLine in FCaret.MultiEdit.Options then
+    for i := 0 to FMultiCarets.Count - 1 do
+      if PBCEditorDisplayPosition(FMultiCarets[i])^.Row = ALine then
+      begin
+        Result := True;
+        Break;
+      end
+  end
+end;
+
 function TBCBaseEditor.IsWordSelected: Boolean;
 var
   i: Integer;
@@ -2781,15 +2798,6 @@ begin
       EndUndoBlock;
   end;
 end;
-
-{function TBCBaseEditor.TextPositionToPixels(const ATextPosition: TBCEditorTextPosition): TPoint;
-var
-  LDisplayPosition: TBCEditorDisplayPosition;
-begin
-  LDisplayPosition := TextToDisplayPosition(ATextPosition);
-  Result.X := (LDisplayPosition.Column - 1) * FCharWidth + FTextOffset;
-  Result.Y := (LDisplayPosition.Row - FTopLine) * FLineHeight;
-end;}
 
 procedure TBCBaseEditor.ActiveLineChanged(ASender: TObject);
 begin
@@ -7408,8 +7416,6 @@ begin
         Invalidate;
       end;
     end;
-    //else
-    //  FMultiCaretPosition.Line := -1;
 
     if Assigned(FMultiCarets) and (FMultiCarets.Count > 0) then
       Exit;
@@ -7879,7 +7885,9 @@ begin
     AClipRect.Top := (i - FTopLine) * FLineHeight;
     AClipRect.Bottom := AClipRect.Top + FLineHeight;
 
-    if (GetTextCaretY + 1 = LLine) and (FCodeFolding.Colors.ActiveLineBackground <> clNone) then
+    if (not Assigned(FMultiCarets) and (GetTextCaretY + 1 = LLine) or
+      Assigned(FMultiCarets) and (FMultiCarets.Count > 0) and IsMultiEditCaretFound(LLine))
+      and (FCodeFolding.Colors.ActiveLineBackground <> clNone) then
     begin
       Canvas.Brush.Color := FCodeFolding.Colors.ActiveLineBackground;
       PatBlt(Canvas.Handle, AClipRect.Left, AClipRect.Top, AClipRect.Width, AClipRect.Height, PATCOPY); { active line background }
@@ -8228,14 +8236,21 @@ var
         begin
           LLine := GetDisplayTextLineNumber(i);
 
-          FTextDrawer.SetBackgroundColor(FLeftMargin.Colors.Background);
-          if (GetTextCaretY + 1 = LLine) and (FLeftMargin.Colors.ActiveLineBackground <> clNone) then
-            FTextDrawer.SetBackgroundColor(FLeftMargin.Colors.ActiveLineBackground);
-
           LLineRect.Top := (i - TopLine) * FLineHeight;
           LLineRect.Bottom := LLineRect.Top + FLineHeight;
 
           LLineNumber := '';
+
+          FTextDrawer.SetBackgroundColor(FLeftMargin.Colors.Background);
+          if (not Assigned(FMultiCarets) and (LLine = GetTextCaretY + 1) or
+            Assigned(FMultiCarets) and (FMultiCarets.Count > 0) and IsMultiEditCaretFound(LLine)) and
+            (FLeftMargin.Colors.ActiveLineBackground <> clNone) then
+          begin
+            FTextDrawer.SetBackgroundColor(FLeftMargin.Colors.ActiveLineBackground);
+            Canvas.Brush.Color := FLeftMargin.Colors.ActiveLineBackground;
+            if Assigned(FMultiCarets) and (FMultiCarets.Count > 0) then
+              PatBlt(Canvas.Handle, LLineRect.Left, LLineRect.Top, LLineRect.Width, LLineRect.Height, PATCOPY); { fill line rect when multi-caret }
+          end;
 
           LPreviousLine := LLine;
           if FWordWrap.Enabled then
@@ -8305,7 +8320,8 @@ var
         begin
           LLine := GetDisplayTextLineNumber(i);
 
-          if LLine = GetTextCaretY + 1 then
+          if not Assigned(FMultiCarets) and (LLine = GetTextCaretY + 1) or
+            Assigned(FMultiCarets) and (FMultiCarets.Count > 0) and (IsMultiEditCaretFound(LLine)) then
           begin
             LPanelActiveLineRect := System.Types.Rect(AClipRect.Left, (i - TopLine) * FLineHeight, AClipRect.Left + FLeftMargin.Bookmarks.Panel.Width,
               (i - TopLine + 1) * FLineHeight);
@@ -9644,7 +9660,11 @@ var
 
       while LCurrentRow = LCurrentLine do
       begin
-        LIsCurrentLine := LTextCaretY = LCurrentLine;
+        if Assigned(FMultiCarets) and (FMultiCarets.Count > 0) then
+          LIsCurrentLine := IsMultiEditCaretFound(LCurrentLine)
+        else
+          LIsCurrentLine := LTextCaretY = LCurrentLine;
+
         LForegroundColor := FForegroundColor;
         LBackgroundColor := GetBackgroundColor;
 
@@ -11540,7 +11560,7 @@ begin
   end
   else
     LBeginRow := LDisplayPosition.Row;
-  LEndRow := LDisplayPosition.Row;
+  LEndRow := ADisplayPosition.Row;
   if LBeginRow > LEndRow then
     SwapInt(LBeginRow, LEndRow);
 
