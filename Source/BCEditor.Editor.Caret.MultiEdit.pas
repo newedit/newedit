@@ -37,7 +37,7 @@ begin
   inherited;
 
   FColors := TBCEditorCaretMultiEditColors.Create;
-  FEnabled := False;
+  FEnabled := True;
   FStyle := csThinVerticalLine;
   FOptions := [meoShowActiveLine, meoShowGhost];
 end;
