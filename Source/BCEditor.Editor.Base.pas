@@ -10477,7 +10477,7 @@ var
     end;
 
   var
-    i, LStartLine: Integer;
+    i, LBeginLine: Integer;
     LInsertedLines: Integer;
   begin
     if Length(AValue) = 0 then
@@ -10488,7 +10488,7 @@ var
     else
       LTextCaretPosition := ATextCaretPosition;
 
-    LStartLine := LTextCaretPosition.Line;
+    LBeginLine := LTextCaretPosition.Line;
     case APasteMode of
       smNormal:
         LInsertedLines := InsertNormal;
@@ -10500,7 +10500,7 @@ var
 
     if LInsertedLines > 0 then
       if eoTrimTrailingSpaces in Options then
-        for i := LStartLine to LStartLine + LInsertedLines do
+        for i := LBeginLine to LBeginLine + LInsertedLines do
           DoTrimTrailingSpaces(i);
 
     { Force caret reset }
@@ -11827,6 +11827,13 @@ begin
             Inc(LPDisplayCaretPosition^.Column);
           ecBackspace:
             Dec(LPDisplayCaretPosition^.Column);
+        end
+        else
+        case ACommand of
+          ecLineBegin:
+            LPDisplayCaretPosition^.Column := 1;
+          ecLineEnd:
+            LPDisplayCaretPosition^.Column := FLines.ExpandedStringLengths[LPDisplayCaretPosition^.Row - 1] + 1;
         end;
       end;
     end
@@ -11921,7 +11928,7 @@ procedure TBCBaseEditor.DoBlockComment;
 var
   i: Integer;
   LLength: Integer;
-  LStartLine, LEndLine: Integer;
+  LBeginLine, LEndLine: Integer;
   LComment: string;
   LCommentIndex: Integer;
   LSpaceCount: Integer;
@@ -11942,16 +11949,16 @@ begin
 
     if SelectionAvailable then
     begin
-      LStartLine := LSelectionBeginPosition.Line;
+      LBeginLine := LSelectionBeginPosition.Line;
       LEndLine := LSelectionEndPosition.Line;
     end
     else
     begin
-      LStartLine := LTextCaretPosition.Line;
+      LBeginLine := LTextCaretPosition.Line;
       LEndLine := LTextCaretPosition.Line;
     end;
 
-    for i := LStartLine to LEndLine do
+    for i := LBeginLine to LEndLine do
     begin
       LCodeFoldingRange := CodeFoldingRangeForLine(i + 1);
       if Assigned(LCodeFoldingRange) and LCodeFoldingRange.Collapsed then
@@ -11960,7 +11967,7 @@ begin
 
     i := 0;
     LCommentIndex := -2;
-    LLineText := FLines[LStartLine];
+    LLineText := FLines[LBeginLine];
     LSpaceCount := LeftSpaceCount(LLineText, False);
     LSpaces := Copy(LLineText, 1, LSpaceCount);
     LLineText := TrimLeft(LLineText);
@@ -11983,8 +11990,8 @@ begin
     begin
       LDeleteComment := True;
       LComment := FHighlighter.Comments.BlockComments[LCommentIndex];
-      FUndoList.AddChange(crDelete, LTextCaretPosition, GetTextPosition(LSpaceCount + 1, LStartLine),
-        GetTextPosition(LSpaceCount + Length(LComment) + 1, LStartLine), LComment, FSelection.ActiveMode);
+      FUndoList.AddChange(crDelete, LTextCaretPosition, GetTextPosition(LSpaceCount + 1, LBeginLine),
+        GetTextPosition(LSpaceCount + Length(LComment) + 1, LBeginLine), LComment, FSelection.ActiveMode);
       LLineText := Copy(LLineText, Length(LComment) + 1, Length(LLineText));
     end;
 
@@ -11996,10 +12003,10 @@ begin
     LLineText := LSpaces + LComment + LLineText;
 
     FLines.BeginUpdate;
-    FLines.Strings[LStartLine] := LLineText;
+    FLines.Strings[LBeginLine] := LLineText;
 
-    FUndoList.AddChange(crInsert, LTextCaretPosition, GetTextPosition(1 + LSpaceCount, LStartLine),
-      GetTextPosition(1 + LSpaceCount + Length(LComment), LStartLine), '', FSelection.ActiveMode);
+    FUndoList.AddChange(crInsert, LTextCaretPosition, GetTextPosition(1 + LSpaceCount, LBeginLine),
+      GetTextPosition(1 + LSpaceCount + Length(LComment), LBeginLine), '', FSelection.ActiveMode);
 
     Inc(LCommentIndex);
     LLineText := FLines[LEndLine];
@@ -12278,8 +12285,8 @@ begin
         MoveCaretHorizontally(-VisibleChars, ACommand = ecSelectionPageLeft);
       ecPageRight, ecSelectionPageRight:
         MoveCaretHorizontally(VisibleChars, ACommand = ecSelectionPageRight);
-      ecLineStart, ecSelectionLineStart:
-        DoHomeKey(ACommand = ecSelectionLineStart);
+      ecLineBegin, ecSelectionLineBegin:
+        DoHomeKey(ACommand = ecSelectionLineBegin);
       ecLineEnd, ecSelectionLineEnd:
         DoEndKey(ACommand = ecSelectionLineEnd);
       ecUp, ecSelectionUp:
