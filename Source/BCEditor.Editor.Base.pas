@@ -7408,13 +7408,14 @@ begin
     begin
       LMultiCaretPosition := PixelsToDisplayPosition(X, Y);
 
-      if (FMultiCaretPosition.Row <> LMultiCaretPosition.Row) or
-        (FMultiCaretPosition.Row = LMultiCaretPosition.Row) and
-        (FMultiCaretPosition.Column <> LMultiCaretPosition.Column) then
-      begin
-        FMultiCaretPosition := LMultiCaretPosition;
-        Invalidate;
-      end;
+      if meoShowGhost in FCaret.MultiEdit.Options then
+        if (FMultiCaretPosition.Row <> LMultiCaretPosition.Row) or
+          (FMultiCaretPosition.Row = LMultiCaretPosition.Row) and
+          (FMultiCaretPosition.Column <> LMultiCaretPosition.Column) then
+        begin
+          FMultiCaretPosition := LMultiCaretPosition;
+          Invalidate;
+        end;
     end;
 
     if Assigned(FMultiCarets) and (FMultiCarets.Count > 0) then
@@ -7855,7 +7856,7 @@ begin
     BitBlt(FBufferBitmap.Canvas.Handle, 0, 0, ClientRect.Width, ClientRect.Height, Canvas.Handle, 0, 0, SRCCOPY);
     FBufferBitmap.Canvas.Handle := Canvas.Handle;
     Canvas.Handle := LHandle;
-    if not (FCaret.NonBlinking.Enabled or Assigned(FMultiCarets) and (FMultiCarets.Count > 0)) then
+    if not FCaret.NonBlinking.Enabled and not Assigned(FMultiCarets) then
       UpdateCaret;
   end;
 end;
@@ -7886,7 +7887,7 @@ begin
     AClipRect.Bottom := AClipRect.Top + FLineHeight;
 
     if (not Assigned(FMultiCarets) and (GetTextCaretY + 1 = LLine) or
-      Assigned(FMultiCarets) and (FMultiCarets.Count > 0) and IsMultiEditCaretFound(LLine))
+      Assigned(FMultiCarets) and IsMultiEditCaretFound(LLine))
       and (FCodeFolding.Colors.ActiveLineBackground <> clNone) then
     begin
       Canvas.Brush.Color := FCodeFolding.Colors.ActiveLineBackground;
@@ -8243,12 +8244,12 @@ var
 
           FTextDrawer.SetBackgroundColor(FLeftMargin.Colors.Background);
           if (not Assigned(FMultiCarets) and (LLine = GetTextCaretY + 1) or
-            Assigned(FMultiCarets) and (FMultiCarets.Count > 0) and IsMultiEditCaretFound(LLine)) and
+            Assigned(FMultiCarets) and IsMultiEditCaretFound(LLine)) and
             (FLeftMargin.Colors.ActiveLineBackground <> clNone) then
           begin
             FTextDrawer.SetBackgroundColor(FLeftMargin.Colors.ActiveLineBackground);
             Canvas.Brush.Color := FLeftMargin.Colors.ActiveLineBackground;
-            if Assigned(FMultiCarets) and (FMultiCarets.Count > 0) then
+            if Assigned(FMultiCarets) then
               PatBlt(Canvas.Handle, LLineRect.Left, LLineRect.Top, LLineRect.Width, LLineRect.Height, PATCOPY); { fill line rect when multi-caret }
           end;
 
@@ -8321,7 +8322,7 @@ var
           LLine := GetDisplayTextLineNumber(i);
 
           if not Assigned(FMultiCarets) and (LLine = GetTextCaretY + 1) or
-            Assigned(FMultiCarets) and (FMultiCarets.Count > 0) and (IsMultiEditCaretFound(LLine)) then
+            Assigned(FMultiCarets) and (IsMultiEditCaretFound(LLine)) then
           begin
             LPanelActiveLineRect := System.Types.Rect(AClipRect.Left, (i - TopLine) * FLineHeight, AClipRect.Left + FLeftMargin.Bookmarks.Panel.Width,
               (i - TopLine + 1) * FLineHeight);
@@ -9660,7 +9661,7 @@ var
 
       while LCurrentRow = LCurrentLine do
       begin
-        if Assigned(FMultiCarets) and (FMultiCarets.Count > 0) then
+        if Assigned(FMultiCarets) then
           LIsCurrentLine := IsMultiEditCaretFound(LCurrentLine)
         else
           LIsCurrentLine := LTextCaretY = LCurrentLine;

@@ -58,7 +58,8 @@ type
   TBCEditorCaretOptions = set of TBCEditorCaretOption;
 
   TBCEditorCaretMultiEditOption = (
-    meoShowActiveLine
+    meoShowActiveLine,
+    meoShowGhost { Ghost caret follows mouse cursor when moved }
   );
   TBCEditorCaretMultiEditOptions = set of TBCEditorCaretMultiEditOption;
 

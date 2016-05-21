@@ -26,7 +26,7 @@ type
     property Colors: TBCEditorCaretMultiEditColors read FColors write SetColors;
     property Enabled: Boolean read FEnabled write SetEnabled;
     property OnChange: TNotifyEvent read FOnChange write FOnChange;
-    property Options: TBCEditorCaretMultiEditOptions read FOptions write SetOptions default [meoShowActiveLine];
+    property Options: TBCEditorCaretMultiEditOptions read FOptions write SetOptions default [meoShowActiveLine, meoShowGhost];
     property Style: TBCEditorCaretStyle read FStyle write SetStyle default csThinVerticalLine;
   end;
 
@@ -39,7 +39,7 @@ begin
   FColors := TBCEditorCaretMultiEditColors.Create;
   FEnabled := False;
   FStyle := csThinVerticalLine;
-  FOptions := [meoShowActiveLine];
+  FOptions := [meoShowActiveLine, meoShowGhost];
 end;
 
 destructor TBCEditorCaretMultiEdit.Destroy;
