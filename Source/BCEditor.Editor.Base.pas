@@ -303,6 +303,7 @@ type
     procedure OpenLink(AURI: string; ARangeType: TBCEditorRangeType);
     procedure PreviousSelectedWordPosition;
     procedure RefreshFind;
+    procedure RemoveDuplicateMultiCarets;
     procedure RightMarginChanged(ASender: TObject);
     procedure ScrollChanged(ASender: TObject);
     procedure ScrollTimerHandler(ASender: TObject);
@@ -3955,6 +3956,25 @@ begin
     if soHighlightResults in FSearch.Options then
       if FSearch.SearchText <> '' then
         FindAll;
+end;
+
+procedure TBCBaseEditor.RemoveDuplicateMultiCarets;
+var
+  i, j: Integer;
+  LPDisplayCaretPosition1, LPDisplayCaretPosition2: PBCEditorDisplayPosition;
+begin
+  for i := 0 to FMultiCarets.Count - 1 do
+    for j := FMultiCarets.Count - 1 downto i + 1 do
+    begin
+      LPDisplayCaretPosition1 := PBCEditorDisplayPosition(FMultiCarets[i]);
+      LPDisplayCaretPosition2 := PBCEditorDisplayPosition(FMultiCarets[j]);
+      if (LPDisplayCaretPosition1^.Row = LPDisplayCaretPosition2^.Row) and
+        (LPDisplayCaretPosition1^.Column = LPDisplayCaretPosition2^.Column) then
+      begin
+        Dispose(LPDisplayCaretPosition2);
+        FMultiCarets.Delete(j);
+      end;
+    end;
 end;
 
 procedure TBCBaseEditor.RightMarginChanged(ASender: TObject);
@@ -11807,35 +11827,40 @@ begin
     end;
 
     if Assigned(FMultiCarets) and (FMultiCarets.Count > 0) then
-    for i := 0 to FMultiCarets.Count - 1 do
     begin
-      case ACommand of
-        ecChar, ecBackspace:
-          begin
-            LDisplayCaretPosition := PBCEditorDisplayPosition(FMultiCarets[i])^;
-            DisplayCaretPosition := LDisplayCaretPosition;
-            ExecuteCommand(ACommand, AChar, AData);
-          end
-      end;
-
-      for j := 0 to FMultiCarets.Count - 1 do
+      for i := 0 to FMultiCarets.Count - 1 do
       begin
-        LPDisplayCaretPosition := PBCEditorDisplayPosition(FMultiCarets[j]);
-        if (LPDisplayCaretPosition^.Row = LDisplayCaretPosition.Row) and (LPDisplayCaretPosition^.Column >= LDisplayCaretPosition.Column) then
         case ACommand of
-          ecChar:
-            Inc(LPDisplayCaretPosition^.Column);
-          ecBackspace:
-            Dec(LPDisplayCaretPosition^.Column);
-        end
-        else
-        case ACommand of
-          ecLineBegin:
-            LPDisplayCaretPosition^.Column := 1;
-          ecLineEnd:
-            LPDisplayCaretPosition^.Column := FLines.ExpandedStringLengths[LPDisplayCaretPosition^.Row - 1] + 1;
+          ecChar, ecBackspace:
+            begin
+              LDisplayCaretPosition := PBCEditorDisplayPosition(FMultiCarets[i])^;
+              DisplayCaretPosition := LDisplayCaretPosition;
+              ExecuteCommand(ACommand, AChar, AData);
+            end
+        end;
+
+        for j := 0 to FMultiCarets.Count - 1 do
+        begin
+          LPDisplayCaretPosition := PBCEditorDisplayPosition(FMultiCarets[j]);
+          if (LPDisplayCaretPosition^.Row = LDisplayCaretPosition.Row) and (LPDisplayCaretPosition^.Column >= LDisplayCaretPosition.Column) then
+          case ACommand of
+            ecChar:
+              Inc(LPDisplayCaretPosition^.Column);
+            ecBackspace:
+              Dec(LPDisplayCaretPosition^.Column);
+          end
+          else
+          begin
+            case ACommand of
+              ecLineBegin:
+                LPDisplayCaretPosition^.Column := 1;
+              ecLineEnd:
+                LPDisplayCaretPosition^.Column := FLines.ExpandedStringLengths[LPDisplayCaretPosition^.Row - 1] + 1;
+            end;
+          end;
         end;
       end;
+      RemoveDuplicateMultiCarets;
     end
     else
     if ACommand < ecUserFirst then
