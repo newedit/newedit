@@ -4,7 +4,7 @@ Version 1.6.0. Use the Issues page to report bugs or send them directly to lasse
 
 <h3>Description</h3>
 
-A syntax highlighting edit control for RAD Studio (Delphi/C++ Builder) with code folding, completion proposal, matching pair, minimap, sync edit, word wrap, etc. External highlighter and color scheme files are in JSON format which can be also loaded from a stream.
+A syntax highlighting edit control for RAD Studio (Delphi/C++ Builder) with code folding, completion proposal, matching pair, minimap, sync edit, multi-caret editing, word wrap, etc. External highlighter and color scheme files are in JSON format which can be also loaded from a stream.
 
 <h3>Build requirements</h3>
 
