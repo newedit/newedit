@@ -3963,6 +3963,7 @@ var
   i, j: Integer;
   LPDisplayCaretPosition1, LPDisplayCaretPosition2: PBCEditorDisplayPosition;
 begin
+  if Assigned(FMultiCarets) then
   for i := 0 to FMultiCarets.Count - 1 do
     for j := FMultiCarets.Count - 1 downto i + 1 do
     begin
@@ -11828,37 +11829,45 @@ begin
 
     if Assigned(FMultiCarets) and (FMultiCarets.Count > 0) then
     begin
-      for i := 0 to FMultiCarets.Count - 1 do
-      begin
-        case ACommand of
-          ecChar, ecBackspace:
-            begin
-              LDisplayCaretPosition := PBCEditorDisplayPosition(FMultiCarets[i])^;
-              DisplayCaretPosition := LDisplayCaretPosition;
-              ExecuteCommand(ACommand, AChar, AData);
-            end
-        end;
-
-        for j := 0 to FMultiCarets.Count - 1 do
-        begin
-          LPDisplayCaretPosition := PBCEditorDisplayPosition(FMultiCarets[j]);
-          if (LPDisplayCaretPosition^.Row = LDisplayCaretPosition.Row) and (LPDisplayCaretPosition^.Column >= LDisplayCaretPosition.Column) then
-          case ACommand of
-            ecChar:
-              Inc(LPDisplayCaretPosition^.Column);
-            ecBackspace:
-              Dec(LPDisplayCaretPosition^.Column);
-          end
-          else
+      case ACommand of
+        ecChar, ecBackspace, ecLineBegin, ecLineEnd:
+          for i := 0 to FMultiCarets.Count - 1 do
           begin
             case ACommand of
-              ecLineBegin:
-                LPDisplayCaretPosition^.Column := 1;
-              ecLineEnd:
-                LPDisplayCaretPosition^.Column := FLines.ExpandedStringLengths[LPDisplayCaretPosition^.Row - 1] + 1;
+              ecChar, ecBackspace:
+                begin
+                  LDisplayCaretPosition := PBCEditorDisplayPosition(FMultiCarets[i])^;
+                  DisplayCaretPosition := LDisplayCaretPosition;
+                  ExecuteCommand(ACommand, AChar, AData);
+                end
+            end;
+
+            for j := 0 to FMultiCarets.Count - 1 do
+            begin
+              LPDisplayCaretPosition := PBCEditorDisplayPosition(FMultiCarets[j]);
+              if (LPDisplayCaretPosition^.Row = LDisplayCaretPosition.Row) and (LPDisplayCaretPosition^.Column >= LDisplayCaretPosition.Column) then
+              case ACommand of
+                ecChar:
+                  Inc(LPDisplayCaretPosition^.Column);
+                ecBackspace:
+                  Dec(LPDisplayCaretPosition^.Column);
+              end
+              else
+              begin
+                case ACommand of
+                  ecLineBegin:
+                    LPDisplayCaretPosition^.Column := 1;
+                  ecLineEnd:
+                    LPDisplayCaretPosition^.Column := FLines.ExpandedStringLengths[LPDisplayCaretPosition^.Row - 1] + 1;
+                end;
+              end;
             end;
           end;
-        end;
+        ecUndo:
+          begin
+            FreeMultiCarets;
+            ExecuteCommand(ACommand, AChar, AData);
+          end;
       end;
       RemoveDuplicateMultiCarets;
     end
