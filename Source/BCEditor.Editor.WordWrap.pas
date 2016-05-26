@@ -49,7 +49,7 @@ begin
 
   FEnabled := False;
   FPosition := 80;
-  FIndicator := TBCEditorGlyph.Create(HINSTANCE, '', clFuchsia);
+  FIndicator := TBCEditorGlyph.Create(HInstance, '', clFuchsia);
   CreateInternalBitmap;
   FStyle := wwsClientWidth;
 end;

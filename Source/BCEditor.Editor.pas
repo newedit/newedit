@@ -31,7 +31,6 @@ type
     property ActiveLine;
     property Align;
     property Anchors;
-    property BackgroundColor;
     property BorderStyle;
     property Caret;
     property CodeFolding;

@@ -73,7 +73,7 @@ begin
   FOptions := [seCaseSensitive];
   FSyncItems := TList.Create;
   FColors := TBCEditorSyncEditColors.Create;
-  FActivator := TBCEditorGlyph.Create(HINSTANCE, BCEDITOR_SYNCEDIT, clFuchsia);
+  FActivator := TBCEditorGlyph.Create(HInstance, BCEDITOR_SYNCEDIT, clFuchsia);
 end;
 
 destructor TBCEditorSyncEdit.Destroy;

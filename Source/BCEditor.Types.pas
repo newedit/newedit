@@ -92,6 +92,7 @@ type
     soALTSetsColumnMode,
     soFromEndOfLine,
     soHighlightSimilarTerms,
+    soTermsCaseSensitive,
     soToEndOfLastLine,
     soToEndOfLine,
     soTripleClickRowSelect
