@@ -366,7 +366,7 @@ type
     procedure SetTextBetween(ATextBeginPosition: TBCEditorTextPosition; ATextEndPosition: TBCEditorTextPosition; const AValue: string);
     procedure SetTopLine(AValue: Integer);
     procedure SetUndo(const AValue: TBCEditorUndo);
-    procedure SetWordBlock(ATextPosition: TBCEditorTextPosition);
+    procedure SetWordBlock(const ATextPosition: TBCEditorTextPosition);
     procedure SetWordWrap(const AValue: TBCEditorWordWrap);
     procedure SizeOrFontChanged(const AFontChanged: Boolean);
     procedure SpecialCharsChanged(ASender: TObject);
@@ -6451,52 +6451,67 @@ begin
   FUndo.Assign(AValue);
 end;
 
-procedure TBCBaseEditor.SetWordBlock(ATextPosition: TBCEditorTextPosition);
+procedure TBCBaseEditor.SetWordBlock(const ATextPosition: TBCEditorTextPosition);
 var
+  LTextPosition: TBCEditorTextPosition;
   LBlockBeginPosition: TBCEditorTextPosition;
   LBlockEndPosition: TBCEditorTextPosition;
   LTempString: string;
+  LLength: Integer;
 
   procedure CharScan;
   var
     i: Integer;
   begin
-    LBlockEndPosition.Char := Length(LTempString);
-    for i := ATextPosition.Char to Length(LTempString) do
+    LBlockEndPosition.Char := LLength;
+    for i := LTextPosition.Char to LLength do
       if IsWordBreakChar(LTempString[i]) then
       begin
         LBlockEndPosition.Char := i;
         Break;
       end;
     LBlockBeginPosition.Char := 1;
-    for i := ATextPosition.Char - 1 downto 1 do
+    for i := LTextPosition.Char - 1 downto 1 do
       if IsWordBreakChar(LTempString[i]) then
       begin
         LBlockBeginPosition.Char := i + 1;
         Break;
       end;
+    if soExpandRealNumbers in FSelection.Options then
+      if LTempString[LBlockBeginPosition.Char].IsNumber then
+      begin
+        i := LTextPosition.Char;
+        while (i > 0) and (LTempString[i].IsNumber or CharInSet(LTempString[i], BCEDITOR_REAL_NUMBER_CHARS)) do
+          Dec(i);
+        LBlockBeginPosition.Char := i + 1;
+        i := LTextPosition.Char;
+        while (i < LLength) and (LTempString[i].IsNumber or CharInSet(LTempString[i], BCEDITOR_REAL_NUMBER_CHARS)) do
+          Inc(i);
+        LBlockEndPosition.Char := i;
+      end;
   end;
 
 begin
   if (soPastEndOfLine in FScroll.Options) and not FWordWrap.Enabled then
-    ATextPosition.Char := MinMax(ATextPosition.Char, 1, FScroll.MaxWidth + 1)
+    LTextPosition.Char := MinMax(ATextPosition.Char, 1, FScroll.MaxWidth + 1)
   else
-    ATextPosition.Char := Max(ATextPosition.Char, 1);
-  ATextPosition.Line := MinMax(ATextPosition.Line, 0, FLines.Count - 1);
-  LTempString := FLines[ATextPosition.Line] + BCEDITOR_NONE_CHAR;
+    LTextPosition.Char := Max(ATextPosition.Char, 1);
+  LTextPosition.Line := MinMax(ATextPosition.Line, 0, FLines.Count - 1);
+  LTempString := FLines[LTextPosition.Line] + BCEDITOR_NONE_CHAR;
+  LLength := Length(LTempString);
 
-  if ATextPosition.Char > Length(LTempString) then
+  if LTextPosition.Char > LLength then
   begin
-    TextCaretPosition := GetTextPosition(Length(LTempString), ATextPosition.Line);
+    TextCaretPosition := GetTextPosition(Length(LTempString), LTextPosition.Line);
     Exit;
   end;
 
   CharScan;
 
-  LBlockBeginPosition.Line := ATextPosition.Line;
-  LBlockEndPosition.Line := ATextPosition.Line;
+  LBlockBeginPosition.Line := LTextPosition.Line;
+  LBlockEndPosition.Line := LTextPosition.Line;
   SetCaretAndSelection(LBlockEndPosition, LBlockBeginPosition, LBlockEndPosition);
-  InvalidateLine(ATextPosition.Line);
+  InvalidateLine(LTextPosition.Line);
 end;
 
 procedure TBCBaseEditor.SetWordWrap(const AValue: TBCEditorWordWrap);

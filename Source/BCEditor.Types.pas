@@ -90,6 +90,7 @@ type
 
   TBCEditorSelectionOption = (
     soALTSetsColumnMode,
+    soExpandRealNumbers,
     soFromEndOfLine,
     soHighlightSimilarTerms,
     soTermsCaseSensitive,
