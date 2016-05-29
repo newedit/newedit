@@ -541,6 +541,7 @@ type
     {$IFDEF USE_ALPHASKINS}
     procedure AfterConstruction; override;
     {$ENDIF}
+    procedure Assign(ASource: TPersistent); override;
     procedure BeginUndoBlock;
     procedure BeginUpdate;
     procedure CaretZero;
@@ -8454,6 +8455,36 @@ begin
   UpdateData(FCommonData);
 end;
 {$ENDIF}
+
+procedure TBCBaseEditor.Assign(ASource: TPersistent);
+begin
+  if Assigned(ASource) and (ASource is TBCBaseEditor) then
+  with ASource as TBCBaseEditor do
+  begin
+    Self.FActiveLine.Assign(FActiveLine);
+    Self.FCaret.Assign(FCaret);
+    Self.FCodeFolding.Assign(FCodeFolding);
+    Self.FCompletionProposal.Assign(FCompletionProposal);
+    Self.FDirectories.Assign(FDirectories);
+    Self.FKeyCommands.Assign(FKeyCommands);
+    Self.FLeftMargin.Assign(FLeftMargin);
+    Self.FLineSpacing.Assign(FLineSpacing);
+    Self.FMatchingPair.Assign(FMatchingPair);
+    Self.FMinimap.Assign(FMinimap);
+    Self.FReplace.Assign(FReplace);
+    Self.FRightMargin.Assign(FRightMargin);
+    Self.FScroll.Assign(FScroll);
+    Self.FSearch.Assign(FSearch);
+    Self.FSelection.Assign(FSelection);
+    Self.FSpecialChars.Assign(FSpecialChars);
+    Self.FSyncEdit.Assign(FSyncEdit);
+    Self.FTabs.Assign(FTabs);
+    Self.FUndo.Assign(FUndo);
+    Self.FWordWrap.Assign(FWordWrap);
+  end
+  else
+    inherited Assign(ASource);
+end;
 
 procedure TBCBaseEditor.Loaded;
 begin
