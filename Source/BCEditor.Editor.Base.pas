@@ -2184,10 +2184,17 @@ begin
     if (ATextPosition.Char >= 1) and (ATextPosition.Char <= LLength) and not IsWordBreakChar(LTextLine[ATextPosition.Char]) then
     begin
       LStop := ATextPosition.Char;
+
       while (LStop <= LLength) and not IsWordBreakChar(LTextLine[LStop]) do
         Inc(LStop);
       while (ATextPosition.Char > 1) and not IsWordBreakChar(LTextLine[ATextPosition.Char - 1]) do
         Dec(ATextPosition.Char);
+
+      if soExpandRealNumbers in FSelection.Options then
+        while (ATextPosition.Char > 0) and (LTextLine[ATextPosition.Char - 1].IsNumber or
+          CharInSet(LTextLine[ATextPosition.Char - 1], BCEDITOR_REAL_NUMBER_CHARS)) do
+          Dec(ATextPosition.Char);
+
       if LStop > ATextPosition.Char then
         Result := Copy(LTextLine, ATextPosition.Char, LStop - ATextPosition.Char);
     end;
@@ -6282,8 +6289,8 @@ begin
     else
       LTextCaretPosition := TextCaretPosition;
 
-    LBlockStartPosition := SelectionBeginPosition;
-    LBlockEndPosition := SelectionEndPosition;
+    LBlockStartPosition := FSelectionBeginPosition;
+    LBlockEndPosition := FSelectionEndPosition;
 
     if SelectionAvailable then
       FUndoList.AddChange(crDelete, LTextCaretPosition, LBlockStartPosition, LBlockEndPosition, GetSelectedText,
