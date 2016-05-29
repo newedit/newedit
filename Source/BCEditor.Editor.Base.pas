@@ -191,6 +191,7 @@ type
     FWordWrap: TBCEditorWordWrap;
     FWordWrapLineLengths: array of Integer;
     function AddMultiByteFillerChars(AText: PChar; ALength: Integer): string;
+    function AllWhiteUpToTextPosition(const ATextPosition: TBCEditorTextPosition; const ALine: string; ALength: Integer): Boolean;
     function AreTextPositionsEqual(const ATextPosition1: TBCEditorTextPosition; const ATextPosition2: TBCEditorTextPosition): Boolean;
     function CodeFoldingCollapsableFoldRangeForLine(ALine: Integer): TBCEditorCodeFoldingRange;
     function CodeFoldingFoldRangeForLineTo(ALine: Integer): TBCEditorCodeFoldingRange;
@@ -557,7 +558,7 @@ type
     procedure CodeFoldingCollapseLevel(ALevel: Integer);
     procedure CodeFoldingUncollapseAll;
     procedure CodeFoldingUncollapseLevel(ALevel: Integer; ANeedInvalidate: Boolean = True);
-    procedure CommandProcessor(ACommand: TBCEditorCommand; AChar: Char; AData: Pointer); // TODO const?
+    procedure CommandProcessor(ACommand: TBCEditorCommand; AChar: Char; AData: Pointer);
     procedure CopyToClipboard;
     procedure CutToClipboard;
     procedure DeleteLines(const ALineNumber: Integer; const ACount: Integer);
@@ -1023,6 +1024,26 @@ begin
     if LCharCount > 1 then
       Result := Result + StringOfChar(BCEDITOR_FILLER_CHAR, LCharCount - 1);
   end;
+end;
+
+function TBCBaseEditor.AllWhiteUpToTextPosition(const ATextPosition: TBCEditorTextPosition; const ALine: string; ALength: Integer): Boolean;
+var
+  j: Integer;
+begin
+  if (ALength = 0) or (ATextPosition.Char = 1) then
+  begin
+    Result := True;
+    Exit;
+  end;
+  Result := False;
+  j := 1;
+  while (j <= ALength) and (j < ATextPosition.Char) do
+  begin
+    if ALine[j] > BCEDITOR_SPACE_CHAR then
+      Exit;
+    Inc(j);
+  end;
+  Result := True;
 end;
 
 function TBCBaseEditor.AreTextPositionsEqual(const ATextPosition1: TBCEditorTextPosition; const ATextPosition2: TBCEditorTextPosition): Boolean;
@@ -3654,27 +3675,6 @@ var
   LSpaceBuffer: string;
   LBlockStartPosition: TBCEditorTextPosition;
   LHelper: string;
-
-  function AllWhiteUpToCaret(const ALine: string; ALength: Integer): Boolean;
-  var
-    j: Integer;
-  begin
-    if (ALength = 0) or (LTextCaretPosition.Char = 1) then
-    begin
-      Result := True;
-      Exit;
-    end;
-    Result := False;
-    j := 1;
-    while (j <= ALength) and (j < LTextCaretPosition.Char) do
-    begin
-      if ALine[j] > BCEDITOR_SPACE_CHAR then
-        Exit;
-      Inc(j);
-    end;
-    Result := True;
-  end;
-
 begin
   LTextCaretPosition := TextCaretPosition;
   if SelectionAvailable then
@@ -3696,7 +3696,7 @@ begin
       if toTabsToSpaces in FTabs.Options then
         LSpaceBuffer := StringOfChar(BCEDITOR_SPACE_CHAR, LTextCaretPosition.Char - LLength - Ord(FInsertMode))
       else
-      if AllWhiteUpToCaret(LLineText, LLength) then
+      if AllWhiteUpToTextPosition(LTextCaretPosition, LLineText, LLength) then
         LSpaceBuffer := StringOfChar(BCEDITOR_TAB_CHAR, (LTextCaretPosition.Char - LLength - Ord(FInsertMode)) div FTabs.Width) +
           StringOfChar(BCEDITOR_SPACE_CHAR, (LTextCaretPosition.Char - LLength - Ord(FInsertMode)) mod FTabs.Width)
       else
@@ -11691,10 +11691,11 @@ var
         if toTabsToSpaces in FTabs.Options then
           LSpaces := StringOfChar(BCEDITOR_SPACE_CHAR, LCharCount)
         else
-        begin
-          LSpaces := StringOfChar(BCEDITOR_TAB_CHAR, LCharCount div FTabs.Width);
-          LSpaces := LSpaces + StringOfChar(BCEDITOR_TAB_CHAR, LCharCount mod FTabs.Width);
-        end;
+        if AllWhiteUpToTextPosition(LTextCaretPosition, LLeftSide, LLength) then
+          LSpaces := StringOfChar(BCEDITOR_TAB_CHAR, LCharCount div FTabs.Width) +
+            StringOfChar(BCEDITOR_TAB_CHAR, LCharCount mod FTabs.Width)
+        else
+          LSpaces := StringOfChar(BCEDITOR_SPACE_CHAR, LCharCount);
         LLeftSide := LLeftSide + LSpaces
       end;
       LRightSide := Copy(FLines[LTextCaretPosition.Line], LTextCaretPosition.Char, FLines.StringLength(LTextCaretPosition.Line) - (LTextCaretPosition.Char - 1));
@@ -13355,12 +13356,14 @@ begin
             SelectionBeginPosition := LNewCaretPosition;
 
             SelectedText := LDragDropText;
+
+           // SelectionBeginPosition := LNewCaretPosition;
           finally
             if LChangeScrollPastEndOfLine then
               FScroll.Options := FScroll.Options - [soPastEndOfLine];
           end;
 
-          SelectionEndPosition := TextCaretPosition;
+          //SelectionEndPosition := TextCaretPosition;
           CommandProcessor(ecSelectionGotoXY, BCEDITOR_NONE_CHAR, @LNewCaretPosition);
         finally
           EndUndoBlock;
