@@ -3,7 +3,7 @@
       "Info": {
          "General": {
             "Version": "1.6.0",
-            "Date": "21.05.2016",
+            "Date": "31.05.2016",
             "Sample": [
                "// Hello World in Pascal\r\n",
                "\r\n",
@@ -389,6 +389,7 @@
                               "default",
                               "index",
                               "read",
+															"stored",
                               "write"
                            ],
                            "Attributes": {
@@ -488,7 +489,6 @@
                      "shr",
                      "static",
                      "stdcall",
-                     "stored",
                      "strict",
                      "string",
                      "stringresource",
