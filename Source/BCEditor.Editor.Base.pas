@@ -9105,13 +9105,13 @@ begin
       if FCodeFolding.Visible and (cfoShowIndentGuides in CodeFolding.Options) then
         PaintGuides(FTextLinesBufferBitmap.Canvas, LLine1, LLine2, False);
 
-      // TODO: Continue here...
-
       if FCaret.MultiEdit.Enabled and (FMultiCaretPosition.Row <> -1) then
         PaintCaretBlock(FTextLinesBufferBitmap.Canvas, FMultiCaretPosition);
 
       if FCaret.NonBlinking.Enabled or Assigned(FMultiCarets) and (FMultiCarets.Count > 0) and FDrawMultiCarets then
         DrawCaret(FTextLinesBufferBitmap.Canvas);
+
+      // TODO: Continue here...
 
       if soHighlightResults in FSearch.Options then
         PaintSearchResults(FTextLinesBufferBitmap.Canvas);
@@ -9165,6 +9165,7 @@ begin
          (FMinimap.Align = maLeft) and (LClipRect.Left < LTextLinesLeft - FLeftMargin.GetWidth - FCodeFolding.GetWidth) then
       begin
         DrawRect := LClipRect;
+        // TODO: Fix rect
         if FMinimap.Align = maRight then
         begin
           DrawRect.Left := LTextLinesRight;
@@ -9215,15 +9216,15 @@ begin
         BitBlt(FMinimapBufferBitmap.Canvas.Handle, 0, 0, DrawRect.Width, DrawRect.Height, Canvas.Handle, DrawRect.Left,
           DrawRect.Top, SRCCOPY);
         FTextDrawer.SetBaseFont(Font);
-      end;
 
-    if Minimap.Visible and FMinimap.Shadow.Visible then
-    begin
-      DrawRect := LClipRect;
-      DrawRect.Left := LTextLinesLeft - FLeftMargin.GetWidth - FCodeFolding.GetWidth;
-      DrawRect.Right := LTextLinesRight;
-      PaintMinimapShadow(Canvas, DrawRect);
-    end;
+        if FMinimap.Shadow.Visible then
+        begin
+          DrawRect := LClipRect;
+          DrawRect.Left := LTextLinesLeft - FLeftMargin.GetWidth - FCodeFolding.GetWidth;
+          DrawRect.Right := LTextLinesRight;
+          PaintMinimapShadow(Canvas, DrawRect);
+        end;
+      end;
 
     { Search map }
     if FSearch.Map.Visible then
@@ -10362,25 +10363,19 @@ procedure TBCBaseEditor.PaintSyncItems(ACanvas: TCanvas);
 var
   i: Integer;
   LTextPosition: TBCEditorTextPosition;
-  LLength, LLeftMargin: Integer;
+  LLength: Integer;
 
   procedure DrawRectangle(ATextPosition: TBCEditorTextPosition);
   var
     LRect: TRect;
     LDisplayPosition: TBCEditorDisplayPosition;
-    LCharsOutside: Integer;
   begin
     LRect.Top := (ATextPosition.Line - TopLine + 1) * LineHeight;
     LRect.Bottom := LRect.Top + LineHeight;
     LDisplayPosition := TextToDisplayPosition(ATextPosition);
-    LRect.Left := LLeftMargin + (LDisplayPosition.Column - FHorizontalScrollPosition div FCharWidth) * FTextDrawer.CharWidth;
-    LCharsOutside := Max(0, (LLeftMargin - LRect.Left) div FTextDrawer.CharWidth);
-    LRect.Left := Max(LLeftMargin, LRect.Left);
-    if LLength - LCharsOutside > 0 then
-    begin
-      LRect.Right := LRect.Left + (LLength - LCharsOutside) * FTextDrawer.CharWidth + 2;
-      ACanvas.Rectangle(LRect);
-    end;
+    LRect.Left := (LDisplayPosition.Column - 1) * FTextDrawer.CharWidth;
+    LRect.Right := LRect.Left + LLength * FTextDrawer.CharWidth + 2;
+    ACanvas.Rectangle(LRect);
   end;
 
 begin
@@ -10388,11 +10383,7 @@ begin
     Exit;
 
   LLength := FSyncEdit.EditEndPosition.Char - FSyncEdit.EditBeginPosition.Char;
-  LLeftMargin := FLeftMargin.GetWidth + FCodeFolding.GetWidth;
-  if FMinimap.Align = maLeft then
-    Inc(LLeftMargin, FMinimap.GetWidth);
-  if FSearch.Map.Align = saLeft then
-    Inc(LLeftMargin, FSearch.Map.GetWidth);
+
   ACanvas.Brush.Style := bsClear;
   ACanvas.Pen.Color := FSyncEdit.Colors.EditBorder;
   DrawRectangle(FSyncEdit.EditBeginPosition);
