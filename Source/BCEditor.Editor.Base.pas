@@ -9107,10 +9107,6 @@ begin
 
       // TODO: Continue here...
 
-      if Minimap.Visible and FMinimap.Shadow.Visible and
-        ((FMinimap.Align = maRight) or (FMinimap.Align = maLeft) and not FLeftMargin.Visible and not FCodeFolding.Visible) then
-        PaintMinimapShadow(FTextLinesBufferBitmap.Canvas, DrawRect);
-
       if FCaret.MultiEdit.Enabled and (FMultiCaretPosition.Row <> -1) then
         PaintCaretBlock(FTextLinesBufferBitmap.Canvas, FMultiCaretPosition);
 
@@ -9153,9 +9149,6 @@ begin
       begin
         DrawRect.Right := DrawRect.Left + FLeftMargin.GetWidth;
         PaintLeftMargin(DrawRect, LLine1, LLine2, LLine3);
-
-        if Minimap.Visible and FMinimap.Shadow.Visible and (FMinimap.Align = maLeft) then
-          PaintMinimapShadow(Canvas, DrawRect);
       end;
 
       if FCodeFolding.Visible then
@@ -9163,8 +9156,6 @@ begin
         Inc(DrawRect.Left, FLeftMargin.GetWidth);
         DrawRect.Right := DrawRect.Left + FCodeFolding.GetWidth;
         PaintCodeFolding(DrawRect, LLine1, LLine2);
-        if Minimap.Visible and FMinimap.Shadow.Visible and (FMinimap.Align = maLeft) and not FLeftMargin.Visible then
-          PaintMinimapShadow(Canvas, DrawRect);
       end;
     end;
 
@@ -9225,6 +9216,14 @@ begin
           DrawRect.Top, SRCCOPY);
         FTextDrawer.SetBaseFont(Font);
       end;
+
+    if Minimap.Visible and FMinimap.Shadow.Visible then
+    begin
+      DrawRect := LClipRect;
+      DrawRect.Left := LTextLinesLeft - FLeftMargin.GetWidth - FCodeFolding.GetWidth;
+      DrawRect.Right := LTextLinesRight;
+      PaintMinimapShadow(Canvas, DrawRect);
+    end;
 
     { Search map }
     if FSearch.Map.Visible then
