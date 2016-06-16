@@ -275,7 +275,7 @@ begin
   FLineHeight := LTextMetric.tmHeight + LTextMetric.tmExternalLeading;
 
   FTextDrawer.SetBaseFont(FFont);
-  FTextDrawer.Style := FFont.Style;
+  FTextDrawer.SetStyle(FFont.Style);
 
   FMargins.InitPage(FCanvas, 1, FPrinterInfo, FLineNumbers, FLineNumbersInMargin, FLines.Count - 1 + FLineOffset);
   CalculatePages;

@@ -392,7 +392,12 @@ begin
   LSize := 0;
   LLineBreak := SLineBreak;
   for i := 0 to LCount - 1 do
-    Inc(LSize, Length(Get(i)) + Length(LLineBreak));
+  begin
+    LLength := Length(LLineBreak);
+    if i = LCount - 1 then
+      LLength := 0;
+    Inc(LSize, Length(Get(i)) + LLength)
+  end;
   SetString(Result, nil, LSize);
   LPValue := Pointer(Result);
   for i := 0 to LCount - 1 do
@@ -404,6 +409,8 @@ begin
       System.Move(Pointer(LValue)^, LPValue^, LLength * SizeOf(Char));
       Inc(LPValue, LLength);
     end;
+    if i = LCount - 1 then
+      Exit;
     LLength := Length(LLineBreak);
     if LLength <> 0 then
     begin
