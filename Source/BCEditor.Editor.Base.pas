@@ -9111,13 +9111,13 @@ begin
       if FCaret.NonBlinking.Enabled or Assigned(FMultiCarets) and (FMultiCarets.Count > 0) and FDrawMultiCarets then
         DrawCaret(FTextLinesBufferBitmap.Canvas);
 
-      // TODO: Continue here...
-
       if soHighlightResults in FSearch.Options then
         PaintSearchResults(FTextLinesBufferBitmap.Canvas);
 
       if FSyncEdit.Enabled and FSyncEdit.Active then
         PaintSyncItems(FTextLinesBufferBitmap.Canvas);
+
+      // TODO: Continue here...
 
       FTextDrawer.EndDrawing;
 
@@ -10084,7 +10084,7 @@ var
   LDisplayPosition: TBCEditorDisplayPosition;
   LRect: TRect;
   LText: string;
-  LLength, LLeftMargin, LCharsOutside: Integer;
+  LLength: Integer;
   LSelectionBeginPosition, LSelectionEndPosition: TBCEditorTextPosition;
 begin
   if not Assigned(FSearch.Lines) then
@@ -10098,11 +10098,7 @@ begin
     FTextDrawer.SetForegroundColor(FSearch.Highlighter.Colors.Foreground);
   FTextDrawer.SetBackgroundColor(FSearch.Highlighter.Colors.Background);
   LLength := Length(FSearch.SearchText);
-  LLeftMargin := FLeftMargin.GetWidth + FCodeFolding.GetWidth;
-  if FMinimap.Align = maLeft then
-    Inc(LLeftMargin, FMinimap.GetWidth);
-  if FSearch.Map.Align = saLeft then
-    Inc(LLeftMargin, FSearch.Map.GetWidth);
+
   for i := 0 to FSearch.Lines.Count - 1 do
   begin
     LTextPosition := PBCEditorTextPosition(FSearch.Lines.Items[i])^;
@@ -10129,16 +10125,9 @@ begin
 
         LDisplayPosition := TextToDisplayPosition(LTextPosition);
 
-        LRect.Left := LLeftMargin + (LDisplayPosition.Column - FHorizontalScrollPosition div FCharWidth) * FTextDrawer.CharWidth;
-        LCharsOutside := Max(0, (LLeftMargin - LRect.Left) div FTextDrawer.CharWidth);
-        LRect.Left := Max(LLeftMargin, LRect.Left) + 1;
-        if LLength - LCharsOutside > 0 then
-        begin
-          if LCharsOutside > 0 then
-            Delete(LText, 1, LCharsOutside);
-          LRect.Right := LRect.Left + (LLength - LCharsOutside) * FTextDrawer.CharWidth;
-          FTextDrawer.ExtTextOut(LRect.Left, LRect.Top, ETO_OPAQUE or ETO_CLIPPED, LRect, PChar(LText), (LLength - LCharsOutside));
-        end;
+        LRect.Left := (LDisplayPosition.Column - 1) * FTextDrawer.CharWidth;
+        LRect.Right := LRect.Left + LLength * FTextDrawer.CharWidth;
+        FTextDrawer.ExtTextOut(LRect.Left, LRect.Top, ETO_OPAQUE or ETO_CLIPPED, LRect, PChar(LText), LLength);
       end;
     end;
   end;
