@@ -742,10 +742,10 @@ procedure TBCEditorTextDrawer.ExtTextOut(X, Y: Integer; AOptions: Longint; var A
   ALength: Integer);
 var
   i, LCharWidth: Integer;
-//  LLastChar: Cardinal;
-//  LRealCharWidth, LNormalCharWidth: Integer;
-//  LCharInfo: TABC;
-//  LTextMetricA: TTextMetricA;
+  LLastChar: Cardinal;
+  LRealCharWidth, LNormalCharWidth: Integer;
+  LCharInfo: TABC;
+  LTextMetricA: TTextMetricA;
   LPChar: PChar;
 begin
   LCharWidth := CharWidth;
@@ -765,9 +765,8 @@ begin
       FExtTextOutDistance[i] := GetCharCount(LPChar) * LCharWidth;
   end;
 
-  // TODO: Investigate, if this is needed... Windows 10 seems to work without but how about previous versions.
   { avoid clipping the last pixels of text in italic }
- { if ALength > 0 then
+  if ALength > 0 then
   begin
     LLastChar := Ord(AText[ALength - 1]);
     if LLastChar <> 32 then
@@ -792,7 +791,7 @@ begin
         Inc(ARect.Right, LRealCharWidth - LNormalCharWidth);
       FExtTextOutDistance[ALength - 1] := Max(LRealCharWidth, LNormalCharWidth);
     end;
-  end;}
+  end;
 
   Winapi.Windows.ExtTextOut(FHandle, X, Y, AOptions, @ARect, AText, ALength, Pointer(FExtTextOutDistance));
 end;

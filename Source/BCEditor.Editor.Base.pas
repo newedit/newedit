@@ -68,7 +68,6 @@ type
     FHorizontalScrollPosition: Integer;
     FInsertMode: Boolean;
     FInternalBookmarkImage: TBCEditorInternalImage;
-    FInvalidateRect: TRect;
     FIsScrolling: Boolean;
     FKeyboardHandler: TBCEditorKeyboardHandler;
     FKeyCommands: TBCEditorKeyCommands;
@@ -456,7 +455,6 @@ type
     procedure FreeCompletionProposalPopupWindow;
     procedure HideCaret;
     procedure IncPaintLock;
-    procedure InvalidateRect(const ARect: TRect);
     procedure KeyDown(var AKey: Word; AShift: TShiftState); override;
     procedure KeyPressW(var AKey: Char);
     procedure KeyUp(var AKey: Word; AShift: TShiftState); override;
@@ -582,13 +580,6 @@ type
     procedure HookEditorLines(ALines: TBCEditorLines; AUndo, ARedo: TBCEditorUndoList);
     procedure InsertLine(const ALineNumber: Integer; const AValue: string); overload;
     procedure InsertBlock(const ABlockBeginPosition, ABlockEndPosition: TBCEditorTextPosition; AChangeStr: PChar; AAddToUndoList: Boolean);
-    procedure InvalidateLeftMargin;
-    procedure InvalidateLeftMarginLine(ALine: Integer);
-    procedure InvalidateLeftMarginLines(AFirstLine, ALastLine: Integer);
-    procedure InvalidateLine(ALine: Integer);
-    procedure InvalidateLines(AFirstLine, ALastLine: Integer);
-    procedure InvalidateMinimap;
-    procedure InvalidateSelection;
     procedure LeftMarginChanged(ASender: TObject);
     procedure LoadFromFile(const AFileName: string; AEncoding: System.SysUtils.TEncoding = nil);
     procedure LoadFromStream(AStream: TStream; AEncoding: System.SysUtils.TEncoding = nil);
@@ -2915,9 +2906,9 @@ begin
   if not (csLoading in ComponentState) then
   begin
     if ASender is TBCEditorActiveLine then
-      InvalidateLine(DisplayCaretY);
+      Invalidate;
     if ASender is TBCEditorGlyph then
-      InvalidateLeftMargin;
+      Invalidate;
   end;
 end;
 
@@ -2976,15 +2967,8 @@ begin
 
   if LNewFoldRange <> FHighlightedFoldRange then
   begin
-    if Assigned(FHighlightedFoldRange) then
-    with FHighlightedFoldRange do
-      InvalidateLines(FromLine, ToLine);
-
     FHighlightedFoldRange := LNewFoldRange;
-
-    if Assigned(FHighlightedFoldRange) then
-      with FHighlightedFoldRange do
-        InvalidateLines(FromLine, ToLine);
+    Invalidate;
   end;
 end;
 
@@ -3991,7 +3975,7 @@ begin
     finally
       EndUndoBlock;
     end;
-    InvalidateLeftMarginLines(-1, -1);
+    Invalidate;
   end
   else
   begin
@@ -5983,7 +5967,7 @@ end;
 
 procedure TBCBaseEditor.SelectionChanged(ASender: TObject);
 begin
-  InvalidateSelection;
+  Invalidate;
 end;
 
 procedure TBCBaseEditor.SetActiveLine(const AValue: TBCEditorActiveLine);
@@ -6166,7 +6150,7 @@ begin
       FScroll.MaxWidth := FHorizontalScrollPosition div FCharWidth + FVisibleChars - 1
     else
       UpdateScrollBars;
-    InvalidateLines(DisplayCaretY, DisplayCaretY);
+    Invalidate;
   end;
 end;
 
@@ -6231,7 +6215,7 @@ begin
         if LPLineAttribute.LineState = lsModified then
           LPLineAttribute.LineState := lsNormal;
       end;
-      InvalidateLeftMargin;
+      Invalidate;
     end;
   end;
 end;
@@ -6315,8 +6299,6 @@ begin
 end;
 
 procedure TBCBaseEditor.SetSelectionBeginPosition(AValue: TBCEditorTextPosition);
-var
-  LFirstLine, LLastLine: Integer;
 begin
   FSelection.ActiveMode := Selection.Mode;
   if (soPastEndOfLine in FScroll.Options) and not FWordWrap.Enabled then
@@ -6326,34 +6308,12 @@ begin
 
   AValue.Line := MinMax(AValue.Line, 0, FLines.Count - 1);
 
-  if SelectionAvailable then
-  begin
-    if FSelectionBeginPosition.Line < FSelectionEndPosition.Line then
-    begin
-      LFirstLine := Min(AValue.Line, FSelectionBeginPosition.Line);
-      LLastLine := Max(AValue.Line, FSelectionEndPosition.Line);
-    end
-    else
-    begin
-      LFirstLine := Min(AValue.Line, FSelectionEndPosition.Line);
-      LLastLine := Max(AValue.Line, FSelectionBeginPosition.Line);
-    end;
-    FSelectionBeginPosition := AValue;
-    FSelectionEndPosition := AValue;
-    InvalidateLines(LFirstLine, LLastLine);
-    if FMinimap.Visible then
-      InvalidateMinimap;
-  end
-  else
-  begin
-    FSelectionBeginPosition := AValue;
-    FSelectionEndPosition := AValue;
-  end;
+  FSelectionBeginPosition := AValue;
+  FSelectionEndPosition := AValue;
+  Invalidate;
 end;
 
 procedure TBCBaseEditor.SetSelectionEndPosition(AValue: TBCEditorTextPosition);
-var
-  LCurrentLine: Integer;
 begin
   FSelection.ActiveMode := Selection.Mode;
   if FSelection.Visible then
@@ -6366,19 +6326,8 @@ begin
 
     if (AValue.Char <> FSelectionEndPosition.Char) or (AValue.Line <> FSelectionEndPosition.Line) then
     begin
-      if (FSelection.ActiveMode = smColumn) and (AValue.Char <> FSelectionEndPosition.Char) then
-      begin
-        InvalidateLines(Min(FSelectionBeginPosition.Line, Min(FSelectionEndPosition.Line, AValue.Line)),
-          Max(FSelectionBeginPosition.Line, Max(FSelectionEndPosition.Line, AValue.Line)));
-        FSelectionEndPosition := AValue;
-      end
-      else
-      begin
-        LCurrentLine := FSelectionEndPosition.Line;
-        FSelectionEndPosition := AValue;
-        if (FSelection.ActiveMode <> smColumn) or (FSelectionBeginPosition.Char <> FSelectionEndPosition.Char) then
-          InvalidateLines(LCurrentLine, FSelectionEndPosition.Line);
-      end;
+      FSelectionEndPosition := AValue;
+      Invalidate;
     end;
     if Assigned(FOnSelectionChanged) then
       FOnSelectionChanged(Self);
@@ -6515,7 +6464,7 @@ begin
   LBlockBeginPosition.Line := LTextPosition.Line;
   LBlockEndPosition.Line := LTextPosition.Line;
   SetCaretAndSelection(LBlockEndPosition, LBlockBeginPosition, LBlockEndPosition);
-  InvalidateLine(LTextPosition.Line);
+  Invalidate;
 end;
 
 procedure TBCBaseEditor.SetWordWrap(const AValue: TBCEditorWordWrap);
@@ -6648,7 +6597,7 @@ begin
   begin
     if FWordWrap.Enabled then
       FResetLineNumbersCache := True;
-    InvalidateLeftMargin;
+    Invalidate;
   end;
 end;
 
@@ -7096,7 +7045,7 @@ begin
   HideCaret;
   Winapi.Windows.DestroyCaret;
   if not Selection.Visible and SelectionAvailable then
-    InvalidateSelection;
+    Invalidate;
 end;
 
 {$IFDEF USE_VCL_STYLES}
@@ -7136,7 +7085,6 @@ var
   LDC, LCompatibleDC: HDC;
   LCompatibleBitmap, LOldBitmap: HBITMAP;
   LPaintStruct: TPaintStruct;
-  LClipRegion: HRGN;
 begin
   if FPaintLock <> 0 then
     Exit;
@@ -7158,21 +7106,18 @@ begin
     ReleaseDC(0, LDC);
     LCompatibleDC := CreateCompatibleDC(0);
     LOldBitmap := SelectObject(LCompatibleDC, LCompatibleBitmap);
+    LDC := BeginPaint(Handle, LPaintStruct);
     try
-      LDC := BeginPaint(Handle, LPaintStruct);
-      LClipRegion := CreateRectRgn(LPaintStruct.rcPaint.Left, LPaintStruct.rcPaint.Top, LPaintStruct.rcPaint.Right,
-        LPaintStruct.rcPaint.Bottom);
-      SelectClipRgn(LCompatibleDC, LClipRegion);
-      DeleteObject(LClipRegion);
       Message.DC := LCompatibleDC;
       WMPaint(Message);
-      Message.DC := 0;
+
       BitBlt(LDC, 0, 0, ClientRect.Right, ClientRect.Bottom, LCompatibleDC, 0, 0, SRCCOPY);
-      EndPaint(Handle, LPaintStruct);
-    finally
+
       SelectObject(LCompatibleDC, LOldBitmap);
-      DeleteDC(LCompatibleDC);
+    finally
       DeleteObject(LCompatibleBitmap);
+      DeleteDC(LCompatibleDC);
+      EndPaint(Handle, LPaintStruct);
     end;
   end;
 end;
@@ -7198,7 +7143,7 @@ begin
 
   ResetCaret;
   if not Selection.Visible and SelectionAvailable then
-    InvalidateSelection;
+    Invalidate;
 end;
 
 procedure TBCBaseEditor.WMSetText(var AMessage: TWMSetText);
@@ -8169,11 +8114,6 @@ begin
   Inc(FPaintLock);
 end;
 
-procedure TBCBaseEditor.InvalidateRect(const ARect: TRect);
-begin
-  Winapi.Windows.InvalidateRect(Handle, ARect, False);
-end;
-
 procedure TBCBaseEditor.KeyDown(var AKey: Word; AShift: TShiftState);
 var
   LData: Pointer;
@@ -8321,10 +8261,9 @@ begin
     LOldMode := FSelection.ActiveMode;
     SetSelectionBeginPosition(TextCaretPosition);
     FSelection.ActiveMode := LOldMode;
-    InvalidateRect(FInvalidateRect);
-    FillChar(FInvalidateRect, SizeOf(TRect), 0); // TODO: Investigate why?
     if FLeftMargin.LineNumbers.Visible and FLeftMargin.Autosize then
       FLeftMargin.AutosizeDigitCount(Lines.Count);
+    Invalidate;
   end;
 end;
 
@@ -8373,7 +8312,7 @@ end;
 
 procedure TBCBaseEditor.LinesDeleted(ASender: TObject; AIndex: Integer; ACount: Integer);
 var
-  i, LNativeIndex, LRunner: Integer;
+  i, LRunner: Integer;
   LMark: TBCEditorBookmark;
 begin
   for i := 0 to Marks.Count - 1 do
@@ -8392,7 +8331,6 @@ begin
   if Assigned(FOnLinesDeleted) then
     FOnLinesDeleted(Self, AIndex, ACount);
 
-  LNativeIndex := AIndex;
   if Assigned(FHighlighter) then
   begin
     AIndex := Max(AIndex, 1);
@@ -8408,8 +8346,7 @@ begin
   CodeFoldingResetCaches;
   RefreshFind;
 
-  InvalidateLines(LNativeIndex + 1, LNativeIndex + FVisibleLines + 1);
-  InvalidateLeftMarginLines(LNativeIndex + 1, LNativeIndex + FVisibleLines + 1);
+  Invalidate;
 end;
 
 procedure TBCBaseEditor.LinesInserted(ASender: TObject; AIndex: Integer; ACount: Integer);
@@ -8451,33 +8388,23 @@ begin
   if FLeftMargin.Autosize and (FLeftMargin.GetWidth <> LLength) then
     SetLeftMarginWidth(LLength);
 
-  InvalidateLines(AIndex + 1, AIndex + FVisibleLines + 1);
-  InvalidateLeftMarginLines(AIndex + 1, AIndex + FVisibleLines + 1);
-
   if soAutoSizeMaxWidth in FScroll.Options then
   begin
     LLength := FLines.ExpandedStringLengths[AIndex];
     if LLength > FScroll.MaxWidth then
       FScroll.MaxWidth := LLength;
   end;
+
+  Invalidate;
 end;
 
 procedure TBCBaseEditor.LinesPutted(ASender: TObject; AIndex: Integer; ACount: Integer);
 var
   LLength: Integer;
-  LLineEnd: Integer;
 begin
-  LLineEnd := Min(AIndex + 1, FLines.Count);
-  if Assigned(FHighlighter) then
-  begin
-    LLineEnd := Max(LLineEnd, RescanHighlighterRangesFrom(AIndex) + 1);
-    if FLines <> FOriginalLines then
-      LLineEnd := MaxInt;
-  end;
   if FWordWrap.Enabled then
     FResetLineNumbersCache := True;
   RefreshFind;
-  InvalidateLines(AIndex + 1, LLineEnd);
 
   if Assigned(FOnLinesPutted) then
     FOnLinesPutted(Self, AIndex, ACount);
@@ -8488,6 +8415,8 @@ begin
     if LLength > FScroll.MaxWidth then
       FScroll.MaxWidth := LLength;
   end;
+
+  Invalidate;
 end;
 
 {$IFDEF USE_ALPHASKINS}
@@ -8543,7 +8472,7 @@ end;
 
 procedure TBCBaseEditor.MarkListChange(ASender: TObject);
 begin
-  InvalidateLeftMargin;
+  Invalidate;
 end;
 
 procedure TBCBaseEditor.MouseDown(AButton: TMouseButton; AShift: TShiftState; X, Y: Integer);
@@ -8694,7 +8623,7 @@ begin
         (LSelectionAvailable and not IsTextPositionInSelection(DisplayToTextPosition(PixelsToRowColumn(X, Y))) or
         not LSelectionAvailable) then
       begin
-        InvalidateSelection;
+        Invalidate;
         FSelectionEndPosition := FSelectionBeginPosition;
         TextCaretPosition := PixelsToTextPosition(X, Y);
       end
@@ -9060,11 +8989,8 @@ begin
 
   LLine1 := FTopLine + LClipRect.Top div FLineHeight;
   LTemp := (LClipRect.Bottom + FLineHeight - 1) div FLineHeight;
-  LLine2 := MinMax(FTopLine + LTemp, 1, FLineNumbersCount);
+  LLine2 := MinMax(FTopLine + LTemp - 1, 1, FLineNumbersCount);
   LLine3 := FTopLine + LTemp;
-
-  //{$IFDEF DEBUG}OutputDebugString(PChar(Format('Line1 = %d, Line2 = %d, Line3 = %d, Temp = %d', [LLine1, LLine2, LLine3, LTemp])));{$ENDIF}
-  //{$IFDEF DEBUG}OutputDebugString(PChar(Format('Top = %d, Bottom = %d', [LClipRect.Top, LClipRect.Bottom])));{$ENDIF}
 
   LTextLinesLeft := FLeftMargin.GetWidth + FCodeFolding.GetWidth;
   LTextLinesRight := ClientRect.Width;
@@ -9103,7 +9029,7 @@ begin
       PaintRightMargin(FTextLinesBufferBitmap.Canvas, DrawRect);
 
       if FCodeFolding.Visible and (cfoShowIndentGuides in CodeFolding.Options) then
-        PaintGuides(FTextLinesBufferBitmap.Canvas, LLine1, LLine2, False);
+        PaintGuides(FTextLinesBufferBitmap.Canvas, FTopLine, FTopLine + FVisibleLines, False);
 
       if FCaret.MultiEdit.Enabled and (FMultiCaretPosition.Row <> -1) then
         PaintCaretBlock(FTextLinesBufferBitmap.Canvas, FMultiCaretPosition);
@@ -9470,8 +9396,8 @@ begin
   LCurrentLine := GetDisplayTextLineNumber(DisplayCaretY);
   LCodeFoldingRange := nil;
   LDeepestLevel := GetDeepestLevel;
-  LTopLine := GetDisplayTextLineNumber(TopLine);
-  LBottomLine := GetDisplayTextLineNumber(TopLine + VisibleLines);
+  LTopLine := GetDisplayTextLineNumber(AFirstRow); //TopLine);
+  LBottomLine := GetDisplayTextLineNumber(ALastRow); //TopLine + VisibleLines);
 
   SetLength(LCodeFoldingRanges, FAllCodeFoldingRanges.AllCount);
   k := 0;
@@ -10899,7 +10825,7 @@ var
     if AMinimap then
       LLineRect.Bottom := (AFirstRow - FMinimap.TopLine) * FMinimap.CharHeight
     else
-      LLineRect.Bottom := (AFirstRow - FTopLine) * FLineHeight;
+      LLineRect.Bottom := FLineHeight; // {(ALastRow - AFirstRow + 1) * FLineHeight;  //}(AFirstRow - FTopLine) * FLineHeight;
 
     if Assigned(FHighlighter) then
     begin
@@ -10979,20 +10905,7 @@ var
 
       LCurrentLineLength := Length(LCurrentLineText);
 
-      {if LCurrentLineLength > Length(FCharCountArray) then
-      begin
-        SetLength(FCharCountArray, 0);
-        SetLength(FCharCountArray, LCurrentLineLength + 1);
-      end;
-
-      FCharCountArray[0] := 0;
-      for i := 0 to LCurrentLineLength - 1 do
-      begin
-        if Ord(LCurrentLineText[i]) < 128 then
-          FCharCountArray[i + 1] := 1
-        else
-          FCharCountArray[i + 1] := FTextDrawer.GetCharCount(@LCurrentLineText[i]);
-      end;  }
+      // TODO
       if LCurrentLineLength > FCharCountArrayLength then
       begin
         FCharCountArrayLength := LCurrentLineLength;
@@ -11089,11 +11002,11 @@ var
           end;
         end;
 
-        LLineRect.Top := LLineRect.Bottom;
+       { LLineRect.Top := LLineRect.Bottom;
         if AMinimap then
           Inc(LLineRect.Bottom, FMinimap.CharHeight)
         else
-          Inc(LLineRect.Bottom, FLineHeight);
+          Inc(LLineRect.Bottom, FLineHeight); }
 
         LIsLineSelected := not LIsSelectionInsideLine and (LLineSelectionStart > 0);
         LTokenRect := LLineRect;
@@ -11159,6 +11072,15 @@ var
 
         if Assigned(FOnAfterLinePaint) then
           FOnAfterLinePaint(Self, ACanvas, LLineRect, LCurrentLine, AMinimap);
+
+
+        LLineRect.Top := LLineRect.Bottom;
+        if AMinimap then
+          Inc(LLineRect.Bottom, FMinimap.CharHeight)
+        else
+          Inc(LLineRect.Bottom, FLineHeight);
+
+
         Inc(LDisplayLine);
         LCurrentRow := GetDisplayTextLineNumber(LDisplayLine);
         if LWrappedRowCount > FVisibleLines then
@@ -11531,11 +11453,7 @@ begin
     if FDisplayCaretY <> AValue.Row then
     begin
       if ActiveLine.Color <> clNone then
-      begin
-        InvalidateLines(FDisplayCaretY, AValue.Row);
-        //InvalidateLine(FDisplayCaretY);
-        //InvalidateLine(AValue.Row);
-      end;
+        Invalidate;
       FDisplayCaretY := AValue.Row;
     end;
     EnsureCursorPositionVisible;
@@ -13055,7 +12973,7 @@ begin
   end;
 
   FLines.EndUpdate;
-  InvalidateLeftMargin;
+  Invalidate;
 end;
 
 procedure TBCBaseEditor.CodeFoldingUncollapseAll;
@@ -13093,7 +13011,7 @@ begin
       CodeFoldingUncollapse(LCodeFoldingRange);
   end;
   if ANeedInvalidate then
-    InvalidateLeftMargin;
+    Invalidate;
 end;
 
 procedure TBCBaseEditor.CommandProcessor(ACommand: TBCEditorCommand; AChar: Char; AData: Pointer);
@@ -13635,7 +13553,7 @@ begin
     GotoLineAndCenter(LTextPosition.Line);
 
     if SelectionAvailable then
-      InvalidateSelection;
+      Invalidate;
     FSelectionBeginPosition := TextCaretPosition;
     FSelectionEndPosition := FSelectionBeginPosition;
   end;
@@ -13661,7 +13579,7 @@ begin
   TopLine := Max(LTextCaretPosition.Line - FVisibleLines div 2, 1);
   SetTextCaretPosition(LTextCaretPosition);
   if SelectionAvailable then
-    InvalidateSelection;
+    Invalidate;
   FSelectionBeginPosition := LTextCaretPosition;
   FSelectionEndPosition := FSelectionBeginPosition;
   EnsureCursorPositionVisible(True);
@@ -13737,151 +13655,6 @@ begin
   FSelection.ActiveMode := smColumn;
   DoSelectedText(smColumn, AChangeStr, AAddToUndoList);
   FSelection.ActiveMode := LSelectionMode;
-end;
-
-procedure TBCBaseEditor.InvalidateLeftMargin;
-begin
-  InvalidateLeftMarginLines(-1, -1);
-end;
-
-procedure TBCBaseEditor.InvalidateLeftMarginLine(ALine: Integer);
-begin
-  if (ALine < 1) or (ALine > FLines.Count) then
-    Exit;
-
-  InvalidateLeftMarginLines(ALine, ALine);
-end;
-
-procedure TBCBaseEditor.InvalidateLeftMarginLines(AFirstLine, ALastLine: Integer);
-var
-  LInvalidationRect: TRect;
-  LWidth: Integer;
-begin
-  if Visible and HandleAllocated then
-  begin
-    LWidth := 0;
-    if FMinimap.Align = maLeft then
-      Inc(LWidth, FMinimap.GetWidth);
-    if FSearch.Map.Align = saLeft then
-      Inc(LWidth, FSearch.Map.GetWidth);
-    if (AFirstLine = -1) and (ALastLine = -1) then
-    begin
-      LInvalidationRect := Rect(LWidth, 0, LWidth + FLeftMargin.GetWidth, ClientHeight);
-
-      if sfLinesChanging in FStateFlags then
-        UnionRect(FInvalidateRect, FInvalidateRect, LInvalidationRect)
-      else
-        InvalidateRect(LInvalidationRect);
-    end
-    else
-    begin
-      if ALastLine < AFirstLine then
-        SwapInt(ALastLine, AFirstLine);
-      AFirstLine := Max(AFirstLine, TopLine);
-      ALastLine := Min(ALastLine, TopLine + VisibleLines);
-      if FWordWrap.Enabled then
-        if ALastLine > FLines.Count then
-          ALastLine := TopLine + VisibleLines;
-
-      if ALastLine >= AFirstLine then
-      begin
-        LInvalidationRect := Rect(LWidth, FLineHeight * (AFirstLine - TopLine),
-          LWidth + FLeftMargin.GetWidth, FLineHeight * (ALastLine - TopLine + 1));
-
-        if sfLinesChanging in FStateFlags then
-          UnionRect(FInvalidateRect, FInvalidateRect, LInvalidationRect)
-        else
-          InvalidateRect(LInvalidationRect);
-      end;
-    end;
-  end;
-end;
-
-procedure TBCBaseEditor.InvalidateLine(ALine: Integer);
-var
-  LInvalidationRect: TRect;
-begin
-  if (not HandleAllocated) or (ALine < 1) or (ALine > FLines.Count) or (not Visible) or FMouseMoveScrolling then
-    Exit;
-
-  if FWordWrap.Enabled then
-  begin
-    InvalidateLines(ALine, ALine);
-    Exit;
-  end;
-
-  if (ALine >= TopLine) and (ALine <= TopLine + VisibleLines) then
-  begin
-    LInvalidationRect := Rect(0, FLineHeight * (ALine - TopLine), ClientWidth, 0);
-    LInvalidationRect.Bottom := LInvalidationRect.Top + FLineHeight;
-    DeflateMinimapRect(LInvalidationRect);
-
-    if sfLinesChanging in FStateFlags then
-      UnionRect(FInvalidateRect, FInvalidateRect, LInvalidationRect)
-    else
-      InvalidateRect(LInvalidationRect);
-  end;
-end;
-
-procedure TBCBaseEditor.InvalidateLines(AFirstLine, ALastLine: Integer);
-var
-  LInvalidationRect: TRect;
-begin
-  if FMouseMoveScrolling then
-    Exit;
-
-  if Visible and HandleAllocated then
-  begin
-    if (AFirstLine = -1) and (ALastLine = -1) then
-    begin
-      LInvalidationRect := ClientRect;
-      DeflateMinimapRect(LInvalidationRect);
-      if sfLinesChanging in FStateFlags then
-        UnionRect(FInvalidateRect, FInvalidateRect, LInvalidationRect)
-      else
-        InvalidateRect(LInvalidationRect);
-    end
-    else
-    begin
-      AFirstLine := Max(AFirstLine, 1);
-      ALastLine := Max(ALastLine, 1);
-      if ALastLine < AFirstLine then
-        SwapInt(ALastLine, AFirstLine);
-      AFirstLine := Max(AFirstLine, TopLine);
-      ALastLine := Min(ALastLine, TopLine + VisibleLines);
-      if FWordWrap.Enabled then
-        if ALastLine > FLines.Count then
-          ALastLine := TopLine + VisibleLines;
-      if ALastLine >= AFirstLine then
-      begin
-        LInvalidationRect := Rect(0, FLineHeight * (AFirstLine - TopLine), ClientWidth,
-          FLineHeight * (ALastLine - TopLine + 1));
-        DeflateMinimapRect(LInvalidationRect);
-        if sfLinesChanging in FStateFlags then
-          UnionRect(FInvalidateRect, FInvalidateRect, LInvalidationRect)
-        else
-          InvalidateRect(LInvalidationRect);
-      end;
-    end;
-  end;
-end;
-
-procedure TBCBaseEditor.InvalidateMinimap;
-var
-  LInvalidationRect: TRect;
-  LRectLeft, LRectRight: Integer;
-begin
-  FMinimapBufferBitmap.Height := 0;
-
-  GetMinimapLeftRight(LRectLeft, LRectRight);
-
-  LInvalidationRect := Rect(LRectLeft, 0, LRectRight, ClientHeight);
-  InvalidateRect(LInvalidationRect);
-end;
-
-procedure TBCBaseEditor.InvalidateSelection;
-begin
-  InvalidateLines(SelectionBeginPosition.Line, SelectionEndPosition.Line);
 end;
 
 procedure TBCBaseEditor.LeftMarginChanged(ASender: TObject);
@@ -13988,7 +13761,7 @@ begin
           if (AComponent = FLeftMargin.Bookmarks.Images) then
           begin
             FLeftMargin.Bookmarks.Images := nil;
-            InvalidateLeftMarginLines(-1, -1);
+            Invalidate;
           end;
   end;
 end;
@@ -14250,14 +14023,14 @@ begin
   begin
     FLines.Attributes[ALine].Foreground := AForegroundColor;
     FLines.Attributes[ALine].Background := ABackgroundColor;
-    InvalidateLine(ALine + 1);
+    Invalidate;
   end;
 end;
 
 procedure TBCBaseEditor.SetLineColorToDefault(ALine: Integer);
 begin
   if (ALine >= 0) and (ALine < FLines.Count) then
-    InvalidateLine(ALine + 1);
+    Invalidate;
 end;
 
 procedure TBCBaseEditor.Sort(ASortOrder: TBCEditorSortOrder = soToggle);

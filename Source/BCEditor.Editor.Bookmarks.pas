@@ -90,7 +90,7 @@ procedure TBCEditorBookmark.Invalidate;
 begin
   if FVisible then
     if Assigned(FEditor) and (FEditor is TBCBaseEditor) then
-     (FEditor as TBCBaseEditor).InvalidateLeftMarginLines(FLine, FLine);
+     (FEditor as TBCBaseEditor).Invalidate;
 end;
 
 procedure TBCEditorBookmark.SetImageIndex(const AValue: Integer);
