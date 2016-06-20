@@ -6738,7 +6738,7 @@ var
         LMaxScroll := VisibleChars
       else
         LMaxScroll := Max(FLines.GetLengthOfLongestLine, 1);
-      // TODO maxscroll * charwidth?
+
       if LMaxScroll <= BCEDITOR_MAX_SCROLL_RANGE then
       begin
         LScrollInfo.nMin := 0;
@@ -9010,49 +9010,42 @@ begin
     Canvas.Brush.Color := FBackgroundColor;
 
     { Text lines }
-    if LClipRect.Right > LTextLinesLeft then
-    begin
-      DrawRect.Top := 0;
-      DrawRect.Bottom := LClipRect.Height;
-      DrawRect.Left := 0;
-      // TODO: Use scroll width?
-      // TODO: Background color when scrolled behind longest line
-      DrawRect.Right := Max((FLines.GetLengthOfLongestLine + 1) * FCharWidth, LClipRect.Width);
+    DrawRect.Top := 0;
+    DrawRect.Left := 0;
+    DrawRect.Right := LClipRect.Width + FHorizontalScrollPosition;
+    DrawRect.Bottom := LClipRect.Height;
 
-      FTextLinesBufferBitmap.Width := DrawRect.Width;
-      FTextLinesBufferBitmap.Height := DrawRect.Height; { Background color is used, no need to fill rect. }
+    FTextLinesBufferBitmap.Width := DrawRect.Width;
+    FTextLinesBufferBitmap.Height := DrawRect.Height; { Background color is used, no need to fill rect. }
 
-      FTextDrawer.BeginDrawing(FTextLinesBufferBitmap.Canvas.Handle);
-      FTextDrawer.SetBaseFont(Font);
+    FTextDrawer.BeginDrawing(FTextLinesBufferBitmap.Canvas.Handle);
+    FTextDrawer.SetBaseFont(Font);
 
-      PaintTextLines(FTextLinesBufferBitmap.Canvas, DrawRect, LLine1, LLine2, False);
+    PaintTextLines(FTextLinesBufferBitmap.Canvas, DrawRect, LLine1, LLine2, False);
 
-      PaintRightMargin(FTextLinesBufferBitmap.Canvas, DrawRect);
+    PaintRightMargin(FTextLinesBufferBitmap.Canvas, DrawRect);
 
-      if FCodeFolding.Visible and (cfoShowIndentGuides in CodeFolding.Options) then
-        PaintGuides(FTextLinesBufferBitmap.Canvas, FTopLine, FTopLine + FVisibleLines, False);
+    if FCodeFolding.Visible and (cfoShowIndentGuides in CodeFolding.Options) then
+      PaintGuides(FTextLinesBufferBitmap.Canvas, FTopLine, FTopLine + FVisibleLines, False);
 
-      if FCaret.MultiEdit.Enabled and (FMultiCaretPosition.Row <> -1) then
-        PaintCaretBlock(FTextLinesBufferBitmap.Canvas, FMultiCaretPosition);
+    if FCaret.MultiEdit.Enabled and (FMultiCaretPosition.Row <> -1) then
+      PaintCaretBlock(FTextLinesBufferBitmap.Canvas, FMultiCaretPosition);
 
-      if FCaret.NonBlinking.Enabled or Assigned(FMultiCarets) and (FMultiCarets.Count > 0) and FDrawMultiCarets then
-        DrawCaret(FTextLinesBufferBitmap.Canvas);
+    if FCaret.NonBlinking.Enabled or Assigned(FMultiCarets) and (FMultiCarets.Count > 0) and FDrawMultiCarets then
+      DrawCaret(FTextLinesBufferBitmap.Canvas);
 
-      if soHighlightResults in FSearch.Options then
-        PaintSearchResults(FTextLinesBufferBitmap.Canvas);
+    if soHighlightResults in FSearch.Options then
+      PaintSearchResults(FTextLinesBufferBitmap.Canvas);
 
-      if FSyncEdit.Enabled and FSyncEdit.Active then
-        PaintSyncItems(FTextLinesBufferBitmap.Canvas);
+    if FSyncEdit.Enabled and FSyncEdit.Active then
+      PaintSyncItems(FTextLinesBufferBitmap.Canvas);
 
-      // TODO: Continue here...
+    FTextDrawer.EndDrawing;
 
-      FTextDrawer.EndDrawing;
+    BitBlt(Canvas.Handle, LTextLinesLeft, LClipRect.Top, LTextLinesRight - LTextLinesLeft, LClipRect.Height,
+      FTextLinesBufferBitmap.Canvas.Handle, FHorizontalScrollPosition, 0, SRCCOPY);
 
-      BitBlt(Canvas.Handle, LTextLinesLeft, LClipRect.Top, LTextLinesRight - LTextLinesLeft, LClipRect.Height,
-        FTextLinesBufferBitmap.Canvas.Handle, FHorizontalScrollPosition, 0, SRCCOPY);
-
-      FTextLinesBufferBitmap.Height := 0;
-    end;
+    FTextLinesBufferBitmap.Height := 0;
 
     FTextDrawer.BeginDrawing(Canvas.Handle);
 
@@ -9063,111 +9056,104 @@ begin
       PaintMouseMoveScrollPoint;
 
     { Left margin and code folding }
-    if LClipRect.Left < LTextLinesLeft then
+    DrawRect := LClipRect;
+    DrawRect.Left := 0;
+    if FMinimap.Align = maLeft then
+      Inc(DrawRect.Left, FMinimap.GetWidth);
+    if FSearch.Map.Align = saLeft then
+      Inc(DrawRect.Left, FSearch.Map.GetWidth);
+
+    if FLeftMargin.Visible then
     begin
-      DrawRect := LClipRect;
-      DrawRect.Left := 0;
-      if FMinimap.Align = maLeft then
-        Inc(DrawRect.Left, FMinimap.GetWidth);
-      if FSearch.Map.Align = saLeft then
-        Inc(DrawRect.Left, FSearch.Map.GetWidth);
+      DrawRect.Right := DrawRect.Left + FLeftMargin.GetWidth;
+      PaintLeftMargin(DrawRect, LLine1, LLine2, LLine3);
+    end;
 
-      if FLeftMargin.Visible then
-      begin
-        DrawRect.Right := DrawRect.Left + FLeftMargin.GetWidth;
-        PaintLeftMargin(DrawRect, LLine1, LLine2, LLine3);
-      end;
-
-      if FCodeFolding.Visible then
-      begin
-        Inc(DrawRect.Left, FLeftMargin.GetWidth);
-        DrawRect.Right := DrawRect.Left + FCodeFolding.GetWidth;
-        PaintCodeFolding(DrawRect, LLine1, LLine2);
-      end;
+    if FCodeFolding.Visible then
+    begin
+      Inc(DrawRect.Left, FLeftMargin.GetWidth);
+      DrawRect.Right := DrawRect.Left + FCodeFolding.GetWidth;
+      PaintCodeFolding(DrawRect, LLine1, LLine2);
     end;
 
     { Minimap }
     if FMinimap.Visible then
-      if (FMinimap.Align = maRight) and (LClipRect.Right > LTextLinesRight) or
-         (FMinimap.Align = maLeft) and (LClipRect.Left < LTextLinesLeft - FLeftMargin.GetWidth - FCodeFolding.GetWidth) then
+    begin
+      DrawRect := LClipRect;
+      // TODO: Fix rect
+      if FMinimap.Align = maRight then
       begin
-        DrawRect := LClipRect;
-        // TODO: Fix rect
-        if FMinimap.Align = maRight then
+        DrawRect.Left := LTextLinesRight;
+        DrawRect.Right := ClientRect.Width;
+        if FSearch.Map.Align = saRight then
+          Dec(DrawRect.Right, FSearch.Map.GetWidth);
+      end
+      else
+      begin
+        DrawRect.Left := 0;
+        DrawRect.Right := FMinimap.GetWidth;
+        if FSearch.Map.Align = saLeft then
         begin
-          DrawRect.Left := LTextLinesRight;
-          DrawRect.Right := ClientRect.Width;
-          if FSearch.Map.Align = saRight then
-            Dec(DrawRect.Right, FSearch.Map.GetWidth);
-        end
-        else
-        begin
-          DrawRect.Left := 0;
-          DrawRect.Right := FMinimap.GetWidth;
-          if FSearch.Map.Align = saLeft then
-          begin
-            Inc(DrawRect.Left, FSearch.Map.GetWidth);
-            Inc(DrawRect.Right, FSearch.Map.GetWidth);
-          end;
-        end;
-
-        FTextDrawer.SetBaseFont(FMinimap.Font);
-
-        LSelectionAvailable := SelectionAvailable;
-
-        if not FMinimap.Dragging and
-          (DrawRect.Height = FMinimapBufferBitmap.Height) and (FLastTopLine = FTopLine) and
-          (FLastLineNumberCount = FLineNumbersCount) and (not LSelectionAvailable or
-          LSelectionAvailable and
-          (FSelectionBeginPosition.Line >= FTopLine) and (FSelectionEndPosition.Line <= FTopLine + FVisibleLines)) then
-        begin
-          LLine1 := FTopLine;
-          LLine2 := FTopLine + FVisibleLines;
-          BitBlt(Canvas.Handle, DrawRect.Left, DrawRect.Top, DrawRect.Width, DrawRect.Height,
-            FMinimapBufferBitmap.Canvas.Handle, 0, 0, SRCCOPY);
-        end
-        else
-        begin
-          LLine1 := Max(FMinimap.TopLine, 1);
-          LLine2 := Min(FLineNumbersCount, LLine1 + LClipRect.Height div Max(FMinimap.CharHeight - 1, 1));
-        end;
-
-        PaintTextLines(Canvas, DrawRect, LLine1, LLine2, True);
-        if FCodeFolding.Visible and (moShowIndentGuides in FMinimap.Options) then
-          PaintGuides(Canvas, LLine1, LLine2, True);
-        if ioUseBlending in FMinimap.Indicator.Options then
-          PaintMinimapIndicator(DrawRect);
-
-        FMinimapBufferBitmap.Width := DrawRect.Width;
-        FMinimapBufferBitmap.Height := DrawRect.Height;
-        BitBlt(FMinimapBufferBitmap.Canvas.Handle, 0, 0, DrawRect.Width, DrawRect.Height, Canvas.Handle, DrawRect.Left,
-          DrawRect.Top, SRCCOPY);
-        FTextDrawer.SetBaseFont(Font);
-
-        if FMinimap.Shadow.Visible then
-        begin
-          DrawRect := LClipRect;
-          DrawRect.Left := LTextLinesLeft - FLeftMargin.GetWidth - FCodeFolding.GetWidth;
-          DrawRect.Right := LTextLinesRight;
-          PaintMinimapShadow(Canvas, DrawRect);
+          Inc(DrawRect.Left, FSearch.Map.GetWidth);
+          Inc(DrawRect.Right, FSearch.Map.GetWidth);
         end;
       end;
+
+      FTextDrawer.SetBaseFont(FMinimap.Font);
+
+      LSelectionAvailable := SelectionAvailable;
+
+      if not FMinimap.Dragging and
+        (DrawRect.Height = FMinimapBufferBitmap.Height) and (FLastTopLine = FTopLine) and
+        (FLastLineNumberCount = FLineNumbersCount) and (not LSelectionAvailable or
+        LSelectionAvailable and
+        (FSelectionBeginPosition.Line >= FTopLine) and (FSelectionEndPosition.Line <= FTopLine + FVisibleLines)) then
+      begin
+        LLine1 := FTopLine;
+        LLine2 := FTopLine + FVisibleLines;
+        BitBlt(Canvas.Handle, DrawRect.Left, DrawRect.Top, DrawRect.Width, DrawRect.Height,
+          FMinimapBufferBitmap.Canvas.Handle, 0, 0, SRCCOPY);
+      end
+      else
+      begin
+        LLine1 := Max(FMinimap.TopLine, 1);
+        LLine2 := Min(FLineNumbersCount, LLine1 + LClipRect.Height div Max(FMinimap.CharHeight - 1, 1));
+      end;
+
+      PaintTextLines(Canvas, DrawRect, LLine1, LLine2, True);
+      if FCodeFolding.Visible and (moShowIndentGuides in FMinimap.Options) then
+        PaintGuides(Canvas, LLine1, LLine2, True);
+      if ioUseBlending in FMinimap.Indicator.Options then
+        PaintMinimapIndicator(DrawRect);
+
+      FMinimapBufferBitmap.Width := DrawRect.Width;
+      FMinimapBufferBitmap.Height := DrawRect.Height;
+      BitBlt(FMinimapBufferBitmap.Canvas.Handle, 0, 0, DrawRect.Width, DrawRect.Height, Canvas.Handle, DrawRect.Left,
+        DrawRect.Top, SRCCOPY);
+      FTextDrawer.SetBaseFont(Font);
+
+      if FMinimap.Shadow.Visible then
+      begin
+        DrawRect := LClipRect;
+        DrawRect.Left := LTextLinesLeft - FLeftMargin.GetWidth - FCodeFolding.GetWidth;
+        DrawRect.Right := LTextLinesRight;
+        PaintMinimapShadow(Canvas, DrawRect);
+      end;
+    end;
 
     { Search map }
     if FSearch.Map.Visible then
-      if (FSearch.Map.Align = saRight) and (LClipRect.Right > ClientRect.Width - FSearch.Map.GetWidth) or
-         (FSearch.Map.Align = saLeft) and (LClipRect.Left <= FSearch.Map.GetWidth) then
+    begin
+      DrawRect := LClipRect;
+      if FSearch.Map.Align = saRight then
+        DrawRect.Left := ClientRect.Width - FSearch.Map.GetWidth
+      else
       begin
-        DrawRect := LClipRect;
-        if FSearch.Map.Align = saRight then
-          DrawRect.Left := ClientRect.Width - FSearch.Map.GetWidth
-        else
-        begin
-          DrawRect.Left := 0;
-          DrawRect.Right := FSearch.Map.GetWidth;
-        end;
-        PaintSearchMap(DrawRect);
+        DrawRect.Left := 0;
+        DrawRect.Right := FSearch.Map.GetWidth;
       end;
+      PaintSearchMap(DrawRect);
+    end;
     FTextDrawer.EndDrawing;
 
     DoOnPaint;
@@ -14264,6 +14250,7 @@ begin
 
     LClientRect := ClientRect;
     DeflateMinimapRect(LClientRect);
+    Inc(LClientRect.Left, FLeftMargin.GetWidth + FCodeFolding.GetWidth);
 
     SetCaretPos(LCaretPoint.X, LCaretPoint.Y);
     if LClientRect.Contains(LCaretPoint) then
