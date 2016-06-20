@@ -2644,8 +2644,8 @@ begin
     Inc(LWidth, FMinimap.GetWidth);
   if FSearch.Map.Align = saLeft then
     Inc(LWidth, FSearch.Map.GetWidth);
-  Result.Column := Max(1, FHorizontalScrollPosition div FCharWidth + ((X - LWidth - FLeftMargin.GetWidth -
-    FCodeFolding.GetWidth) div FCharWidth));
+  Dec(LWidth, FLeftMargin.GetWidth + FCodeFolding.GetWidth);
+  Result.Column := Max(1, (X + LWidth + FHorizontalScrollPosition) div FCharWidth + 1);
   Result.Row := Max(1, TopLine + Y div FLineHeight);
 end;
 
@@ -3057,6 +3057,7 @@ begin
       CodeFoldingUncollapseAll
     else
       InitCodeFolding;
+    FTextOffset := GetTextOffset;
   end
   else
   if AEvent = fcRescan then
@@ -9168,6 +9169,7 @@ begin
         PaintSearchMap(DrawRect);
       end;
     FTextDrawer.EndDrawing;
+
     DoOnPaint;
   finally
     FLastTopLine := FTopLine;
