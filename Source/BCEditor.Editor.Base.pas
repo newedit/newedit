@@ -9300,11 +9300,11 @@ begin
   if FCodeFolding.Visible and (cfoShowCollapsedCodeHint in CodeFolding.Options) and Assigned(AFoldRange) and
     AFoldRange.Collapsed and not AFoldRange.ParentCollapsed then
   begin
-    LCollapseMarkRect.Left := (ATokenPosition + ATokenLength + 1) * FCharWidth + FLeftMargin.GetWidth + FCodeFolding.GetWidth;
-    if FMinimap.Align = maLeft then
+    LCollapseMarkRect.Left := (ATokenPosition + ATokenLength + 1) * FCharWidth {+ FLeftMargin.GetWidth + FCodeFolding.GetWidth};
+   { if FMinimap.Align = maLeft then
       Inc(LCollapseMarkRect.Left, FMinimap.GetWidth);
     if FSearch.Map.Align = saLeft then
-      Inc(LCollapseMarkRect.Left, FSearch.Map.GetWidth);
+      Inc(LCollapseMarkRect.Left, FSearch.Map.GetWidth);  }
     LCollapseMarkRect.Top := ALineRect.Top + 2;
     LCollapseMarkRect.Bottom := ALineRect.Bottom - 2;
     LCollapseMarkRect.Right := LCollapseMarkRect.Left + FCharWidth * 4 - 2;
@@ -10844,8 +10844,8 @@ var
         if Assigned(LFoldRange) and LFoldRange.Collapsed then
         begin
           LOpenTokenEndLen := 0;
-          LTempLineText := FLines.ExpandedStrings[LFoldRange.FromLine - 1];
-          LTempLineText := FLines.ExpandedStrings[LFoldRange.ToLine - 1];
+          LFromLineText := FLines.ExpandedStrings[LFoldRange.FromLine - 1];
+          LToLineText := FLines.ExpandedStrings[LFoldRange.ToLine - 1];
 
           LOpenTokenEndPos := Pos(LFoldRange.RegionItem.OpenTokenEnd, AnsiUpperCase(LFromLineText));
 
@@ -10990,12 +10990,6 @@ var
             end;
           end;
         end;
-
-       { LLineRect.Top := LLineRect.Bottom;
-        if AMinimap then
-          Inc(LLineRect.Bottom, FMinimap.CharHeight)
-        else
-          Inc(LLineRect.Bottom, FLineHeight); }
 
         LIsLineSelected := not LIsSelectionInsideLine and (LLineSelectionStart > 0);
         LTokenRect := LLineRect;
