@@ -9028,12 +9028,6 @@ begin
     if FCodeFolding.Visible and (cfoShowIndentGuides in CodeFolding.Options) then
       PaintGuides(FTextLinesBufferBitmap.Canvas, FTopLine, FTopLine + FVisibleLines, False);
 
-    if FCaret.MultiEdit.Enabled and (FMultiCaretPosition.Row <> -1) then
-      PaintCaretBlock(FTextLinesBufferBitmap.Canvas, FMultiCaretPosition);
-
-    if FCaret.NonBlinking.Enabled or Assigned(FMultiCarets) and (FMultiCarets.Count > 0) and FDrawMultiCarets then
-      DrawCaret(FTextLinesBufferBitmap.Canvas);
-
     if soHighlightResults in FSearch.Options then
       PaintSearchResults(FTextLinesBufferBitmap.Canvas);
 
@@ -9048,6 +9042,12 @@ begin
     FTextLinesBufferBitmap.Height := 0;
 
     FTextDrawer.BeginDrawing(Canvas.Handle);
+
+    if FCaret.NonBlinking.Enabled or Assigned(FMultiCarets) and (FMultiCarets.Count > 0) and FDrawMultiCarets then
+      DrawCaret(Canvas);
+
+    if FCaret.MultiEdit.Enabled and (FMultiCaretPosition.Row <> -1) then
+      PaintCaretBlock(Canvas, FMultiCaretPosition);
 
     if FRightMargin.Moving then
       PaintRightMarginMove;
