@@ -9080,7 +9080,7 @@ begin
     if FMinimap.Visible then
     begin
       DrawRect := LClipRect;
-      // TODO: Fix rect
+
       if FMinimap.Align = maRight then
       begin
         DrawRect.Left := LTextLinesRight;
@@ -9113,6 +9113,7 @@ begin
         LLine2 := FTopLine + FVisibleLines;
         BitBlt(Canvas.Handle, DrawRect.Left, DrawRect.Top, DrawRect.Width, DrawRect.Height,
           FMinimapBufferBitmap.Canvas.Handle, 0, 0, SRCCOPY);
+        DrawRect.Top := (FTopLine - FMinimap.TopLine) * FMinimap.CharHeight;
       end
       else
       begin
@@ -10432,7 +10433,7 @@ var
       Result := 0;
 
     for i := 1 to AIndex - 1 do
-      Result := Result + FCharWidth * FCharCountArray[i - 1];
+      Result := Result + FTextDrawer.CharWidth * FCharCountArray[i - 1];
   end;
 
   procedure PaintToken(AToken: string; ATokenLength, ACharsBefore, AFirst, ALast: Integer);
@@ -10559,12 +10560,12 @@ var
         begin
           SetDrawingColors(soFromEndOfLine in FSelection.Options);
           if (soFromEndOfLine in FSelection.Options) and (soToEndOfLine in FSelection.Options) then
-            LTokenRect.Right := LTokenRect.Left + FCharWidth
+            LTokenRect.Right := LTokenRect.Left + FTextDrawer.CharWidth
           else
             LTokenRect.Right := X1;
           PatBlt(ACanvas.Handle, LTokenRect.Left, LTokenRect.Top, LTokenRect.Width, LTokenRect.Height, PATCOPY); { fill end of line rect }
           if (soFromEndOfLine in FSelection.Options) and (soToEndOfLine in FSelection.Options) then
-            LTokenRect.Left := LTokenRect.Right - FCharWidth
+            LTokenRect.Left := LTokenRect.Right - FTextDrawer.CharWidth
           else
             LTokenRect.Left := X1;
         end;
@@ -10577,7 +10578,7 @@ var
           if (soFromEndOfLine in FSelection.Options) and (soToEndOfLine in FSelection.Options) then
           begin
             SetDrawingColors(True);
-            LTokenRect.Right := LTokenRect.Left + FCharWidth;
+            LTokenRect.Right := LTokenRect.Left + FTextDrawer.CharWidth;
             PatBlt(ACanvas.Handle, LTokenRect.Left, LTokenRect.Top, LTokenRect.Width, LTokenRect.Height, PATCOPY); { fill end of line rect }
           end;
           LTokenRect.Right := X2;
@@ -10598,7 +10599,7 @@ var
         if (soFromEndOfLine in FSelection.Options) and (soToEndOfLine in FSelection.Options) and LIsLineSelected then
         begin
           SetDrawingColors(True);
-          LTokenRect.Right := LTokenRect.Left + FCharWidth;
+          LTokenRect.Right := LTokenRect.Left + FTextDrawer.CharWidth;
           PatBlt(ACanvas.Handle, LTokenRect.Left, LTokenRect.Top, LTokenRect.Width, LTokenRect.Height, PATCOPY); { fill end of line rect }
         end;
       end;
@@ -10811,9 +10812,9 @@ var
   begin
     LLineRect := AClipRect;
     if AMinimap then
-      LLineRect.Bottom := (AFirstRow - FMinimap.TopLine) * FMinimap.CharHeight
+      LLineRect.Bottom := (AFirstRow - FMinimap.TopLine + 1) * FMinimap.CharHeight
     else
-      LLineRect.Bottom := FLineHeight; // {(ALastRow - AFirstRow + 1) * FLineHeight;  //}(AFirstRow - FTopLine) * FLineHeight;
+      LLineRect.Bottom := FLineHeight; // (AFirstRow - FTopLine) * FLineHeight;
 
     if Assigned(FHighlighter) then
     begin
@@ -11061,13 +11062,11 @@ var
         if Assigned(FOnAfterLinePaint) then
           FOnAfterLinePaint(Self, ACanvas, LLineRect, LCurrentLine, AMinimap);
 
-
         LLineRect.Top := LLineRect.Bottom;
         if AMinimap then
           Inc(LLineRect.Bottom, FMinimap.CharHeight)
         else
           Inc(LLineRect.Bottom, FLineHeight);
-
 
         Inc(LDisplayLine);
         LCurrentRow := GetDisplayTextLineNumber(LDisplayLine);
