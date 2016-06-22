@@ -271,6 +271,7 @@ type
     procedure CompletionProposalTimerHandler(ASender: TObject);
     procedure ComputeScroll(X, Y: Integer);
     procedure CreateLineNumbersCache(AResetCache: Boolean = False);
+    procedure CreateShadowBitmap(const AClipRect: TRect);
     procedure DeflateMinimapRect(var ARect: TRect);
     procedure DeleteChar;
     procedure DeleteLastWordOrBeginningOfLine(const ACommand: TBCEditorCommand);
@@ -1205,7 +1206,7 @@ begin
   if TopLine <> LTopLine then
   begin
     TopLine := LTopLine;
-    Paint;
+    Invalidate;
   end;
 end;
 
@@ -2139,6 +2140,30 @@ begin
   end;
 end;
 
+procedure TBCBaseEditor.CreateShadowBitmap(const AClipRect: TRect);
+var
+  LRow, LColumn: Integer;
+  LPixel: PBCEditorQuadColor;
+  LAlpha: Single;
+begin
+  FMinimapShadowBitmap.Height := 0;
+  FMinimapShadowBitmap.Height := AClipRect.Height; //FI:W508 FixInsight ignore
+
+  for LRow := 0 to FMinimapShadowBitmap.Height - 1 do
+  begin
+    LPixel := FMinimapShadowBitmap.Scanline[LRow];
+    for LColumn := 0 to FMinimapShadowBitmap.Width - 1 do
+    begin
+      LAlpha := FMinimapShadowAlphaArray[LColumn];
+      LPixel.Alpha := FMinimapShadowAlphaByteArray[LColumn];
+      LPixel.Red := Round(LPixel.Red * LAlpha);
+      LPixel.Green := Round(LPixel.Green * LAlpha);
+      LPixel.Blue := Round(LPixel.Blue * LAlpha);
+      Inc(LPixel);
+    end;
+  end;
+end;
+
 function TBCBaseEditor.DisplayPositionToPixels(const ADisplayPosition: TBCEditorDisplayPosition): TPoint;
 begin
   Result.X := (ADisplayPosition.Column - 1) * FCharWidth + FTextOffset;
@@ -2984,7 +3009,7 @@ begin
   end;
 
   CheckIfAtMatchingKeywords;
-  Paint;
+  Invalidate;
   UpdateScrollBars;
 end;
 
@@ -3080,7 +3105,7 @@ begin
     SetParentCollapsedOfSubCodeFoldingRanges(False, FoldRangeLevel);
   end;
   CheckIfAtMatchingKeywords;
-  Paint;
+  Invalidate;
   UpdateScrollBars;
 end;
 
@@ -7087,6 +7112,7 @@ var
   LCompatibleBitmap, LOldBitmap: HBITMAP;
   LPaintStruct: TPaintStruct;
 begin
+  {$IFDEF DEBUG}OutputDebugString(PChar('WMPaint'));{$ENDIF}
   if FPaintLock <> 0 then
     Exit;
 
@@ -7107,18 +7133,18 @@ begin
     ReleaseDC(0, LDC);
     LCompatibleDC := CreateCompatibleDC(0);
     LOldBitmap := SelectObject(LCompatibleDC, LCompatibleBitmap);
-    LDC := BeginPaint(Handle, LPaintStruct);
     try
+      LDC := BeginPaint(Handle, LPaintStruct);
+      //Perform(WM_ERASEBKGND, LCompatibleDC, LCompatibleDC);
       Message.DC := LCompatibleDC;
       WMPaint(Message);
-
+      //Message.DC := 0;
       BitBlt(LDC, 0, 0, ClientRect.Right, ClientRect.Bottom, LCompatibleDC, 0, 0, SRCCOPY);
-
-      SelectObject(LCompatibleDC, LOldBitmap);
+      EndPaint(Handle, LPaintStruct);
     finally
+      SelectObject(LCompatibleDC, LOldBitmap);
       DeleteObject(LCompatibleBitmap);
       DeleteDC(LCompatibleDC);
-      EndPaint(Handle, LPaintStruct);
     end;
   end;
 end;
@@ -7956,7 +7982,7 @@ begin
         LPreviousLine := TopLine
       else
         Break;
-      Paint;
+      Invalidate;
     end
     else
     while LNewLine > TopLine + LStep do
@@ -7967,7 +7993,7 @@ begin
         LPreviousLine := TopLine
       else
         Break;
-      Paint;
+      Invalidate;
     end;
     TopLine := LNewLine;
   end;
@@ -8986,7 +9012,8 @@ var
   LSelectionAvailable: Boolean;
   LTextLinesLeft, LTextLinesRight: Integer;
 begin
-  LClipRect := Canvas.ClipRect;
+  {$IFDEF DEBUG}OutputDebugString(PChar('Paint'));{$ENDIF}
+  LClipRect := ClientRect; // Canvas.ClipRect;
 
   LLine1 := FTopLine + LClipRect.Top div FLineHeight;
   LTemp := (LClipRect.Bottom + FLineHeight - 1) div FLineHeight;
@@ -9132,14 +9159,6 @@ begin
       BitBlt(FMinimapBufferBitmap.Canvas.Handle, 0, 0, DrawRect.Width, DrawRect.Height, Canvas.Handle, DrawRect.Left,
         DrawRect.Top, SRCCOPY);
       FTextDrawer.SetBaseFont(Font);
-
-      if FMinimap.Shadow.Visible then
-      begin
-        DrawRect := LClipRect;
-        DrawRect.Left := LTextLinesLeft - FLeftMargin.GetWidth - FCodeFolding.GetWidth;
-        DrawRect.Right := LTextLinesRight;
-        PaintMinimapShadow(Canvas, DrawRect);
-      end;
     end;
 
     { Search map }
@@ -9156,6 +9175,15 @@ begin
       PaintSearchMap(DrawRect);
     end;
     FTextDrawer.EndDrawing;
+
+    if FMinimap.Visible then
+      if FMinimap.Shadow.Visible then
+      begin
+        DrawRect := LClipRect;
+        DrawRect.Left := LTextLinesLeft - FLeftMargin.GetWidth - FCodeFolding.GetWidth;
+        DrawRect.Right := LTextLinesRight;
+        PaintMinimapShadow(Canvas, DrawRect);
+      end;
 
     DoOnPaint;
   finally
@@ -9839,27 +9867,10 @@ end;
 
 procedure TBCBaseEditor.PaintMinimapShadow(ACanvas: TCanvas; AClipRect: TRect);
 var
-  LRow, LColumn: Integer;
-  LPixel: PBCEditorQuadColor;
-  LAlpha: Single;
   LLeft: Integer;
 begin
-  FMinimapShadowBitmap.Height := 0;
-  FMinimapShadowBitmap.Height := AClipRect.Height; //FI:W508 FixInsight ignore
-
-  for LRow := 0 to FMinimapShadowBitmap.Height - 1 do
-  begin
-    LPixel := FMinimapShadowBitmap.Scanline[LRow];
-    for LColumn := 0 to FMinimapShadowBitmap.Width - 1 do
-    begin
-      LAlpha := FMinimapShadowAlphaArray[LColumn];
-      LPixel.Alpha := FMinimapShadowAlphaByteArray[LColumn];
-      LPixel.Red := Round(LPixel.Red * LAlpha);
-      LPixel.Green := Round(LPixel.Green * LAlpha);
-      LPixel.Blue := Round(LPixel.Blue * LAlpha);
-      Inc(LPixel);
-    end;
-  end;
+  if FMinimapShadowBitmap.Height <> AClipRect.Height then
+    CreateShadowBitmap(AClipRect);
 
   if FMinimap.Align = maLeft then
     LLeft := AClipRect.Left
