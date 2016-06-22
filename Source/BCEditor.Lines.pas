@@ -608,6 +608,9 @@ begin
       Exclude(Flags, sfHasNoTabs);
       Value := AValue;
       Attribute^.LineState := lsModified;
+      if FIndexOfLongestLine <> -1 then
+        if FList^[FIndexOfLongestLine].ExpandedLength < FList^[AIndex].ExpandedLength then
+          FIndexOfLongestLine := AIndex;
     end;
 
     if Assigned(FOnPutted) then

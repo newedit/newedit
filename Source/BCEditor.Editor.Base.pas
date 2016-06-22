@@ -10439,7 +10439,7 @@ var
       if AMinimap then
         ATokenLength := Min(ATokenLength, LLastChar)
       else
-        ATokenLength := Min(ATokenLength, LVisibleChars);
+        ATokenLength := ATokenLength; // Min(ATokenLength, LVisibleChars);
       LText := Copy(AToken, AFirst, ATokenLength);
 
       FTextDrawer.ExtTextOut(X + 1, LTokenRect.Top, ETO_OPAQUE or ETO_CLIPPED, LTokenRect, PChar(LText), ATokenLength);
@@ -10465,7 +10465,7 @@ var
     X1, X2: Integer;
   begin
     { Compute some helper variables. }
-    LFirstColumn := Max(1, LTokenHelper.CharsBefore + 1);
+    LFirstColumn := {Max(1,} LTokenHelper.CharsBefore + 1{)};
     LLastColumn := Min(LLastChar, LTokenHelper.CharsBefore + LTokenHelper.Length + 1);
     if LIsSelectionInsideLine then
     begin
@@ -13290,11 +13290,14 @@ begin
   try
     LVisibleX := DisplayCaretX;
     LColumn := FHorizontalScrollPosition div FCharWidth;
+    if LVisibleX = 1 then
+      LColumn := 0
+    else
     if LVisibleX < LColumn then
       LColumn := LVisibleX
     else
     if LVisibleX >= VisibleChars + LColumn then
-      LColumn := LVisibleX - VisibleChars + 1;
+      LColumn := LVisibleX - VisibleChars {+ 1};
     SetHorizontalScrollPosition(LColumn * FCharWidth);
 
     LCaretRow := DisplayCaretY;
