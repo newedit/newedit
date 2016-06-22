@@ -7112,7 +7112,6 @@ var
   LCompatibleBitmap, LOldBitmap: HBITMAP;
   LPaintStruct: TPaintStruct;
 begin
-  {$IFDEF DEBUG}OutputDebugString(PChar('WMPaint'));{$ENDIF}
   if FPaintLock <> 0 then
     Exit;
 
@@ -9012,8 +9011,7 @@ var
   LSelectionAvailable: Boolean;
   LTextLinesLeft, LTextLinesRight: Integer;
 begin
-  {$IFDEF DEBUG}OutputDebugString(PChar('Paint'));{$ENDIF}
-  LClipRect := ClientRect; // Canvas.ClipRect;
+  LClipRect := ClientRect;
 
   LLine1 := FTopLine + LClipRect.Top div FLineHeight;
   LTemp := (LClipRect.Bottom + FLineHeight - 1) div FLineHeight;

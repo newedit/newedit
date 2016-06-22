@@ -589,6 +589,8 @@ begin
 end;
 
 procedure TBCEditorLines.Put(AIndex: Integer; const AValue: string);
+var
+  LHasTabs: Boolean;
 begin
   if ((AIndex = 0) and (FCount = 0)) or (FCount = AIndex) then
   begin
@@ -608,10 +610,10 @@ begin
       Exclude(Flags, sfHasNoTabs);
       Value := AValue;
       Attribute^.LineState := lsModified;
-      if FIndexOfLongestLine <> -1 then
-        if FList^[FIndexOfLongestLine].ExpandedLength < FList^[AIndex].ExpandedLength then
-          FIndexOfLongestLine := AIndex;
     end;
+    if FIndexOfLongestLine <> -1 then
+      if FList^[FIndexOfLongestLine].ExpandedLength < Length(FTabConvertProc(AValue, FTabWidth, LHasTabs)) then
+        FIndexOfLongestLine := AIndex;
 
     if Assigned(FOnPutted) then
       FOnPutted(Self, AIndex, 1);
