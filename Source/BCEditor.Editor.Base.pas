@@ -10675,10 +10675,9 @@ var
 
   procedure PaintLines;
   var
-    i, j: Integer;
+    i: Integer;
     LFirstColumn, LLastColumn: Integer;
-    {LCurrentLineText,} LFromLineText, LToLineText, LTempLineText: string;
-    LCurrentLineLength: Integer;
+    LFromLineText, LToLineText: string;
     LCurrentRow: Integer;
     LFoldRange: TBCEditorCodeFoldingRange;
     LHighlighterAttribute: TBCEditorHighlighterAttribute;
@@ -10694,7 +10693,6 @@ var
     LPreviousFirstColumn: Integer;
     LTextCaretY: Integer;
     LWrappedRowCount: Integer;
-    LPChar: PChar;
 
     function GetWordAtSelection(var ASelectedText: string): string;
     var
@@ -10894,8 +10892,6 @@ var
           end;
         end;
       end;
-
-      LCurrentLineLength := Length(LCurrentLineText);
 
       LIsCurrentLine := False;
 
