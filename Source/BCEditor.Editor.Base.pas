@@ -9327,11 +9327,9 @@ begin
     AFoldRange.Collapsed and not AFoldRange.ParentCollapsed then
   begin
     LCollapseMarkRect.Left := (ATokenPosition + ATokenLength + 1) * FCharWidth;
+    LCollapseMarkRect.Right := LCollapseMarkRect.Left + FCharWidth * 4 - 2;
     LCollapseMarkRect.Top := ALineRect.Top + 2;
     LCollapseMarkRect.Bottom := ALineRect.Bottom - 2;
-    LCollapseMarkRect.Right := LCollapseMarkRect.Left + FCharWidth * 4 - 2;
-
-    AFoldRange.CollapseMarkRect := LCollapseMarkRect;
 
     if LCollapseMarkRect.Right - AScrolledXBy > 0 then
     begin
@@ -9353,6 +9351,15 @@ begin
         X := X + FCharWidth - 1;
       end;
     end;
+
+    if FMinimap.Align = maLeft then
+      Inc(LCollapseMarkRect.Left, FMinimap.GetWidth);
+    if FSearch.Map.Align = saLeft then
+      Inc(LCollapseMarkRect.Left, FSearch.Map.GetWidth);
+    Inc(LCollapseMarkRect.Left, FLeftMargin.GetWidth + FCodeFolding.GetWidth);
+    LCollapseMarkRect.Right := LCollapseMarkRect.Left + FCharWidth * 4 - 2;
+
+    AFoldRange.CollapseMarkRect := LCollapseMarkRect;
   end;
   ACanvas.Pen.Color := LOldPenColor;
 end;
@@ -10431,7 +10438,7 @@ var
     else
       Result := 0;
 
-    for i := 1 to AIndex - 1 do
+    for i := 1 to AIndex do
       Result := Result + FTextDrawer.CharWidth * FCharCountArray[i - 1];
   end;
 
@@ -10893,13 +10900,12 @@ var
 
       LCurrentLineLength := Length(LCurrentLineText);
 
-      // TODO
       if LCurrentLineLength > FCharCountArrayLength then
       begin
         FCharCountArrayLength := LCurrentLineLength;
-        ReallocMem(FCharCountArray, LCurrentLineLength * SizeOf(Integer));
+        ReallocMem(FCharCountArray, (LCurrentLineLength + 1) * SizeOf(Integer));
       end;
-      for i := 0 to LCurrentLineLength - 1 do
+      for i := 1 to LCurrentLineLength do
       begin
         LPChar := @LCurrentLineText[i];
         if Ord(LPChar^) < 128 then
