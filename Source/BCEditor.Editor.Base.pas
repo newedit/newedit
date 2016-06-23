@@ -34,8 +34,6 @@ type
     FBorderStyle: TBorderStyle;
     FCaret: TBCEditorCaret;
     FCaretOffset: TPoint;
-    FCharCountArray: PByteArray;
-    FCharCountArrayLength: Integer;
     FDisplayCaretX: Integer;
     FDisplayCaretY: Integer;
     FDragBeginTextCaretPosition: TBCEditorTextPosition;
@@ -996,11 +994,6 @@ begin
   begin
     FreeMem(FMinimapShadowAlphaByteArray);
     FMinimapShadowAlphaByteArray := nil;
-  end;
-  if Assigned(FCharCountArray) then
-  begin
-    FreeMem(FCharCountArray);
-    FCharCountArray := nil;
   end;
   if Assigned(FSearchEngine) then
   begin
@@ -10333,6 +10326,7 @@ var
   LLastChar: Integer;
   LBookmarkOnCurrentLine: Boolean;
   LVisibleChars: Integer;
+  LCurrentLineText: string;
 
   function IsBookmarkOnCurrentLine: Boolean;
   var
@@ -10422,7 +10416,8 @@ var
 
   function GetCharWidth(AIndex: Integer; AMinimap: Boolean = False): Integer;
   var
-    i: Integer;
+    LTemp: string;
+    LTextSize: TSize;
   begin
     if AMinimap then
     begin
@@ -10438,8 +10433,10 @@ var
     else
       Result := 0;
 
-    for i := 1 to AIndex do
-      Result := Result + FTextDrawer.CharWidth * FCharCountArray[i - 1];
+     LTemp := Copy(LCurrentLineText, 1, AIndex - 1);
+     GetTextExtentPoint32(ACanvas.Handle, LTemp, Length(LTemp), LTextSize);
+
+     Result := Result + LTextSize.cx;
   end;
 
   procedure PaintToken(AToken: string; ATokenLength, ACharsBefore, AFirst, ALast: Integer);
@@ -10680,7 +10677,7 @@ var
   var
     i, j: Integer;
     LFirstColumn, LLastColumn: Integer;
-    LCurrentLineText, LFromLineText, LToLineText, LTempLineText: string;
+    {LCurrentLineText,} LFromLineText, LToLineText, LTempLineText: string;
     LCurrentLineLength: Integer;
     LCurrentRow: Integer;
     LFoldRange: TBCEditorCodeFoldingRange;
@@ -10899,20 +10896,6 @@ var
       end;
 
       LCurrentLineLength := Length(LCurrentLineText);
-
-      if LCurrentLineLength > FCharCountArrayLength then
-      begin
-        FCharCountArrayLength := LCurrentLineLength;
-        ReallocMem(FCharCountArray, (LCurrentLineLength + 1) * SizeOf(Integer));
-      end;
-      for i := 1 to LCurrentLineLength do
-      begin
-        LPChar := @LCurrentLineText[i];
-        if Ord(LPChar^) < 128 then
-          FCharCountArray[i] := 1
-        else
-          FCharCountArray[i] := FTextDrawer.GetCharCount(LPChar);
-      end;
 
       LIsCurrentLine := False;
 
