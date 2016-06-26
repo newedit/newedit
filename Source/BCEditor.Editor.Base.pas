@@ -10416,7 +10416,8 @@ var
 
   function GetCharWidth(AIndex: Integer; AMinimap: Boolean = False): Integer;
   var
-    LTemp: string;
+    LText: string;
+    LAfterLine: Integer;
     LTextSize: TSize;
   begin
     if AMinimap then
@@ -10433,21 +10434,22 @@ var
     else
       Result := 0;
 
-     LTemp := Copy(LCurrentLineText, 1, AIndex - 1);
-     GetTextExtentPoint32(ACanvas.Handle, LTemp, Length(LTemp), LTextSize);
+    LText := Copy(LCurrentLineText, 1, AIndex - 1);
+    GetTextExtentPoint32(ACanvas.Handle, LText, Length(LText), LTextSize);
+    Result := Result + LTextSize.cx;
 
-     Result := Result + LTextSize.cx;
+    LAfterLine := AIndex - Length(LCurrentLineText) - 1;
+    if LAfterLine > 0 then
+      Result := Result + LAfterLine * FTextDrawer.CharWidth;
   end;
 
   procedure PaintToken(AToken: string; ATokenLength, ACharsBefore, AFirst, ALast: Integer);
   var
     LText: string;
-    X: Integer;
     LOldPenColor: TColor;
   begin
     if (ALast > AFirst) and (LTokenRect.Right > LTokenRect.Left) then
     begin
-      X := GetCharWidth(AFirst, AMinimap);
       Dec(AFirst, ACharsBefore);
       if AMinimap then
         ATokenLength := Min(ATokenLength, LLastChar)
@@ -10455,7 +10457,7 @@ var
         ATokenLength := ATokenLength; // Min(ATokenLength, LVisibleChars);
       LText := Copy(AToken, AFirst, ATokenLength);
 
-      FTextDrawer.ExtTextOut(X + 1, LTokenRect.Top, ETO_OPAQUE or ETO_CLIPPED, LTokenRect, PChar(LText), ATokenLength);
+      FTextDrawer.ExtTextOut(LTokenRect.Left, LTokenRect.Top, ETO_OPAQUE or ETO_CLIPPED, LTokenRect, PChar(LText), ATokenLength);
 
       if LTokenHelper.MatchingPairUnderline then
       begin
@@ -10517,27 +10519,27 @@ var
         if LFirstUnselectedPartOfToken then
         begin
           SetDrawingColors(False);
-          LTokenRect.Right := GetCharWidth(LLineSelectionStart, AMinimap) + 1;
+          LTokenRect.Right := GetCharWidth(LLineSelectionStart, AMinimap){ + 1};
           PaintToken(LTokenHelper.Text, LLineSelectionStart - 1, LTokenHelper.CharsBefore, LFirstColumn, LLineSelectionStart);
         end;
         { selected part of the token }
         SetDrawingColors(True);
         LSelectionStart := Max(LLineSelectionStart, LFirstColumn);
         LSelectionEnd := Min(LLineSelectionEnd, LLastColumn);
-        LTokenRect.Right := GetCharWidth(LSelectionEnd, AMinimap) + 1;
+        LTokenRect.Right := GetCharWidth(LSelectionEnd, AMinimap){ + 1};
         PaintToken(LTokenHelper.Text, LSelectionEnd - LSelectionStart, LTokenHelper.CharsBefore, LSelectionStart, LSelectionEnd);
         { second unselected part of the token }
         if LSecondUnselectedPartOfToken then
         begin
           SetDrawingColors(False);
-          LTokenRect.Right := GetCharWidth(LLastColumn, AMinimap) + 1;
+          LTokenRect.Right := GetCharWidth(LLastColumn, AMinimap){ + 1};
           PaintToken(LTokenHelper.Text, LLastColumn - LSelectionEnd, LTokenHelper.CharsBefore, LLineSelectionEnd, LLastColumn);
         end;
       end
       else
       begin
         SetDrawingColors(LSelected);
-        LTokenRect.Right := GetCharWidth(LLastColumn, AMinimap) + 1;
+        LTokenRect.Right := GetCharWidth(LLastColumn, AMinimap){ + 1};
         PaintToken(LTokenHelper.Text, LTokenHelper.Length, LTokenHelper.CharsBefore, LFirstColumn, LLastColumn);
       end;
     end;
@@ -11068,7 +11070,7 @@ begin
     if FWordWrap.Enabled then
       LLastChar := LVisibleChars + 1
     else
-      LLastChar := FLines.GetLengthOfLongestLine + 1;
+      LLastChar := LVisibleChars + FHorizontalScrollPosition div FCharWidth + 2
   end;
 
   if LLastLine >= LFirstLine then
