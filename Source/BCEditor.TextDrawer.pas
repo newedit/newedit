@@ -651,6 +651,8 @@ var
   LTextMetricA: TTextMetricA;
   LPChar: PChar;
   LDrawRect: TRect;
+
+  LTextSize: TSize;
 begin
   LDrawRect := ARect;
   LCharWidth := CharWidth;
@@ -663,7 +665,11 @@ begin
       if Ord(LPChar^) < 128 then
         LExtTextOutDistance[i] := LCharWidth
       else
-        LExtTextOutDistance[i] := GetCharCount(LPChar) * LCharWidth;
+      begin
+        GetTextExtentPoint32(FHandle, LPChar^, 1, LTextSize);
+        LExtTextOutDistance[i] := LTextSize.cx;
+        // LExtTextOutDistance[i] := GetCharCount(LPChar) * LCharWidth;
+      end;
     end;
 
     { avoid clipping the last pixels of text in italic }
