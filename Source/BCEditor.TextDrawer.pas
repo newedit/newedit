@@ -118,7 +118,7 @@ type
     function GetCharCount(AChar: PChar): Integer;
     procedure BeginDrawing(AHandle: HDC);
     procedure EndDrawing;
-    procedure ExtTextOut(X, Y: Integer; AOptions: Longint; var ARect: TRect; AText: PChar; ALength: Integer);
+    procedure ExtTextOut(const X, Y: Integer; AOptions: Longint; const ARect: TRect; AText: PChar; ALength: Integer);
     procedure SetBackgroundColor(AValue: TColor);
     procedure SetBaseFont(AValue: TFont);
     procedure SetBaseStyle(const AValue: TFontStyles);
@@ -640,7 +640,7 @@ begin
   end;
 end;
 
-procedure TBCEditorTextDrawer.ExtTextOut(X, Y: Integer; AOptions: Longint; var ARect: TRect; AText: PChar;
+procedure TBCEditorTextDrawer.ExtTextOut(const X, Y: Integer; AOptions: Longint; const ARect: TRect; AText: PChar;
   ALength: Integer);
 var
   i, LCharWidth: Integer;
@@ -650,7 +650,9 @@ var
   LCharInfo: TABC;
   LTextMetricA: TTextMetricA;
   LPChar: PChar;
+  LDrawRect: TRect;
 begin
+  LDrawRect := ARect;
   LCharWidth := CharWidth;
 
   GetMem(LExtTextOutDistance, ALength * SizeOf(Integer));
@@ -687,12 +689,12 @@ begin
         end;
 
         if LRealCharWidth > LNormalCharWidth then
-          Inc(ARect.Right, LRealCharWidth - LNormalCharWidth);
+          Inc(LDrawRect.Right, LRealCharWidth - LNormalCharWidth);
         LExtTextOutDistance[ALength - 1] := Max(LRealCharWidth, LNormalCharWidth);
       end;
     end;
 
-    Winapi.Windows.ExtTextOut(FHandle, X, Y, AOptions, @ARect, AText, ALength, Pointer(LExtTextOutDistance));
+    Winapi.Windows.ExtTextOut(FHandle, X, Y, AOptions, @LDrawRect, AText, ALength, Pointer(LExtTextOutDistance));
   finally
     FreeMem(LExtTextOutDistance);
   end;

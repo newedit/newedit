@@ -10378,13 +10378,13 @@ var
       if (FSelectionEndPosition.Line < FSelectionBeginPosition.Line) or
         ((FSelectionEndPosition.Line = FSelectionBeginPosition.Line) and (FSelectionEndPosition.Char < FSelectionBeginPosition.Char)) then
       begin
-        LSelectionBeginPosition := TextToDisplayPosition(FSelectionEndPosition, True);
-        LSelectionEndPosition := TextToDisplayPosition(FSelectionBeginPosition, True);
+        LSelectionBeginPosition := TextToDisplayPosition(FSelectionEndPosition, False);
+        LSelectionEndPosition := TextToDisplayPosition(FSelectionBeginPosition, False);
       end
       else
       begin
-        LSelectionBeginPosition := TextToDisplayPosition(FSelectionBeginPosition, True);
-        LSelectionEndPosition := TextToDisplayPosition(FSelectionEndPosition, True);
+        LSelectionBeginPosition := TextToDisplayPosition(FSelectionBeginPosition, False);
+        LSelectionEndPosition := TextToDisplayPosition(FSelectionEndPosition, False);
       end;
   end;
 
@@ -10454,7 +10454,7 @@ var
       if AMinimap then
         ATokenLength := Min(ATokenLength, LLastChar)
       else
-        ATokenLength := ATokenLength; // Min(ATokenLength, LVisibleChars);
+        ATokenLength := ATokenLength;
       LText := Copy(AToken, AFirst, ATokenLength);
 
       FTextDrawer.ExtTextOut(LTokenRect.Left, LTokenRect.Top, ETO_OPAQUE or ETO_CLIPPED, LTokenRect, PChar(LText), ATokenLength);
@@ -10519,27 +10519,27 @@ var
         if LFirstUnselectedPartOfToken then
         begin
           SetDrawingColors(False);
-          LTokenRect.Right := GetCharWidth(LLineSelectionStart, AMinimap){ + 1};
+          LTokenRect.Right := GetCharWidth(LLineSelectionStart, AMinimap) {+ 1};
           PaintToken(LTokenHelper.Text, LLineSelectionStart - 1, LTokenHelper.CharsBefore, LFirstColumn, LLineSelectionStart);
         end;
         { selected part of the token }
         SetDrawingColors(True);
         LSelectionStart := Max(LLineSelectionStart, LFirstColumn);
         LSelectionEnd := Min(LLineSelectionEnd, LLastColumn);
-        LTokenRect.Right := GetCharWidth(LSelectionEnd, AMinimap){ + 1};
+        LTokenRect.Right := GetCharWidth(LSelectionEnd, AMinimap) {+ 1};
         PaintToken(LTokenHelper.Text, LSelectionEnd - LSelectionStart, LTokenHelper.CharsBefore, LSelectionStart, LSelectionEnd);
         { second unselected part of the token }
         if LSecondUnselectedPartOfToken then
         begin
           SetDrawingColors(False);
-          LTokenRect.Right := GetCharWidth(LLastColumn, AMinimap){ + 1};
+          LTokenRect.Right := GetCharWidth(LLastColumn, AMinimap) {+ 1};
           PaintToken(LTokenHelper.Text, LLastColumn - LSelectionEnd, LTokenHelper.CharsBefore, LLineSelectionEnd, LLastColumn);
         end;
       end
       else
       begin
         SetDrawingColors(LSelected);
-        LTokenRect.Right := GetCharWidth(LLastColumn, AMinimap){ + 1};
+        LTokenRect.Right := GetCharWidth(LLastColumn, AMinimap) {+ 1};
         PaintToken(LTokenHelper.Text, LTokenHelper.Length, LTokenHelper.CharsBefore, LFirstColumn, LLastColumn);
       end;
     end;
