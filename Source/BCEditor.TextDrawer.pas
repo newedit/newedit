@@ -107,8 +107,6 @@ type
     FSaveHandle: Integer;
     FStockBitmap: TBitmap;
   protected
-    //function GetCachedABCWidth(AChar: Cardinal; var AABC: TABC): Boolean;
-    //procedure FlushCharABCWidthCache;
     property DrawingCount: Integer read FDrawingCount;
     property FontStock: TBCEditorFontStock read FFontStock;
   public
@@ -118,7 +116,7 @@ type
     function GetCharCount(AChar: PChar): Integer;
     procedure BeginDrawing(AHandle: HDC);
     procedure EndDrawing;
-    //procedure ExtTextOut(const X, Y: Integer; AOptions: Longint; const ARect: TRect; AText: PChar; ALength: Integer);
+    procedure ExtTextOut(const X, Y: Integer; AOptions: Longint; const ARect: TRect; AText: PChar; ALength: Integer);
     procedure SetBackgroundColor(AValue: TColor);
     procedure SetBaseFont(AValue: TFont);
     procedure SetBaseStyle(const AValue: TFontStyles);
@@ -536,7 +534,6 @@ procedure TBCEditorTextDrawer.SetBaseFont(AValue: TFont);
 begin
   if Assigned(AValue) then
   begin
-    //FlushCharABCWidthCache;
     FStockBitmap.Canvas.Font.Assign(AValue);
     FStockBitmap.Canvas.Font.Style := [];
     with FFontStock do
@@ -578,29 +575,6 @@ begin
     SelectObject(FHandle, FCurrentFont);
 end;
 
-{procedure TBCEditorTextDrawer.FlushCharABCWidthCache;
-begin
-  FillChar(FCharABCWidthCache, SizeOf(TABC) * Length(FCharABCWidthCache), 0);
-end;}
-
-{function TBCEditorTextDrawer.GetCachedABCWidth(AChar: Cardinal; var AABC: TABC): Boolean;
-begin
-  if AChar > High(FCharABCWidthCache) then
-  begin
-    Result := GetCharABCWidthsW(FHandle, AChar, AChar, AABC);
-    Exit;
-  end;
-  AABC := FCharABCWidthCache[AChar];
-  if (AABC.abcA or Integer(AABC.abcB) or AABC.abcC) = 0 then
-  begin
-    Result := GetCharABCWidthsW(FHandle, AChar, AChar, AABC);
-    if Result then
-      FCharABCWidthCache[AChar] := AABC;
-  end
-  else
-    Result := True;
-end;}
-
 procedure TBCEditorTextDrawer.SetForegroundColor(AValue: TColor);
 begin
   if FColor <> AValue then
@@ -627,124 +601,47 @@ var
   LRemainder: Word;
   LResult: Word;
 begin
-  GetTextExtentPoint32(FStockBitmap.Canvas.Handle, AChar, Length(AChar^), LTextSize);
-  DivMod(LTextSize.cx, CharWidth, LResult, LRemainder);
-  if LRemainder > 0 then
-    Inc(LResult);
-  Result := LResult;
+  if (AChar^.GetUnicodeCategory = TUnicodeCategory.ucCombiningMark) or
+     (AChar^.GetUnicodeCategory = TUnicodeCategory.ucNonSpacingMark) then
+    Result := 0
+  else
+  begin
+    GetTextExtentPoint32(FStockBitmap.Canvas.Handle, AChar, Length(AChar^), LTextSize);
+    DivMod(LTextSize.cx, CharWidth, LResult, LRemainder);
+    if LRemainder > 0 then
+      Inc(LResult);
+    Result := LResult;
+  end;
 end;
 
-(*
 procedure TBCEditorTextDrawer.ExtTextOut(const X, Y: Integer; AOptions: Longint; const ARect: TRect; AText: PChar;
   ALength: Integer);
 var
   i, LCharWidth: Integer;
   LExtTextOutDistance: PIntegerArray;
-  LLastChar: Cardinal;
-  LRealCharWidth, LNormalCharWidth: Integer;
-  LCharInfo: TABC;
-  LTextMetricA: TTextMetricA;
   LPChar: PChar;
   LDrawRect: TRect;
-
-  LTextSize: TSize;
-  LCharLength: Integer;
-  LPTempChar: PChar;
-  LAvoidClipping: Boolean;
-
-  procedure IncMarks;
-  var
-    LInc: Integer;
-  begin
-    LCharLength := 1;
-    LPTempChar := LPChar + 1;
-    while (LPTempChar^.GetUnicodeCategory = TUnicodeCategory.ucCombiningMark) or
-     (LPTempChar^.GetUnicodeCategory = TUnicodeCategory.ucNonSpacingMark) do
-    begin
-      LInc := 1;
-      if LPTempChar^.GetUnicodeCategory = TUnicodeCategory.ucNonSpacingMark then
-        LInc := 2;
-      Inc(LCharLength, LInc);
-      Inc(LPTempChar, LInc);
-    end;
-  end;
-
 begin
   LDrawRect := ARect;
   LCharWidth := CharWidth;
-  LAvoidClipping := True;
 
   GetMem(LExtTextOutDistance, ALength * SizeOf(Integer));
   try
     LPChar := AText;
-    IncMarks;
-    i := 0;
-    while LPChar^ <> BCEDITOR_NONE_CHAR do
+    for i := 0 to ALength - 1 do
     begin
       if Ord(LPChar^) < 128 then
         LExtTextOutDistance[i] := LCharWidth
       else
-      begin
-        GetTextExtentPoint32(FHandle, LPChar^, Length(LPChar^), LTextSize);
-        LExtTextOutDistance[i] := LTextSize.cx;
-        LAvoidClipping := False;
-      end;
-      Inc(i);
-      Inc(LPChar, LCharLength);
-      while LCharLength > 1 do
-      begin
-        LExtTextOutDistance[i] := 0;
-        Dec(LCharLength);
-        Inc(i);
-      end;
-      IncMarks;
-    end;
-  (*  for i := 0 to ALength - 1 do
-    begin
-      LPChar := @AText[i];
-      if Ord(LPChar^) < 128 then
-        LExtTextOutDistance[i] := LCharWidth
-      else
-      begin
-        GetTextExtentPoint32(FHandle, LPChar^, 1, LTextSize);
-        LExtTextOutDistance[i] := LTextSize.cx;
-        // LExtTextOutDistance[i] := GetCharCount(LPChar) * LCharWidth;
-      end;
-    end; *)
-
-    { avoid clipping the last pixels of text in italic }
- (*   if LAvoidClipping and (ALength > 0) then
-    begin
-      LLastChar := Ord(AText[ALength - 1]);
-      if LLastChar <> 32 then
-      begin
-        LNormalCharWidth := LExtTextOutDistance[ALength - 1];
-        LRealCharWidth := LNormalCharWidth;
-
-        if GetCachedABCWidth(LLastChar, LCharInfo) then
-        begin
-          LRealCharWidth := LCharInfo.abcA + Integer(LCharInfo.abcB);
-          if LCharInfo.abcC >= 0 then
-            Inc(LRealCharWidth, LCharInfo.abcC);
-        end
-        else
-        if LLastChar < Ord(High(AnsiChar)) then
-        begin
-          GetTextMetricsA(FHandle, LTextMetricA);
-          LRealCharWidth := LTextMetricA.tmAveCharWidth + LTextMetricA.tmOverhang;
-        end;
-
-        if LRealCharWidth > LNormalCharWidth then
-          Inc(LDrawRect.Right, LRealCharWidth - LNormalCharWidth);
-        LExtTextOutDistance[ALength - 1] := Max(LRealCharWidth, LNormalCharWidth);
-      end;
+        LExtTextOutDistance[i] := GetCharCount(LPChar) * LCharWidth;
+      Inc(LPChar);
     end;
 
-    Winapi.Windows.ExtTextOut(FHandle, X, Y, AOptions, @LDrawRect, AText, ALength, nil); // Pointer(LExtTextOutDistance));
+    Winapi.Windows.ExtTextOut(FHandle, X, Y, AOptions, @LDrawRect, AText, ALength, Pointer(LExtTextOutDistance));
   finally
     FreeMem(LExtTextOutDistance);
   end;
-end;*)
+end;
 
 initialization
 

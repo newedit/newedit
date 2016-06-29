@@ -34,6 +34,8 @@ type
     FBorderStyle: TBorderStyle;
     FCaret: TBCEditorCaret;
     FCaretOffset: TPoint;
+    FCharCountArray: PByteArray;
+    FCharCountArrayLength: Integer;
     FDisplayCaretX: Integer;
     FDisplayCaretY: Integer;
     FDragBeginTextCaretPosition: TBCEditorTextPosition;
@@ -777,6 +779,8 @@ begin
   DoubleBuffered := False;
   ControlStyle := ControlStyle + [csOpaque, csSetCaption, csNeedsBorderPaint];
 
+  FCharCountArrayLength := 0;
+
   FBackgroundColor := clWindow;
   FForegroundColor := clWindowText;
   FBorderStyle := bsSingle;
@@ -994,6 +998,11 @@ begin
   begin
     FreeMem(FMinimapShadowAlphaByteArray);
     FMinimapShadowAlphaByteArray := nil;
+  end;
+  if Assigned(FCharCountArray) then
+  begin
+    FreeMem(FCharCountArray);
+    FCharCountArray := nil;
   end;
   if Assigned(FSearchEngine) then
   begin
@@ -4895,7 +4904,6 @@ begin
       FMinimapShadowBitmap.Width := FMinimap.Shadow.Width;
 
       SetLength(FMinimapShadowAlphaArray, FMinimapShadowBitmap.Width);
-      //SetLength(FMinimapShadowAlphaByteArray, FMinimapShadowBitmap.Width);
       if FMinimapShadowAlphaByteArrayLength <> FMinimapShadowBitmap.Width then
       begin
         FMinimapShadowAlphaByteArrayLength := FMinimapShadowBitmap.Width;
@@ -9600,8 +9608,7 @@ var
         begin
           LLineRect.Top := LLineRect.Bottom;
           LLineRect.Bottom := AClipRect.Bottom;
-          //FTextDrawer.ExtTextOut(LLineRect.Left, LLineRect.Top, ETO_OPAQUE, LLineRect, '', 0);
-          Winapi.Windows.ExtTextOut(Canvas.Handle, LLineRect.Left, LLineRect.Top, ETO_OPAQUE, @LLineRect, '', 0, nil);
+          FTextDrawer.ExtTextOut(LLineRect.Left, LLineRect.Top, ETO_OPAQUE, LLineRect, '', 0);
         end;
       finally
         FTextDrawer.SetBaseFont(Self.Font);
@@ -10048,9 +10055,7 @@ begin
 
         LRect.Left := (LDisplayPosition.Column - 1) * FTextDrawer.CharWidth;
         LRect.Right := LRect.Left + LLength * FTextDrawer.CharWidth;
-        //FTextDrawer.ExtTextOut(LRect.Left, LRect.Top, ETO_OPAQUE or ETO_CLIPPED, LRect, PChar(LText), LLength);
-        Winapi.Windows.ExtTextOut(ACanvas.Handle, LRect.Left, LRect.Top, ETO_OPAQUE or ETO_CLIPPED, @LRect,
-          PChar(LText), LLength, nil);
+        FTextDrawer.ExtTextOut(LRect.Left, LRect.Top, ETO_OPAQUE or ETO_CLIPPED, LRect, PChar(LText), LLength);
       end;
     end;
   end;
@@ -10219,9 +10224,7 @@ begin
           FTextDrawer.SetForegroundColor(ACanvas.Pen.Color);
           FTextDrawer.SetStyle([]);
           LPilcrow := Char($00B6);
-          //FTextDrawer.ExtTextOut(LCharRect.Left, LCharRect.Top, ETO_OPAQUE or ETO_CLIPPED, LCharRect, PChar(LPilcrow), 1);
-          Winapi.Windows.ExtTextOut(ACanvas.Handle, LCharRect.Left, LCharRect.Top, ETO_OPAQUE or ETO_CLIPPED, @LCharRect,
-            PChar(LPilcrow), 1, nil);
+          FTextDrawer.ExtTextOut(LCharRect.Left, LCharRect.Top, ETO_OPAQUE or ETO_CLIPPED, LCharRect, PChar(LPilcrow), 1);
         end
         else
         if FSpecialChars.EndOfLine.Style = eolArrow then
@@ -10331,7 +10334,7 @@ var
   LLastChar: Integer;
   LBookmarkOnCurrentLine: Boolean;
   LVisibleChars: Integer;
-  LCurrentLineText: string;
+  LCurrentLineLength: Integer;
 
   function IsBookmarkOnCurrentLine: Boolean;
   var
@@ -10421,9 +10424,8 @@ var
 
   function GetTextWidth(AIndex: Integer; AMinimap: Boolean = False): Integer;
   var
-    LText: string;
+    i: Integer;
     LAfterLine: Integer;
-    LTextSize: TSize;
   begin
     if AMinimap then
     begin
@@ -10439,15 +10441,12 @@ var
     else
       Result := 0;
 
-    LText := Copy(LCurrentLineText, 1, AIndex - 1);
-    GetTextExtentPoint32(ACanvas.Handle, LText, Length(LText), LTextSize);
-    Result := Result + LTextSize.Width;
+    for i := 1 to AIndex - 1 do
+      Result := Result + FCharWidth * FCharCountArray[i - 1];
 
-    LAfterLine := AIndex - Length(LCurrentLineText) - 1;
+    LAfterLine := AIndex - LCurrentLineLength - 1;
     if LAfterLine = 0 then
-      Inc(Result); { Italic }
-    if LAfterLine > 0 then
-      Result := Result + LAfterLine * FTextDrawer.CharWidth;
+      Inc(Result);
   end;
 
   procedure PaintToken(AToken: string; ATokenLength, ACharsBefore, AFirst, ALast: Integer);
@@ -10464,10 +10463,7 @@ var
         ATokenLength := ATokenLength;
       LText := Copy(AToken, AFirst, ATokenLength);
 
-     // FTextDrawer.ExtTextOut(LTokenRect.Left, LTokenRect.Top, ETO_OPAQUE or ETO_CLIPPED, LTokenRect, PChar(LText), ATokenLength);
-
-      Winapi.Windows.ExtTextOut(ACanvas.Handle, LTokenRect.Left, LTokenRect.Top, ETO_OPAQUE or ETO_CLIPPED, @LTokenRect,
-        PChar(LText), ATokenLength, nil);
+      FTextDrawer.ExtTextOut(LTokenRect.Left, LTokenRect.Top, ETO_OPAQUE or ETO_CLIPPED, LTokenRect, PChar(LText), ATokenLength);
 
       if LTokenHelper.MatchingPairUnderline then
       begin
@@ -10705,6 +10701,8 @@ var
     LPreviousFirstColumn: Integer;
     LTextCaretY: Integer;
     LWrappedRowCount: Integer;
+    LCurrentLineText: string;
+    LPChar: PChar;
 
     function GetWordAtSelection(var ASelectedText: string): string;
     var
@@ -10827,7 +10825,7 @@ var
     if AMinimap then
       LLineRect.Bottom := (AFirstRow - FMinimap.TopLine + 1) * FMinimap.CharHeight
     else
-      LLineRect.Bottom := FLineHeight; // (AFirstRow - FTopLine) * FLineHeight;
+      LLineRect.Bottom := FLineHeight;
 
     if Assigned(FHighlighter) then
     begin
@@ -10906,6 +10904,23 @@ var
       end;
 
       LIsCurrentLine := False;
+
+      LCurrentLineLength := Length(LCurrentLineText);
+      if LCurrentLineLength > FCharCountArrayLength then
+      begin
+        FCharCountArrayLength := LCurrentLineLength;
+        ReallocMem(FCharCountArray, LCurrentLineLength * SizeOf(Integer));
+      end;
+
+      LPChar := PChar(LCurrentLineText);
+      for i := 0 to LCurrentLineLength - 1 do
+      begin
+        if Ord(LPChar^) < 128 then
+          FCharCountArray[i] := 1
+        else
+          FCharCountArray[i] := FTextDrawer.GetCharCount(LPChar);
+        Inc(LPChar);
+      end;
 
       LTokenPosition := 0;
       LTokenLength := 0;
