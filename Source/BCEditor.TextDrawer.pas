@@ -116,7 +116,8 @@ type
     function GetCharCount(AChar: PChar): Integer;
     procedure BeginDrawing(AHandle: HDC);
     procedure EndDrawing;
-    procedure ExtTextOut(const X, Y: Integer; AOptions: Longint; const ARect: TRect; AText: PChar; ALength: Integer);
+    procedure ExtTextOut(const X, Y: Integer; AOptions: Longint; const ARect: TRect; AText: PChar; ALength: Integer;
+      ACharCountArray: PByteArray = nil);
     procedure SetBackgroundColor(AValue: TColor);
     procedure SetBaseFont(AValue: TFont);
     procedure SetBaseStyle(const AValue: TFontStyles);
@@ -615,7 +616,7 @@ begin
 end;
 
 procedure TBCEditorTextDrawer.ExtTextOut(const X, Y: Integer; AOptions: Longint; const ARect: TRect; AText: PChar;
-  ALength: Integer);
+  ALength: Integer; ACharCountArray: PByteArray = nil);
 var
   i, LCharWidth: Integer;
   LExtTextOutDistance: PIntegerArray;
@@ -627,14 +628,20 @@ begin
 
   GetMem(LExtTextOutDistance, ALength * SizeOf(Integer));
   try
-    LPChar := AText;
+    if Assigned(ACharCountArray) then
     for i := 0 to ALength - 1 do
+      LExtTextOutDistance[i] := ACharCountArray[i] * LCharWidth
+    else
     begin
-      if Ord(LPChar^) < 128 then
-        LExtTextOutDistance[i] := LCharWidth
-      else
-        LExtTextOutDistance[i] := GetCharCount(LPChar) * LCharWidth;
-      Inc(LPChar);
+      LPChar := AText;
+      for i := 0 to ALength - 1 do
+      begin
+        if Ord(LPChar^) < 128 then
+          LExtTextOutDistance[i] := LCharWidth
+        else
+          LExtTextOutDistance[i] := GetCharCount(LPChar) * LCharWidth;
+        Inc(LPChar);
+      end;
     end;
 
     Winapi.Windows.ExtTextOut(FHandle, X, Y, AOptions, @LDrawRect, AText, ALength, Pointer(LExtTextOutDistance));

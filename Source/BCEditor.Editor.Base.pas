@@ -10442,7 +10442,7 @@ var
       Result := 0;
 
     for i := 1 to AIndex - 1 do
-      Result := Result + FCharWidth * FCharCountArray[i - 1];
+      Result := Result + FTextDrawer.CharWidth * FCharCountArray[i - 1];
 
     LAfterLine := AIndex - LCurrentLineLength - 1;
     if LAfterLine = 0 then
@@ -10463,7 +10463,8 @@ var
         ATokenLength := ATokenLength;
       LText := Copy(AToken, AFirst, ATokenLength);
 
-      FTextDrawer.ExtTextOut(LTokenRect.Left, LTokenRect.Top, ETO_OPAQUE or ETO_CLIPPED, LTokenRect, PChar(LText), ATokenLength);
+      FTextDrawer.ExtTextOut(LTokenRect.Left, LTokenRect.Top, ETO_OPAQUE or ETO_CLIPPED, LTokenRect, PChar(LText),
+        ATokenLength, FCharCountArray);
 
       if LTokenHelper.MatchingPairUnderline then
       begin
