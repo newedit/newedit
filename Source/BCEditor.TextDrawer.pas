@@ -601,15 +601,33 @@ var
   LTextSize: TSize;
   LRemainder: Word;
   LResult: Word;
+  LNextChar: PChar;
+  LLength: Integer;
 begin
   if (AChar^.GetUnicodeCategory = TUnicodeCategory.ucCombiningMark) or
-     (AChar^.GetUnicodeCategory = TUnicodeCategory.ucNonSpacingMark) then
+     (AChar^.GetUnicodeCategory = TUnicodeCategory.ucNonSpacingMark) or
+     ((AChar - 1)^ <> BCEDITOR_NONE_CHAR) and ((AChar - 1)^.GetUnicodeCategory = TUnicodeCategory.ucNonSpacingMark) then
     Result := 0
   else
   begin
-    GetTextExtentPoint32(FStockBitmap.Canvas.Handle, AChar, Length(AChar^), LTextSize);
+    LLength := Length(AChar^);
+    LNextChar := AChar + 1;
+    while (LNextChar^ <> BCEDITOR_NONE_CHAR) and
+      ((LNextChar^.GetUnicodeCategory = TUnicodeCategory.ucCombiningMark) or
+       (LNextChar^.GetUnicodeCategory = TUnicodeCategory.ucNonSpacingMark) or
+       ((LNextChar - 1)^.GetUnicodeCategory = TUnicodeCategory.ucNonSpacingMark)) do
+    begin
+      if LNextChar^.GetUnicodeCategory = TUnicodeCategory.ucNonSpacingMark then
+      begin
+        Inc(LNextChar);
+        Inc(LLength);
+      end;
+      Inc(LNextChar);
+      Inc(LLength);
+    end;
+    GetTextExtentPoint32(FStockBitmap.Canvas.Handle, AChar, LLength, LTextSize);
     DivMod(LTextSize.cx, CharWidth, LResult, LRemainder);
-    if LRemainder > 0 then
+    if LRemainder > CharWidth div 2 then
       Inc(LResult);
     Result := LResult;
   end;

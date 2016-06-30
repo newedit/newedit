@@ -10920,6 +10920,7 @@ var
           FCharCountArray[i] := 1
         else
           FCharCountArray[i] := FTextDrawer.GetCharCount(LPChar);
+        {$IFDEF DEBUG}OutputDebugString(PChar(Format('%d: %d', [i, FCharCountArray[i]])));{$ENDIF}
         Inc(LPChar);
       end;
 
@@ -12647,7 +12648,22 @@ begin
           if Ord(LPLine^) < 128 then
             Inc(LChar)
           else
-            Inc(LChar, FTextDrawer.GetCharCount(LPLine))
+          begin
+            while (LPLine^ <> BCEDITOR_NONE_CHAR) and
+              ((LPLine^.GetUnicodeCategory = TUnicodeCategory.ucCombiningMark) or
+               (LPLine^.GetUnicodeCategory = TUnicodeCategory.ucNonSpacingMark) or
+               ((LPLine - 1)^.GetUnicodeCategory = TUnicodeCategory.ucNonSpacingMark)) do
+            begin
+              if LPLine^.GetUnicodeCategory = TUnicodeCategory.ucNonSpacingMark then
+              begin
+                Inc(LPLine);
+                Inc(i);
+              end;
+              Inc(LPLine);
+              Inc(i);
+            end;
+            Inc(LChar, FTextDrawer.GetCharCount(LPLine));
+          end;
         end
         else
           Inc(LChar);
