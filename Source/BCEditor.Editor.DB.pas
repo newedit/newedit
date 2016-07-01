@@ -3,7 +3,7 @@ unit BCEditor.Editor.DB;
 interface
 
 uses
-  Winapi.Messages, System.SysUtils, System.Classes, Vcl.Controls, Vcl.DbCtrls, Data.DB, BCEditor.Editor,
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Classes, Vcl.Controls, Vcl.DbCtrls, Data.DB, BCEditor.Editor,
   BCEditor.Editor.KeyCommands;
 
 type
@@ -190,7 +190,7 @@ end;
 
 procedure TBCCustomDBEditor.CMGetDataLink(var AMessage: TMessage);
 begin
-  AMessage.Result := Integer(FDataLink);
+  AMessage.Result := LRESULT(FDataLink);
 end;
 
 procedure TBCCustomDBEditor.DataChange(ASender: TObject);
