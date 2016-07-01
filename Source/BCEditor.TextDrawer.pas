@@ -604,8 +604,7 @@ var
   LNextChar: PChar;
   LLength: Integer;
 begin
-  if (AChar^.GetUnicodeCategory = TUnicodeCategory.ucCombiningMark) or
-     (AChar^.GetUnicodeCategory = TUnicodeCategory.ucNonSpacingMark) or
+  if (AChar^.GetUnicodeCategory in [TUnicodeCategory.ucCombiningMark, TUnicodeCategory.ucNonSpacingMark]) or
      ((AChar - 1)^ <> BCEDITOR_NONE_CHAR) and ((AChar - 1)^.GetUnicodeCategory = TUnicodeCategory.ucNonSpacingMark) then
     Result := 0
   else
@@ -613,8 +612,7 @@ begin
     LLength := Length(AChar^);
     LNextChar := AChar + 1;
     while (LNextChar^ <> BCEDITOR_NONE_CHAR) and
-      ((LNextChar^.GetUnicodeCategory = TUnicodeCategory.ucCombiningMark) or
-       (LNextChar^.GetUnicodeCategory = TUnicodeCategory.ucNonSpacingMark) or
+      ((LNextChar^.GetUnicodeCategory in [TUnicodeCategory.ucCombiningMark, TUnicodeCategory.ucNonSpacingMark]) or
        ((LNextChar - 1)^.GetUnicodeCategory = TUnicodeCategory.ucNonSpacingMark)) do
     begin
       if LNextChar^.GetUnicodeCategory = TUnicodeCategory.ucNonSpacingMark then

@@ -4987,11 +4987,13 @@ end;
 
 procedure TBCBaseEditor.MoveCaretHorizontally(const X: Integer; ASelectionCommand: Boolean);
 var
-  LZeroPosition, LDestinationPosition, LTextCaretPosition: TBCEditorTextPosition;
+  LTextCaretPosition: TBCEditorTextPosition;
+  LDestinationPosition: TBCEditorDisplayPosition;
   LCurrentLineLength: Integer;
   LChangeY: Boolean;
   LCaretRowColumn: TBCEditorDisplayPosition;
 begin
+  // TODO: Continue here...
   LTextCaretPosition := TextCaretPosition;
   if not SelectionAvailable then
   begin
@@ -4999,40 +5001,39 @@ begin
     FSelectionEndPosition := LTextCaretPosition;
   end;
 
-  LZeroPosition := LTextCaretPosition;
-  LDestinationPosition := LZeroPosition;
+  LDestinationPosition := DisplayCaretPosition;
 
   LCurrentLineLength := FLines.StringLength(LTextCaretPosition.Line);
   LChangeY := not (soPastEndOfLine in FScroll.Options);
 
-  if LChangeY and (X = -1) and (LZeroPosition.Char = 1) and (LZeroPosition.Line > 1) then
+  if LChangeY and (X = -1) and (LTextCaretPosition.Char = 1) and (LTextCaretPosition.Line > 1) then
   with LDestinationPosition do
   begin
-    Line := Line - 1;
-    Char := FLines.StringLength(Line) + 1;
+    Row := Row - 1;
+    Column := FLines.StringLength(Row) + 1;
   end
   else
-  if LChangeY and (X = 1) and (LZeroPosition.Char > LCurrentLineLength) and (LZeroPosition.Line < FLines.Count) then
+  if LChangeY and (X = 1) and (LTextCaretPosition.Char > LCurrentLineLength) and (LTextCaretPosition.Line < FLines.Count) then
   with LDestinationPosition do
   begin
-    Line := LDestinationPosition.Line + 1;
-    Char := 1;
+    Row := LDestinationPosition.Row + 1;
+    Column := 1;
   end
   else
   begin
-    LDestinationPosition.Char := Max(1, LDestinationPosition.Char + X);
+    LDestinationPosition.Column := Max(1, LDestinationPosition.Column + X);
 
     if (X > 0) and LChangeY then
-      LDestinationPosition.Char := Min(LDestinationPosition.Char, LCurrentLineLength + 1);
+      LDestinationPosition.Column := Min(LDestinationPosition.Column, LCurrentLineLength + 1);
   end;
 
-  if not ASelectionCommand and (LDestinationPosition.Line <> LZeroPosition.Line) then
+  if not ASelectionCommand and (LDestinationPosition.Row <> LTextCaretPosition.Line + 1) then
   begin
-    DoTrimTrailingSpaces(LZeroPosition.Line);
-    DoTrimTrailingSpaces(LDestinationPosition.Line);
+    DoTrimTrailingSpaces(LTextCaretPosition.Line);
+    DoTrimTrailingSpaces(LDestinationPosition.Row);
   end;
 
-  MoveCaretAndSelection(FSelectionBeginPosition, LDestinationPosition, ASelectionCommand);
+  MoveCaretAndSelection(FSelectionBeginPosition, DisplayToTextPosition(LDestinationPosition), ASelectionCommand);
 
   if FWordWrap.Enabled and (X > 0) and (DisplayCaretX < FLines.ExpandedStringLengths[LTextCaretPosition.Line]) then
   begin
@@ -10458,9 +10459,7 @@ var
     begin
       Dec(AFirst, ACharsBefore);
       if AMinimap then
-        ATokenLength := Min(ATokenLength, LLastChar)
-      else
-        ATokenLength := ATokenLength;
+        ATokenLength := Min(ATokenLength, LLastChar);
       LText := Copy(AToken, AFirst, ATokenLength);
 
       FTextDrawer.ExtTextOut(LTokenRect.Left, LTokenRect.Top, ETO_OPAQUE or ETO_CLIPPED, LTokenRect, PChar(LText),
@@ -10920,7 +10919,6 @@ var
           FCharCountArray[i] := 1
         else
           FCharCountArray[i] := FTextDrawer.GetCharCount(LPChar);
-        {$IFDEF DEBUG}OutputDebugString(PChar(Format('%d: %d', [i, FCharCountArray[i]])));{$ENDIF}
         Inc(LPChar);
       end;
 
@@ -12649,20 +12647,10 @@ begin
             Inc(LChar)
           else
           begin
-            while (LPLine^ <> BCEDITOR_NONE_CHAR) and
-              ((LPLine^.GetUnicodeCategory = TUnicodeCategory.ucCombiningMark) or
-               (LPLine^.GetUnicodeCategory = TUnicodeCategory.ucNonSpacingMark) or
-               ((LPLine - 1)^.GetUnicodeCategory = TUnicodeCategory.ucNonSpacingMark)) do
-            begin
-              if LPLine^.GetUnicodeCategory = TUnicodeCategory.ucNonSpacingMark then
-              begin
-                Inc(LPLine);
-                Inc(i);
-              end;
-              Inc(LPLine);
-              Inc(i);
-            end;
-            Inc(LChar, FTextDrawer.GetCharCount(LPLine));
+            if (LPLine^ <> BCEDITOR_NONE_CHAR) and
+              (not (LPLine^.GetUnicodeCategory in [TUnicodeCategory.ucCombiningMark, TUnicodeCategory.ucNonSpacingMark]) and
+               ((LPLine - 1)^.GetUnicodeCategory <> TUnicodeCategory.ucNonSpacingMark)) then
+              Inc(LChar, FTextDrawer.GetCharCount(LPLine));
           end;
         end
         else
