@@ -10443,7 +10443,10 @@ var
       Result := 0;
 
     for i := 1 to AIndex - 1 do
-      Result := Result + FTextDrawer.CharWidth * FCharCountArray[i - 1];
+      if i > FCharCountArrayLength then
+        Result := Result + FTextDrawer.CharWidth
+      else
+        Result := Result + FTextDrawer.CharWidth * FCharCountArray[i - 1];
 
     LAfterLine := AIndex - LCurrentLineLength - 1;
     if LAfterLine = 0 then
@@ -10909,15 +10912,14 @@ var
       if LCurrentLineLength > FCharCountArrayLength then
       begin
         FCharCountArrayLength := LCurrentLineLength;
-        ReallocMem(FCharCountArray, LCurrentLineLength * SizeOf(Integer));
+        ReallocMem(FCharCountArray, LCurrentLineLength * SizeOf(Byte));
       end;
+      FillChar(FCharCountArray^, LCurrentLineLength * SizeOf(Byte), 1);
 
       LPChar := PChar(LCurrentLineText);
       for i := 0 to LCurrentLineLength - 1 do
       begin
-        if Ord(LPChar^) < 128 then
-          FCharCountArray[i] := 1
-        else
+        if Ord(LPChar^) >= 128 then
           FCharCountArray[i] := FTextDrawer.GetCharCount(LPChar);
         Inc(LPChar);
       end;
@@ -12879,6 +12881,7 @@ end;
 procedure TBCBaseEditor.Clear;
 begin
   FLines.Clear;
+  Invalidate;
 end;
 
 procedure TBCBaseEditor.ClearBookmark(ABookmark: Integer);
