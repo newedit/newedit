@@ -4993,7 +4993,6 @@ var
   LChangeY: Boolean;
   LCaretRowColumn: TBCEditorDisplayPosition;
 begin
-  // TODO: Continue here...
   LTextCaretPosition := TextCaretPosition;
   if not SelectionAvailable then
   begin
@@ -5010,7 +5009,7 @@ begin
   with LDestinationPosition do
   begin
     Row := Row - 1;
-    Column := FLines.StringLength(Row) + 1;
+    Column := FLines.StringLength(Row - 1) + 1;
   end
   else
   if LChangeY and (X = 1) and (LTextCaretPosition.Char > LCurrentLineLength) and (LTextCaretPosition.Line < FLines.Count) then
@@ -12648,12 +12647,7 @@ begin
           if Ord(LPLine^) < 128 then
             Inc(LChar)
           else
-          begin
-            if (LPLine^ <> BCEDITOR_NONE_CHAR) and
-              (not (LPLine^.GetUnicodeCategory in [TUnicodeCategory.ucCombiningMark, TUnicodeCategory.ucNonSpacingMark]) and
-               ((LPLine - 1)^.GetUnicodeCategory <> TUnicodeCategory.ucNonSpacingMark)) then
-              Inc(LChar, FTextDrawer.GetCharCount(LPLine));
-          end;
+            Inc(LChar, FTextDrawer.GetCharCount(LPLine));
         end
         else
           Inc(LChar);
