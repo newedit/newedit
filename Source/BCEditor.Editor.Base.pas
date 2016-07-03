@@ -4988,10 +4988,11 @@ end;
 procedure TBCBaseEditor.MoveCaretHorizontally(const X: Integer; ASelectionCommand: Boolean);
 var
   LTextCaretPosition: TBCEditorTextPosition;
-  LDestinationPosition: TBCEditorDisplayPosition;
+  LDestinationPosition: TBCEditorTextPosition;
   LCurrentLineLength: Integer;
   LChangeY: Boolean;
   LCaretRowColumn: TBCEditorDisplayPosition;
+  LPLine: PChar;
 begin
   LTextCaretPosition := TextCaretPosition;
   if not SelectionAvailable then
@@ -5000,7 +5001,7 @@ begin
     FSelectionEndPosition := LTextCaretPosition;
   end;
 
-  LDestinationPosition := DisplayCaretPosition;
+  LDestinationPosition := LTextCaretPosition;
 
   LCurrentLineLength := FLines.StringLength(LTextCaretPosition.Line);
   LChangeY := not (soPastEndOfLine in FScroll.Options);
@@ -5008,31 +5009,50 @@ begin
   if LChangeY and (X = -1) and (LTextCaretPosition.Char = 1) and (LTextCaretPosition.Line > 1) then
   with LDestinationPosition do
   begin
-    Row := Row - 1;
-    Column := FLines.StringLength(Row - 1) + 1;
+    Line := Line - 1;
+    Char := FLines.StringLength(Line) + 1;
   end
   else
   if LChangeY and (X = 1) and (LTextCaretPosition.Char > LCurrentLineLength) and (LTextCaretPosition.Line < FLines.Count) then
   with LDestinationPosition do
   begin
-    Row := LDestinationPosition.Row + 1;
-    Column := 1;
+    Line := LDestinationPosition.Line + 1;
+    Char := 1;
   end
   else
   begin
-    LDestinationPosition.Column := Max(1, LDestinationPosition.Column + X);
-
+    LDestinationPosition.Char := Max(1, LDestinationPosition.Char + X);
     if (X > 0) and LChangeY then
-      LDestinationPosition.Column := Min(LDestinationPosition.Column, LCurrentLineLength + 1);
+      LDestinationPosition.Char := Min(LDestinationPosition.Char, LCurrentLineLength + 1);
+
+    { Skip combined and non-spacing marks }
+    // TODO: Continue here, the following is not a good solution... damn this is kinky.
+    if LDestinationPosition.Char < FLines.StringLength(LDestinationPosition.Line) then
+    begin
+      LPLine := PChar(FLines[LDestinationPosition.Line]);
+      Inc(LPLine, LDestinationPosition.Char - 1);
+      while (LPLine^.GetUnicodeCategory in [TUnicodeCategory.ucCombiningMark, TUnicodeCategory.ucNonSpacingMark]) or
+        ((LPLine - 1)^ <> BCEDITOR_NONE_CHAR) and ((LPLine - 1)^.GetUnicodeCategory = TUnicodeCategory.ucNonSpacingMark) do
+      if X > 0 then
+      begin
+        Inc(LPLine);
+        Inc(LDestinationPosition.Char);
+      end
+      else
+      begin
+        Dec(LPLine);
+        Dec(LDestinationPosition.Char);
+      end;
+    end;
   end;
 
-  if not ASelectionCommand and (LDestinationPosition.Row <> LTextCaretPosition.Line + 1) then
+  if not ASelectionCommand and (LDestinationPosition.Line <> LTextCaretPosition.Line) then
   begin
     DoTrimTrailingSpaces(LTextCaretPosition.Line);
-    DoTrimTrailingSpaces(LDestinationPosition.Row);
+    DoTrimTrailingSpaces(LDestinationPosition.Line);
   end;
 
-  MoveCaretAndSelection(FSelectionBeginPosition, DisplayToTextPosition(LDestinationPosition), ASelectionCommand);
+  MoveCaretAndSelection(FSelectionBeginPosition, LDestinationPosition, ASelectionCommand);
 
   if FWordWrap.Enabled and (X > 0) and (DisplayCaretX < FLines.ExpandedStringLengths[LTextCaretPosition.Line]) then
   begin
@@ -10465,7 +10485,7 @@ var
       LText := Copy(AToken, AFirst, ATokenLength);
 
       FTextDrawer.ExtTextOut(LTokenRect.Left, LTokenRect.Top, ETO_OPAQUE or ETO_CLIPPED, LTokenRect, PChar(LText),
-        ATokenLength, FCharCountArray);
+        ATokenLength);
 
       if LTokenHelper.MatchingPairUnderline then
       begin
@@ -12061,6 +12081,12 @@ begin
         Inc(LChar);
       Inc(i);
     end;
+    while (LPLine^.GetUnicodeCategory in [TUnicodeCategory.ucCombiningMark, TUnicodeCategory.ucNonSpacingMark]) or
+      ((LPLine - 1)^ <> BCEDITOR_NONE_CHAR) and ((LPLine - 1)^.GetUnicodeCategory = TUnicodeCategory.ucNonSpacingMark) do
+    begin
+      Inc(LPLine);
+      Inc(i);
+    end;
     Result.Char := i;
   end;
 end;
@@ -12657,6 +12683,7 @@ begin
         Inc(LChar);
       Inc(i);
     end;
+
     Result.Column := LChar;
   end;
 end;
