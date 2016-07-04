@@ -4980,8 +4980,7 @@ begin
   else
     SetSelectionBeginPosition(AAfterTextPosition);
   TextCaretPosition := AAfterTextPosition;
-  //if GetVisibleChars > FVisibleChars then
-  EnsureCursorPositionVisible;
+
   DecPaintLock;
 end;
 
@@ -5026,8 +5025,7 @@ begin
       LDestinationPosition.Char := Min(LDestinationPosition.Char, LCurrentLineLength + 1);
 
     { Skip combined and non-spacing marks }
-    // TODO: Continue here, the following is not a good solution... damn this is kinky.
-    if LDestinationPosition.Char < FLines.StringLength(LDestinationPosition.Line) then
+    if LDestinationPosition.Char <= FLines.StringLength(LDestinationPosition.Line) then
     begin
       LPLine := PChar(FLines[LDestinationPosition.Line]);
       Inc(LPLine, LDestinationPosition.Char - 1);
@@ -12081,6 +12079,7 @@ begin
         Inc(LChar);
       Inc(i);
     end;
+    if LPLine^ <> BCEDITOR_NONE_CHAR then
     while (LPLine^.GetUnicodeCategory in [TUnicodeCategory.ucCombiningMark, TUnicodeCategory.ucNonSpacingMark]) or
       ((LPLine - 1)^ <> BCEDITOR_NONE_CHAR) and ((LPLine - 1)^.GetUnicodeCategory = TUnicodeCategory.ucNonSpacingMark) do
     begin
