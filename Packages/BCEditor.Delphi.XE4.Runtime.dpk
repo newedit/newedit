@@ -85,6 +85,7 @@ contains
   BCEditor.Editor.RightMargin.Colors in '..\Source\BCEditor.Editor.RightMargin.Colors.pas',
   BCEditor.Editor.Scroll in '..\Source\BCEditor.Editor.Scroll.pas',
   BCEditor.Editor.Scroll.Hint in '..\Source\BCEditor.Editor.Scroll.Hint.pas',
+	BCEditor.Editor.Scroll.Shadow in '..\Source\BCEditor.Editor.Scroll.Shadow.pas',
   BCEditor.Editor.Search in '..\Source\BCEditor.Editor.Search.pas',
   BCEditor.Editor.Search.Highlighter in '..\Source\BCEditor.Editor.Search.Highlighter.pas',
   BCEditor.Editor.Search.Highlighter.Colors in '..\Source\BCEditor.Editor.Search.Highlighter.Colors.pas',

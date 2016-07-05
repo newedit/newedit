@@ -614,11 +614,6 @@ begin
       ((LNextChar^.GetUnicodeCategory in [TUnicodeCategory.ucCombiningMark, TUnicodeCategory.ucNonSpacingMark]) or
        ((LNextChar - 1)^.GetUnicodeCategory = TUnicodeCategory.ucNonSpacingMark)) do
     begin
-      {if LNextChar^.GetUnicodeCategory = TUnicodeCategory.ucNonSpacingMark then
-      begin
-        Inc(LNextChar);
-        Inc(LLength);
-      end;}
       Inc(LNextChar);
       Inc(LLength);
     end;

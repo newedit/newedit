@@ -132,6 +132,7 @@ contains
   BCEditor.StyleHooks in '..\Source\BCEditor.StyleHooks.pas',
   BCEditor.TextDrawer in '..\Source\BCEditor.TextDrawer.pas',
   BCEditor.Types in '..\Source\BCEditor.Types.pas',
-  BCEditor.Utils in '..\Source\BCEditor.Utils.pas';
+  BCEditor.Utils in '..\Source\BCEditor.Utils.pas',
+  BCEditor.Editor.Scroll.Shadow in '..\Source\BCEditor.Editor.Scroll.Shadow.pas';
 
 end.

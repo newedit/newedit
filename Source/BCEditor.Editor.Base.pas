@@ -12079,7 +12079,7 @@ begin
       Inc(i);
     end;
     while (LPLine^ <> BCEDITOR_NONE_CHAR) and
-     ((LPLine^.GetUnicodeCategory in [TUnicodeCategory.ucCombiningMark, TUnicodeCategory.ucNonSpacingMark]) or
+      ((LPLine^.GetUnicodeCategory in [TUnicodeCategory.ucCombiningMark, TUnicodeCategory.ucNonSpacingMark]) or
       ((LPLine - 1)^.GetUnicodeCategory = TUnicodeCategory.ucNonSpacingMark)) do
     begin
       Inc(i);

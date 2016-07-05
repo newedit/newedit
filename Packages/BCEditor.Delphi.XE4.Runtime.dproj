@@ -173,6 +173,7 @@
         <DCCReference Include="..\Source\BCEditor.Editor.RightMargin.Colors.pas"/>
         <DCCReference Include="..\Source\BCEditor.Editor.Scroll.pas"/>
         <DCCReference Include="..\Source\BCEditor.Editor.Scroll.Hint.pas"/>
+				<DCCReference Include="..\Source\BCEditor.Editor.Scroll.Shadow.pas"/>
         <DCCReference Include="..\Source\BCEditor.Editor.Search.pas"/>
         <DCCReference Include="..\Source\BCEditor.Editor.Search.Highlighter.pas"/>
         <DCCReference Include="..\Source\BCEditor.Editor.Search.Highlighter.Colors.pas"/>
