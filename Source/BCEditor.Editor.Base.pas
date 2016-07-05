@@ -4484,8 +4484,7 @@ begin
     begin
       FSyncEdit.MoveBeginPositionChar(LDifference);
       FSyncEdit.MoveEndPositionChar(LDifference);
-      LTextCaretPosition.Char := LTextCaretPosition.Char + LDifference;
-      //SetTextCaretX(TextCaretPosition.Char + LDifference);
+      Inc(LTextCaretPosition.Char, LDifference);
     end;
 
     if (LTextBeginPosition.Line = FSyncEdit.EditBeginPosition.Line) and
@@ -4496,13 +4495,13 @@ begin
     end;
 
     LTextEndPosition := LTextBeginPosition;
-    LTextEndPosition.Char := LTextEndPosition.Char + FSyncEdit.EditWidth;
+    Inc(LTextEndPosition.Char, FSyncEdit.EditWidth);
     LOldText := Copy(FLines[LTextBeginPosition.Line], LTextBeginPosition.Char, FSyncEdit.EditWidth);
 
     FUndoList.AddChange(crDelete, LTextCaretPosition, LTextBeginPosition, LTextEndPosition, '', FSelection.ActiveMode);
 
     LTextEndPosition := LTextBeginPosition;
-    LTextEndPosition.Char := LTextEndPosition.Char + Length(LEditText);
+    Inc(LTextEndPosition.Char, Length(LEditText));
 
     FUndoList.AddChange(crInsert, LTextCaretPosition, LTextBeginPosition, LTextEndPosition, LOldText, FSelection.ActiveMode);
     FLines.BeginUpdate;
@@ -12079,12 +12078,12 @@ begin
         Inc(LChar);
       Inc(i);
     end;
-    if LPLine^ <> BCEDITOR_NONE_CHAR then
-    while (LPLine^.GetUnicodeCategory in [TUnicodeCategory.ucCombiningMark, TUnicodeCategory.ucNonSpacingMark]) or
-      ((LPLine - 1)^ <> BCEDITOR_NONE_CHAR) and ((LPLine - 1)^.GetUnicodeCategory = TUnicodeCategory.ucNonSpacingMark) do
+    while (LPLine^ <> BCEDITOR_NONE_CHAR) and
+     ((LPLine^.GetUnicodeCategory in [TUnicodeCategory.ucCombiningMark, TUnicodeCategory.ucNonSpacingMark]) or
+      ((LPLine - 1)^.GetUnicodeCategory = TUnicodeCategory.ucNonSpacingMark)) do
     begin
-      Inc(LPLine);
       Inc(i);
+      Inc(LPLine);
     end;
     Result.Char := i;
   end;
@@ -13293,14 +13292,11 @@ begin
             SelectionBeginPosition := LNewCaretPosition;
 
             SelectedText := LDragDropText;
-
-           // SelectionBeginPosition := LNewCaretPosition;
           finally
             if LChangeScrollPastEndOfLine then
               FScroll.Options := FScroll.Options - [soPastEndOfLine];
           end;
 
-          //SelectionEndPosition := TextCaretPosition;
           CommandProcessor(ecSelectionGotoXY, BCEDITOR_NONE_CHAR, @LNewCaretPosition);
         finally
           EndUndoBlock;
