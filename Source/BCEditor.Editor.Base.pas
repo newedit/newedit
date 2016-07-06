@@ -94,7 +94,7 @@ type
     FMinimapClickOffsetY: Integer;
     FMinimapIndicatorBlendFunction: TBlendFunction;
     FMinimapIndicatorBitmap: Vcl.Graphics.TBitmap;
-    FMinimapShadowAlphaArray: array of Single;
+    FMinimapShadowAlphaArray: TBCEditorArrayOfSingle;
     FMinimapShadowAlphaByteArray: PByteArray;
     FMinimapShadowAlphaByteArrayLength: Integer;
     FMinimapShadowBlendFunction: TBlendFunction;
@@ -163,6 +163,11 @@ type
     FRightMarginMovePosition: Integer;
     FSaveSelectionMode: TBCEditorSelectionMode;
     FScroll: TBCEditorScroll;
+    FScrollShadowAlphaArray: TBCEditorArrayOfSingle;
+    FScrollShadowAlphaByteArray: PByteArray;
+    FScrollShadowAlphaByteArrayLength: Integer;
+    FScrollShadowBlendFunction: TBlendFunction;
+    FScrollShadowBitmap: Vcl.Graphics.TBitmap;
     FScrollDeltaX: Integer;
     FScrollDeltaY: Integer;
     FScrollTimer: TTimer;
@@ -271,7 +276,8 @@ type
     procedure CompletionProposalTimerHandler(ASender: TObject);
     procedure ComputeScroll(X, Y: Integer);
     procedure CreateLineNumbersCache(AResetCache: Boolean = False);
-    procedure CreateShadowBitmap(const AClipRect: TRect);
+    procedure CreateShadowBitmap(const AClipRect: TRect; ABitmap: Vcl.Graphics.TBitmap;
+      const AShadowAlphaArray: TBCEditorArrayOfSingle; const AShadowAlphaByteArray: PByteArray);
     procedure DeflateMinimapRect(var ARect: TRect);
     procedure DeleteChar;
     procedure DeleteLastWordOrBeginningOfLine(const ACommand: TBCEditorCommand);
@@ -309,6 +315,7 @@ type
     procedure FindAll(const ASearchText: string = '');
     procedure FindWords(const AWord: string; AList: TList; ACaseSensitive: Boolean; AWholeWordsOnly: Boolean);
     procedure FontChanged(ASender: TObject);
+    procedure FreeScrollShadowBitmap;
     procedure FreeMinimapBitmaps;
     procedure FreeMultiCarets;
     procedure GetMinimapLeftRight(var ALeft: Integer; var ARight: Integer);
@@ -489,6 +496,7 @@ type
     procedure PaintMouseMoveScrollPoint;
     procedure PaintRightMargin(ACanvas: TCanvas; AClipRect: TRect);
     procedure PaintRightMarginMove;
+    procedure PaintScrollShadow(ACanvas: TCanvas; AClipRect: TRect);
     procedure PaintSearchMap(AClipRect: TRect);
     procedure PaintSearchResults(ACanvas: TCanvas);
     procedure PaintSpecialChars(ACanvas: TCanvas; ALine, AFirstColumn: Integer; ALineRect: TRect);
@@ -879,6 +887,12 @@ begin
   FSelectionEndPosition := FSelectionBeginPosition;
   FOptions := BCEDITOR_DEFAULT_OPTIONS;
   { Scroll }
+   with FScrollShadowBlendFunction do
+  begin
+    BlendOp := AC_SRC_OVER;
+    BlendFlags := 0;
+    AlphaFormat := AC_SRC_ALPHA;
+  end;
   FScrollTimer := TTimer.Create(Self);
   FScrollTimer.Enabled := False;
   FScrollTimer.Interval := 100;
@@ -979,6 +993,7 @@ begin
   FFontDummy.Free;
   FOriginalLines.Free;
   FTextLinesBufferBitmap.Free;
+  FreeScrollShadowBitmap;
   FreeMinimapBitmaps;
   FActiveLine.Free;
   FRightMargin.Free;
@@ -998,6 +1013,11 @@ begin
   begin
     FreeMem(FMinimapShadowAlphaByteArray);
     FMinimapShadowAlphaByteArray := nil;
+  end;
+  if Assigned(FScrollShadowAlphaByteArray) then
+  begin
+    FreeMem(FScrollShadowAlphaByteArray);
+    FScrollShadowAlphaByteArray := nil;
   end;
   if Assigned(FCharCountArray) then
   begin
@@ -2142,22 +2162,23 @@ begin
   end;
 end;
 
-procedure TBCBaseEditor.CreateShadowBitmap(const AClipRect: TRect);
+procedure TBCBaseEditor.CreateShadowBitmap(const AClipRect: TRect; ABitmap: Vcl.Graphics.TBitmap;
+  const AShadowAlphaArray: TBCEditorArrayOfSingle; const AShadowAlphaByteArray: PByteArray);
 var
   LRow, LColumn: Integer;
   LPixel: PBCEditorQuadColor;
   LAlpha: Single;
 begin
-  FMinimapShadowBitmap.Height := 0;
-  FMinimapShadowBitmap.Height := AClipRect.Height; //FI:W508 FixInsight ignore
+  ABitmap.Height := 0;
+  ABitmap.Height := AClipRect.Height; //FI:W508 FixInsight ignore
 
-  for LRow := 0 to FMinimapShadowBitmap.Height - 1 do
+  for LRow := 0 to ABitmap.Height - 1 do
   begin
-    LPixel := FMinimapShadowBitmap.Scanline[LRow];
-    for LColumn := 0 to FMinimapShadowBitmap.Width - 1 do
+    LPixel := ABitmap.Scanline[LRow];
+    for LColumn := 0 to ABitmap.Width - 1 do
     begin
-      LAlpha := FMinimapShadowAlphaArray[LColumn];
-      LPixel.Alpha := FMinimapShadowAlphaByteArray[LColumn];
+      LAlpha := AShadowAlphaArray[LColumn];
+      LPixel.Alpha := AShadowAlphaByteArray[LColumn];
       LPixel.Red := Round(LPixel.Red * LAlpha);
       LPixel.Green := Round(LPixel.Green * LAlpha);
       LPixel.Blue := Round(LPixel.Blue * LAlpha);
@@ -4772,6 +4793,15 @@ begin
   end;
 end;
 
+procedure TBCBaseEditor.FreeScrollShadowBitmap;
+begin
+  if Assigned(FScrollShadowBitmap) then
+  begin
+    FScrollShadowBitmap.Free;
+    FScrollShadowBitmap := nil;
+  end;
+end;
+
 procedure TBCBaseEditor.FreeMinimapBitmaps;
 begin
   if Assigned(FMinimapBufferBitmap) then
@@ -4886,11 +4916,12 @@ begin
       FMinimapBufferBitmap := Vcl.Graphics.TBitmap.Create;
     FMinimapBufferBitmap.Height := 0;
 
-    if FMinimap.Shadow.Visible then
-    begin
+    if ioUseBlending in FMinimap.Indicator.Options then
       if not Assigned(FMinimapIndicatorBitmap) then
         FMinimapIndicatorBitmap := Vcl.Graphics.TBitmap.Create;
 
+    if FMinimap.Shadow.Visible then
+    begin
       FMinimapShadowBlendFunction.SourceConstantAlpha := FMinimap.Shadow.AlphaBlending;
 
       if not Assigned(FMinimapShadowBitmap) then
@@ -5935,7 +5966,37 @@ begin
 end;
 
 procedure TBCBaseEditor.ScrollChanged(ASender: TObject);
+var
+  i: Integer;
 begin
+  if FScroll.Shadow.Visible then
+  begin
+    FScrollShadowBlendFunction.SourceConstantAlpha := FScroll.Shadow.AlphaBlending;
+
+    if not Assigned(FScrollShadowBitmap) then
+    begin
+      FScrollShadowBitmap := Vcl.Graphics.TBitmap.Create;
+      FScrollShadowBitmap.PixelFormat := pf32Bit;
+    end;
+
+    FScrollShadowBitmap.Canvas.Brush.Color := FScroll.Shadow.Color;
+    FScrollShadowBitmap.Width := FScroll.Shadow.Width;
+
+    SetLength(FScrollShadowAlphaArray, FScrollShadowBitmap.Width);
+    if FScrollShadowAlphaByteArrayLength <> FScrollShadowBitmap.Width then
+    begin
+      FScrollShadowAlphaByteArrayLength := FScrollShadowBitmap.Width;
+      ReallocMem(FScrollShadowAlphaByteArray, FScrollShadowAlphaByteArrayLength * SizeOf(Byte));
+    end;
+
+    for i := 0 to FScrollShadowBitmap.Width - 1 do
+    begin
+      FScrollShadowAlphaArray[i] := (FScrollShadowBitmap.Width - i) / FScrollShadowBitmap.Width;
+      FScrollShadowAlphaByteArray[i] := Min(Round(Power(FScrollShadowAlphaArray[i], 4) * 255.0), 255);
+    end;
+  end
+  else
+    FreeScrollShadowBitmap;
   UpdateScrollBars;
   Invalidate;
 end;
@@ -9201,6 +9262,14 @@ begin
         PaintMinimapShadow(Canvas, DrawRect);
       end;
 
+    if FScroll.Shadow.Visible and (FHorizontalScrollPosition <> 0) then
+    begin
+      DrawRect := LClipRect;
+      DrawRect.Left := LTextLinesLeft;
+      DrawRect.Right := LTextLinesRight;
+      PaintScrollShadow(Canvas, DrawRect);
+    end;
+
     DoOnPaint;
   finally
     FLastTopLine := FTopLine;
@@ -9893,7 +9962,7 @@ var
   LLeft: Integer;
 begin
   if FMinimapShadowBitmap.Height <> AClipRect.Height then
-    CreateShadowBitmap(AClipRect);
+    CreateShadowBitmap(AClipRect, FMinimapShadowBitmap, FMinimapShadowAlphaArray, FMinimapShadowAlphaByteArray);
 
   if FMinimap.Align = maLeft then
     LLeft := AClipRect.Left
@@ -9950,6 +10019,16 @@ begin
     MoveTo(LRightMarginPosition, 0);
     LineTo(LRightMarginPosition, ClientHeight);
   end;
+end;
+
+procedure TBCBaseEditor.PaintScrollShadow(ACanvas: TCanvas; AClipRect: TRect);
+begin
+  if FScrollShadowBitmap.Height <> AClipRect.Height then
+    CreateShadowBitmap(AClipRect, FScrollShadowBitmap, FScrollShadowAlphaArray, FScrollShadowAlphaByteArray);
+
+  AlphaBlend(ACanvas.Handle, AClipRect.Left, 0, FScrollShadowBitmap.Width,
+    FScrollShadowBitmap.Height, FScrollShadowBitmap.Canvas.Handle, 0, 0, FScrollShadowBitmap.Width,
+    FScrollShadowBitmap.Height, FScrollShadowBlendFunction);
 end;
 
 procedure TBCBaseEditor.PaintSearchMap(AClipRect: TRect);

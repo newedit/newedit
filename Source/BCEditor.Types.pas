@@ -7,6 +7,7 @@ uses
 
 type
   TBCEditorArrayOfString = array of string;
+  TBCEditorArrayOfSingle = array of Single;
 
   TBCEditorCharMethod = function(AChar: Char): Boolean of object;
 
