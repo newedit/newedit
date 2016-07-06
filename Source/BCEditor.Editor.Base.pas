@@ -5059,8 +5059,10 @@ begin
     begin
       LPLine := PChar(FLines[LDestinationPosition.Line]);
       Inc(LPLine, LDestinationPosition.Char - 1);
-      while (LPLine^.GetUnicodeCategory in [TUnicodeCategory.ucCombiningMark, TUnicodeCategory.ucNonSpacingMark]) or
-        ((LPLine - 1)^ <> BCEDITOR_NONE_CHAR) and ((LPLine - 1)^.GetUnicodeCategory = TUnicodeCategory.ucNonSpacingMark) do
+      while (LPLine^ <> BCEDITOR_NONE_CHAR) and
+        ( (LPLine^.GetUnicodeCategory in [TUnicodeCategory.ucCombiningMark, TUnicodeCategory.ucNonSpacingMark]) or
+          ((LPLine - 1)^ <> BCEDITOR_NONE_CHAR) and ((LPLine - 1)^.GetUnicodeCategory = TUnicodeCategory.ucNonSpacingMark) and
+          not IsCombiningDiacriticalMark((LPLine - 1)^) ) do
       if X > 0 then
       begin
         Inc(LPLine);
@@ -10802,6 +10804,8 @@ var
     LCurrentLineText: string;
     LPChar: PChar;
 
+    LTest: string;
+
     function GetWordAtSelection(var ASelectedText: string): string;
     var
       LTempTextPosition: TBCEditorTextPosition;
@@ -12158,8 +12162,9 @@ begin
       Inc(i);
     end;
     while (LPLine^ <> BCEDITOR_NONE_CHAR) and
-      ((LPLine^.GetUnicodeCategory in [TUnicodeCategory.ucCombiningMark, TUnicodeCategory.ucNonSpacingMark]) or
-      ((LPLine - 1)^.GetUnicodeCategory = TUnicodeCategory.ucNonSpacingMark)) do
+      ( (LPLine^.GetUnicodeCategory in [TUnicodeCategory.ucCombiningMark, TUnicodeCategory.ucNonSpacingMark]) or
+      ((LPLine - 1)^ <> BCEDITOR_NONE_CHAR) and ((LPLine - 1)^.GetUnicodeCategory = TUnicodeCategory.ucNonSpacingMark) and
+      not IsCombiningDiacriticalMark((LPLine - 1)^) ) do
     begin
       Inc(i);
       Inc(LPLine);

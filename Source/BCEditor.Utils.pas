@@ -5,6 +5,7 @@ interface
 uses
   Winapi.Windows, System.Math, System.Classes, Vcl.Graphics, System.UITypes, BCEditor.Consts, BCEditor.Types;
 
+function IsCombiningDiacriticalMark(const AChar: Char): Boolean;
 function DeleteWhitespace(const AText: string): string;
 function GetTabConvertProc(AColumns: Boolean): TBCEditorTabConvertProc;
 function MessageDialog(const AMessage: string; ADlgType: TMsgDlgType; AButtons: TMsgDlgButtons): Integer;
@@ -19,6 +20,16 @@ implementation
 
 uses
   Vcl.Forms, Vcl.Dialogs, System.SysUtils, System.Character;
+
+function IsCombiningDiacriticalMark(const AChar: Char): Boolean;
+begin
+  case Word(AChar) of
+    $0300..$036F:
+      Result := True
+  else
+    Result := False;
+  end;
+end;
 
 function MiddleColor(AColor1, AColor2: TColor): TColor;
 var

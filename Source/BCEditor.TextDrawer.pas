@@ -133,7 +133,7 @@ function GetFontsInfoManager: TBCEditorFontsInfoManager;
 implementation
 
 uses
-  BCEditor.Consts, BCEditor.Language, System.Character;
+  BCEditor.Utils, BCEditor.Consts, BCEditor.Language, System.Character;
 
 var
   GFontsInfoManager: TBCEditorFontsInfoManager;
@@ -603,16 +603,19 @@ var
   LNextChar: PChar;
   LLength: Integer;
 begin
-  if (AChar^.GetUnicodeCategory in [TUnicodeCategory.ucCombiningMark, TUnicodeCategory.ucNonSpacingMark]) or
-     ((AChar - 1)^ <> BCEDITOR_NONE_CHAR) and ((AChar - 1)^.GetUnicodeCategory = TUnicodeCategory.ucNonSpacingMark) then
+  if (AChar^ <> BCEDITOR_NONE_CHAR) and
+    ( (AChar^.GetUnicodeCategory in [TUnicodeCategory.ucCombiningMark, TUnicodeCategory.ucNonSpacingMark]) or
+    ((AChar - 1)^ <> BCEDITOR_NONE_CHAR) and ((AChar - 1)^.GetUnicodeCategory = TUnicodeCategory.ucNonSpacingMark) and
+      not IsCombiningDiacriticalMark((AChar - 1)^) ) then
     Result := 0
   else
   begin
     LLength := Length(AChar^);
     LNextChar := AChar + 1;
     while (LNextChar^ <> BCEDITOR_NONE_CHAR) and
-      ((LNextChar^.GetUnicodeCategory in [TUnicodeCategory.ucCombiningMark, TUnicodeCategory.ucNonSpacingMark]) or
-       ((LNextChar - 1)^.GetUnicodeCategory = TUnicodeCategory.ucNonSpacingMark)) do
+      ( (LNextChar^.GetUnicodeCategory in [TUnicodeCategory.ucCombiningMark, TUnicodeCategory.ucNonSpacingMark]) or
+    ((LNextChar - 1)^ <> BCEDITOR_NONE_CHAR) and ((LNextChar - 1)^.GetUnicodeCategory = TUnicodeCategory.ucNonSpacingMark) and
+      not IsCombiningDiacriticalMark((LNextChar - 1)^) ) do
     begin
       Inc(LNextChar);
       Inc(LLength);
