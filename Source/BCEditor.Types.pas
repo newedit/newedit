@@ -321,8 +321,6 @@ type
   TBCEditorCodeFoldingMarkStyle = (msSquare, msCircle);
   TBCEditorCodeFoldingChanges = (fcEnabled, fcRefresh, fcRescan);
 
-  TLineSpacingRule = (lsSingle, lsOneAndHalf, lsDouble, lsSpecified);
-
   TBCEditorCodeFoldingChangeEvent = procedure(Event: TBCEditorCodeFoldingChanges) of object;
 
   TBCEditorCodeFoldingOption = (

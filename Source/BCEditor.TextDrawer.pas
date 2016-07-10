@@ -98,7 +98,6 @@ type
     FCharHeight: Integer;
     FCharWidth: Integer;
     FCalcExtentBaseStyle: TFontStyles;
-    //FCharABCWidthCache: array [0 .. 127] of TABC;
     FColor: TColor;
     FCurrentFont: HFont;
     FDrawingCount: Integer;
@@ -113,7 +112,8 @@ type
     constructor Create(ACalcExtentBaseStyle: TFontStyles; ABaseFont: TFont);
     destructor Destroy; override;
 
-    function GetCharCount(AChar: PChar): Integer;
+    function GetCharCount(const AChar: PChar): Integer;
+    function GetTextWidth(const AText: string; const AIndex: Integer): Integer;
     procedure BeginDrawing(AHandle: HDC);
     procedure EndDrawing;
     procedure ExtTextOut(const X, Y: Integer; AOptions: Longint; const ARect: TRect; AText: PChar; ALength: Integer);
@@ -127,8 +127,6 @@ type
   end;
 
   EBCEditorTextDrawerException = class(Exception);
-
-function GetFontsInfoManager: TBCEditorFontsInfoManager;
 
 implementation
 
@@ -553,7 +551,6 @@ procedure TBCEditorTextDrawer.SetBaseStyle(const AValue: TFontStyles);
 begin
   if FCalcExtentBaseStyle <> AValue then
   begin
-    //FlushCharABCWidthCache;
     FCalcExtentBaseStyle := AValue;
     with FFontStock do
     begin
@@ -595,7 +592,7 @@ begin
   end;
 end;
 
-function TBCEditorTextDrawer.GetCharCount(AChar: PChar): Integer;
+function TBCEditorTextDrawer.GetCharCount(const AChar: PChar): Integer;
 var
   LTextSize: TSize;
   LRemainder: Word;
@@ -628,6 +625,16 @@ begin
   end;
 end;
 
+function TBCEditorTextDrawer.GetTextWidth(const AText: string; const AIndex: Integer): Integer;
+var
+  LText: string;
+  LTextSize: TSize;
+begin
+  LText := Copy(AText, 1, AIndex - 1);
+  GetTextExtentPoint32(FStockBitmap.Canvas.Handle, LText, AIndex - 1, LTextSize);
+  Result := LTextSize.cx;
+end;
+
 procedure TBCEditorTextDrawer.ExtTextOut(const X, Y: Integer; AOptions: Longint; const ARect: TRect; AText: PChar;
   ALength: Integer);
 var
@@ -651,7 +658,7 @@ begin
       Inc(LPChar);
     end;
 
-    Winapi.Windows.ExtTextOut(FHandle, X, Y, AOptions, @LDrawRect, AText, ALength, Pointer(LExtTextOutDistance));
+    Winapi.Windows.ExtTextOut(FHandle, X, Y, AOptions, @LDrawRect, AText, ALength, nil); // Pointer(LExtTextOutDistance));
   finally
     FreeMem(LExtTextOutDistance);
   end;

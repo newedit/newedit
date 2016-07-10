@@ -9,17 +9,14 @@ type
   TBCEditorLineSpacing = class(TPersistent)
   strict private
     FOnChange: TNotifyEvent;
-    FRule: TLineSpacingRule;
     FSpacing: Integer;
     procedure DoChange;
-    procedure SetRule(const AValue: TLineSpacingRule);
     procedure SetSpacing(const AValue: Integer);
   public
     constructor Create;
     procedure Assign(ASource: TPersistent); override;
   published
-    property Rule: TLineSpacingRule read FRule write SetRule default lsSpecified;
-    property Spacing: Integer read FSpacing write SetSpacing default 1;
+    property Spacing: Integer read FSpacing write SetSpacing default 0;
     property OnChange: TNotifyEvent read FOnChange write FOnChange;
   end;
 
@@ -33,7 +30,6 @@ begin
   with ASource as TBCEditorLineSpacing do
   begin
     Self.FSpacing := Spacing;
-    Self.FRule := Rule;
     Self.DoChange;
   end
   else
@@ -44,8 +40,7 @@ constructor TBCEditorLineSpacing.Create;
 begin
   inherited;
 
-  FSpacing := 1;
-  FRule := lsSpecified;
+  FSpacing := 0;
 end;
 
 procedure TBCEditorLineSpacing.DoChange;
@@ -59,15 +54,6 @@ begin
   if FSpacing <> AValue then
   begin
     FSpacing := AValue;
-    DoChange;
-  end;
-end;
-
-procedure TBCEditorLineSpacing.SetRule(const AValue: TLineSpacingRule);
-begin
-  if FRule <> AValue then
-  begin
-    FRule := AValue;
     DoChange;
   end;
 end;
