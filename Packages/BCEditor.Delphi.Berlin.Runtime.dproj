@@ -158,7 +158,6 @@
         <DCCReference Include="..\Source\BCEditor.Editor.LeftMargin.Colors.pas"/>
         <DCCReference Include="..\Source\BCEditor.Editor.LeftMargin.LineNumbers.pas"/>
         <DCCReference Include="..\Source\BCEditor.Editor.LeftMargin.LineState.pas"/>
-        <DCCReference Include="..\Source\BCEditor.Editor.LineSpacing.pas"/>
         <DCCReference Include="..\Source\BCEditor.Editor.MatchingPair.pas"/>
         <DCCReference Include="..\Source\BCEditor.Editor.MatchingPair.Colors.pas"/>
         <DCCReference Include="..\Source\BCEditor.Editor.Minimap.pas"/>
