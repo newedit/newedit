@@ -453,7 +453,7 @@ var
     if Assigned(LElement) then
       AAttribute.Foreground := LElement.Foreground;
     if Assigned(LElement) then
-      AAttribute.Style := LElement.Style;
+      AAttribute.FontStyles := LElement.FontStyles;
   end;
 
 begin

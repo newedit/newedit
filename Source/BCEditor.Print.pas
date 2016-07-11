@@ -577,7 +577,7 @@ begin
 
       if Assigned(LHighlighterAttribute) then
       begin
-        FCanvas.Font.Style := LHighlighterAttribute.Style;
+        FCanvas.Font.Style := LHighlighterAttribute.FontStyles;
         if FColors then
         begin
           LColor := LHighlighterAttribute.Foreground;

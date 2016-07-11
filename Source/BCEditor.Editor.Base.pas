@@ -500,7 +500,7 @@ type
     procedure PaintSyncItems(ACanvas: TCanvas);
     procedure PaintTextLines(ACanvas: TCanvas; AClipRect: TRect; AFirstRow, ALastRow: Integer; AMinimap: Boolean);
     procedure RedoItem;
-    procedure ResetCaret(ADoUpdate: Boolean = True);
+    procedure ResetCaret;
     procedure ScanCodeFoldingRanges; virtual;
     procedure ScanMatchingPair;
     procedure SetAlwaysShowCaret(const AValue: Boolean);
@@ -1415,27 +1415,27 @@ var
   LLine: string;
 begin
   LPositionY := ATextPosition.Line;
-  if Assigned(Highlighter) and (LPositionY >= 0) and (LPositionY < FLines.Count) then
+  if Assigned(FHighlighter) and (LPositionY >= 0) and (LPositionY < FLines.Count) then
   begin
     LLine := FLines[LPositionY];
     if LPositionY = 0 then
-      Highlighter.ResetCurrentRange
+      FHighlighter.ResetCurrentRange
     else
-      Highlighter.SetCurrentRange(FLines.Ranges[LPositionY - 1]);
-    Highlighter.SetCurrentLine(LLine);
+      FHighlighter.SetCurrentRange(FLines.Ranges[LPositionY - 1]);
+    FHighlighter.SetCurrentLine(LLine);
     LPositionX := ATextPosition.Char;
     if (LPositionX > 0) and (LPositionX <= Length(LLine)) then
-    while not Highlighter.GetEndOfLine do
+    while not FHighlighter.GetEndOfLine do
     begin
-      AStart := Highlighter.GetTokenPosition + 1;
-      Highlighter.GetToken(AToken);
+      AStart := FHighlighter.GetTokenPosition + 1;
+      FHighlighter.GetToken(AToken);
       if (LPositionX >= AStart) and (LPositionX < AStart + Length(AToken)) then
       begin
-        AHighlighterAttribute := Highlighter.GetTokenAttribute;
-        ATokenType := Highlighter.GetTokenKind;
+        AHighlighterAttribute := FHighlighter.GetTokenAttribute;
+        ATokenType := FHighlighter.GetTokenKind;
         Exit(True);
       end;
-      Highlighter.Next;
+      FHighlighter.Next;
     end;
   end;
   AToken := '';
@@ -1614,7 +1614,7 @@ var
     if ADisplayPosition.Row = 1 then
       FHighlighter.ResetCurrentRange
     else
-      FHighlighter.SetCurrentRange(FLines.Ranges[ ADisplayPosition.Row - 1]);
+      FHighlighter.SetCurrentRange(FLines.Ranges[ADisplayPosition.Row - 1]);
     { Get line with tabs converted to spaces like PaintTextLines does. }
     LCurrentLineText := FLines.ExpandedStrings[ADisplayPosition.Row - 1];
     FHighlighter.SetCurrentLine(LCurrentLineText);
@@ -2170,11 +2170,64 @@ begin
 end;
 
 function TBCBaseEditor.DisplayPositionToPixels(const ADisplayPosition: TBCEditorDisplayPosition): TPoint;
+var
+  LPositionY: Integer;
+  LToken: string;
+  LText: string;
+  LHighlighterAttribute: TBCEditorHighlighterAttribute;
+  LFontStyles, LPreviousFontStyles: TFontStyles;
+  LLength: Integer;
 begin
-  Result.X := (ADisplayPosition.Column - 1) * FTextDrawer.CharWidth + FTextOffset;
-  Result.Y := (ADisplayPosition.Row - FTopLine) * GetLineHeight;
-  // TODO
-  //Result.X := GetTextWidth(FLines[ADisplayPosition.Row - 1], ADisplayPosition.Column) + FTextOffset;
+  LPositionY := ADisplayPosition.Row - FTopLine;
+  Result.Y := LPositionY * GetLineHeight;
+  Result.X := 0;
+
+  if LPositionY = 0 then
+    FHighlighter.ResetCurrentRange
+  else
+    FHighlighter.SetCurrentRange(FLines.Ranges[LPositionY - 1]);
+  FHighlighter.SetCurrentLine(FLines[ADisplayPosition.Row - FTopLine]);
+  LFontStyles := [];
+  LPreviousFontStyles := [];
+  LText := '';
+  LLength := 0;
+  LHighlighterAttribute := FHighlighter.GetTokenAttribute;
+  if Assigned(LHighlighterAttribute) then
+    LPreviousFontStyles := LHighlighterAttribute.FontStyles;
+  while not FHighlighter.GetEndOfLine do
+  begin
+    FHighlighter.GetToken(LToken);
+    LHighlighterAttribute := FHighlighter.GetTokenAttribute;
+    if Assigned(LHighlighterAttribute) then
+      LFontStyles := LHighlighterAttribute.FontStyles;
+    if (LText <> '') and (LFontStyles <> LPreviousFontStyles) then
+    begin
+      FTextDrawer.SetStyle(LFontStyles);
+      LPreviousFontStyles := LFontStyles;
+      Inc(LLength, Length(LText));
+      Inc(Result.X, FTextDrawer.GetTextWidth(LText, Length(LText)));
+      LText := LToken;
+    end;
+
+    LText := LText + LToken;
+
+    if FHighlighter.GetTokenPosition + FHighlighter.GetTokenLength > ADisplayPosition.Column then
+    begin
+      Inc(Result.X, FTextDrawer.GetTextWidth(LText, ADisplayPosition.Column - LLength + 1));
+      LText := '';
+      Break;
+    end;
+
+    FHighlighter.Next;
+  end;
+
+  if LText <> '' then
+    Inc(Result.X, FTextDrawer.GetTextWidth(LText, Length(LText)));
+
+  if FHighlighter.GetTokenPosition + FHighlighter.GetTokenLength < ADisplayPosition.Column then
+    Inc(Result.X, (ADisplayPosition.Column - FHighlighter.GetTokenPosition - FHighlighter.GetTokenLength) * FTextDrawer.CharWidth);
+
+  Inc(Result.X, FTextOffset);
 end;
 
 function TBCBaseEditor.GetDisplayTextLineNumber(ADisplayLineNumber: Integer): Integer;
@@ -7564,8 +7617,8 @@ begin
     if sfScrollbarChanged in FStateFlags then
       UpdateScrollBars;
 
-    if sfCaretChanged in FStateFlags then
-      UpdateCaret;
+    //if sfCaretChanged in FStateFlags then
+    //  UpdateCaret;
   end;
 end;
 
@@ -8857,7 +8910,8 @@ begin
 
   if (rmoMouseMove in FRightMargin.Options) and FRightMargin.Visible then
   begin
-    FRightMargin.MouseOver := Abs(DisplayPositionToPixels(GetDisplayPosition(FRightMargin.Position + 1, 0)).X - X) < 3;
+    // TODO: This is not a good idea...
+    //FRightMargin.MouseOver := Abs(DisplayPositionToPixels(GetDisplayPosition(FRightMargin.Position + 1, 0)).X - X) < 3;
 
     if FRightMargin.Moving then
     begin
@@ -10772,7 +10826,7 @@ var
     LHighlighterAttribute: TBCEditorHighlighterAttribute;
     LTokenText: string;
     LTokenPosition, LRealTokenPosition, LTokenLength: Integer;
-    LStyle: TFontStyles;
+    LFontStyles: TFontStyles;
     LKeyword, LWordAtSelection, LSelectedText: string;
     LMatchingPairUnderline: Boolean;
     LOpenTokenEndPos, LOpenTokenEndLen: Integer;
@@ -10782,9 +10836,6 @@ var
     LPreviousFirstColumn: Integer;
     LTextCaretY: Integer;
     LWrappedRowCount: Integer;
-    LPChar: PChar;
-
-    LTest: string;
 
     function GetWordAtSelection(var ASelectedText: string): string;
     var
@@ -10816,11 +10867,11 @@ var
           LBackgroundColor := FMinimap.Colors.Background
         else
           LBackgroundColor := LHighlighterAttribute.Background;
-        LStyle := LHighlighterAttribute.Style;
+        LFontStyles := LHighlighterAttribute.FontStyles;
 
         if Assigned(FOnCustomTokenAttribute) then
           FOnCustomTokenAttribute(Self, LTokenText, LCurrentLine, LRealTokenPosition, LForegroundColor,
-            LBackgroundColor, LStyle);
+            LBackgroundColor, LFontStyles);
 
         LIsCustomBackgroundColor := False;
         LMatchingPairUnderline := False;
@@ -10894,7 +10945,7 @@ var
           end;
         end;
 
-        PrepareTokenHelper(LTokenText, LTokenPosition, LTokenLength, LForegroundColor, LBackgroundColor, LStyle,
+        PrepareTokenHelper(LTokenText, LTokenPosition, LTokenLength, LForegroundColor, LBackgroundColor, LFontStyles,
           LMatchingPairUnderline, LIsCustomBackgroundColor)
       end
       else
@@ -10944,10 +10995,10 @@ var
 
           if LOpenTokenEndPos > 0 then
           begin
-            if LCurrentLine = 0 then
+            if LCurrentLine = 1 then
               FHighlighter.ResetCurrentRange
             else
-              FHighlighter.SetCurrentRange(FLines.Ranges[LCurrentLine]);
+              FHighlighter.SetCurrentRange(FLines.Ranges[LCurrentLine - 2]);
             FHighlighter.SetCurrentLine(LFromLineText);
             repeat
               while not FHighlighter.GetEndOfLine and
@@ -11072,13 +11123,14 @@ var
         LIsLineSelected := not LIsSelectionInsideLine and (LLineSelectionStart > 0);
         LTokenRect := LLineRect;
 
-        if LCurrentLine - 1 = 0 then
+        if LCurrentLine = 1 then
           FHighlighter.ResetCurrentRange
         else
         if LWrappedRowCount = 0 then
           FHighlighter.SetCurrentRange(Lines.Ranges[LCurrentLine - 2]);
         if LWrappedRowCount = 0 then
           FHighlighter.SetCurrentLine(LCurrentLineText);
+
         LTokenHelper.Length := 0;
 
         while not FHighlighter.GetEndOfLine do
@@ -11313,7 +11365,7 @@ begin
   end;
 end;
 
-procedure TBCBaseEditor.ResetCaret(ADoUpdate: Boolean = True);
+procedure TBCBaseEditor.ResetCaret;
 var
   LCaretStyle: TBCEditorCaretStyle;
   LWidth, LHeight: Integer;
@@ -11356,8 +11408,7 @@ begin
   if Focused or FAlwaysShowCaret then
   begin
     CreateCaret(Handle, 0, LWidth, LHeight);
-    if ADoUpdate then
-      UpdateCaret;
+    UpdateCaret;
   end;
 end;
 
