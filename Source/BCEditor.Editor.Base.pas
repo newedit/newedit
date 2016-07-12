@@ -2204,13 +2204,13 @@ begin
       FTextDrawer.SetStyle(LFontStyles);
       LPreviousFontStyles := LFontStyles;
       Inc(LLength, Length(LText));
-      Inc(Result.X, FTextDrawer.GetTextWidth(LText, Length(LText)));
-      LText := LToken;
+      Inc(Result.X, FTextDrawer.GetTextWidth(LText, Length(LText) + 1));
+      LText := '';
     end;
 
     LText := LText + LToken;
 
-    if FHighlighter.GetTokenPosition + FHighlighter.GetTokenLength > ADisplayPosition.Column then
+    if FHighlighter.GetTokenPosition + FHighlighter.GetTokenLength + 1 >= ADisplayPosition.Column then
     begin
       Inc(Result.X, FTextDrawer.GetTextWidth(LText, ADisplayPosition.Column - LLength));
       LText := '';
@@ -2221,10 +2221,10 @@ begin
   end;
 
   if LText <> '' then
-    Inc(Result.X, FTextDrawer.GetTextWidth(LText, Length(LText)));
+    Inc(Result.X, FTextDrawer.GetTextWidth(LText, Length(LText) + 1));
 
-  if FHighlighter.GetTokenPosition + FHighlighter.GetTokenLength < ADisplayPosition.Column then
-    Inc(Result.X, (ADisplayPosition.Column - FHighlighter.GetTokenPosition - FHighlighter.GetTokenLength) * FTextDrawer.CharWidth);
+  if FHighlighter.GetTokenPosition + FHighlighter.GetTokenLength + 1 < ADisplayPosition.Column then
+    Inc(Result.X, (ADisplayPosition.Column - FHighlighter.GetTokenPosition - FHighlighter.GetTokenLength - 1) * FTextDrawer.CharWidth);
 
   Inc(Result.X, FTextOffset);
 end;
@@ -10022,7 +10022,6 @@ begin
   if FRightMargin.Visible then
   begin
     LRightMarginPosition := FRightMargin.Position * FTextDrawer.CharWidth;
-    {$IFDEF DEBUG}OutputDebugString(PChar(Format('Result = %d', [LRightMarginPosition])));{$ENDIF}
     if (LRightMarginPosition >= AClipRect.Left) and (LRightMarginPosition <= AClipRect.Right) then
     begin
       ACanvas.Pen.Color := FRightMargin.Colors.Edge;
@@ -10034,7 +10033,6 @@ end;
 
 procedure TBCBaseEditor.PaintRightMarginMove;
 var
-  LRightMarginPosition: Integer;
   LOldStyle: TBrushStyle;
 begin
   with Canvas do
@@ -11980,6 +11978,7 @@ var
   LWidth: Integer;
   LCursorIndex: Integer;
   LMinimapLeft, LMinimapRight: Integer;
+  LSelectionAvailable: Boolean;
 begin
   Winapi.Windows.GetCursorPos(LCursorPoint);
   LCursorPoint := ScreenToClient(LCursorPoint);
@@ -12013,8 +12012,11 @@ begin
     SetCursor(Screen.Cursors[FSearch.Map.Cursor])
   else
   begin
-    LTextPosition := DisplayToTextPosition(PixelsToDisplayPosition(LCursorPoint.X, LCursorPoint.Y));
-    if (eoDragDropEditing in FOptions) and not MouseCapture and IsTextPositionInSelection(LTextPosition) then
+    LSelectionAvailable := GetSelectionAvailable;
+    if LSelectionAvailable then
+      LTextPosition := PixelsToTextPosition(LCursorPoint.X, LCursorPoint.Y);
+    if (eoDragDropEditing in FOptions) and not MouseCapture and LSelectionAvailable and
+      IsTextPositionInSelection(LTextPosition) then
       LNewCursor := crArrow
     else
     if FRightMargin.Moving or FRightMargin.MouseOver then
