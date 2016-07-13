@@ -222,6 +222,7 @@ type
     function GetHookedCommandHandlersCount: Integer;
     function GetTextCaretPosition: TBCEditorTextPosition;
     function GetLeadingExpandedLength(const AStr: string; ABorder: Integer = 0): Integer;
+    function GetLeftMarginWidth: Integer;
     function GetLineHeight: Integer;
     function GetLineIndentLevel(ALine: Integer): Integer;
     function GetMatchingToken(ADisplayPosition: TBCEditorDisplayPosition; var AMatch: TBCEditorMatchingPairMatch): TBCEditorMatchingTokenResult;
@@ -1480,6 +1481,15 @@ begin
   end;
 end;
 
+function TBCBaseEditor.GetLeftMarginWidth: Integer;
+begin
+  Result := FLeftMargin.GetWidth + FCodeFolding.GetWidth;
+  if FMinimap.Align = maLeft then
+    Inc(Result, FMinimap.GetWidth);
+  if FSearch.Map.Align = saLeft then
+    Inc(Result, FSearch.Map.GetWidth);
+end;
+
 function TBCBaseEditor.GetLineHeight: Integer;
 begin
   Result := FTextDrawer.CharHeight + FLinespacing;
@@ -2239,11 +2249,7 @@ end;
 
 function TBCBaseEditor.GetTextOffset: Integer;
 begin
-  Result := FLeftMargin.GetWidth + FCodeFolding.GetWidth - FHorizontalScrollPosition;
-  if FMinimap.Align = maLeft then
-    Inc(Result, FMinimap.GetWidth);
-  if FSearch.Map.Align = saLeft then
-    Inc(Result, FSearch.Map.GetWidth);
+  Result := GetLeftMarginWidth - FHorizontalScrollPosition;
 end;
 
 function TBCBaseEditor.GetWordAtCursor: string;
@@ -2699,22 +2705,19 @@ end;
 function TBCBaseEditor.PixelsToDisplayPosition(X, Y: Integer): TBCEditorDisplayPosition;
 var
   LLinesY: Integer;
-  LWidth: Integer;
+  LLeftMarginWidth: Integer;
 begin
   LLinesY := FVisibleLines * GetLineHeight;
   { don't return a partially visible last line }
   if Y >= LLinesY then
     Y := Max(LLinesY - 1, 0);
 
-  LWidth := 0;
-  if FMinimap.Align = maLeft then
-    Inc(LWidth, FMinimap.GetWidth);
-  if FSearch.Map.Align = saLeft then
-    Inc(LWidth, FSearch.Map.GetWidth);
-  Dec(LWidth, FLeftMargin.GetWidth + FCodeFolding.GetWidth);
+  LLeftMarginWidth := GetLeftMarginWidth;
 
   Result.Row := Max(1, TopLine + Y div GetLineHeight);
-  Result.Column := Max(1, (X + LWidth + FHorizontalScrollPosition) div FTextDrawer.CharWidth + 1);
+  // TODO
+  //xxx
+  Result.Column := Max(1, (X - LLeftMarginWidth + FHorizontalScrollPosition) div FTextDrawer.CharWidth + 1);
 end;
 
 function TBCBaseEditor.PixelsToTextPosition(X, Y: Integer): TBCEditorTextPosition;
@@ -8605,12 +8608,7 @@ var
   LRow, LRowCount: Integer;
   LMinimapLeft, LMinimapRight: Integer;
 begin
-  LLeftMarginWidth := FLeftMargin.GetWidth + FCodeFolding.GetWidth;
-  if FMinimap.Align = maLeft then
-    Inc(LLeftMarginWidth, FMinimap.GetWidth);
-  if FSearch.Map.Align = saLeft then
-    Inc(LLeftMarginWidth, FSearch.Map.GetWidth);
-
+  LLeftMarginWidth := GetLeftMarginWidth;
   LSelectionAvailable := SelectionAvailable;
 
   if AButton = mbLeft then
@@ -8693,7 +8691,7 @@ begin
   inherited MouseDown(AButton, AShift, X, Y);
 
   if (rmoMouseMove in FRightMargin.Options) and FRightMargin.Visible then
-    if (AButton = mbLeft) and (Abs(FRightMargin.Position * FTextDrawer.CharWidth + LLeftMarginWidth - X) < 3) then
+    if (AButton = mbLeft) and (Abs(FRightMargin.Position * FTextDrawer.CharWidth + LLeftMarginWidth - X - FHorizontalScrollPosition) < 3) then
     begin
       FRightMargin.Moving := True;
       FRightMarginMovePosition := FRightMargin.Position * FTextDrawer.CharWidth + LLeftMarginWidth;
@@ -8828,17 +8826,12 @@ var
   LHintWindow: THintWindow;
   LPositionText: string;
   LLine: Integer;
-  LWidth: Integer;
   LMinimapLeft, LMinimapRight: Integer;
   LTextCaretPosition: TBCEditorTextPosition;
   LMultiCaretPosition: TBCEditorDisplayPosition;
   LLeftMarginWidth: Integer;
 begin
-  LLeftMarginWidth := FLeftMargin.GetWidth + FCodeFolding.GetWidth;
-  if FMinimap.Align = maLeft then
-    Inc(LLeftMarginWidth, FMinimap.GetWidth);
-  if FSearch.Map.Align = saLeft then
-    Inc(LLeftMarginWidth, FSearch.Map.GetWidth);
+  LLeftMarginWidth := GetLeftMarginWidth;
 
   if FCaret.MultiEdit.Enabled and Focused then
   begin
@@ -8896,23 +8889,17 @@ begin
 
   if (rmoMouseMove in FRightMargin.Options) and FRightMargin.Visible then
   begin
-    FRightMargin.MouseOver := Abs(FRightMargin.Position * FTextDrawer.CharWidth + LLeftMarginWidth - X) < 3;
+    FRightMargin.MouseOver := Abs(FRightMargin.Position * FTextDrawer.CharWidth + LLeftMarginWidth - X - FHorizontalScrollPosition) < 3;
 
     if FRightMargin.Moving then
     begin
-      LWidth := 0;
-      if FMinimap.Align = maLeft then
-        Inc(LWidth, FMinimap.GetWidth);
-      if FSearch.Map.Align = saLeft then
-        Inc(LWidth, FSearch.Map.GetWidth);
-
-      if X > FLeftMargin.GetWidth + FCodeFolding.GetWidth + LWidth then
+      if X > LLeftMarginWidth then
         FRightMarginMovePosition := X;
       if rmoShowMovingHint in FRightMargin.Options then
       begin
         LHintWindow := GetRightMarginHint;
 
-        LPositionText := Format(SBCEditorRightMarginPosition, [(FRightMarginMovePosition - LLeftMarginWidth) div FTextDrawer.CharWidth]);
+        LPositionText := Format(SBCEditorRightMarginPosition, [(FRightMarginMovePosition - LLeftMarginWidth + FHorizontalScrollPosition) div FTextDrawer.CharWidth]);
 
         LRect := LHintWindow.CalcHintRect(200, LPositionText, nil);
         LPoint := ClientToScreen(Point(ClientWidth - LRect.Right - 4, 4));
@@ -9029,12 +9016,7 @@ var
   LWidth: Integer;
   LLeftMarginWidth: Integer;
 begin
-  // TODO: make a function
-  LLeftMarginWidth := FLeftMargin.GetWidth + FCodeFolding.GetWidth;
-  if FMinimap.Align = maLeft then
-    Inc(LLeftMarginWidth, FMinimap.GetWidth);
-  if FSearch.Map.Align = saLeft then
-    Inc(LLeftMarginWidth, FSearch.Map.GetWidth);
+  LLeftMarginWidth := GetLeftMarginWidth;
 
   FMinimap.Clicked := False;
   FMinimap.Dragging := False;
@@ -9070,7 +9052,7 @@ begin
       FRightMargin.Moving := False;
       if rmoShowMovingHint in FRightMargin.Options then
         ShowWindow(GetRightMarginHint.Handle, SW_HIDE);
-      FRightMargin.Position := (FRightMarginMovePosition - LLeftMarginWidth) div FTextDrawer.CharWidth;
+      FRightMargin.Position := (FRightMarginMovePosition - LLeftMarginWidth + FHorizontalScrollPosition) div FTextDrawer.CharWidth;
       if Assigned(FOnRightMarginMouseUp) then
         FOnRightMarginMouseUp(Self);
       Invalidate;
