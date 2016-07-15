@@ -233,6 +233,7 @@ type
     function GetSearchResultCount: Integer;
     function GetSelectionBeginPosition: TBCEditorTextPosition;
     function GetSelectionEndPosition: TBCEditorTextPosition;
+    function GetSelectedRow(Y: Integer): Integer;
     function GetText: string;
     function GetTextBetween(ATextBeginPosition: TBCEditorTextPosition; ATextEndPosition: TBCEditorTextPosition): string;
     function GetTextCaretY: Integer;
@@ -1118,7 +1119,7 @@ var
 begin
   Result := True;
 
-  LFoldRange := CodeFoldingCollapsableFoldRangeForLine(GetDisplayTextLineNumber(Max(1, TopLine + Y div GetLineHeight)));
+  LFoldRange := CodeFoldingCollapsableFoldRangeForLine(GetDisplayTextLineNumber(GetSelectedRow(Y)));
 
   if Assigned(LFoldRange) and LFoldRange.Collapsed then
   begin
@@ -2010,6 +2011,11 @@ begin
     Result.Char := LLineLength + 1;
 end;
 
+function TBCBaseEditor.GetSelectedRow(Y: Integer): Integer;
+begin
+  Result := Max(1, TopLine + Y div GetLineHeight);
+end;
+
 function TBCBaseEditor.GetText: string;
 begin
   Result := FLines.Text;
@@ -2718,7 +2724,7 @@ begin
 
   LLeftMarginWidth := GetLeftMarginWidth;
 
-  Result.Row := Max(1, TopLine + Y div GetLineHeight);
+  Result.Row := GetSelectedRow(Y);
   Result.Column := 1;
 
   if X < LLeftMarginWidth then
@@ -2905,8 +2911,8 @@ begin
   Result := 0;
   ATextPosition.Line := Min(FLines.Count, ATextPosition.Line) - 1;
   for i := 0 to ATextPosition.Line do
-    Result := Result + Length(FLines[i]) + 2;
-  Result := Result + ATextPosition.Char - 1;
+    Inc(Result, Length(FLines[i]) + 2);
+  Inc(Result, ATextPosition.Char - 1);
 end;
 
 function TBCBaseEditor.SearchText(const ASearchText: string; AChanged: Boolean = False): Integer;
@@ -8065,8 +8071,10 @@ var
   LCodeFoldingRegion: Boolean;
   LTextCaretPosition: TBCEditorTextPosition;
   LLeftMarginWidth: Integer;
+  LSelectedRow: Integer;
 begin
-  LTextCaretPosition := DisplayToTextPosition(GetDisplayPosition(1, Max(1, TopLine + Y div GetLineHeight)));
+  LSelectedRow := GetSelectedRow(Y);
+  LTextCaretPosition := DisplayToTextPosition(GetDisplayPosition(1, LSelectedRow));
   TextCaretPosition := LTextCaretPosition;
   { Clear selection }
   if ssShift in AShift then
@@ -8087,7 +8095,7 @@ begin
 
   if FCodeFolding.Visible and LCodeFoldingRegion and (Lines.Count > 0) then
   begin
-    LLine := GetDisplayTextLineNumber(Max(1, TopLine + Y div GetLineHeight));
+    LLine := GetDisplayTextLineNumber(LSelectedRow);
     LFoldRange := CodeFoldingCollapsableFoldRangeForLine(LLine);
 
     if Assigned(LFoldRange) then
@@ -8102,7 +8110,7 @@ begin
   end;
   if Assigned(FOnLeftMarginClick) then
   begin
-    LLine := DisplayToTextPosition(GetDisplayPosition(1, Max(1, TopLine + Y div GetLineHeight))).Line;
+    LLine := DisplayToTextPosition(GetDisplayPosition(1, LSelectedRow)).Line;
     if LLine <= FLines.Count then
     begin
       Marks.GetMarksForLine(LLine, LMarks);
@@ -8658,9 +8666,11 @@ var
   LTextCaretPosition: TBCEditorTextPosition;
   LRow, LRowCount: Integer;
   LMinimapLeft, LMinimapRight: Integer;
+  LSelectedRow: Integer;
 begin
   LLeftMarginWidth := GetLeftMarginWidth;
   LSelectionAvailable := SelectionAvailable;
+  LSelectedRow := GetSelectedRow(Y);
 
   if AButton = mbLeft then
   begin
@@ -8765,13 +8775,13 @@ begin
   if (AButton = mbLeft) and (ssDouble in AShift) and (X > LLeftMarginWidth) then
   begin
     FLastDblClick := GetTickCount;
-    FLastRow := Max(1, TopLine + Y div GetLineHeight);
+    FLastRow := LSelectedRow;
     Exit;
   end
   else
   if (soTripleClickRowSelect in FSelection.Options) and (AShift = [ssLeft]) and (FLastDblClick > 0) then
   begin
-    if ((GetTickCount - FLastDblClick) < FDoubleClickTime) and (FLastRow = Max(1, TopLine + Y div GetLineHeight)) then
+    if ((GetTickCount - FLastDblClick) < FDoubleClickTime) and (FLastRow = LSelectedRow) then
     begin
       DoTripleClick;
       Invalidate;
@@ -8975,7 +8985,7 @@ begin
 
   if FCodeFolding.Visible and (cfoShowCollapsedCodeHint in CodeFolding.Options) and FCodeFolding.Hint.Visible then
   begin
-    LLine := GetDisplayTextLineNumber(Max(1, TopLine + Y div GetLineHeight));
+    LLine := GetDisplayTextLineNumber(GetSelectedRow(Y));
 
     LFoldRange := CodeFoldingCollapsableFoldRangeForLine(LLine);
 
@@ -10569,10 +10579,13 @@ var
     ACanvas.Brush.Color := LColor; { Rest of the line }
   end;
 
-  function GetTextWidth(AIndex: Integer; AMinimap: Boolean = False): Integer;
+  function GetTextWidth(const AIndex: Integer; const AMinimap: Boolean = False): Integer;
   var
+    LIndex: Integer;
     LAfterLine: Integer;
   begin
+    LIndex := AIndex;
+
     if AMinimap then
     begin
       if FMinimap.Align = maRight then
@@ -10587,11 +10600,23 @@ var
     else
       Result := 0;
 
-   Result := Result + FTextDrawer.GetTextWidth(LCurrentLineText, AIndex);
+    if LIndex > LCurrentLineLength then
+      LIndex := LCurrentLineLength;
 
-    LAfterLine := AIndex - LCurrentLineLength - 1;
-    if LAfterLine = 0 then
-      Inc(Result);
+    if LIndex > 0 then
+    begin
+      Inc(Result, FTextDrawer.GetTextWidth(LCurrentLineText, LIndex));
+
+      LAfterLine := LIndex - LCurrentLineLength - 1;
+      if LAfterLine = 0 then
+        Inc(Result);
+    end;
+
+    if (LCurrentLineLength = 0) and (AIndex > 1) then
+      Inc(Result, (AIndex - 1) * FTextDrawer.CharWidth)
+    else
+    if AIndex > LCurrentLineLength then
+      Inc(Result, (AIndex - LCurrentLineLength) * FTextDrawer.CharWidth);
   end;
 
   procedure PaintToken(AToken: string; ATokenLength, ACharsBefore, AFirst, ALast: Integer);
