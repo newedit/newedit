@@ -1113,14 +1113,12 @@ end;
 function TBCBaseEditor.DoOnCodeFoldingHintClick(X, Y: Integer): Boolean;
 var
   LFoldRange: TBCEditorCodeFoldingRange;
-  LDisplayPosition: TBCEditorDisplayPosition;
   LPoint: TPoint;
   LCollapseMarkRect: TRect;
 begin
   Result := True;
 
-  LDisplayPosition := PixelsToDisplayPosition(X, Y);
-  LFoldRange := CodeFoldingCollapsableFoldRangeForLine(GetDisplayTextLineNumber(LDisplayPosition.Row));
+  LFoldRange := CodeFoldingCollapsableFoldRangeForLine(GetDisplayTextLineNumber(Max(1, TopLine + Y div GetLineHeight)));
 
   if Assigned(LFoldRange) and LFoldRange.Collapsed then
   begin
@@ -2721,8 +2719,10 @@ begin
   LLeftMarginWidth := GetLeftMarginWidth;
 
   Result.Row := Max(1, TopLine + Y div GetLineHeight);
-
   Result.Column := 1;
+
+  if X < LLeftMarginWidth then
+    Exit;
 
   if Result.Row = 1 then
     FHighlighter.ResetCurrentRange
@@ -2774,6 +2774,8 @@ begin
 
   Inc(Result.Column, (X + FHorizontalScrollPosition - LLeftMarginWidth -
     FTextDrawer.GetTextWidth(LText, Length(LText) + 1)) div FTextDrawer.CharWidth);
+
+  {$IFDEF DEBUG}OutputDebugString(PChar(Format('(%d, %d)', [Result.Row, Result.Column])));{$ENDIF}
 end;
 
 function TBCBaseEditor.PixelsToTextPosition(X, Y: Integer): TBCEditorTextPosition;
@@ -8963,8 +8965,8 @@ begin
 
   if FCodeFolding.Visible and (cfoShowCollapsedCodeHint in CodeFolding.Options) and FCodeFolding.Hint.Visible then
   begin
-    LDisplayPosition := PixelsToDisplayPosition(X, Y);
-    LLine := GetDisplayTextLineNumber(LDisplayPosition.Row);
+    //LDisplayPosition := PixelsToDisplayPosition(X, Y);
+    LLine := GetDisplayTextLineNumber(Max(1, TopLine + Y div GetLineHeight));
 
     LFoldRange := CodeFoldingCollapsableFoldRangeForLine(LLine);
 
