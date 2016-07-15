@@ -8066,7 +8066,7 @@ var
   LTextCaretPosition: TBCEditorTextPosition;
   LLeftMarginWidth: Integer;
 begin
-  LTextCaretPosition := DisplayToTextPosition(GetDisplayPosition(1, PixelsToDisplayPosition(X, Y).Row));
+  LTextCaretPosition := DisplayToTextPosition(GetDisplayPosition(1, Max(1, TopLine + Y div GetLineHeight)));
   TextCaretPosition := LTextCaretPosition;
   { Clear selection }
   if ssShift in AShift then
@@ -8087,7 +8087,7 @@ begin
 
   if FCodeFolding.Visible and LCodeFoldingRegion and (Lines.Count > 0) then
   begin
-    LLine := GetDisplayTextLineNumber(PixelsToDisplayPosition(X, Y).Row);
+    LLine := GetDisplayTextLineNumber(Max(1, TopLine + Y div GetLineHeight));
     LFoldRange := CodeFoldingCollapsableFoldRangeForLine(LLine);
 
     if Assigned(LFoldRange) then
@@ -8102,7 +8102,7 @@ begin
   end;
   if Assigned(FOnLeftMarginClick) then
   begin
-    LLine := DisplayToTextPosition(PixelsToDisplayPosition(X, Y)).Line;
+    LLine := DisplayToTextPosition(GetDisplayPosition(1, Max(1, TopLine + Y div GetLineHeight))).Line;
     if LLine <= FLines.Count then
     begin
       Marks.GetMarksForLine(LLine, LMarks);
@@ -8338,7 +8338,7 @@ begin
   begin
     Winapi.Windows.GetCursorPos(LCursorPoint);
     LCursorPoint := ScreenToClient(LCursorPoint);
-    LTextPosition := DisplayToTextPosition(PixelsToDisplayPosition(LCursorPoint.X, LCursorPoint.Y));
+    LTextPosition := PixelsToTextPosition(LCursorPoint.X, LCursorPoint.Y);
     GetHighlighterAttributeAtRowColumn(LTextPosition, LToken, LRangeType, LStart, LHighlighterAttribute);
     FMouseOverURI := LRangeType in [ttWebLink, ttMailtoLink];
   end;
@@ -8655,6 +8655,7 @@ var
   LSelectionAvailable: Boolean;
   LLeftMarginWidth: Integer;
   LDisplayPosition: TBCEditorDisplayPosition;
+  LTextCaretPosition: TBCEditorTextPosition;
   LRow, LRowCount: Integer;
   LMinimapLeft, LMinimapRight: Integer;
 begin
@@ -8675,10 +8676,11 @@ begin
     begin
       if ssCtrl in AShift then
       begin
+        LDisplayPosition := PixelsToDisplayPosition(X, Y);
         if ssShift in AShift then
-          AddMultipleCarets(PixelsToDisplayPosition(X, Y))
+          AddMultipleCarets(LDisplayPosition)
         else
-          AddCaret(PixelsToDisplayPosition(X, Y));
+          AddCaret(LDisplayPosition);
         Invalidate;
         Exit;
       end
@@ -8712,12 +8714,12 @@ begin
   end;
 
   if FSyncEdit.Enabled and FSyncEdit.BlockSelected then
-    if not FSyncEdit.IsTextPositionInBlock(DisplayToTextPosition(PixelsToDisplayPosition(X, Y))) then
+    if not FSyncEdit.IsTextPositionInBlock(PixelsToTextPosition(X, Y)) then
       FSyncEdit.Active := False;
 
   if FSyncEdit.Enabled and FSyncEdit.Active then
   begin
-    if not FSyncEdit.IsTextPositionInEdit(DisplayToTextPosition(PixelsToDisplayPosition(X, Y))) then
+    if not FSyncEdit.IsTextPositionInEdit(PixelsToTextPosition(X, Y)) then
       FSyncEdit.Active := False
     else
     begin
@@ -8763,13 +8765,13 @@ begin
   if (AButton = mbLeft) and (ssDouble in AShift) and (X > LLeftMarginWidth) then
   begin
     FLastDblClick := GetTickCount;
-    FLastRow := PixelsToDisplayPosition(X, Y).Row;
+    FLastRow := Max(1, TopLine + Y div GetLineHeight);
     Exit;
   end
   else
   if (soTripleClickRowSelect in FSelection.Options) and (AShift = [ssLeft]) and (FLastDblClick > 0) then
   begin
-    if ((GetTickCount - FLastDblClick) < FDoubleClickTime) and (FLastRow = PixelsToDisplayPosition(X, Y).Row) then
+    if ((GetTickCount - FLastDblClick) < FDoubleClickTime) and (FLastRow = Max(1, TopLine + Y div GetLineHeight)) then
     begin
       DoTripleClick;
       Invalidate;
@@ -8780,22 +8782,30 @@ begin
 
   if X > LLeftMarginWidth then
   begin
+    if (AButton = mbLeft) or (AButton = mbRight) then
+      LTextCaretPosition := PixelsToTextPosition(X, Y);
     if AButton = mbLeft then
     begin
       FUndoList.AddChange(crCaret, TextCaretPosition, SelectionBeginPosition, SelectionEndPosition, '',
         FSelection.ActiveMode);
-      TextCaretPosition := PixelsToTextPosition(X, Y);
+      TextCaretPosition := LTextCaretPosition;
+
+      MouseCapture := True;
+
+      Exclude(FStateFlags, sfWaitForDragging);
+      if LSelectionAvailable and (eoDragDropEditing in FOptions) and (X > LLeftMarginWidth) and
+        (FSelection.Mode = smNormal) and IsTextPositionInSelection(LTextCaretPosition) then
+        Include(FStateFlags, sfWaitForDragging);
     end
     else
     if AButton = mbRight then
     begin
       if (coRightMouseClickMove in FCaret.Options) and
-        (LSelectionAvailable and not IsTextPositionInSelection(DisplayToTextPosition(PixelsToDisplayPosition(X, Y))) or
-        not LSelectionAvailable) then
+        (LSelectionAvailable and not IsTextPositionInSelection(LTextCaretPosition) or not LSelectionAvailable) then
       begin
         Invalidate;
         FSelectionEndPosition := FSelectionBeginPosition;
-        TextCaretPosition := PixelsToTextPosition(X, Y);
+        TextCaretPosition := LTextCaretPosition;
       end
       else
         Exit;
@@ -8817,15 +8827,15 @@ begin
     Exit;
   end;
 
-  if AButton = mbLeft then
+  {if AButton = mbLeft then
   begin
     MouseCapture := True;
 
     Exclude(FStateFlags, sfWaitForDragging);
     if LSelectionAvailable and (eoDragDropEditing in FOptions) and (X > LLeftMarginWidth) and
-      (FSelection.Mode = smNormal) and IsTextPositionInSelection(DisplayToTextPosition(PixelsToDisplayPosition(X, Y))) then
+      (FSelection.Mode = smNormal) and IsTextPositionInSelection(LTextCaretPosition) then
       Include(FStateFlags, sfWaitForDragging);
-  end;
+  end;  }
 
   if not (sfWaitForDragging in FStateFlags) then
     if not (sfDblClicked in FStateFlags) then
@@ -8965,7 +8975,6 @@ begin
 
   if FCodeFolding.Visible and (cfoShowCollapsedCodeHint in CodeFolding.Options) and FCodeFolding.Hint.Visible then
   begin
-    //LDisplayPosition := PixelsToDisplayPosition(X, Y);
     LLine := GetDisplayTextLineNumber(Max(1, TopLine + Y div GetLineHeight));
 
     LFoldRange := CodeFoldingCollapsableFoldRangeForLine(LLine);
@@ -9083,7 +9092,7 @@ begin
   begin
     Winapi.Windows.GetCursorPos(LCursorPoint);
     LCursorPoint := ScreenToClient(LCursorPoint);
-    LTextPosition := DisplayToTextPosition(PixelsToDisplayPosition(LCursorPoint.X, LCursorPoint.Y));
+    LTextPosition := PixelsToTextPosition(LCursorPoint.X, LCursorPoint.Y);
     GetHighlighterAttributeAtRowColumn(LTextPosition, LToken, LRangeType, LStart, LHighlighterAttribute);
     OpenLink(LToken, LRangeType);
     Exit;
@@ -12253,13 +12262,13 @@ begin
   LCursorPoint := ScreenToClient(LCursorPoint);
   if (LCursorPoint.X < 0) or (LCursorPoint.Y < 0) or (LCursorPoint.X > Self.Width) or (LCursorPoint.Y > Self.Height) then
     Exit;
-  ATextPosition := DisplayToTextPosition(PixelsToDisplayPosition(LCursorPoint.X, LCursorPoint.Y));
+  ATextPosition := PixelsToTextPosition(LCursorPoint.X, LCursorPoint.Y);
   Result := True;
 end;
 
 function TBCBaseEditor.GetWordAtPixels(X, Y: Integer): string;
 begin
-  Result := GetWordAtTextPosition(DisplayToTextPosition(PixelsToDisplayPosition(X, Y)));
+  Result := GetWordAtTextPosition(PixelsToTextPosition(X, Y));
 end;
 
 function TBCBaseEditor.IsCommentChar(AChar: Char): Boolean;
