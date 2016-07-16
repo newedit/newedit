@@ -10595,10 +10595,7 @@ var
     else
       Result := 0;
 
-    if LIndex > LCurrentLineLength then
-      LIndex := LCurrentLineLength;
-
-    if LIndex > 0 then
+    if (LCurrentLineLength <> 0) and (LIndex > 0) then
     begin
       Inc(Result, FTextDrawer.GetTextWidth(LCurrentLineText, LIndex));
 
@@ -10610,7 +10607,7 @@ var
     if (LCurrentLineLength = 0) and (AIndex > 1) then
       Inc(Result, (AIndex - 1) * FTextDrawer.CharWidth)
     else
-    if AIndex > LCurrentLineLength then
+    if AIndex - 1 > LCurrentLineLength then
       Inc(Result, (AIndex - LCurrentLineLength) * FTextDrawer.CharWidth);
   end;
 
