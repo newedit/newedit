@@ -112,11 +112,9 @@ type
     constructor Create(ACalcExtentBaseStyle: TFontStyles; ABaseFont: TFont);
     destructor Destroy; override;
 
-    //function GetCharCount(const AChar: PChar): Integer;
     function GetTextWidth(const AText: string; const AIndex: Integer): Integer;
     procedure BeginDrawing(AHandle: HDC);
     procedure EndDrawing;
-    procedure ExtTextOut(const X, Y: Integer; AOptions: Longint; const ARect: TRect; AText: PChar; ALength: Integer);
     procedure SetBackgroundColor(AValue: TColor);
     procedure SetBaseFont(AValue: TFont);
     procedure SetBaseStyle(const AValue: TFontStyles);
@@ -591,39 +589,6 @@ begin
       Winapi.Windows.SetBkColor(FHandle, ColorToRGB(AValue));
   end;
 end;
- {
-function TBCEditorTextDrawer.GetCharCount(const AChar: PChar): Integer;
-var
-  LTextSize: TSize;
-  LRemainder: Word;
-  LResult: Word;
-  LNextChar: PChar;
-  LLength: Integer;
-begin
-  if (AChar^ <> BCEDITOR_NONE_CHAR) and
-    ( (AChar^.GetUnicodeCategory in [TUnicodeCategory.ucCombiningMark, TUnicodeCategory.ucNonSpacingMark]) or
-    ((AChar - 1)^ <> BCEDITOR_NONE_CHAR) and ((AChar - 1)^.GetUnicodeCategory = TUnicodeCategory.ucNonSpacingMark) and
-      not IsCombiningDiacriticalMark((AChar - 1)^) ) then
-    Result := 0
-  else
-  begin
-    LLength := Length(AChar^);
-    LNextChar := AChar + 1;
-    while (LNextChar^ <> BCEDITOR_NONE_CHAR) and
-      ( (LNextChar^.GetUnicodeCategory in [TUnicodeCategory.ucCombiningMark, TUnicodeCategory.ucNonSpacingMark]) or
-    ((LNextChar - 1)^ <> BCEDITOR_NONE_CHAR) and ((LNextChar - 1)^.GetUnicodeCategory = TUnicodeCategory.ucNonSpacingMark) and
-      not IsCombiningDiacriticalMark((LNextChar - 1)^) ) do
-    begin
-      Inc(LNextChar);
-      Inc(LLength);
-    end;
-    GetTextExtentPoint32(FStockBitmap.Canvas.Handle, AChar, LLength, LTextSize);
-    DivMod(LTextSize.cx, CharWidth, LResult, LRemainder);
-    if LRemainder > CharWidth div 2 then
-      Inc(LResult);
-    Result := LResult;
-  end;
-end; }
 
 function TBCEditorTextDrawer.GetTextWidth(const AText: string; const AIndex: Integer): Integer;
 var
@@ -633,35 +598,6 @@ begin
   LText := Copy(AText, 1, AIndex - 1);
   GetTextExtentPoint32(FStockBitmap.Canvas.Handle, LText, AIndex - 1, LTextSize);
   Result := LTextSize.cx;
-end;
-
-procedure TBCEditorTextDrawer.ExtTextOut(const X, Y: Integer; AOptions: Longint; const ARect: TRect; AText: PChar;
-  ALength: Integer);
-{var
-  i, LCharWidth: Integer;
-  LExtTextOutDistance: PIntegerArray;
-  LPChar: PChar;
-  LDrawRect: TRect;    }
-begin
-  {LDrawRect := ARect;
-  LCharWidth := CharWidth;
-
-  GetMem(LExtTextOutDistance, ALength * SizeOf(Integer));   }
-  //try
-    {LPChar := AText;
-    for i := 0 to ALength - 1 do
-    begin
-      if Ord(LPChar^) < 128 then
-        LExtTextOutDistance[i] := LCharWidth
-      else
-        LExtTextOutDistance[i] := GetCharCount(LPChar) * LCharWidth;
-      Inc(LPChar);
-    end; }
-
-    Winapi.Windows.ExtTextOut(FHandle, X, Y, AOptions, @ARect, AText, ALength, nil); // Pointer(LExtTextOutDistance));
-  //finally
-    //FreeMem(LExtTextOutDistance);
-  //end;
 end;
 
 initialization
