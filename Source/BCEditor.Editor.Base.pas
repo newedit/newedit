@@ -534,7 +534,7 @@ type
     function IsWordChar(AChar: Char): Boolean;
     function ReplaceText(const ASearchText: string; const AReplaceText: string): Integer;
     function SplitTextIntoWords(AStringList: TStrings; ACaseSensitive: Boolean): string;
-    function TextToDisplayPosition(const ATextPosition: TBCEditorTextPosition; ARealWidth: Boolean = True): TBCEditorDisplayPosition;
+    function TextToDisplayPosition(const ATextPosition: TBCEditorTextPosition): TBCEditorDisplayPosition;
     function TranslateKeyCode(ACode: Word; AShift: TShiftState; var AData: pointer): TBCEditorCommand;
     function WordEnd: TBCEditorTextPosition; overload;
     function WordEnd(const ATextPosition: TBCEditorTextPosition): TBCEditorTextPosition; overload;
@@ -4079,11 +4079,8 @@ end;
 
 procedure TBCBaseEditor.DoImeStr(AData: Pointer);
 var
-//  i: Integer;
   S: string;
-  //LPChar: PChar;
   LLength: Integer;
-  //LRealLength: Integer;
   LHelper: string;
   LLineText: string;
   LChangeScroll: Boolean;
@@ -4091,17 +4088,8 @@ var
   LBlockStartPosition: TBCEditorTextPosition;
 begin
   LTextCaretPosition := TextCaretPosition;
-//  LPChar := PChar(AData);
   LLength := Length(PChar(AData));
-  {LRealLength := 0;
-  for i := 0 to LLength - 1 do //FI:W528 FixInsight ignore
-  begin
-    if Ord(LPChar^) < 128 then
-      LRealLength := LRealLength + 1
-    else
-      LRealLength := LRealLength + FTextDrawer.GetCharCount(LPChar);
-    Inc(LPChar);
-  end; }
+
   SetString(S, PChar(AData), LLength);
   if SelectionAvailable then
   begin
@@ -4137,7 +4125,7 @@ begin
       end;
 
       Insert(S, LLineText, LTextCaretPosition.Char);
-      DisplayCaretX := DisplayCaretX + LLength; // LRealLength;
+      DisplayCaretX := DisplayCaretX + LLength;
       SetLineWithRightTrim(GetTextCaretY, LLineText);
       if FInsertMode then
         LHelper := '';
@@ -9764,7 +9752,7 @@ var
         begin
           LLineRect.Top := LLineRect.Bottom;
           LLineRect.Bottom := AClipRect.Bottom;
-          FTextDrawer.ExtTextOut(LLineRect.Left, LLineRect.Top, ETO_OPAQUE, LLineRect, '', 0);
+          Winapi.Windows.ExtTextOut(Canvas.Handle, LLineRect.Left, LLineRect.Top, ETO_OPAQUE, @LLineRect, '', 0, nil);
         end;
       finally
         FTextDrawer.SetBaseFont(Self.Font);
@@ -10216,7 +10204,7 @@ begin
 
         LRect.Left := (LDisplayPosition.Column - 1) * FTextDrawer.CharWidth;
         LRect.Right := LRect.Left + LLength * FTextDrawer.CharWidth;
-        FTextDrawer.ExtTextOut(LRect.Left, LRect.Top, ETO_OPAQUE or ETO_CLIPPED, LRect, PChar(LText), LLength);
+        Winapi.Windows.ExtTextOut(ACanvas.Handle, LRect.Left, LRect.Top, ETO_OPAQUE or ETO_CLIPPED, @LRect, PChar(LText), LLength, nil);
       end;
     end;
   end;
@@ -10378,7 +10366,7 @@ begin
           FTextDrawer.SetForegroundColor(ACanvas.Pen.Color);
           FTextDrawer.SetStyle([]);
           LPilcrow := Char($00B6);
-          FTextDrawer.ExtTextOut(LCharRect.Left, LCharRect.Top, ETO_OPAQUE or ETO_CLIPPED, LCharRect, PChar(LPilcrow), 1);
+          Winapi.Windows.ExtTextOut(ACanvas.Handle, LCharRect.Left, LCharRect.Top, ETO_OPAQUE or ETO_CLIPPED, @LCharRect, PChar(LPilcrow), 1, nil);
         end
         else
         if FSpecialChars.EndOfLine.Style = eolArrow then
@@ -10541,13 +10529,13 @@ var
       if (FSelectionEndPosition.Line < FSelectionBeginPosition.Line) or
         ((FSelectionEndPosition.Line = FSelectionBeginPosition.Line) and (FSelectionEndPosition.Char < FSelectionBeginPosition.Char)) then
       begin
-        LSelectionBeginPosition := TextToDisplayPosition(FSelectionEndPosition, False);
-        LSelectionEndPosition := TextToDisplayPosition(FSelectionBeginPosition, False);
+        LSelectionBeginPosition := TextToDisplayPosition(FSelectionEndPosition);
+        LSelectionEndPosition := TextToDisplayPosition(FSelectionBeginPosition);
       end
       else
       begin
-        LSelectionBeginPosition := TextToDisplayPosition(FSelectionBeginPosition, False);
-        LSelectionEndPosition := TextToDisplayPosition(FSelectionEndPosition, False);
+        LSelectionBeginPosition := TextToDisplayPosition(FSelectionBeginPosition);
+        LSelectionEndPosition := TextToDisplayPosition(FSelectionEndPosition);
       end;
   end;
 
@@ -10629,8 +10617,8 @@ var
         ATokenLength := Min(ATokenLength, LLastChar);
       LText := Copy(AToken, AFirst, ATokenLength);
 
-      FTextDrawer.ExtTextOut(LTokenRect.Left, LTokenRect.Top, ETO_OPAQUE or ETO_CLIPPED, LTokenRect, PChar(LText),
-        ATokenLength);
+      Winapi.Windows.ExtTextOut(ACanvas.Handle, LTokenRect.Left, LTokenRect.Top, ETO_OPAQUE or ETO_CLIPPED, @LTokenRect,
+        PChar(LText), ATokenLength, nil);
 
       if LTokenHelper.MatchingPairUnderline then
       begin
@@ -12157,10 +12145,7 @@ begin
             Inc(LChar, FTabs.Width)
         end
         else
-        //if Ord(LPLine^) < 128 then
           Inc(LChar);
-        //else
-        //  Inc(LChar, FTextDrawer.GetCharCount(LPLine));
         Inc(LPLine);
       end
       else
@@ -12687,7 +12672,7 @@ begin
   end;
 end;
 
-function TBCBaseEditor.TextToDisplayPosition(const ATextPosition: TBCEditorTextPosition; ARealWidth: Boolean = True): TBCEditorDisplayPosition;
+function TBCBaseEditor.TextToDisplayPosition(const ATextPosition: TBCEditorTextPosition): TBCEditorDisplayPosition;
 var
   i: Integer;
   LChar: Integer;
@@ -12755,14 +12740,6 @@ begin
           else
             Inc(LChar, FTabs.Width)
         end
-        {else
-        if ARealWidth and (LPLine^ <> BCEDITOR_SPACE_CHAR) and (LPLine^ <> '') then
-        begin
-          //if Ord(LPLine^) < 128 then
-            Inc(LChar)
-          //else
-            Inc(LChar, FTextDrawer.GetCharCount(LPLine));
-        end }
         else
           Inc(LChar);
         Inc(LPLine);
