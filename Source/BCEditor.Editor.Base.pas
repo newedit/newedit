@@ -233,7 +233,7 @@ type
     function GetSearchResultCount: Integer;
     function GetSelectionBeginPosition: TBCEditorTextPosition;
     function GetSelectionEndPosition: TBCEditorTextPosition;
-    function GetSelectedRow(Y: Integer): Integer;
+    function GetSelectedRow(const Y: Integer): Integer;
     function GetText: string;
     function GetTextBetween(ATextBeginPosition: TBCEditorTextPosition; ATextEndPosition: TBCEditorTextPosition): string;
     function GetTextCaretY: Integer;
@@ -2011,7 +2011,7 @@ begin
     Result.Char := LLineLength + 1;
 end;
 
-function TBCBaseEditor.GetSelectedRow(Y: Integer): Integer;
+function TBCBaseEditor.GetSelectedRow(const Y: Integer): Integer;
 begin
   Result := Max(1, TopLine + Y div GetLineHeight);
 end;
@@ -2780,8 +2780,6 @@ begin
 
   Inc(Result.Column, (X + FHorizontalScrollPosition - LLeftMarginWidth -
     FTextDrawer.GetTextWidth(LText, Length(LText) + 1)) div FTextDrawer.CharWidth);
-
-  {$IFDEF DEBUG}OutputDebugString(PChar(Format('(%d, %d)', [Result.Row, Result.Column])));{$ENDIF}
 end;
 
 function TBCBaseEditor.PixelsToTextPosition(X, Y: Integer): TBCEditorTextPosition;
@@ -4081,11 +4079,11 @@ end;
 
 procedure TBCBaseEditor.DoImeStr(AData: Pointer);
 var
-  i: Integer;
+//  i: Integer;
   S: string;
-  LPChar: PChar;
+  //LPChar: PChar;
   LLength: Integer;
-  LRealLength: Integer;
+  //LRealLength: Integer;
   LHelper: string;
   LLineText: string;
   LChangeScroll: Boolean;
@@ -4093,9 +4091,9 @@ var
   LBlockStartPosition: TBCEditorTextPosition;
 begin
   LTextCaretPosition := TextCaretPosition;
-  LPChar := PChar(AData);
+//  LPChar := PChar(AData);
   LLength := Length(PChar(AData));
-  LRealLength := 0;
+  {LRealLength := 0;
   for i := 0 to LLength - 1 do //FI:W528 FixInsight ignore
   begin
     if Ord(LPChar^) < 128 then
@@ -4103,7 +4101,7 @@ begin
     else
       LRealLength := LRealLength + FTextDrawer.GetCharCount(LPChar);
     Inc(LPChar);
-  end;
+  end; }
   SetString(S, PChar(AData), LLength);
   if SelectionAvailable then
   begin
@@ -4139,7 +4137,7 @@ begin
       end;
 
       Insert(S, LLineText, LTextCaretPosition.Char);
-      DisplayCaretX := DisplayCaretX + LRealLength;
+      DisplayCaretX := DisplayCaretX + LLength; // LRealLength;
       SetLineWithRightTrim(GetTextCaretY, LLineText);
       if FInsertMode then
         LHelper := '';
@@ -12159,10 +12157,10 @@ begin
             Inc(LChar, FTabs.Width)
         end
         else
-        if Ord(LPLine^) < 128 then
-          Inc(LChar)
-        else
-          Inc(LChar, FTextDrawer.GetCharCount(LPLine));
+        //if Ord(LPLine^) < 128 then
+          Inc(LChar);
+        //else
+        //  Inc(LChar, FTextDrawer.GetCharCount(LPLine));
         Inc(LPLine);
       end
       else
@@ -12757,14 +12755,14 @@ begin
           else
             Inc(LChar, FTabs.Width)
         end
-        else
+        {else
         if ARealWidth and (LPLine^ <> BCEDITOR_SPACE_CHAR) and (LPLine^ <> '') then
         begin
-          if Ord(LPLine^) < 128 then
+          //if Ord(LPLine^) < 128 then
             Inc(LChar)
-          else
+          //else
             Inc(LChar, FTextDrawer.GetCharCount(LPLine));
-        end
+        end }
         else
           Inc(LChar);
         Inc(LPLine);

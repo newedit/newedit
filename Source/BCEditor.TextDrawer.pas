@@ -112,7 +112,7 @@ type
     constructor Create(ACalcExtentBaseStyle: TFontStyles; ABaseFont: TFont);
     destructor Destroy; override;
 
-    function GetCharCount(const AChar: PChar): Integer;
+    //function GetCharCount(const AChar: PChar): Integer;
     function GetTextWidth(const AText: string; const AIndex: Integer): Integer;
     procedure BeginDrawing(AHandle: HDC);
     procedure EndDrawing;
@@ -591,7 +591,7 @@ begin
       Winapi.Windows.SetBkColor(FHandle, ColorToRGB(AValue));
   end;
 end;
-
+ {
 function TBCEditorTextDrawer.GetCharCount(const AChar: PChar): Integer;
 var
   LTextSize: TSize;
@@ -623,7 +623,7 @@ begin
       Inc(LResult);
     Result := LResult;
   end;
-end;
+end; }
 
 function TBCEditorTextDrawer.GetTextWidth(const AText: string; const AIndex: Integer): Integer;
 var
@@ -637,18 +637,18 @@ end;
 
 procedure TBCEditorTextDrawer.ExtTextOut(const X, Y: Integer; AOptions: Longint; const ARect: TRect; AText: PChar;
   ALength: Integer);
-var
+{var
   i, LCharWidth: Integer;
   LExtTextOutDistance: PIntegerArray;
   LPChar: PChar;
-  LDrawRect: TRect;
+  LDrawRect: TRect;    }
 begin
-  LDrawRect := ARect;
+  {LDrawRect := ARect;
   LCharWidth := CharWidth;
 
-  GetMem(LExtTextOutDistance, ALength * SizeOf(Integer));
-  try
-    LPChar := AText;
+  GetMem(LExtTextOutDistance, ALength * SizeOf(Integer));   }
+  //try
+    {LPChar := AText;
     for i := 0 to ALength - 1 do
     begin
       if Ord(LPChar^) < 128 then
@@ -656,12 +656,12 @@ begin
       else
         LExtTextOutDistance[i] := GetCharCount(LPChar) * LCharWidth;
       Inc(LPChar);
-    end;
+    end; }
 
-    Winapi.Windows.ExtTextOut(FHandle, X, Y, AOptions, @LDrawRect, AText, ALength, nil); // Pointer(LExtTextOutDistance));
-  finally
-    FreeMem(LExtTextOutDistance);
-  end;
+    Winapi.Windows.ExtTextOut(FHandle, X, Y, AOptions, @ARect, AText, ALength, nil); // Pointer(LExtTextOutDistance));
+  //finally
+    //FreeMem(LExtTextOutDistance);
+  //end;
 end;
 
 initialization
