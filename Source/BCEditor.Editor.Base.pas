@@ -10594,7 +10594,7 @@ var
 
     if (LCurrentLineLength <> 0) and (AIndex > 0) then
     begin
-      Inc(Result, FTextDrawer.GetTextWidth(LCurrentLineText, AIndex));
+      Inc(Result, FTextDrawer.GetTextWidth(LCurrentLineText, Min(LCurrentLineLength + 1, AIndex)));
 
       LAfterLine := AIndex - LCurrentLineLength - 1;
       if LAfterLine = 0 then
