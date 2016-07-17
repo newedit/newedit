@@ -250,11 +250,9 @@ type
   TBCEditorTokenHelper = record
     Position: Integer;
     Length: Integer;
-    VisualLength: Integer;
     MaxLength: Integer;
     CharsBefore: Integer;
     Text: string;
-    TabString: string;
     Foreground, Background: TColor;
     FontStyle: TFontStyles;
     MatchingPairUnderline: Boolean;
