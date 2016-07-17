@@ -594,10 +594,31 @@ function TBCEditorTextDrawer.GetTextWidth(const AText: string; const AIndex: Int
 var
   LText: string;
   LTextSize: TSize;
+  LPText: PChar;
+  LFromIndex, LIndex: Integer;
 begin
-  LText := Copy(AText, 1, AIndex - 1);
-  GetTextExtentPoint32(FStockBitmap.Canvas.Handle, LText, AIndex - 1, LTextSize);
-  Result := LTextSize.cx;
+  Result := 0;
+  if AIndex = 1 then
+    Exit;
+
+  LIndex := AIndex;
+
+  LFromIndex := 1;
+  LPText := PChar(AText);
+  while (LPText^ <> BCEDITOR_NONE_CHAR) and ((LPText^ = BCEDITOR_SPACE_CHAR) or (LPText^ = BCEDITOR_TAB_CHAR)) do
+  begin
+    Inc(Result, CharWidth);
+    Dec(LIndex);
+    Inc(LPText);
+    Inc(LFromIndex);
+  end;
+
+  if AIndex - 1 < LFromIndex then
+    Exit;
+
+  LText := Copy(AText, LFromIndex, AIndex - 1);
+  GetTextExtentPoint32(FStockBitmap.Canvas.Handle, LText, LIndex - 1, LTextSize);
+  Inc(Result, LTextSize.cx);
 end;
 
 initialization

@@ -256,6 +256,7 @@ type
     Foreground, Background: TColor;
     FontStyle: TFontStyles;
     MatchingPairUnderline: Boolean;
+    Space: Boolean;
   end;
 
   TBCEditorSpecialCharsEndOfLineStyle = (

@@ -2218,11 +2218,11 @@ begin
       LFontStyles := LHighlighterAttribute.FontStyles;
     if (LText <> '') and (LFontStyles <> LPreviousFontStyles) then
     begin
-      FTextDrawer.SetStyle(LFontStyles);
       LPreviousFontStyles := LFontStyles;
       Inc(LLength, Length(LText));
       Inc(Result.X, FTextDrawer.GetTextWidth(LText, Length(LText) + 1));
       LText := '';
+      FTextDrawer.SetStyle(LFontStyles);
     end;
 
     LText := LText + LToken;
@@ -10576,11 +10576,8 @@ var
 
   function GetTextWidth(const AIndex: Integer; const AMinimap: Boolean = False): Integer;
   var
-    LIndex: Integer;
     LAfterLine: Integer;
   begin
-    LIndex := AIndex;
-
     if AMinimap then
     begin
       if FMinimap.Align = maRight then
@@ -10595,11 +10592,11 @@ var
     else
       Result := 0;
 
-    if (LCurrentLineLength <> 0) and (LIndex > 0) then
+    if (LCurrentLineLength <> 0) and (AIndex > 0) then
     begin
-      Inc(Result, FTextDrawer.GetTextWidth(LCurrentLineText, LIndex));
+      Inc(Result, FTextDrawer.GetTextWidth(LCurrentLineText, AIndex));
 
-      LAfterLine := LIndex - LCurrentLineLength - 1;
+      LAfterLine := AIndex - LCurrentLineLength - 1;
       if LAfterLine = 0 then
         Inc(Result);
     end;
@@ -10647,7 +10644,7 @@ var
     X1, X2: Integer;
   begin
     { Compute some helper variables. }
-    LFirstColumn := {Max(1,} LTokenHelper.CharsBefore + 1{)};
+    LFirstColumn := LTokenHelper.CharsBefore + 1;
     LLastColumn := Min(LLastChar, LTokenHelper.CharsBefore + LTokenHelper.Length + 1);
     if LIsSelectionInsideLine then
     begin
@@ -10793,25 +10790,22 @@ var
 
     LCanAppend := False;
 
+    PToken := PChar(AToken);
+    LAreSpaces := (PToken^ = BCEDITOR_SPACE_CHAR) or (PToken^ = BCEDITOR_TAB_CHAR);
+
     if LTokenHelper.Length > 0 then
     begin
-      PToken := PChar(AToken);
-      while PToken^ <> BCEDITOR_NONE_CHAR do
-      begin
-        if PToken^ <> BCEDITOR_SPACE_CHAR then
-          Break;
-        Inc(PToken);
-      end;
-      LAreSpaces := PToken^ = BCEDITOR_NONE_CHAR;
-
       LCanAppend := ((LTokenHelper.FontStyle = AFontStyle) or
         (not (fsUnderline in AFontStyle) and not (fsUnderline in LTokenHelper.FontStyle) and LAreSpaces)) and
         (LTokenHelper.MatchingPairUnderline = AMatchingPairUnderline) and
-        ((LTokenHelper.Background = ABackground) and ((LTokenHelper.Foreground = AForeground) or LAreSpaces));
+        ((LTokenHelper.Background = ABackground) and ((LTokenHelper.Foreground = AForeground) or LAreSpaces)) and
+        ((Word(PToken^) < 128) and not LTokenHelper.Space);
 
       if not LCanAppend then
         PaintHighlightToken(False);
     end;
+
+    LTokenHelper.Space := LAreSpaces;
 
     if LCanAppend then
     begin
@@ -11158,6 +11152,7 @@ var
           FHighlighter.SetCurrentLine(LCurrentLineText);
 
         LTokenHelper.Length := 0;
+        LTokenHelper.Space := False;
 
         while not FHighlighter.GetEndOfLine do
         begin
