@@ -126,7 +126,7 @@ begin
   end
 end;
 
-function ConvertTabs(const ALine: string; ATabWidth: Integer; var AHasTabs: Boolean): string;
+function ConvertTabs(const ALine: string; ATabWidth: Integer; var AHasTabs: Boolean; const ATabChar: Char): string;
 var
   PLine: PChar;
 begin
@@ -138,7 +138,7 @@ begin
     if PLine^ = BCEDITOR_TAB_CHAR then
     begin
       AHasTabs := True;
-      Result := Result + StringOfChar(BCEDITOR_SPACE_CHAR, ATabWidth);
+      Result := Result + StringOfChar(ATabChar, ATabWidth);
     end
     else
       Result := Result + PLine^;
@@ -146,7 +146,7 @@ begin
   end;
 end;
 
-function ConvertColumnTabs(const ALine: string; ATabWidth: Integer; var AHasTabs: Boolean): string;
+function ConvertColumnTabs(const ALine: string; ATabWidth: Integer; var AHasTabs: Boolean; const ATabChar: Char): string;
 var
   LPLine: PChar;
 begin
@@ -158,7 +158,7 @@ begin
     if LPLine^ = BCEDITOR_TAB_CHAR then
     begin
       AHasTabs := True;
-      Result := Result + StringOfChar(BCEDITOR_SPACE_CHAR, ATabWidth - Length(Result) mod ATabWidth);
+      Result := Result + StringOfChar(ATabChar, ATabWidth - Length(Result) mod ATabWidth);
     end
     else
       Result := Result + LPLine^;

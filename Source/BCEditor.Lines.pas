@@ -3,7 +3,7 @@ unit BCEditor.Lines;
 interface
 
 uses
-  System.SysUtils, Vcl.Graphics, BCEditor.Utils, System.Classes, BCEditor.Types;
+  System.SysUtils, Vcl.Graphics, BCEditor.Utils, System.Classes, BCEditor.Consts, BCEditor.Types;
 
 type
   TBCEditorLinesRange = Pointer;
@@ -63,9 +63,9 @@ type
     FTabConvertProc: TBCEditorTabConvertProc;
     FTabWidth: Integer;
     FUpdateCount: Integer;
-    function ExpandString(AIndex: Integer): string;
+    function ExpandString(AIndex: Integer; ATabChar: Char = BCEDITOR_SPACE_CHAR): string;
     function GetAttributes(AIndex: Integer): PBCEditorLineAttribute;
-    function GetExpandedString(AIndex: Integer): string;
+    function GetExpandedString(AIndex: Integer): string; overload;
     function GetExpandedStringLength(AIndex: Integer): Integer;
     function GetRange(AIndex: Integer): TBCEditorLinesRange;
     procedure Grow;
@@ -88,6 +88,7 @@ type
     destructor Destroy; override;
     function StringLength(AIndex: Integer): Integer;
     function Add(const AValue: string): Integer; override;
+    function GetExpandedString(AIndex: Integer; ATabChar: Char): string; overload;
     function GetLengthOfLongestLine: Integer; overload;
     function GetLineText(ALine: Integer): string;
     procedure Clear; override;
@@ -128,7 +129,7 @@ type
 implementation
 
 uses
-  BCEditor.Consts, BCEditor.Language;
+  BCEditor.Language;
 
 { TBCEditorLines }
 
@@ -301,7 +302,7 @@ begin
   EndUpdate;
 end;
 
-function TBCEditorLines.ExpandString(AIndex: Integer): string;
+function TBCEditorLines.ExpandString(AIndex: Integer; ATabChar: Char = BCEDITOR_SPACE_CHAR): string;
 var
   LHasTabs: Boolean;
 begin
@@ -317,7 +318,7 @@ begin
     end
     else
     begin
-      Result := FTabConvertProc(Value, FTabWidth, LHasTabs);
+      Result := FTabConvertProc(Value, FTabWidth, LHasTabs, ATabChar);
 
       ExpandedLength := Length(Result);
       Exclude(Flags, sfExpandedLengthUnknown);
@@ -351,13 +352,18 @@ end;
 
 function TBCEditorLines.GetExpandedString(AIndex: Integer): string;
 begin
+  Result := GetExpandedString(AIndex, BCEDITOR_SPACE_CHAR);
+end;
+
+function TBCEditorLines.GetExpandedString(AIndex: Integer; ATabChar: Char): string;
+begin
   Result := '';
   if (AIndex >= 0) and (AIndex < FCount) then
   begin
     if sfHasNoTabs in FList^[AIndex].Flags then
       Result := Get(AIndex)
     else
-      Result := ExpandString(AIndex);
+      Result := ExpandString(AIndex, ATabChar);
   end
 end;
 

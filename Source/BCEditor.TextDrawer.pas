@@ -112,7 +112,7 @@ type
     constructor Create(ACalcExtentBaseStyle: TFontStyles; ABaseFont: TFont);
     destructor Destroy; override;
 
-    function GetTextWidth(const AText: string; const AIndex: Integer): Integer;
+    function GetTextWidth(const AText: string; const AIndex: Integer; const ARemoveEmptySpace: Boolean = True): Integer;
     procedure BeginDrawing(AHandle: HDC);
     procedure EndDrawing;
     procedure SetBackgroundColor(AValue: TColor);
@@ -590,7 +590,7 @@ begin
   end;
 end;
 
-function TBCEditorTextDrawer.GetTextWidth(const AText: string; const AIndex: Integer): Integer;
+function TBCEditorTextDrawer.GetTextWidth(const AText: string; const AIndex: Integer; const ARemoveEmptySpace: Boolean = True): Integer;
 var
   LText: string;
   LTextSize: TSize;
@@ -602,21 +602,24 @@ begin
     Exit;
 
   LIndex := AIndex;
-
   LFromIndex := 1;
-  LPText := PChar(AText);
-  while (LPText^ <> BCEDITOR_NONE_CHAR) and ((LPText^ = BCEDITOR_SPACE_CHAR) or (LPText^ = BCEDITOR_TAB_CHAR)) do
+
+  if ARemoveEmptySpace then
   begin
-    Inc(Result, CharWidth);
-    Dec(LIndex);
-    Inc(LPText);
-    Inc(LFromIndex);
+    LPText := PChar(AText);
+    while (LPText^ <> BCEDITOR_NONE_CHAR) and ((LPText^ = BCEDITOR_SPACE_CHAR) or (LPText^ = BCEDITOR_TAB_CHAR)) do
+    begin
+      Inc(Result, CharWidth);
+      Dec(LIndex);
+      Inc(LPText);
+      Inc(LFromIndex);
+    end;
+
+    if AIndex - 1 < LFromIndex then
+      Exit;
   end;
 
-  if AIndex - 1 < LFromIndex then
-    Exit;
-
-  LText := Copy(AText, LFromIndex, AIndex - 1);
+  LText := Copy(AText, LFromIndex, LIndex - 1);
   GetTextExtentPoint32(FStockBitmap.Canvas.Handle, LText, LIndex - 1, LTextSize);
   Inc(Result, LTextSize.cx);
 end;

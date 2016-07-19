@@ -497,7 +497,7 @@ type
     procedure PaintScrollShadow(ACanvas: TCanvas; AClipRect: TRect);
     procedure PaintSearchMap(AClipRect: TRect);
     procedure PaintSearchResults(ACanvas: TCanvas);
-    procedure PaintSpecialChars(ACanvas: TCanvas; ALine, AFirstColumn: Integer; ALineRect: TRect);
+    //procedure PaintSpecialChars(ACanvas: TCanvas; ALine, AFirstColumn: Integer; ALineRect: TRect);
     procedure PaintSyncItems(ACanvas: TCanvas);
     procedure PaintTextLines(ACanvas: TCanvas; AClipRect: TRect; AFirstRow, ALastRow: Integer; AMinimap: Boolean);
     procedure RedoItem;
@@ -10219,12 +10219,12 @@ begin
   end;
 end;
 
-procedure TBCBaseEditor.PaintSpecialChars(ACanvas: TCanvas; ALine, AFirstColumn: Integer; ALineRect: TRect);
+(*procedure TBCBaseEditor.PaintSpecialChars(ACanvas: TCanvas; ALine, AFirstColumn: Integer; ALineRect: TRect);
 var
   i: Integer;
   LPLine: PChar;
   LLineLength: Integer;
-  LCharWidth, LTextHeight: Integer;
+  LTextHeight: Integer;
   LDisplayCharPosition, X, Y: Integer;
   LCharRect: TRect;
   LPilcrow: string;
@@ -10256,7 +10256,6 @@ begin
     end;
 
     LDisplayCharPosition := 1;
-    LCharWidth := FTextDrawer.CharWidth;
 
     if scoMiddleColor in FSpecialChars.Options then
       LPenColor := MiddleColor(FHighlighter.MainRules.Attribute.Background, FHighlighter.MainRules.Attribute.Foreground)
@@ -10282,7 +10281,7 @@ begin
         begin
           Top := X - LTextHeight;
           Bottom := X + 2 + LTextHeight;
-          Left := LDisplayCharPosition * LCharWidth - LCharWidth div 2 - 1;
+          Left := FTextDrawer.GetTextWidth(FLines[ALine - 1], LDisplayCharPosition) - FTextDrawer.CharWidth div 2 - 1;
           Right := Left + 2;
         end;
         with LCharRect do
@@ -10294,11 +10293,11 @@ begin
         begin
           Top := ALineRect.Top;
           Bottom := ALineRect.Bottom;
-          Left := (LDisplayCharPosition - 1) * LCharWidth + LCharWidth div 2 + 1;
+          Left := FTextDrawer.GetTextWidth(FLines[ALine - 1], LDisplayCharPosition - 1) + FTextDrawer.CharWidth div 2 + 1;
           if toColumns in FTabs.Options then
-            Right := Left + (FTabs.Width - (LDisplayCharPosition - 1) mod FTabs.Width) * LCharWidth - 6
+            Right := Left + (FTabs.Width - (LDisplayCharPosition - 1) mod FTabs.Width) * FTextDrawer.CharWidth - 6
           else
-            Right := Left + FTabs.Width * LCharWidth - 6;
+            Right := Left + FTabs.Width * FTextDrawer.CharWidth - 6;
         end;
         with ACanvas do
         begin
@@ -10350,16 +10349,16 @@ begin
         LCharRect.Bottom := ALineRect.Bottom
       else
         LCharRect.Bottom := ALineRect.Bottom - 3;
-      LCharRect.Left := (LDisplayCharPosition - 1) * LCharWidth;
+      LCharRect.Left := FTextDrawer.GetTextWidth(FLines[ALine - 1], LDisplayCharPosition - 1);
       if FSpecialChars.EndOfLine.Style = eolEnter then
         LCharRect.Left := LCharRect.Left + 4;
       if FSpecialChars.EndOfLine.Style = eolPilcrow then
       begin
         LCharRect.Left := LCharRect.Left + 2;
-        LCharRect.Right := LCharRect.Left + LCharWidth
+        LCharRect.Right := LCharRect.Left + FTextDrawer.CharWidth
       end
       else
-        LCharRect.Right := LCharRect.Left + FTabs.Width * LCharWidth - 3;
+        LCharRect.Right := LCharRect.Left + FTabs.Width * FTextDrawer.CharWidth - 3;
 
       if LCharRect.Left > GetLeftMarginWidth then
       begin
@@ -10419,7 +10418,7 @@ begin
       end;
     end;
   end;
-end;
+end; *)
 
 procedure TBCBaseEditor.PaintSyncItems(ACanvas: TCanvas);
 var
@@ -10594,10 +10593,10 @@ var
 
     if (LCurrentLineLength <> 0) and (AIndex > 0) then
     begin
-      Inc(Result, FTextDrawer.GetTextWidth(LCurrentLineText, Min(LCurrentLineLength + 1, AIndex)));
+      Inc(Result, FTextDrawer.GetTextWidth(LCurrentLineText, Min(LCurrentLineLength + 1, AIndex), False));
 
       LAfterLine := AIndex - LCurrentLineLength - 1;
-      if LAfterLine = 0 then
+      if (LAfterLine = 0) and not LCurrentLineText[LCurrentLineLength].IsSeparator then
         Inc(Result);
     end;
 
@@ -10610,8 +10609,11 @@ var
 
   procedure PaintToken(AToken: string; ATokenLength, ACharsBefore, AFirst, ALast: Integer);
   var
+    i: Integer;
     LText: string;
     LOldPenColor: TColor;
+    LRect: TRect;
+    LSpaceWidth: Integer;
   begin
     if (ALast > AFirst) and (LTokenRect.Right > LTokenRect.Left) then
     begin
@@ -10620,8 +10622,37 @@ var
         ATokenLength := Min(ATokenLength, LLastChar);
       LText := Copy(AToken, AFirst, ATokenLength);
 
-      Winapi.Windows.ExtTextOut(ACanvas.Handle, LTokenRect.Left, LTokenRect.Top, ETO_OPAQUE or ETO_CLIPPED, @LTokenRect,
-        PChar(LText), ATokenLength, nil);
+      if (LTokenHelper.EmptySpace <> esNone) and FSpecialChars.Visible then
+      begin
+        if ACanvas.Brush.Color = FSelection.Colors.Background then
+          ACanvas.Pen.Color := FSpecialChars.Selection.Color
+        else
+          ACanvas.Pen.Color := LTokenHelper.Foreground;
+        PatBlt(ACanvas.Handle, LTokenRect.Left, LTokenRect.Top, LTokenRect.Width, LTokenRect.Height, PATCOPY); { fill rect }
+
+        if (LTokenHelper.EmptySpace = esSpace) and
+          (FSpecialChars.Selection.Visible and (ACanvas.Brush.Color = FSelection.Colors.Background) or
+           (ACanvas.Brush.Color <> FSelection.Colors.Background)) then
+        begin
+          LSpaceWidth := LTokenRect.Width div ATokenLength;
+          LRect.Top := LTokenRect.Top + LTokenRect.Height div 2;
+          LRect.Bottom := LRect.Top + 2;
+          LRect.Left := LTokenRect.Left + LSpaceWidth div 2;
+
+          for i := 0 to ATokenLength - 1 do
+          begin
+            LRect.Right := LRect.Left + 2;
+            ACanvas.Rectangle(LRect);
+            Inc(LRect.Left, LSpaceWidth);
+          end;
+        end;
+
+        if LTokenHelper.EmptySpace = esTab then
+          ; // TODO
+      end
+      else
+        Winapi.Windows.ExtTextOut(ACanvas.Handle, LTokenRect.Left, LTokenRect.Top, ETO_OPAQUE or ETO_CLIPPED, @LTokenRect,
+          PChar(LText), ATokenLength, nil);
 
       if LTokenHelper.MatchingPairUnderline then
       begin
@@ -10780,7 +10811,7 @@ var
   var
     i: Integer;
     LCanAppend: Boolean;
-    LAreSpaces: Boolean;
+    LEmptySpace: TBCEditorEmptySpace;
     PToken: PChar;
   begin
     if (ABackground = clNone) or ((FActiveLine.Color <> clNone) and LIsCurrentLine and not ACustomBackgroundColor) then
@@ -10791,21 +10822,48 @@ var
     LCanAppend := False;
 
     PToken := PChar(AToken);
-    LAreSpaces := (PToken^ = BCEDITOR_SPACE_CHAR) or (PToken^ = BCEDITOR_TAB_CHAR);
+
+    if PToken^ = BCEDITOR_SPACE_CHAR then
+      LEmptySpace := esSpace
+    else
+    if PToken^ = BCEDITOR_TAB_CHAR then
+      LEmptySpace := esTab
+    else
+      LEmptySpace := esNone;
+
+    if (LEmptySpace <> esNone) and FSpecialChars.Visible then
+    begin
+      if scoMiddleColor in FSpecialChars.Options then
+        AForeground := MiddleColor(FHighlighter.MainRules.Attribute.Background, FHighlighter.MainRules.Attribute.Foreground)
+      else
+      if scoTextColor in FSpecialChars.Options then
+        AForeground := FHighlighter.MainRules.Attribute.Foreground
+      else
+        AForeground := FSpecialChars.Color;
+    end;
 
     if LTokenHelper.Length > 0 then
     begin
-      LCanAppend := ((LTokenHelper.FontStyle = AFontStyle) or
-        (not (fsUnderline in AFontStyle) and not (fsUnderline in LTokenHelper.FontStyle) and LAreSpaces)) and
+      LCanAppend :=
+        ( (LTokenHelper.FontStyle = AFontStyle) or
+          ((LEmptySpace <> esNone) and not (fsUnderline in AFontStyle) and not (fsUnderline in LTokenHelper.FontStyle)) ) and
+
         (LTokenHelper.MatchingPairUnderline = AMatchingPairUnderline) and
-        ((LTokenHelper.Background = ABackground) and ((LTokenHelper.Foreground = AForeground) or LAreSpaces)) and
-        ((Word(PToken^) < 128) and not LTokenHelper.Space);
+
+        ((LTokenHelper.Background = ABackground) and ((LTokenHelper.Foreground = AForeground) or (LEmptySpace <> esNone))) and
+
+        ((Word(PToken^) < 128) and (LTokenHelper.EmptySpace <> esNone)) and
+
+        ((LEmptySpace = LTokenHelper.EmptySpace) and FSpecialChars.Visible);
 
       if not LCanAppend then
+      begin
         PaintHighlightToken(False);
+        LTokenHelper.EmptySpace := esNone;
+      end;
     end;
 
-    LTokenHelper.Space := LAreSpaces;
+    LTokenHelper.EmptySpace := LEmptySpace;
 
     if LCanAppend then
     begin
@@ -10998,8 +11056,7 @@ var
       if AMinimap and (moShowBookmarks in FMinimap.Options) then
         LBookmarkOnCurrentLine := IsBookmarkOnCurrentLine;
 
-      { Get line with tabs converted to spaces. Trust me, you don't want to mess around with tabs when painting. }
-      LCurrentLineText := FLines.ExpandedStrings[LCurrentLine - 1];
+      LCurrentLineText := FLines.GetExpandedString(LCurrentLine - 1, BCEDITOR_TAB_CHAR);
 
       LFoldRange := nil;
       if FCodeFolding.Visible then
@@ -11152,7 +11209,7 @@ var
           FHighlighter.SetCurrentLine(LCurrentLineText);
 
         LTokenHelper.Length := 0;
-        LTokenHelper.Space := False;
+        LTokenHelper.EmptySpace := esNone;
 
         while not FHighlighter.GetEndOfLine do
         begin
@@ -11199,7 +11256,7 @@ var
         if not AMinimap then
         begin
           PaintCodeFoldingCollapseMark(ACanvas, LFoldRange, LTokenPosition, LTokenLength, LCurrentLine, FHorizontalScrollPosition, LLineRect);
-          PaintSpecialChars(ACanvas, LCurrentLine, LPreviousFirstColumn, LLineRect);
+          //PaintSpecialChars(ACanvas, LCurrentLine, LPreviousFirstColumn, LLineRect);
           LPreviousFirstColumn := LFirstColumn;
           PaintCodeFoldingCollapsedLine(ACanvas, LFoldRange, LLineRect);
         end;
@@ -13500,7 +13557,7 @@ begin
       ecBackspace:
         if not ReadOnly then
           DoBackspace;
-      ecDeleteChar:
+      ecDeleteChar: // TODO: check Delete, it deletes 2 chars
         if not ReadOnly then
           DeleteChar;
       ecDeleteWord, ecDeleteEndOfLine:

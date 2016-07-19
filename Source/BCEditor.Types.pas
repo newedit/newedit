@@ -3,7 +3,8 @@ unit BCEditor.Types;
 interface
 
 uses
-  Winapi.Windows, System.Classes, Vcl.Forms, Vcl.Graphics, Vcl.Controls, BCEditor.Highlighter.Attributes, System.SysUtils;
+  Winapi.Windows, System.Classes, Vcl.Forms, Vcl.Graphics, Vcl.Controls, BCEditor.Highlighter.Attributes,
+  BCEditor.Consts, System.SysUtils;
 
 type
   TBCEditorArrayOfString = array of string;
@@ -247,6 +248,12 @@ type
 
   TBCEditorMouseCursorEvent = procedure(ASender: TObject; const ALineCharPos: TBCEditorTextPosition; var ACursor: TCursor) of object;
 
+  TBCEditorEmptySpace = (
+    esNone,
+    esSpace,
+    esTab
+  );
+
   TBCEditorTokenHelper = record
     Position: Integer;
     Length: Integer;
@@ -256,7 +263,7 @@ type
     Foreground, Background: TColor;
     FontStyle: TFontStyles;
     MatchingPairUnderline: Boolean;
-    Space: Boolean;
+    EmptySpace: TBCEditorEmptySpace;
   end;
 
   TBCEditorSpecialCharsEndOfLineStyle = (
@@ -272,10 +279,8 @@ type
   TBCEditorSpecialCharsOptions = set of TBCEditorSpecialCharsOption;
   TBCEditorSpecialCharsStyle = (scsDot, scsSolid);
 
-  //TBCEditorByteArray = array of Byte;
-  //PBCEditorByteArray = ^TBCEditorByteArray; { Can't use System.SysUtils PByteArray because it isn't dynamic }
-
-  TBCEditorTabConvertProc = function(const ALine: string; ATabWidth: Integer; var AHasTabs: Boolean): string;
+  TBCEditorTabConvertProc = function(const ALine: string; ATabWidth: Integer; var AHasTabs: Boolean;
+    const ATabChar: Char = BCEDITOR_SPACE_CHAR): string;
 
   TBCEditorLeftMarginLineNumberOption = (
     lnoIntens,
