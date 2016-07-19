@@ -10622,7 +10622,8 @@ var
         ATokenLength := Min(ATokenLength, LLastChar);
       LText := Copy(AToken, AFirst, ATokenLength);
 
-      if (LTokenHelper.EmptySpace <> esNone) and FSpecialChars.Visible then
+      if FSpecialChars.Visible and (LTokenHelper.EmptySpace <> esNone) and
+        (not AMinimap or AMinimap and (moShowSpecialChars in FMinimap.Options)) then
       begin
         if ACanvas.Brush.Color = FSelection.Colors.Background then
           ACanvas.Pen.Color := FSpecialChars.Selection.Color
@@ -10632,7 +10633,7 @@ var
 
         if (LTokenHelper.EmptySpace = esSpace) and
           (FSpecialChars.Selection.Visible and (ACanvas.Brush.Color = FSelection.Colors.Background) or
-           (ACanvas.Brush.Color <> FSelection.Colors.Background)) then
+          (ACanvas.Brush.Color <> FSelection.Colors.Background)) then
         begin
           LSpaceWidth := LTokenRect.Width div ATokenLength;
           LRect.Top := LTokenRect.Top + LTokenRect.Height div 2;
