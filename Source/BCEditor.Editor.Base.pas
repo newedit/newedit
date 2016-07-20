@@ -10576,6 +10576,7 @@ var
   function GetTextWidth(const AIndex: Integer; const AMinimap: Boolean = False): Integer;
   var
     LAfterLine: Integer;
+    LLastChar: Char;
   begin
     if AMinimap then
     begin
@@ -10596,8 +10597,12 @@ var
       Inc(Result, FTextDrawer.GetTextWidth(LCurrentLineText, Min(LCurrentLineLength + 1, AIndex), False));
 
       LAfterLine := AIndex - LCurrentLineLength - 1;
-      if (LAfterLine = 0) and not LCurrentLineText[LCurrentLineLength].IsSeparator then
-        Inc(Result);
+      if LAfterLine = 0 then
+      begin
+        LLastChar := LCurrentLineText[LCurrentLineLength];
+        if (LLastChar <> BCEDITOR_SPACE_CHAR) and (LLastChar <> BCEDITOR_TAB_CHAR) then
+          Inc(Result);
+      end;
     end;
 
     if (LCurrentLineLength = 0) and (AIndex > 1) then
@@ -10609,11 +10614,65 @@ var
 
   procedure PaintToken(AToken: string; ATokenLength, ACharsBefore, AFirst, ALast: Integer);
   var
-    i: Integer;
     LText: string;
     LOldPenColor: TColor;
-    LRect: TRect;
-    LSpaceWidth: Integer;
+
+    procedure PaintSpecialCharSpace;
+    var
+      i: Integer;
+      LSpaceWidth: Integer;
+      LRect: TRect;
+    begin
+      LSpaceWidth := LTokenRect.Width div ATokenLength;
+      LRect.Top := LTokenRect.Top + LTokenRect.Height div 2;
+      LRect.Bottom := LRect.Top + 2;
+      LRect.Left := LTokenRect.Left + LSpaceWidth div 2;
+
+      for i := 0 to ATokenLength - 1 do
+      begin
+        LRect.Right := LRect.Left + 2;
+        ACanvas.Rectangle(LRect);
+        Inc(LRect.Left, LSpaceWidth);
+      end;
+    end;
+
+    procedure PaintSpecialCharSpaceTab;
+    var
+      i, Y: Integer;
+    begin
+      with ACanvas do
+      begin
+        Y := (LTokenRect.Bottom - LTokenRect.Top) shr 1;
+        { Line }
+        if FSpecialChars.Style = scsDot then
+        begin
+          i := LTokenRect.Left + 2;
+          {if (ACharsBefore - 1) mod FTabs.Width = 0 then
+            Inc(i);
+          if Odd(FTabs.Width) then
+            Inc(i); }
+          while i < LTokenRect.Right - 2 do
+          begin
+            MoveTo(i, LTokenRect.Top + Y);
+            LineTo(i + 1, LTokenRect.Top + Y);
+            Inc(i, 2);
+          end;
+        end
+        else
+        if FSpecialChars.Style = scsSolid then
+        begin
+          MoveTo(LTokenRect.Left + 2, LTokenRect.Top + Y);
+          LineTo(LTokenRect.Right - 2, LTokenRect.Top + Y);
+        end;
+        { Arrow }
+        i := LTokenRect.Right - 2;
+        MoveTo(i, LTokenRect.Top + Y);
+        LineTo(i - (Y shr 1), LTokenRect.Top + Y - (Y shr 1));
+        MoveTo(i, LTokenRect.Top + Y);
+        LineTo(i - (Y shr 1), LTokenRect.Top + Y + (Y shr 1));
+      end;
+    end;
+
   begin
     if (ALast > AFirst) and (LTokenRect.Right > LTokenRect.Left) then
     begin
@@ -10634,22 +10693,10 @@ var
         if (LTokenHelper.EmptySpace = esSpace) and
           (FSpecialChars.Selection.Visible and (ACanvas.Brush.Color = FSelection.Colors.Background) or
           (ACanvas.Brush.Color <> FSelection.Colors.Background)) then
-        begin
-          LSpaceWidth := LTokenRect.Width div ATokenLength;
-          LRect.Top := LTokenRect.Top + LTokenRect.Height div 2;
-          LRect.Bottom := LRect.Top + 2;
-          LRect.Left := LTokenRect.Left + LSpaceWidth div 2;
-
-          for i := 0 to ATokenLength - 1 do
-          begin
-            LRect.Right := LRect.Left + 2;
-            ACanvas.Rectangle(LRect);
-            Inc(LRect.Left, LSpaceWidth);
-          end;
-        end;
+          PaintSpecialCharSpace;
 
         if LTokenHelper.EmptySpace = esTab then
-          ; // TODO
+          PaintSpecialCharSpaceTab;
       end
       else
         Winapi.Windows.ExtTextOut(ACanvas.Handle, LTokenRect.Left, LTokenRect.Top, ETO_OPAQUE or ETO_CLIPPED, @LTokenRect,
