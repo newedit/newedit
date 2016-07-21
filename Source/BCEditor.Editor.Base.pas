@@ -10240,6 +10240,8 @@ begin
     ACanvas.Pen.Color := LPenColor;
     LVisibleChars := GetVisibleChars;
 
+    // TODO: No painting if not FSpecialChars.Selection.Visible
+
     if FSpecialChars.EndOfLine.Visible and (ALine <> FLineNumbersCount) and (ALineLength - AFirstColumn < LVisibleChars) then
     with ACanvas do
     begin
@@ -10536,34 +10538,47 @@ var
     procedure PaintSpecialCharSpaceTab;
     var
       i, Y: Integer;
+      LRect: TRect;
+      LTabWidth: Integer;
     begin
-      // TODO: Continue here...
+      LTabWidth := FTabs.Width * FTextDrawer.CharWidth;
+      LRect := LTokenRect;
+      LRect.Right := LRect.Left;
+      if toColumns in FTabs.Options then
+        Inc(LRect.Right, LTabWidth - FTextDrawer.CharWidth * (ACharsBefore mod FTabs.Width))
+      else
+        Inc(LRect.Right, LTabWidth);
+
+      while LRect.Right <= LTokenRect.Right do
       with ACanvas do
       begin
-        Y := (LTokenRect.Bottom - LTokenRect.Top) shr 1;
+        Y := (LRect.Bottom - LRect.Top) shr 1;
         { Line }
         if FSpecialChars.Style = scsDot then
         begin
-          i := LTokenRect.Left + 2;
-          while i < LTokenRect.Right - 2 do
+          i := LRect.Left + 2;
+          while i < LRect.Right - 2 do
           begin
-            MoveTo(i, LTokenRect.Top + Y);
-            LineTo(i + 1, LTokenRect.Top + Y);
+            MoveTo(i, LRect.Top + Y);
+            LineTo(i + 1, LRect.Top + Y);
             Inc(i, 2);
           end;
         end
         else
         if FSpecialChars.Style = scsSolid then
         begin
-          MoveTo(LTokenRect.Left + 2, LTokenRect.Top + Y);
-          LineTo(LTokenRect.Right - 2, LTokenRect.Top + Y);
+          MoveTo(LRect.Left + 2, LRect.Top + Y);
+          LineTo(LRect.Right - 2, LRect.Top + Y);
         end;
         { Arrow }
-        i := LTokenRect.Right - 2;
-        MoveTo(i, LTokenRect.Top + Y);
-        LineTo(i - (Y shr 1), LTokenRect.Top + Y - (Y shr 1));
-        MoveTo(i, LTokenRect.Top + Y);
-        LineTo(i - (Y shr 1), LTokenRect.Top + Y + (Y shr 1));
+        i := LRect.Right - 2;
+        MoveTo(i, LRect.Top + Y);
+        LineTo(i - (Y shr 1), LRect.Top + Y - (Y shr 1));
+        MoveTo(i, LRect.Top + Y);
+        LineTo(i - (Y shr 1), LRect.Top + Y + (Y shr 1));
+
+        LRect.Left := LRect.Right;
+        Inc(LRect.Right, LTabWidth);
       end;
     end;
 
