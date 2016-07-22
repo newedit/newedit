@@ -112,7 +112,7 @@ type
     constructor Create(ACalcExtentBaseStyle: TFontStyles; ABaseFont: TFont);
     destructor Destroy; override;
 
-    function GetTextWidth(const AText: string; const AIndex: Integer; const ARemoveEmptySpace: Boolean = True): Integer;
+    function GetTextWidth(const AText: string; const AIndex: Integer): Integer;
     procedure BeginDrawing(AHandle: HDC);
     procedure EndDrawing;
     procedure SetBackgroundColor(AValue: TColor);
@@ -590,7 +590,7 @@ begin
   end;
 end;
 
-function TBCEditorTextDrawer.GetTextWidth(const AText: string; const AIndex: Integer; const ARemoveEmptySpace: Boolean = True): Integer;
+function TBCEditorTextDrawer.GetTextWidth(const AText: string; const AIndex: Integer): Integer;
 var
   i: Integer;
   LText: string;

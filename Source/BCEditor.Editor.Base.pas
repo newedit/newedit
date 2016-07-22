@@ -10566,7 +10566,11 @@ var
         { Line }
         if FSpecialChars.Style = scsDot then
         begin
-          i := LRect.Left + 2;
+          i := LRect.Left;
+          if Odd(i) then
+            Inc(i)
+          else
+            Inc(i, 2);
           while i < LRect.Right - 2 do
           begin
             MoveTo(i, LRect.Top + Y);
@@ -10823,7 +10827,9 @@ var
 
         ((LTokenHelper.Background = ABackground) and ((LTokenHelper.Foreground = AForeground) )) and
 
-        ((LWToken < 128) or (LWToken >= 128) and (LEmptySpace = esNone));
+        ((LWToken < 128) or (LWToken >= 128) and (LEmptySpace = esNone)) and
+
+        (not FSpecialChars.Visible or FSpecialChars.Visible and (LEmptySpace = LTokenHelper.EmptySpace));
 
       if not LCanAppend then
       begin
