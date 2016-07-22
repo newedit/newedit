@@ -592,36 +592,44 @@ end;
 
 function TBCEditorTextDrawer.GetTextWidth(const AText: string; const AIndex: Integer; const ARemoveEmptySpace: Boolean = True): Integer;
 var
+  i: Integer;
   LText: string;
   LTextSize: TSize;
   LPText: PChar;
-  LFromIndex, LIndex: Integer;
+  LCount: Integer;
 begin
   Result := 0;
   if AIndex = 1 then
     Exit;
 
-  LIndex := AIndex;
-  LFromIndex := 1;
-
-  if ARemoveEmptySpace then
+  LText := '';
+  LCount := 0;
+  LPText := PChar(AText);
+  for i := 1 to AIndex - 1 do
   begin
-    LPText := PChar(AText);
-    while (LPText^ <> BCEDITOR_NONE_CHAR) and ((LPText^ = BCEDITOR_SPACE_CHAR) or (LPText^ = BCEDITOR_TAB_CHAR)) do
+    if (LPText^ = BCEDITOR_SPACE_CHAR) or (LPText^ = BCEDITOR_TAB_CHAR) then
     begin
       Inc(Result, CharWidth);
-      Dec(LIndex);
-      Inc(LPText);
-      Inc(LFromIndex);
+      if LText <> '' then
+      begin
+        GetTextExtentPoint32(FStockBitmap.Canvas.Handle, LText, LCount, LTextSize);
+        Inc(Result, LTextSize.cx);
+        LText := '';
+        LCount := 0;
+      end;
+    end
+    else
+    begin
+      Inc(LCount);
+      LText := LText + LPText^;
     end;
-
-    if AIndex - 1 < LFromIndex then
-      Exit;
+    Inc(LPText);
   end;
-
-  LText := Copy(AText, LFromIndex, LIndex - 1);
-  GetTextExtentPoint32(FStockBitmap.Canvas.Handle, LText, LIndex - 1, LTextSize);
-  Inc(Result, LTextSize.cx);
+  if LText <> '' then
+  begin
+    GetTextExtentPoint32(FStockBitmap.Canvas.Handle, LText, LCount, LTextSize);
+    Inc(Result, LTextSize.cx);
+  end;
 end;
 
 initialization

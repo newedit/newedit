@@ -2201,7 +2201,7 @@ begin
     FHighlighter.ResetCurrentRange
   else
     FHighlighter.SetCurrentRange(FLines.Ranges[ADisplayPosition.Row - 1]);
-  FHighlighter.SetCurrentLine(FLines[ADisplayPosition.Row - 1]);
+  FHighlighter.SetCurrentLine(FLines.GetExpandedString(ADisplayPosition.Row - 1, BCEDITOR_TAB_CHAR));
   LFontStyles := [];
   LPreviousFontStyles := [];
   LText := '';
@@ -2738,7 +2738,7 @@ begin
     FHighlighter.ResetCurrentRange
   else
     FHighlighter.SetCurrentRange(FLines.Ranges[Result.Row - 1]);
-  FHighlighter.SetCurrentLine(FLines[Result.Row - 1]);
+  FHighlighter.SetCurrentLine(FLines.GetExpandedString(Result.Row - 1, BCEDITOR_TAB_CHAR));
 
   LFontStyles := [];
   LPreviousFontStyles := [];
@@ -10503,7 +10503,7 @@ var
 
     if (LCurrentLineLength <> 0) and (AIndex > 0) then
     begin
-      Inc(Result, FTextDrawer.GetTextWidth(LCurrentLineText, Min(LCurrentLineLength + 1, AIndex), False));
+      Inc(Result, FTextDrawer.GetTextWidth(LCurrentLineText, Min(LCurrentLineLength + 1, AIndex))); //, False));
 
       LAfterLine := AIndex - LCurrentLineLength - 1;
       if LAfterLine = 0 then
@@ -10781,7 +10781,8 @@ var
     i: Integer;
     LCanAppend: Boolean;
     LEmptySpace: TBCEditorEmptySpace;
-    PToken: PChar;
+    LPToken: PChar;
+    LWToken: Word;
   begin
     if (ABackground = clNone) or ((FActiveLine.Color <> clNone) and LIsCurrentLine and not ACustomBackgroundColor) then
       ABackground := GetBackgroundColor;
@@ -10790,12 +10791,13 @@ var
 
     LCanAppend := False;
 
-    PToken := PChar(AToken);
+    LPToken := PChar(AToken);
+    LWToken := Word(LPToken^);
 
-    if PToken^ = BCEDITOR_SPACE_CHAR then
+    if LPToken^ = BCEDITOR_SPACE_CHAR then
       LEmptySpace := esSpace
     else
-    if PToken^ = BCEDITOR_TAB_CHAR then
+    if LPToken^ = BCEDITOR_TAB_CHAR then
       LEmptySpace := esTab
     else
       LEmptySpace := esNone;
@@ -10819,11 +10821,9 @@ var
 
         (LTokenHelper.MatchingPairUnderline = AMatchingPairUnderline) and
 
-        ((LTokenHelper.Background = ABackground) and ((LTokenHelper.Foreground = AForeground) or (LEmptySpace <> esNone))) and
+        ((LTokenHelper.Background = ABackground) and ((LTokenHelper.Foreground = AForeground) )) and
 
-        ((Word(PToken^) < 128) and (LTokenHelper.EmptySpace <> esNone)) and
-
-        (not FSpecialChars.Visible or FSpecialChars.Visible and (LEmptySpace = LTokenHelper.EmptySpace));
+        ((LWToken < 128) or (LWToken >= 128) and (LEmptySpace = esNone));
 
       if not LCanAppend then
       begin
