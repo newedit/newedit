@@ -596,7 +596,7 @@ var
   LText: string;
   LTextSize: TSize;
   LPText: PChar;
-  LCount: Integer;
+  LFrom, LCount: Integer;
 begin
   Result := 0;
   if AIndex = 1 then
@@ -604,6 +604,7 @@ begin
 
   LText := '';
   LCount := 0;
+  LFrom := 1;
   LPText := PChar(AText);
   for i := 1 to AIndex - 1 do
   begin
@@ -612,21 +613,20 @@ begin
       Inc(Result, CharWidth);
       if LText <> '' then
       begin
+        LText := Copy(AText, LFrom, LCount);
         GetTextExtentPoint32(FStockBitmap.Canvas.Handle, LText, LCount, LTextSize);
         Inc(Result, LTextSize.cx);
-        LText := '';
+        Inc(LFrom, LCount);
         LCount := 0;
       end;
     end
     else
-    begin
       Inc(LCount);
-      LText := LText + LPText^;
-    end;
     Inc(LPText);
   end;
-  if LText <> '' then
+  if LCount <> 0 then
   begin
+    LText := Copy(AText, LFrom, LCount);
     GetTextExtentPoint32(FStockBitmap.Canvas.Handle, LText, LCount, LTextSize);
     Inc(Result, LTextSize.cx);
   end;
