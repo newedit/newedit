@@ -611,7 +611,8 @@ begin
     if (LPText^ = BCEDITOR_SPACE_CHAR) or (LPText^ = BCEDITOR_TAB_CHAR) then
     begin
       Inc(Result, CharWidth);
-      if LText <> '' then
+      Inc(LFrom);
+      if LCount <> 0 then
       begin
         LText := Copy(AText, LFrom, LCount);
         GetTextExtentPoint32(FStockBitmap.Canvas.Handle, LText, LCount, LTextSize);
