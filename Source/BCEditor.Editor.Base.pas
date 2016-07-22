@@ -10226,94 +10226,104 @@ var
   LPilcrow: string;
   LPenColor: TColor;
   LVisibleChars: Integer;
+  LTextPositionInSelection: Boolean;
+  LTextCaretPosition: TBCEditorTextPosition;
 begin
   if FSpecialChars.Visible then
   begin
-    if scoMiddleColor in FSpecialChars.Options then
-      LPenColor := MiddleColor(FHighlighter.MainRules.Attribute.Background, FHighlighter.MainRules.Attribute.Foreground)
-    else
-    if scoTextColor in FSpecialChars.Options then
-      LPenColor := FHighlighter.MainRules.Attribute.Foreground
-    else
-      LPenColor := FSpecialChars.Color;
+    LTextCaretPosition.Line := ALine - 1;
+    LTextCaretPosition.Char := ALineLength;
+    LTextPositionInSelection := IsTextPositionInSelection(LTextCaretPosition);
 
-    ACanvas.Pen.Color := LPenColor;
-    LVisibleChars := GetVisibleChars;
-
-    // TODO: No painting if not FSpecialChars.Selection.Visible
-
-    if FSpecialChars.EndOfLine.Visible and (ALine <> FLineNumbersCount) and (ALineLength - AFirstColumn < LVisibleChars) then
-    with ACanvas do
+    if FSpecialChars.Selection.Visible and LTextPositionInSelection or not LTextPositionInSelection then
     begin
-      Pen.Color := LPenColor;
-      LCharRect.Top := ALineRect.Top;
-      if FSpecialChars.EndOfLine.Style = eolPilcrow then
-        LCharRect.Bottom := ALineRect.Bottom
+      if FSpecialChars.Selection.Visible and LTextPositionInSelection then
+        LPenColor := FSpecialChars.Selection.Color
       else
-        LCharRect.Bottom := ALineRect.Bottom - 3;
-      LCharRect.Left := FTextDrawer.GetTextWidth(FLines.ExpandedStrings[ALine - 1], ALineLength + 1);
-      if FSpecialChars.EndOfLine.Style = eolEnter then
-        LCharRect.Left := LCharRect.Left + 4;
-      if FSpecialChars.EndOfLine.Style = eolPilcrow then
-      begin
-        LCharRect.Left := LCharRect.Left + 2;
-        LCharRect.Right := LCharRect.Left + FTextDrawer.CharWidth
-      end
+      if scoMiddleColor in FSpecialChars.Options then
+        LPenColor := MiddleColor(FHighlighter.MainRules.Attribute.Background, FHighlighter.MainRules.Attribute.Foreground)
       else
-        LCharRect.Right := LCharRect.Left + FTabs.Width * FTextDrawer.CharWidth - 3;
+      if scoTextColor in FSpecialChars.Options then
+        LPenColor := FHighlighter.MainRules.Attribute.Foreground
+      else
+        LPenColor := FSpecialChars.Color;
 
-      if FSpecialChars.EndOfLine.Style = eolPilcrow then
+      ACanvas.Pen.Color := LPenColor;
+      LVisibleChars := GetVisibleChars;
+
+      if FSpecialChars.EndOfLine.Visible and (ALine <> FLineNumbersCount) and (ALineLength - AFirstColumn < LVisibleChars) then
+      with ACanvas do
       begin
-        if IsTextPositionInSelection(TextCaretPosition) then
-          FTextDrawer.SetBackgroundColor(FSelection.Colors.Background)
+        Pen.Color := LPenColor;
+        LCharRect.Top := ALineRect.Top;
+        if FSpecialChars.EndOfLine.Style = eolPilcrow then
+          LCharRect.Bottom := ALineRect.Bottom
         else
-        if GetTextCaretY = ALine - 1 then
-          FTextDrawer.SetBackgroundColor(FActiveLine.Color)
-        else
-          FTextDrawer.SetBackgroundColor(FBackgroundColor);
-        FTextDrawer.SetForegroundColor(ACanvas.Pen.Color);
-        FTextDrawer.SetStyle([]);
-        LPilcrow := Char($00B6);
-        Winapi.Windows.ExtTextOut(ACanvas.Handle, LCharRect.Left, LCharRect.Top, ETO_OPAQUE or ETO_CLIPPED, @LCharRect, PChar(LPilcrow), 1, nil);
-      end
-      else
-      if FSpecialChars.EndOfLine.Style = eolArrow then
-      begin
-        Y := LCharRect.Top + 2;
-        if FSpecialChars.Style = scsDot then
+          LCharRect.Bottom := ALineRect.Bottom - 3;
+        LCharRect.Left := FTextDrawer.GetTextWidth(FLines.ExpandedStrings[ALine - 1], ALineLength + 1);
+        if FSpecialChars.EndOfLine.Style = eolEnter then
+          LCharRect.Left := LCharRect.Left + 4;
+        if FSpecialChars.EndOfLine.Style = eolPilcrow then
         begin
-          while Y < LCharRect.Bottom do
+          LCharRect.Left := LCharRect.Left + 2;
+          LCharRect.Right := LCharRect.Left + FTextDrawer.CharWidth
+        end
+        else
+          LCharRect.Right := LCharRect.Left + FTabs.Width * FTextDrawer.CharWidth - 3;
+
+        if FSpecialChars.EndOfLine.Style = eolPilcrow then
+        begin
+          if IsTextPositionInSelection(TextCaretPosition) then
+            FTextDrawer.SetBackgroundColor(FSelection.Colors.Background)
+          else
+          if GetTextCaretY = ALine - 1 then
+            FTextDrawer.SetBackgroundColor(FActiveLine.Color)
+          else
+            FTextDrawer.SetBackgroundColor(FBackgroundColor);
+          FTextDrawer.SetForegroundColor(ACanvas.Pen.Color);
+          FTextDrawer.SetStyle([]);
+          LPilcrow := Char($00B6);
+          Winapi.Windows.ExtTextOut(ACanvas.Handle, LCharRect.Left, LCharRect.Top, ETO_OPAQUE or ETO_CLIPPED, @LCharRect, PChar(LPilcrow), 1, nil);
+        end
+        else
+        if FSpecialChars.EndOfLine.Style = eolArrow then
+        begin
+          Y := LCharRect.Top + 2;
+          if FSpecialChars.Style = scsDot then
+          begin
+            while Y < LCharRect.Bottom do
+            begin
+              MoveTo(LCharRect.Left + 6, Y);
+              LineTo(LCharRect.Left + 6, Y + 1);
+              Inc(Y, 2);
+            end;
+          end;
+          { Solid }
+          if FSpecialChars.Style = scsSolid then
           begin
             MoveTo(LCharRect.Left + 6, Y);
+            Y := LCharRect.Bottom;
             LineTo(LCharRect.Left + 6, Y + 1);
-            Inc(Y, 2);
           end;
-        end;
-        { Solid }
-        if FSpecialChars.Style = scsSolid then
-        begin
           MoveTo(LCharRect.Left + 6, Y);
-          Y := LCharRect.Bottom;
-          LineTo(LCharRect.Left + 6, Y + 1);
+          LineTo(LCharRect.Left + 3, Y - 3);
+          MoveTo(LCharRect.Left + 6, Y);
+          LineTo(LCharRect.Left + 9, Y - 3);
+        end
+        else
+        begin
+          Y := LCharRect.Top + GetLineHeight div 2;
+          MoveTo(LCharRect.Left, Y);
+          LineTo(LCharRect.Left + 11, Y);
+          MoveTo(LCharRect.Left + 1, Y - 1);
+          LineTo(LCharRect.Left + 1, Y + 2);
+          MoveTo(LCharRect.Left + 2, Y - 2);
+          LineTo(LCharRect.Left + 2, Y + 3);
+          MoveTo(LCharRect.Left + 3, Y - 3);
+          LineTo(LCharRect.Left + 3, Y + 4);
+          MoveTo(LCharRect.Left + 10, Y - 3);
+          LineTo(LCharRect.Left + 10, Y);
         end;
-        MoveTo(LCharRect.Left + 6, Y);
-        LineTo(LCharRect.Left + 3, Y - 3);
-        MoveTo(LCharRect.Left + 6, Y);
-        LineTo(LCharRect.Left + 9, Y - 3);
-      end
-      else
-      begin
-        Y := LCharRect.Top + GetLineHeight div 2;
-        MoveTo(LCharRect.Left, Y);
-        LineTo(LCharRect.Left + 11, Y);
-        MoveTo(LCharRect.Left + 1, Y - 1);
-        LineTo(LCharRect.Left + 1, Y + 2);
-        MoveTo(LCharRect.Left + 2, Y - 2);
-        LineTo(LCharRect.Left + 2, Y + 3);
-        MoveTo(LCharRect.Left + 3, Y - 3);
-        LineTo(LCharRect.Left + 3, Y + 4);
-        MoveTo(LCharRect.Left + 10, Y - 3);
-        LineTo(LCharRect.Left + 10, Y);
       end;
     end;
   end;
@@ -10593,18 +10603,21 @@ var
       if FSpecialChars.Visible and (LTokenHelper.EmptySpace <> esNone) and
         (not AMinimap or AMinimap and (moShowSpecialChars in FMinimap.Options)) then
       begin
-        if ACanvas.Brush.Color = FSelection.Colors.Background then
+        if FSpecialChars.Selection.Visible and (ACanvas.Brush.Color = FSelection.Colors.Background) then
           ACanvas.Pen.Color := FSpecialChars.Selection.Color
         else
           ACanvas.Pen.Color := LTokenHelper.Foreground;
         PatBlt(ACanvas.Handle, LTokenRect.Left, LTokenRect.Top, LTokenRect.Width, LTokenRect.Height, PATCOPY); { fill rect }
 
-        if (LTokenHelper.EmptySpace = esSpace) and (FSpecialChars.Selection.Visible and
+        if (FSpecialChars.Selection.Visible and
           (ACanvas.Brush.Color = FSelection.Colors.Background) or (ACanvas.Brush.Color <> FSelection.Colors.Background)) then
-          PaintSpecialCharSpace;
+        begin
+          if LTokenHelper.EmptySpace = esSpace then
+            PaintSpecialCharSpace;
 
-        if LTokenHelper.EmptySpace = esTab then
-          PaintSpecialCharSpaceTab;
+          if LTokenHelper.EmptySpace = esTab then
+            PaintSpecialCharSpaceTab;
+        end;
       end
       else
         Winapi.Windows.ExtTextOut(ACanvas.Handle, LTokenRect.Left, LTokenRect.Top, ETO_OPAQUE or ETO_CLIPPED, @LTokenRect,
