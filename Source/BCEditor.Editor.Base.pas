@@ -10831,9 +10831,7 @@ var
 
         ((LTokenHelper.Background = ABackground) and ((LTokenHelper.Foreground = AForeground) )) and
 
-        ((LWToken < 128) or (LWToken >= 128) and (LEmptySpace = esNone)) and
-
-        (not FSpecialChars.Visible or FSpecialChars.Visible and (LEmptySpace = LTokenHelper.EmptySpace));
+        ((LWToken < 128) or (LWToken >= 128) and (LEmptySpace = LTokenHelper.EmptySpace)); 
 
       if not LCanAppend then
       begin
