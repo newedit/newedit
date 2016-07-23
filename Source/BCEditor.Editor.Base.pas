@@ -10504,7 +10504,7 @@ var
 
     if (LCurrentLineLength <> 0) and (AIndex > 0) then
     begin
-      Inc(Result, FTextDrawer.GetTextWidth(LCurrentLineText, Min(LCurrentLineLength + 1, AIndex))); //, False));
+      Inc(Result, FTextDrawer.GetTextWidth(LCurrentLineText, Min(LCurrentLineLength + 1, AIndex)));
 
       LAfterLine := AIndex - LCurrentLineLength - 1;
       if LAfterLine = 0 then
@@ -10625,8 +10625,11 @@ var
         end;
       end
       else
+      begin
+        LText := StringReplace(LText, BCEDITOR_TAB_CHAR, BCEDITOR_SPACE_CHAR, [rfReplaceAll]);
         Winapi.Windows.ExtTextOut(ACanvas.Handle, LTokenRect.Left, LTokenRect.Top, ETO_OPAQUE or ETO_CLIPPED, @LTokenRect,
           PChar(LText), ATokenLength, nil);
+      end;
 
       if LTokenHelper.MatchingPairUnderline then
       begin
