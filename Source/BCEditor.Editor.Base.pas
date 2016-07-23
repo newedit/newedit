@@ -1,6 +1,4 @@
-﻿{$MESSAGE WARN 'Note! Painting is currently under development and this is not a stable version. Use the latest release version instead.'}
-{$MESSAGE WARN 'Fix TODO''s'}
-unit BCEditor.Editor.Base;
+﻿unit BCEditor.Editor.Base;
 
 interface
 
@@ -9362,7 +9360,7 @@ begin
 
   LFoldRange := nil;
   if cfoHighlightFoldingLine in FCodeFolding.Options then
-    LFoldRange := CodeFoldingLineInsideRange(GetTextCaretY);
+    LFoldRange := CodeFoldingLineInsideRange(FDisplayCaretY);
 
   for i := AFirstRow to ALastRow do
   begin
@@ -10525,6 +10523,7 @@ var
   procedure PaintToken(AToken: string; ATokenLength, ACharsBefore, AFirst, ALast: Integer);
   var
     LText: string;
+    LPChar: PChar;
     LOldPenColor: TColor;
 
     procedure PaintSpecialCharSpace;
@@ -10626,7 +10625,13 @@ var
       end
       else
       begin
-        LText := StringReplace(LText, BCEDITOR_TAB_CHAR, BCEDITOR_SPACE_CHAR, [rfReplaceAll]);
+        LPChar := PChar(LText);
+        while LPChar^ <> BCEDITOR_NONE_CHAR do
+        begin
+          if LPChar^ = BCEDITOR_TAB_CHAR then
+            LPChar^ := BCEDITOR_SPACE_CHAR;
+          Inc(LPChar);
+        end;
         Winapi.Windows.ExtTextOut(ACanvas.Handle, LTokenRect.Left, LTokenRect.Top, ETO_OPAQUE or ETO_CLIPPED, @LTokenRect,
           PChar(LText), ATokenLength, nil);
       end;
@@ -13534,7 +13539,7 @@ begin
       ecBackspace:
         if not ReadOnly then
           DoBackspace;
-      ecDeleteChar: // TODO: check Delete, it deletes 2 chars
+      ecDeleteChar:
         if not ReadOnly then
           DeleteChar;
       ecDeleteWord, ecDeleteEndOfLine:
@@ -13599,12 +13604,12 @@ begin
       ecScrollLeft:
         begin
           SetHorizontalScrollPosition(FHorizontalScrollPosition - 1);
-          Update; // TODO: don't create buffer
+          Update;
         end;
       ecScrollRight:
         begin
           SetHorizontalScrollPosition(FHorizontalScrollPosition + 1);
-          Update; // TODO: don't create buffer
+          Update;
         end;
       ecInsertMode:
         InsertMode := True;
