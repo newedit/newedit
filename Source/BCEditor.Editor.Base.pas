@@ -5014,7 +5014,7 @@ begin
       end;
 
       FMinimapShadowBitmap.Canvas.Brush.Color := FMinimap.Shadow.Color;
-      FMinimapShadowBitmap.Width := FMinimap.Shadow.Width;
+      FMinimapShadowBitmap.Width := Max(FMinimap.Shadow.Width, 1);
 
       SetLength(FMinimapShadowAlphaArray, FMinimapShadowBitmap.Width);
       if FMinimapShadowAlphaByteArrayLength <> FMinimapShadowBitmap.Width then
@@ -6065,7 +6065,7 @@ begin
     end;
 
     FScrollShadowBitmap.Canvas.Brush.Color := FScroll.Shadow.Color;
-    FScrollShadowBitmap.Width := FScroll.Shadow.Width;
+    FScrollShadowBitmap.Width := Max(FScroll.Shadow.Width, 1);
 
     SetLength(FScrollShadowAlphaArray, FScrollShadowBitmap.Width);
     if FScrollShadowAlphaByteArrayLength <> FScrollShadowBitmap.Width then
@@ -6672,7 +6672,7 @@ begin
       FSearch.Map.GetWidth, 0) div FTextDrawer.CharWidth;
     FVisibleLines := ClientHeight div GetLineHeight;
 
-    if FMinimap.Visible and (FLineNumbersCount > 0) then
+    if FMinimap.Visible then
     begin
       FTextDrawer.SetBaseFont(FMinimap.Font);
       FMinimap.CharHeight := FTextDrawer.CharHeight - 1;
@@ -9563,8 +9563,8 @@ begin
   LCurrentLine := GetDisplayTextLineNumber(DisplayCaretY);
   LCodeFoldingRange := nil;
   LDeepestLevel := GetDeepestLevel;
-  LTopLine := GetDisplayTextLineNumber(AFirstRow); //TopLine);
-  LBottomLine := GetDisplayTextLineNumber(ALastRow); //TopLine + VisibleLines);
+  LTopLine := GetDisplayTextLineNumber(AFirstRow);
+  LBottomLine := GetDisplayTextLineNumber(ALastRow);
 
   SetLength(LCodeFoldingRanges, FAllCodeFoldingRanges.AllCount);
   k := 0;
