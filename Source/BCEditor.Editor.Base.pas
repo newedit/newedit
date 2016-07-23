@@ -4683,7 +4683,12 @@ begin
       LTextCaretPosition.Char := Length(LTextLine) + 1;
 
     if toTabsToSpaces in FTabs.Options then
-      LTabText := StringOfChar(BCEDITOR_SPACE_CHAR, LCharCount)
+    begin
+      if toColumns in  FTabs.Options then
+        LTabText := StringOfChar(BCEDITOR_SPACE_CHAR, LCharCount - LDisplayCaretPosition.Column mod FTabs.Width)
+      else
+        LTabText := StringOfChar(BCEDITOR_SPACE_CHAR, LCharCount)
+    end
     else
     begin
       LTabText := StringOfChar(BCEDITOR_TAB_CHAR, LCharCount div FTabs.Width);
