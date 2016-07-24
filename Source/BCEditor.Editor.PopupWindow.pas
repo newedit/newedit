@@ -71,11 +71,19 @@ begin
 end;
 
 procedure TBCEditorPopupWindow.CreateWnd;
+{$IFDEF USE_ALPHASKINS}
+var
+  LSkinParams: TacSkinParams;
+{$ENDIF}
 begin
   inherited;
 {$IFDEF USE_ALPHASKINS}
   FCommonData.Loaded(False);
-  RefreshEditScrolls(SkinData, FScrollWnd); // TODO: Why this will set the focus...
+  if (FScrollWnd <> nil) and FScrollWnd.Destroyed then
+    FreeAndNil(FScrollWnd);
+
+  if FScrollWnd = nil then
+    FScrollWnd := TacEditWnd.Create(Handle, SkinData, SkinData.SkinManager, LSkinParams, False);
 {$ENDIF}
 end;
 
