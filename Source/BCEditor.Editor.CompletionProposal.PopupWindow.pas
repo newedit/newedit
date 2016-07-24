@@ -5,7 +5,7 @@ interface
 uses
   Winapi.Messages, System.Classes, System.Types, Vcl.Forms, Vcl.Controls, Vcl.Graphics, BCEditor.Utils,
   BCEditor.Types, BCEditor.Editor.CompletionProposal.Columns, BCEditor.Editor.PopupWindow,
-  BCEditor.Editor.CompletionProposal{$IFDEF USE_ALPHASKINS}, sCommonData, acSBUtils{$ENDIF};
+  BCEditor.Editor.CompletionProposal{$IFDEF USE_ALPHASKINS}, sCommonData, acSBUtils, sStyleSimply{$ENDIF};
 
 {$IFDEF USE_VCL_STYLES}
 const
@@ -61,9 +61,9 @@ type
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
-{$IFDEF USE_ALPHASKINS}
+    {$IFDEF USE_ALPHASKINS}
     procedure AfterConstruction; override;
-{$ENDIF}
+    {$ENDIF}
     function GetCurrentInput: string;
     procedure Assign(ASource: TPersistent); override;
     procedure Execute(const ACurrentString: string; X, Y: Integer);
@@ -82,23 +82,26 @@ implementation
 uses
   Winapi.Windows, System.SysUtils, System.UITypes, BCEditor.Editor.Base, BCEditor.Editor.KeyCommands,
   BCEditor.Editor.Utils, BCEditor.Consts, System.Math, Vcl.Dialogs{$IFDEF USE_VCL_STYLES}, Vcl.Themes{$ENDIF}
-{$IFDEF USE_ALPHASKINS}, Winapi.CommCtrl, sVCLUtils, sMessages, sConst, sSkinProps{$ENDIF};
+{$IFDEF USE_ALPHASKINS}, Winapi.CommCtrl, sVCLUtils, sMessages, sConst, sSkinProps, sSkinProvider{$ENDIF};
 
 { TBCEditorCompletionProposalPopupWindow }
 
 constructor TBCEditorCompletionProposalPopupWindow.Create(AOwner: TComponent);
 begin
-  inherited Create(AOwner);
-
 {$IFDEF USE_ALPHASKINS}
   FCommonData := TsScrollWndData.Create(Self, True);
   FCommonData.COC := COC_TsListBox;
+{$ENDIF}
+  inherited Create(AOwner);
+
+{$IFDEF USE_ALPHASKINS}
   if FCommonData.SkinSection = '' then
     FCommonData.SkinSection := s_Edit;
 {$ENDIF}
-  AddKeyHandlers;
 
   Visible := False;
+
+  AddKeyHandlers;
 
   FBitmapBuffer := Vcl.Graphics.TBitmap.Create;
   FFiltered := False;
@@ -111,17 +114,27 @@ begin
   OnDblClick := HandleDblClick;
 end;
 
+{$IFDEF USE_ALPHASKINS}
+procedure TBCEditorCompletionProposalPopupWindow.AfterConstruction;
+begin
+  inherited AfterConstruction;
+
+  UpdateData(FCommonData);
+end;
+{$ENDIF}
+
 destructor TBCEditorCompletionProposalPopupWindow.Destroy;
 begin
-{$IFDEF USE_ALPHASKINS}
-  if FScrollWnd <> nil then
-    FreeAndNil(FScrollWnd);
-  if Assigned(FCommonData) then
-    FreeAndNil(FCommonData);
-{$ENDIF}
   RemoveKeyHandlers;
   FBitmapBuffer.Free;
   SetLength(FItemIndexArray, 0);
+
+  {$IFDEF USE_ALPHASKINS}
+  if Assigned(FScrollWnd) then
+    FreeAndNil(FScrollWnd);
+  if Assigned(FCommonData) then
+    FreeAndNil(FCommonData);
+  {$ENDIF}
 
   inherited Destroy;
 end;
@@ -131,15 +144,6 @@ begin
   RemoveKeyHandlers;
   inherited Hide;
 end;
-
-{$IFDEF USE_ALPHASKINS}
-procedure TBCEditorCompletionProposalPopupWindow.AfterConstruction;
-begin
-  inherited AfterConstruction;
-
-  UpdateData(FCommonData);
-end;
-{$ENDIF}
 
 procedure TBCEditorCompletionProposalPopupWindow.Assign(ASource: TPersistent);
 begin
@@ -759,46 +763,24 @@ begin
 end;
 
 procedure TBCEditorCompletionProposalPopupWindow.WndProc(var AMessage: TMessage);
+{$IFDEF USE_ALPHASKINS}
+var
+  LSkinProvider: TsSkinProvider;
+{$ENDIF}
 begin
 {$IFDEF USE_ALPHASKINS}
   if AMessage.Msg = SM_ALPHACMD then
-    case AMessage.wParamHi of
+    case AMessage.WParamHi of
       AC_CTRLHANDLED:
         begin
           AMessage.Result := 1;
           Exit;
         end;
-
-      AC_GETAPPLICATION:
+      AC_GETDEFINDEX:
         begin
-          AMessage.Result := LRESULT(Application);
-          Exit
-        end;
+          if FCommonData.SkinManager <> nil then
+            AMessage.Result := FCommonData.SkinManager.ConstData.Sections[ssEdit] + 1;
 
-      AC_REMOVESKIN:
-        if (ACUInt(AMessage.LParam) = ACUInt(SkinData.SkinManager)) and not(csDestroying in ComponentState) then
-        begin
-          if FScrollWnd <> nil then
-            FreeAndNil(FScrollWnd);
-
-          CommonWndProc(AMessage, FCommonData);
-          RecreateWnd;
-          Exit;
-        end;
-
-      AC_REFRESH:
-        if (ACUInt(AMessage.LParam) = ACUInt(SkinData.SkinManager)) and Visible then
-        begin
-          CommonWndProc(AMessage, FCommonData);
-          RefreshEditScrolls(SkinData, FScrollWnd);
-          SendMessage(Handle, WM_NCPAINT, 0, 0);
-          Exit;
-        end;
-
-      AC_SETNEWSKIN:
-        if (ACUInt(AMessage.LParam) = ACUInt(SkinData.SkinManager)) then
-        begin
-          CommonWndProc(AMessage, FCommonData);
           Exit;
         end;
     end;
@@ -808,7 +790,7 @@ begin
   else
   begin
     if AMessage.Msg = SM_ALPHACMD then
-      case AMessage.wParamHi of
+      case AMessage.WParamHi of
         AC_ENDPARENTUPDATE:
           if FCommonData.Updating then
           begin
@@ -824,10 +806,16 @@ begin
     inherited;
 
     case AMessage.Msg of
-      TB_SETANCHORHIGHLIGHT, WM_SIZE:
-        SendMessage(Handle, WM_NCPAINT, 0, 0);
       CM_SHOWINGCHANGED:
+      begin
+        LSkinProvider := GetSkinProvider(Self);
+        LSkinProvider.Form.Perform(WM_SETREDRAW, 0, 0);
         RefreshEditScrolls(SkinData, FScrollWnd);
+        LSkinProvider.Form.Perform(WM_SETREDRAW, 1, 0);
+      end;
+
+      CM_VISIBLECHANGED, CM_ENABLEDCHANGED, WM_SETFONT:
+        FCommonData.Invalidate;
     end;
   end;
 {$ELSE}

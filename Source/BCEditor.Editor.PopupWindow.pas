@@ -16,14 +16,14 @@ type
 {$ENDIF}
   protected
     FActiveControl: TWinControl;
-    FIsFocusable: Boolean;
+    //FIsFocusable: Boolean;
     procedure CreateParams(var Params: TCreateParams); override;
     procedure Hide; virtual;
     procedure Show(Origin: TPoint); virtual;
   public
     constructor Create(AOwner: TComponent); override;
     property ActiveControl: TWinControl read FActiveControl;
-    property IsFocusable: Boolean read FIsFocusable;
+    //property IsFocusable: Boolean read FIsFocusable;
   end;
 
 implementation
@@ -69,10 +69,10 @@ end;
 
 procedure TBCEditorPopupWindow.WMMouseActivate(var AMessage: TMessage);
 begin
-  if FIsFocusable then
+  {if FIsFocusable then
     inherited
-  else
-    AMessage.Result := MA_NOACTIVATE;
+  else }
+  AMessage.Result := MA_NOACTIVATE;
 end;
 
 procedure TBCEditorPopupWindow.WMEraseBkgnd(var AMessage: TMessage);

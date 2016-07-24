@@ -55,6 +55,7 @@ type
   strict private
     FCurrentFont: HFont;
     FCurrentStyle: TFontStyles;
+    FIsFixedFont: Boolean;
     FHandle: HDC;
     FHandleRefCount: Integer;
     FPSharedFontsInfo: PBCEditorSharedFontsInfo;
@@ -86,6 +87,7 @@ type
     property FontHandle: HFont read FCurrentFont;
     property CharAdvance: Integer read GetCharAdvance;
     property CharHeight: Integer read GetCharHeight;
+    property IsFixedFont: Boolean read FIsFixedFont;
   end;
 
   EBCEditorFontStockException = class(Exception);
@@ -107,7 +109,6 @@ type
     FStockBitmap: TBitmap;
   protected
     property DrawingCount: Integer read FDrawingCount;
-    property FontStock: TBCEditorFontStock read FFontStock;
   public
     constructor Create(ACalcExtentBaseStyle: TFontStyles; ABaseFont: TFont);
     destructor Destroy; override;
@@ -122,6 +123,7 @@ type
     procedure SetStyle(AValue: TFontStyles);
     property CharHeight: Integer read FCharHeight;
     property CharWidth: Integer read FCharWidth;
+    property FontStock: TBCEditorFontStock read FFontStock;
   end;
 
   EBCEditorTextDrawerException = class(Exception);
@@ -288,7 +290,10 @@ var
   LHasABC: Boolean;
 begin
   GetTextMetrics(AHandle, LTextMetric);
-  LHasABC := GetCharABCWidths(AHandle, Ord('M'), Ord('M'), LCharInfo);
+
+  FIsFixedFont := not Odd(LTextMetric.tmPitchAndFamily);
+
+  LHasABC := GetCharABCWidths(AHandle, Ord(' '), Ord(' '), LCharInfo);
   if not LHasABC then
   begin
     with LCharInfo do
@@ -611,7 +616,6 @@ begin
     if (LPText^ = BCEDITOR_SPACE_CHAR) or (LPText^ = BCEDITOR_TAB_CHAR) then
     begin
       Inc(Result, CharWidth);
-      Inc(LFrom);
       if LCount <> 0 then
       begin
         LText := Copy(AText, LFrom, LCount);
@@ -620,6 +624,7 @@ begin
         Inc(LFrom, LCount);
         LCount := 0;
       end;
+      Inc(LFrom);
     end
     else
       Inc(LCount);

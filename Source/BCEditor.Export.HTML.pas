@@ -136,7 +136,7 @@ begin
     if i = 0 then
       FHighlighter.ResetCurrentRange
     else
-      FHighlighter.SetCurrentRange(FLines.Ranges[i]);
+      FHighlighter.SetCurrentRange(FLines.Ranges[i - 1]);
     FHighlighter.SetCurrentLine(FLines.ExpandedStrings[i]);
     LTextLine := '';
     while not FHighlighter.GetEndOfLine do

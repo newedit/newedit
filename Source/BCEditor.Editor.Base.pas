@@ -1620,7 +1620,7 @@ var
     if LDisplayPosition.Row = 1 then
       FHighlighter.ResetCurrentRange
     else
-      FHighlighter.SetCurrentRange(FLines.Ranges[LDisplayPosition.Row - 1]);
+      FHighlighter.SetCurrentRange(FLines.Ranges[LDisplayPosition.Row - 2]);
     { Get line with tabs converted to spaces like PaintTextLines does. }
     LCurrentLineText := FLines.ExpandedStrings[LDisplayPosition.Row - 1];
     FHighlighter.SetCurrentLine(LCurrentLineText);
@@ -2198,7 +2198,7 @@ begin
   if ADisplayPosition.Row = 1 then
     FHighlighter.ResetCurrentRange
   else
-    FHighlighter.SetCurrentRange(FLines.Ranges[ADisplayPosition.Row - 1]);
+    FHighlighter.SetCurrentRange(FLines.Ranges[ADisplayPosition.Row - 2]);
   FHighlighter.SetCurrentLine(FLines.GetExpandedString(ADisplayPosition.Row - 1, BCEDITOR_TAB_CHAR));
   LFontStyles := [];
   LPreviousFontStyles := [];
@@ -2735,7 +2735,7 @@ begin
   if Result.Row = 1 then
     FHighlighter.ResetCurrentRange
   else
-    FHighlighter.SetCurrentRange(FLines.Ranges[Result.Row - 1]);
+    FHighlighter.SetCurrentRange(FLines.Ranges[Result.Row - 2]);
   FHighlighter.SetCurrentLine(FLines.GetExpandedString(Result.Row - 1, BCEDITOR_TAB_CHAR));
 
   LFontStyles := [];
@@ -8276,6 +8276,7 @@ procedure TBCBaseEditor.FreeCompletionProposalPopupWindow;
 begin
   if Assigned(FCompletionProposalPopupWindow) then
   begin
+    FCompletionProposalPopupWindow.Visible := False;
     FCompletionProposalPopupWindow.Free;
     FCompletionProposalPopupWindow := nil;
   end;
@@ -8580,10 +8581,22 @@ end;
 procedure TBCBaseEditor.LinesPutted(ASender: TObject; AIndex: Integer; ACount: Integer);
 var
   LLength: Integer;
+  LLastScan: Integer;
 begin
   if FWordWrap.Enabled then
     FResetLineNumbersCache := True;
+
   RefreshFind;
+
+  if Assigned(Parent) then
+    if Assigned(FHighlighter) and (FLines.Count > 0) then
+    begin
+      LLastScan := AIndex;
+      repeat
+        LLastScan := RescanHighlighterRangesFrom(LLastScan);
+        Inc(LLastScan);
+      until LLastScan >= AIndex + ACount;
+    end;
 
   if Assigned(FOnLinesPutted) then
     FOnLinesPutted(Self, AIndex, ACount);
@@ -10841,7 +10854,9 @@ var
 
         ((LTokenHelper.Background = ABackground) and ((LTokenHelper.Foreground = AForeground) )) and
 
-        ((LWToken < 128) or (LWToken >= 128) and (LEmptySpace = LTokenHelper.EmptySpace)); 
+        ((LWToken < 128) and FTextDrawer.FontStock.IsFixedFont or
+         (LWToken >= 128) and (LEmptySpace = LTokenHelper.EmptySpace) or
+         not FTextDrawer.FontStock.IsFixedFont and (LEmptySpace = LTokenHelper.EmptySpace) );
 
       if not LCanAppend then
       begin
@@ -11191,7 +11206,7 @@ var
           FHighlighter.ResetCurrentRange
         else
         if LWrappedRowCount = 0 then
-          FHighlighter.SetCurrentRange(Lines.Ranges[LCurrentLine - 2]);
+          FHighlighter.SetCurrentRange(FLines.Ranges[LCurrentLine - 2]);
         if LWrappedRowCount = 0 then
           FHighlighter.SetCurrentLine(LCurrentLineText);
 
