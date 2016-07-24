@@ -7888,7 +7888,6 @@ begin
   FCompletionProposalPopupWindow := TBCEditorCompletionProposalPopupWindow.Create(Self);
   with FCompletionProposalPopupWindow do
   begin
-    Parent := Self;
     Assign(FCompletionProposal);
     if cpoParseItemsFromText in FCompletionProposal.Options then
       SplitTextIntoWords(Items, False);
@@ -8276,7 +8275,7 @@ procedure TBCBaseEditor.FreeCompletionProposalPopupWindow;
 begin
   if Assigned(FCompletionProposalPopupWindow) then
   begin
-    FCompletionProposalPopupWindow.Visible := False;
+    FCompletionProposalPopupWindow.Hide;
     FCompletionProposalPopupWindow.Free;
     FCompletionProposalPopupWindow := nil;
   end;

@@ -5,7 +5,7 @@ interface
 uses
   Winapi.Messages, System.Classes, System.Types, Vcl.Forms, Vcl.Controls, Vcl.Graphics, BCEditor.Utils,
   BCEditor.Types, BCEditor.Editor.CompletionProposal.Columns, BCEditor.Editor.PopupWindow,
-  BCEditor.Editor.CompletionProposal{$IFDEF USE_ALPHASKINS}, sCommonData, acSBUtils, sStyleSimply{$ENDIF};
+  BCEditor.Editor.CompletionProposal;
 
 {$IFDEF USE_VCL_STYLES}
 const
@@ -21,9 +21,6 @@ type
     FItemIndexArray: array of Integer;
     FBitmapBuffer: TBitmap;
     FCaseSensitive: Boolean;
-{$IFDEF USE_ALPHASKINS}
-    FCommonData: TsScrollWndData;
-{$ENDIF}
     FCompletionProposal: TBCEditorCompletionProposal;
     FCompletionStart: Integer;
     FSelectedLine: Integer;
@@ -34,9 +31,6 @@ type
     FMargin: Integer;
     FMouseWheelAccumulator: Integer;
     FOnValidate: TBCEditorValidateEvent;
-{$IFDEF USE_ALPHASKINS}
-    FScrollWnd: TacScrollWnd;
-{$ENDIF}
     FTopLine: Integer;
     function GetItems: TStrings;
     procedure AddKeyHandlers;
@@ -61,43 +55,27 @@ type
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
-    {$IFDEF USE_ALPHASKINS}
-    procedure AfterConstruction; override;
-    {$ENDIF}
+
     function GetCurrentInput: string;
     procedure Assign(ASource: TPersistent); override;
     procedure Execute(const ACurrentString: string; X, Y: Integer);
-    procedure WndProc(var AMessage: TMessage); override;
     property CurrentString: string read FCurrentString write SetCurrentString;
     property Items: TStrings read GetItems;
     property TopLine: Integer read FTopLine write SetTopLine;
     property OnValidate: TBCEditorValidateEvent read FOnValidate write FOnValidate;
-{$IFDEF USE_ALPHASKINS}
-    property SkinData: TsScrollWndData read FCommonData write FCommonData;
-{$ENDIF}
   end;
 
 implementation
 
 uses
   Winapi.Windows, System.SysUtils, System.UITypes, BCEditor.Editor.Base, BCEditor.Editor.KeyCommands,
-  BCEditor.Editor.Utils, BCEditor.Consts, System.Math, Vcl.Dialogs{$IFDEF USE_VCL_STYLES}, Vcl.Themes{$ENDIF}
-{$IFDEF USE_ALPHASKINS}, Winapi.CommCtrl, sVCLUtils, sMessages, sConst, sSkinProps, sSkinProvider{$ENDIF};
+  BCEditor.Editor.Utils, BCEditor.Consts, System.Math, Vcl.Dialogs{$IFDEF USE_VCL_STYLES}, Vcl.Themes{$ENDIF};
 
 { TBCEditorCompletionProposalPopupWindow }
 
 constructor TBCEditorCompletionProposalPopupWindow.Create(AOwner: TComponent);
 begin
-{$IFDEF USE_ALPHASKINS}
-  FCommonData := TsScrollWndData.Create(Self, True);
-  FCommonData.COC := COC_TsListBox;
-{$ENDIF}
   inherited Create(AOwner);
-
-{$IFDEF USE_ALPHASKINS}
-  if FCommonData.SkinSection = '' then
-    FCommonData.SkinSection := s_Edit;
-{$ENDIF}
 
   Visible := False;
 
@@ -114,27 +92,11 @@ begin
   OnDblClick := HandleDblClick;
 end;
 
-{$IFDEF USE_ALPHASKINS}
-procedure TBCEditorCompletionProposalPopupWindow.AfterConstruction;
-begin
-  inherited AfterConstruction;
-
-  UpdateData(FCommonData);
-end;
-{$ENDIF}
-
 destructor TBCEditorCompletionProposalPopupWindow.Destroy;
 begin
   RemoveKeyHandlers;
   FBitmapBuffer.Free;
   SetLength(FItemIndexArray, 0);
-
-  {$IFDEF USE_ALPHASKINS}
-  if Assigned(FScrollWnd) then
-    FreeAndNil(FScrollWnd);
-  if Assigned(FCommonData) then
-    FreeAndNil(FCommonData);
-  {$ENDIF}
 
   inherited Destroy;
 end;
@@ -165,25 +127,25 @@ end;
 
 procedure TBCEditorCompletionProposalPopupWindow.AddKeyHandlers;
 var
-  Editor: TBCBaseEditor;
+  LEditor: TBCBaseEditor;
 begin
-  Editor := Owner as TBCBaseEditor;
-  if Assigned(Editor) then
+  LEditor := Owner as TBCBaseEditor;
+  if Assigned(LEditor) then
   begin
-    Editor.AddKeyPressHandler(EditorKeyPress);
-    Editor.AddKeyDownHandler(EditorKeyDown);
+    LEditor.AddKeyPressHandler(EditorKeyPress);
+    LEditor.AddKeyDownHandler(EditorKeyDown);
   end;
 end;
 
 procedure TBCEditorCompletionProposalPopupWindow.RemoveKeyHandlers;
 var
-  Editor: TBCBaseEditor;
+  LEditor: TBCBaseEditor;
 begin
-  Editor := Owner as TBCBaseEditor;
-  if Assigned(Editor) then
+  LEditor := Owner as TBCBaseEditor;
+  if Assigned(LEditor) then
   begin
-    Editor.RemoveKeyPressHandler(EditorKeyPress);
-    Editor.RemoveKeyDownHandler(EditorKeyDown);
+    LEditor.RemoveKeyPressHandler(EditorKeyPress);
+    LEditor.RemoveKeyDownHandler(EditorKeyDown);
   end;
 end;
 
@@ -497,36 +459,35 @@ begin
 end;
 
 procedure TBCEditorCompletionProposalPopupWindow.Execute(const ACurrentString: string; X, Y: Integer);
+var
+  LPoint: TPoint;
 
   procedure CalculateFormPlacement;
   var
     LWidth: Integer;
     LHeight: Integer;
-    LX: Integer;
-    LY: Integer;
   begin
-    LX := X - TextWidth(FBitmapBuffer.Canvas, ACurrentString);
-    LY := Y;
+    LPoint.X := X - TextWidth(FBitmapBuffer.Canvas, ACurrentString);
+    LPoint.Y := Y;
 
     LWidth := FFormWidth;
     LHeight := FItemHeight * FCompletionProposal.VisibleLines + 2;
 
-    if LX + LWidth > Screen.DesktopWidth then
+    if LPoint.X + LWidth > Screen.DesktopWidth then
     begin
-      LX := Screen.DesktopWidth - LWidth - 5;
-      if LX < 0 then
-        LX := 0;
+      LPoint.X := Screen.DesktopWidth - LWidth - 5;
+      if LPoint.X < 0 then
+        LPoint.X := 0;
     end;
 
-    if LY + LHeight > Screen.DesktopHeight then
+    if LPoint.Y + LHeight > Screen.DesktopHeight then
     begin
-      LY := LY - LHeight - (Owner as TBCBaseEditor).LineHeight - 2;
-      if LY < 0 then
-        LY := 0;
+      LPoint.Y := LPoint.Y - LHeight - (Owner as TBCBaseEditor).LineHeight - 2;
+      if LPoint.Y < 0 then
+        LPoint.Y := 0;
     end;
 
-    SetWindowPos(Handle, HWND_TOP, LX, LY, 0, 0, SWP_NOACTIVATE or SWP_SHOWWINDOW);
-
+    LPoint := ScreenToClient(LPoint);
     Width := LWidth;
     Height := LHeight;
   end;
@@ -594,7 +555,7 @@ begin
     if Length(FItemIndexArray) > 0 then
     begin
       UpdateScrollBar;
-      Visible := True;
+      Show(LPoint);
     end;
   end;
 end;
@@ -760,67 +721,6 @@ begin
       end;
   end;
   Invalidate;
-end;
-
-procedure TBCEditorCompletionProposalPopupWindow.WndProc(var AMessage: TMessage);
-{$IFDEF USE_ALPHASKINS}
-var
-  LSkinProvider: TsSkinProvider;
-{$ENDIF}
-begin
-{$IFDEF USE_ALPHASKINS}
-  if AMessage.Msg = SM_ALPHACMD then
-    case AMessage.WParamHi of
-      AC_CTRLHANDLED:
-        begin
-          AMessage.Result := 1;
-          Exit;
-        end;
-      AC_GETDEFINDEX:
-        begin
-          if FCommonData.SkinManager <> nil then
-            AMessage.Result := FCommonData.SkinManager.ConstData.Sections[ssEdit] + 1;
-
-          Exit;
-        end;
-    end;
-
-  if not ControlIsReady(Self) or not Assigned(FCommonData) or not FCommonData.Skinned then
-    inherited
-  else
-  begin
-    if AMessage.Msg = SM_ALPHACMD then
-      case AMessage.WParamHi of
-        AC_ENDPARENTUPDATE:
-          if FCommonData.Updating then
-          begin
-            if not InUpdating(FCommonData, True) then
-              Perform(WM_NCPAINT, 0, 0);
-
-            Exit;
-          end;
-      end;
-
-    CommonWndProc(AMessage, FCommonData);
-
-    inherited;
-
-    case AMessage.Msg of
-      CM_SHOWINGCHANGED:
-      begin
-        LSkinProvider := GetSkinProvider(Self);
-        LSkinProvider.Form.Perform(WM_SETREDRAW, 0, 0);
-        RefreshEditScrolls(SkinData, FScrollWnd);
-        LSkinProvider.Form.Perform(WM_SETREDRAW, 1, 0);
-      end;
-
-      CM_VISIBLECHANGED, CM_ENABLEDCHANGED, WM_SETFONT:
-        FCommonData.Invalidate;
-    end;
-  end;
-{$ELSE}
-  inherited;
-{$ENDIF}
 end;
 
 procedure TBCEditorCompletionProposalPopupWindow.MouseDown(AButton: TMouseButton; AShift: TShiftState; X, Y: Integer);
