@@ -1,4 +1,3 @@
-// TODO: AlphaSkins: Fix border paint and invalidate after resize...
 unit BCEditor.Editor.PopupWindow;
 
 interface
@@ -21,6 +20,7 @@ type
 {$ENDIF}
   protected
     FActiveControl: TWinControl;
+    procedure CreateParams(var Params: TCreateParams); override;
     procedure Hide; virtual;
     procedure Show(Origin: TPoint); virtual;
   public
@@ -52,9 +52,6 @@ begin
 
   ControlStyle := ControlStyle + [csNoDesignVisible, csReplicatable];
 
-  if not(csDesigning in ComponentState) then
-    ControlStyle := ControlStyle + [csAcceptsControls];
-
   Ctl3D := False;
   ParentCtl3D := False;
   Parent := AOwner as TWinControl;
@@ -78,7 +75,7 @@ begin
   inherited;
 {$IFDEF USE_ALPHASKINS}
   FCommonData.Loaded(False);
-  RefreshEditScrolls(SkinData, FScrollWnd);
+  RefreshEditScrolls(SkinData, FScrollWnd); // TODO: Why this will set the focus...
 {$ENDIF}
 end;
 
@@ -88,14 +85,18 @@ begin
   Visible := False;
 end;
 
+procedure TBCEditorPopupWindow.CreateParams(var Params: TCreateParams);
+begin
+  inherited CreateParams(Params);
+
+  Params.Style := WS_POPUP or WS_BORDER;
+end;
+
 procedure TBCEditorPopupWindow.Show(Origin: TPoint);
 begin
   SetBounds(Origin.X, Origin.Y, Width, Height);
 
-  SetWindowLong(Handle, GWL_STYLE, GetWindowLong(Handle, GWL_STYLE) or WS_CLIPSIBLINGS or NativeInt(WS_POPUP));
-  SetWindowLong(Handle, GWL_EXSTYLE, GetWindowLong(Handle, GWL_EXSTYLE) or WS_EX_TOOLWINDOW);
-
-  SetWindowPos(Handle, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE or SWP_NOACTIVATE or SWP_NOREDRAW or SWP_SHOWWINDOW or
+  SetWindowPos(Handle, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE or SWP_NOACTIVATE or SWP_SHOWWINDOW or
     SWP_NOSENDCHANGING or SWP_NOOWNERZORDER or SWP_NOMOVE);
 
   Visible := True;

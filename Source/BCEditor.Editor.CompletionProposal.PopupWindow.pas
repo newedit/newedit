@@ -487,7 +487,6 @@ var
         LPoint.Y := 0;
     end;
 
-    LPoint := ScreenToClient(LPoint);
     Width := LWidth;
     Height := LHeight;
   end;
