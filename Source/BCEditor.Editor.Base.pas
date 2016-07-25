@@ -10850,7 +10850,8 @@ var
 
         ((LTokenHelper.Background = ABackground) and ((LTokenHelper.Foreground = AForeground) )) and
 
-        ((LWToken < 128) and FTextDrawer.FontStock.IsFixedFont or
+        ((LWToken < 128) and FTextDrawer.FontStock.IsFixedFont and
+          (not FSpecialChars.Visible or FSpecialChars.Visible and (LEmptySpace = LTokenHelper.EmptySpace)) or
          (LWToken >= 128) and (LEmptySpace = LTokenHelper.EmptySpace) or
          not FTextDrawer.FontStock.IsFixedFont and (LEmptySpace = LTokenHelper.EmptySpace) );
 
@@ -10871,7 +10872,11 @@ var
         SetLength(LTokenHelper.Text, LTokenHelper.MaxLength);
       end;
       for i := 1 to ATokenLength do
-        LTokenHelper.Text[LTokenHelper.Length + i] := AToken[i];
+      begin
+        // TODO: Continue here
+        LTokenHelper.Text[LTokenHelper.Length + i] := {LPToken^; //} AToken[i];
+        //Inc(LPToken);
+      end;
       Inc(LTokenHelper.Length, ATokenLength);
     end
     else
@@ -10883,7 +10888,10 @@ var
         SetLength(LTokenHelper.Text, LTokenHelper.MaxLength);
       end;
       for i := 1 to ATokenLength do
-        LTokenHelper.Text[i] := AToken[i];
+      begin
+        LTokenHelper.Text[i] := {LPToken^; //} AToken[i];
+       // Inc(LPToken);
+      end;
       LTokenHelper.CharsBefore := ACharsBefore;
       LTokenHelper.Foreground := AForeground;
       LTokenHelper.Background := ABackground;
