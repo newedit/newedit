@@ -11300,6 +11300,8 @@ begin
     PaintLines;
   end;
 
+  LBookmarkOnCurrentLine := False;
+
   { fill below the last line }
   LTokenRect := AClipRect;
   if AMinimap then
