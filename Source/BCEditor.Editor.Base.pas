@@ -5611,9 +5611,6 @@ var
     if LOpenTokenFoldRangeList.Count > 0 then
       if (not IsValidChar(LTextPtr - 1) or LIsOneCharFolds) and CharInSet(UpCase(LTextPtr^), FHighlighter.FoldCloseKeyChars) then
       begin
-        {$IFDEF WIN32}
-        LCodeFoldingRange := nil;
-        {$ENDIF}
         LIndexDecrease := 1;
         repeat
           if LOpenTokenFoldRangeList.Count - LIndexDecrease < 0 then
