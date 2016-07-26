@@ -9706,80 +9706,80 @@ var
     LOldColor: TColor;
     LLastTextLine: Integer;
   begin
-    if FLeftMargin.LineNumbers.Visible then
-    begin
-      FTextDrawer.SetBaseFont(FLeftMargin.Font);
-      try
-        FTextDrawer.SetForegroundColor(FLeftMargin.Font.Color);
+    FTextDrawer.SetBaseFont(FLeftMargin.Font);
+    try
+      FTextDrawer.SetForegroundColor(FLeftMargin.Font.Color);
 
-        LLineRect := AClipRect;
+      LLineRect := AClipRect;
 
-        LLastTextLine := ALastTextLine;
-        if lnoAfterLastLine in FLeftMargin.LineNumbers.Options then
-          LLastTextLine := ALastLine;
+      LLastTextLine := ALastTextLine;
+      if lnoAfterLastLine in FLeftMargin.LineNumbers.Options then
+        LLastTextLine := ALastLine;
 
-        for i := AFirstLine to LLastTextLine do
+      for i := AFirstLine to LLastTextLine do
+      begin
+        LLine := GetDisplayTextLineNumber(i);
+
+        LLineRect.Top := (i - TopLine) * LLineHeight;
+        LLineRect.Bottom := LLineRect.Top + LLineHeight;
+
+        LLineNumber := '';
+
+        FTextDrawer.SetBackgroundColor(FLeftMargin.Colors.Background);
+        if (not Assigned(FMultiCarets) and (LLine = GetTextCaretY + 1) or
+          Assigned(FMultiCarets) and IsMultiEditCaretFound(LLine)) and
+          (FLeftMargin.Colors.ActiveLineBackground <> clNone) then
         begin
-          LLine := GetDisplayTextLineNumber(i);
+          FTextDrawer.SetBackgroundColor(FLeftMargin.Colors.ActiveLineBackground);
+          Canvas.Brush.Color := FLeftMargin.Colors.ActiveLineBackground;
+          if Assigned(FMultiCarets) then
+            PatBlt(Canvas.Handle, LLineRect.Left, LLineRect.Top, LLineRect.Width, LLineRect.Height, PATCOPY); { fill line rect when multi-caret }
+        end;
 
-          LLineRect.Top := (i - TopLine) * LLineHeight;
-          LLineRect.Bottom := LLineRect.Top + LLineHeight;
+        LPreviousLine := LLine;
+        if FWordWrap.Enabled then
+          LPreviousLine := GetDisplayTextLineNumber(i - 1);
 
+        if FLeftMargin.LineNumbers.Visible and not FWordWrap.Enabled or FWordWrap.Enabled and (LPreviousLine <> LLine) then
+        begin
+          LLineNumber := FLeftMargin.FormatLineNumber(LLine);
+          if GetTextCaretY + 1 <> LLine then
+            if (lnoIntens in LeftMargin.LineNumbers.Options) and
+              (LLineNumber[Length(LLineNumber)] <> '0') and (i <> LeftMargin.LineNumbers.StartFrom) then
+            begin
+              LLeftMarginWidth := LLineRect.Left + FLeftMargin.GetWidth - FLeftMargin.LineState.Width - 1;
+              LOldColor := Canvas.Pen.Color;
+              Canvas.Pen.Color := LeftMargin.Colors.LineNumberLine;
+              LTop := LLineRect.Top + ((LLineHeight - 1) div 2);
+              if LLine mod 5 = 0 then
+                Canvas.MoveTo(LLeftMarginWidth - FLeftMarginCharWidth + ((FLeftMarginCharWidth - 9) div 2), LTop)
+              else
+                Canvas.MoveTo(LLeftMarginWidth - FLeftMarginCharWidth + ((FLeftMarginCharWidth - 2) div 2), LTop);
+              Canvas.LineTo(LLeftMarginWidth - ((FLeftMarginCharWidth - 1) div 2), LTop);
+              Canvas.Pen.Color := LOldColor;
+
+              Continue;
+            end;
+        end;
+
+        if not FLeftMargin.LineNumbers.Visible then
           LLineNumber := '';
 
-          FTextDrawer.SetBackgroundColor(FLeftMargin.Colors.Background);
-          if (not Assigned(FMultiCarets) and (LLine = GetTextCaretY + 1) or
-            Assigned(FMultiCarets) and IsMultiEditCaretFound(LLine)) and
-            (FLeftMargin.Colors.ActiveLineBackground <> clNone) then
-          begin
-            FTextDrawer.SetBackgroundColor(FLeftMargin.Colors.ActiveLineBackground);
-            Canvas.Brush.Color := FLeftMargin.Colors.ActiveLineBackground;
-            if Assigned(FMultiCarets) then
-              PatBlt(Canvas.Handle, LLineRect.Left, LLineRect.Top, LLineRect.Width, LLineRect.Height, PATCOPY); { fill line rect when multi-caret }
-          end;
-
-          LPreviousLine := LLine;
-          if FWordWrap.Enabled then
-            LPreviousLine := GetDisplayTextLineNumber(i - 1);
-
-          if not FWordWrap.Enabled or FWordWrap.Enabled and (LPreviousLine <> LLine) then
-          begin
-            LLineNumber := FLeftMargin.FormatLineNumber(LLine);
-            if GetTextCaretY + 1 <> LLine then
-              if (lnoIntens in LeftMargin.LineNumbers.Options) and
-                (LLineNumber[Length(LLineNumber)] <> '0') and (i <> LeftMargin.LineNumbers.StartFrom) then
-              begin
-                LLeftMarginWidth := LLineRect.Left + FLeftMargin.GetWidth - FLeftMargin.LineState.Width - 1;
-                LOldColor := Canvas.Pen.Color;
-                Canvas.Pen.Color := LeftMargin.Colors.LineNumberLine;
-                LTop := LLineRect.Top + ((LLineHeight - 1) div 2);
-                if LLine mod 5 = 0 then
-                  Canvas.MoveTo(LLeftMarginWidth - FLeftMarginCharWidth + ((FLeftMarginCharWidth - 9) div 2), LTop)
-                else
-                  Canvas.MoveTo(LLeftMarginWidth - FLeftMarginCharWidth + ((FLeftMarginCharWidth - 2) div 2), LTop);
-                Canvas.LineTo(LLeftMarginWidth - ((FLeftMarginCharWidth - 1) div 2), LTop);
-                Canvas.Pen.Color := LOldColor;
-
-                Continue;
-              end;
-          end;
-
-          GetTextExtentPoint32(Canvas.Handle, PChar(LLineNumber), Length(LLineNumber), LTextSize);
-          Winapi.Windows.ExtTextOut(Canvas.Handle, LLineRect.Left + (FLeftMargin.GetWidth - FLeftMargin.LineState.Width - 2) - LTextSize.cx,
-            LLineRect.Top + ((LLineHeight - Integer(LTextSize.cy)) div 2), ETO_OPAQUE, @LLineRect, PChar(LLineNumber),
-            Length(LLineNumber), nil);
-        end;
-        FTextDrawer.SetBackgroundColor(FLeftMargin.Colors.Background);
-        { erase the remaining area }
-        if AClipRect.Bottom > LLineRect.Bottom then
-        begin
-          LLineRect.Top := LLineRect.Bottom;
-          LLineRect.Bottom := AClipRect.Bottom;
-          Winapi.Windows.ExtTextOut(Canvas.Handle, LLineRect.Left, LLineRect.Top, ETO_OPAQUE, @LLineRect, '', 0, nil);
-        end;
-      finally
-        FTextDrawer.SetBaseFont(Self.Font);
+        GetTextExtentPoint32(Canvas.Handle, PChar(LLineNumber), Length(LLineNumber), LTextSize);
+        Winapi.Windows.ExtTextOut(Canvas.Handle, LLineRect.Left + (FLeftMargin.GetWidth - FLeftMargin.LineState.Width - 2) - LTextSize.cx,
+          LLineRect.Top + ((LLineHeight - Integer(LTextSize.cy)) div 2), ETO_OPAQUE, @LLineRect, PChar(LLineNumber),
+          Length(LLineNumber), nil);
       end;
+      FTextDrawer.SetBackgroundColor(FLeftMargin.Colors.Background);
+      { erase the remaining area }
+      if AClipRect.Bottom > LLineRect.Bottom then
+      begin
+        LLineRect.Top := LLineRect.Bottom;
+        LLineRect.Bottom := AClipRect.Bottom;
+        Winapi.Windows.ExtTextOut(Canvas.Handle, LLineRect.Left, LLineRect.Top, ETO_OPAQUE, @LLineRect, '', 0, nil);
+      end;
+    finally
+      FTextDrawer.SetBaseFont(Self.Font);
     end;
   end;
 
