@@ -2777,8 +2777,8 @@ begin
     FHighlighter.Next;
   end;
 
-  Inc(Result.Column, FHighlighter.GetTokenPosition + FHighlighter.GetTokenLength);
   LText := FLines[Result.Row - 1];
+  Inc(Result.Column, Length(LText));
 
   Inc(Result.Column, (X + FHorizontalScrollPosition - LLeftMarginWidth -
     FTextDrawer.GetTextWidth(LText, Length(LText) + 1)) div FTextDrawer.CharWidth);
