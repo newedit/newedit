@@ -2926,14 +2926,15 @@ var
   LIsBackward, LIsFromCursor: Boolean;
   LIsEndUndoBlock: Boolean;
   LResultOffset: Integer;
+  LSelectedOnly: Boolean;
 
   function InValidSearchRange(AFirst, ALast: Integer): Boolean;
   begin
     Result := True;
-    if (FSelection.ActiveMode = smNormal) or not (soSelectedOnly in FSearch.Options) then
+    if (FSelection.ActiveMode = smNormal) or not LSelectedOnly then
     begin
       if ((LCurrentTextPosition.Line = LStartTextPosition.Line) and
-        (not AChanged and (AFirst <= LStartTextPosition.Char) or
+        (not AChanged and (AFirst < LStartTextPosition.Char) or
          AChanged and (AFirst < LStartTextPosition.Char)) ) or
         ((LCurrentTextPosition.Line = LEndTextPosition.Line) and
         (not AChanged and (ALast >= LEndTextPosition.Char) or
@@ -2956,19 +2957,16 @@ begin
 
   LIsBackward := soBackwards in FSearch.Options;
   LIsFromCursor := not AChanged or AChanged and not (soEntireScope in FSearch.Options);
+  LSelectedOnly := soSelectedOnly in FSearch.Options;
   if not SelectionAvailable then
-    FSearch.Options := FSearch.Options - [soSelectedOnly];
-  if soSelectedOnly in FSearch.Options then
+    LSelectedOnly := False;
+  if LSelectedOnly then
   begin
     LStartTextPosition := SelectionBeginPosition;
     LEndTextPosition := SelectionEndPosition;
     if FSelection.ActiveMode = smColumn then
       if LStartTextPosition.Char > LEndTextPosition.Char then
         SwapInt(LStartTextPosition.Char, LEndTextPosition.Char);
-    if LIsBackward then
-      LCurrentTextPosition := LEndTextPosition
-    else
-      LCurrentTextPosition := LStartTextPosition;
   end
   else
   begin
@@ -2976,15 +2974,17 @@ begin
     LStartTextPosition.Line := 0;
     LEndTextPosition.Line := FLines.Count - 1;
     LEndTextPosition.Char := FLines.StringLength(LEndTextPosition.Line);
+  end;
 
-    if LIsFromCursor then
-      if LIsBackward then
-        LEndTextPosition := TextCaretPosition
-      else
-      if AChanged and SelectionAvailable then
-        LStartTextPosition := SelectionBeginPosition
-      else
-        LStartTextPosition := TextCaretPosition;
+  if LIsFromCursor then
+  begin
+    if LIsBackward then
+      LEndTextPosition := TextCaretPosition
+    else
+    if AChanged and SelectionAvailable then
+      LStartTextPosition := SelectionBeginPosition
+    else
+      LStartTextPosition := TextCaretPosition;
   end;
 
   if LIsBackward then
@@ -3024,19 +3024,17 @@ begin
         Inc(Result);
         LCurrentTextPosition.Char := LFound;
 
-        SelectionBeginPosition := LCurrentTextPosition;
+        if not LSelectedOnly then
+          SelectionBeginPosition := LCurrentTextPosition;
 
         Inc(LCurrentTextPosition.Char, LSearchLength);
-        SelectionEndPosition := LCurrentTextPosition;
 
-        if LIsBackward then
-          TextCaretPosition := SelectionBeginPosition
-        else
-        begin
-          if TopLine + VisibleLines <= LCurrentTextPosition.Line then
-            TopLine := LCurrentTextPosition.Line - VisibleLines div 2 + 1;
-          TextCaretPosition := LCurrentTextPosition;
-        end;
+        if not LSelectedOnly then
+          SelectionEndPosition := LCurrentTextPosition;
+
+        if TopLine + VisibleLines <= LCurrentTextPosition.Line then
+          TopLine := LCurrentTextPosition.Line - VisibleLines div 2 + 1;
+        TextCaretPosition := LCurrentTextPosition;
         Exit;
       end;
       if LIsBackward then
@@ -7231,6 +7229,11 @@ procedure TBCBaseEditor.WMKillFocus(var AMessage: TWMKillFocus);
 begin
   inherited;
   FreeCompletionProposalPopupWindow;
+  if FMultiCaretPosition.Row <> -1 then
+  begin
+    FMultiCaretPosition.Row := -1;
+    Invalidate;
+  end;
   CommandProcessor(ecLostFocus, BCEDITOR_NONE_CHAR, nil);
   if Focused or FAlwaysShowCaret then
     Exit;
@@ -8914,13 +8917,14 @@ begin
       LMultiCaretPosition := PixelsToDisplayPosition(X, Y);
 
       if meoShowGhost in FCaret.MultiEdit.Options then
-        if (FMultiCaretPosition.Row <> LMultiCaretPosition.Row) or
-          (FMultiCaretPosition.Row = LMultiCaretPosition.Row) and
-          (FMultiCaretPosition.Column <> LMultiCaretPosition.Column) then
-        begin
-          FMultiCaretPosition := LMultiCaretPosition;
-          Invalidate;
-        end;
+        if LMultiCaretPosition.Row <= FLines.Count then
+          if (FMultiCaretPosition.Row <> LMultiCaretPosition.Row) or
+            (FMultiCaretPosition.Row = LMultiCaretPosition.Row) and
+            (FMultiCaretPosition.Column <> LMultiCaretPosition.Column) then
+          begin
+            FMultiCaretPosition := LMultiCaretPosition;
+            Invalidate;
+          end;
     end;
 
     if Assigned(FMultiCarets) and (FMultiCarets.Count > 0) then
@@ -12911,6 +12915,9 @@ procedure TBCBaseEditor.AddCaret(const ADisplayPosition: TBCEditorDisplayPositio
   end;
 
 begin
+  if ADisplayPosition.Row > FLines.Count then
+    Exit;
+
   if not Assigned(FMultiCarets) then
   begin
     FDrawMultiCarets := True;
@@ -12977,6 +12984,10 @@ var
   LPLastCaretPosition: PBCEditorDisplayPosition;
 begin
   LDisplayPosition := DisplayCaretPosition;
+
+  if LDisplayPosition.Row > FLines.Count then
+    Exit;
+
   if Assigned(FMultiCarets) and (FMultiCarets.Count > 0) then
   begin
     LPLastCaretPosition :=  PBCEditorDisplayPosition(FMultiCarets.Last);
