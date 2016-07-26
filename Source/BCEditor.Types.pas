@@ -308,7 +308,8 @@ type
   TBCEditorSearchMapAlign = (saLeft, saRight);
 
   TBCEditorUndoOption = (
-    uoGroupUndo
+    uoGroupUndo,
+    uoUndoAfterSave
   );
   TBCEditorUndoOptions = set of TBCEditorUndoOption;
 

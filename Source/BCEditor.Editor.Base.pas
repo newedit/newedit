@@ -6859,7 +6859,7 @@ end;
 
 procedure TBCBaseEditor.UpdateModifiedStatus;
 begin
-  Modified := UndoList.ChangeCount > 0;
+  SetModified(UndoList.ChangeCount > 0);
 end;
 
 procedure TBCBaseEditor.UpdateScrollBars;
@@ -8486,7 +8486,7 @@ begin
   FUndoList.Clear;
   FRedoList.Clear;
   FResetLineNumbersCache := True;
-  Modified := False;
+  SetModified(False);
 end;
 
 procedure TBCBaseEditor.LinesDeleted(ASender: TObject; AIndex: Integer; ACount: Integer);
@@ -14111,7 +14111,9 @@ begin
   if Assigned(AEncoding) then
     FEncoding := AEncoding;
   FLines.SaveToStream(AStream, FEncoding);
-  Modified := False;
+  SetModified(False);
+  if not (uoUndoAfterSave in FUndo.Options) then
+    UndoList.Clear;
 end;
 
 procedure TBCBaseEditor.SelectAll;
