@@ -55,7 +55,7 @@ type
   strict private
     FCurrentFont: HFont;
     FCurrentStyle: TFontStyles;
-    FIsFixedFont: Boolean;
+    //FIsFixedFont: Boolean;
     FHandle: HDC;
     FHandleRefCount: Integer;
     FPSharedFontsInfo: PBCEditorSharedFontsInfo;
@@ -87,7 +87,7 @@ type
     property FontHandle: HFont read FCurrentFont;
     property CharAdvance: Integer read GetCharAdvance;
     property CharHeight: Integer read GetCharHeight;
-    property IsFixedFont: Boolean read FIsFixedFont;
+    //property IsFixedFont: Boolean read FIsFixedFont;
   end;
 
   EBCEditorFontStockException = class(Exception);
@@ -107,6 +107,7 @@ type
     FHandle: HDC;
     FSaveHandle: Integer;
     FStockBitmap: TBitmap;
+//    function CalculateTextWidth(const AText: string; const ALength: Integer): Integer;
   protected
     property DrawingCount: Integer read FDrawingCount;
   public
@@ -291,7 +292,7 @@ var
 begin
   GetTextMetrics(AHandle, LTextMetric);
 
-  FIsFixedFont := not Odd(LTextMetric.tmPitchAndFamily);
+  //FIsFixedFont := not Odd(LTextMetric.tmPitchAndFamily);
 
   LHasABC := GetCharABCWidths(AHandle, Ord(' '), Ord(' '), LCharInfo);
   if not LHasABC then
@@ -487,6 +488,7 @@ begin
 
   FFontStock := TBCEditorFontStock.Create(ABaseFont);
   FStockBitmap := TBitmap.Create;
+  FStockBitmap.Canvas.Brush.Color := clWhite;
   FCalcExtentBaseStyle := ACalcExtentBaseStyle;
   SetBaseFont(ABaseFont);
   FColor := clWindowText;
@@ -571,6 +573,7 @@ begin
     SetStyle(AValue);
     Self.FCurrentFont := FontHandle;
   end;
+  FStockBitmap.Canvas.Font.Style := AValue;
   if FHandle <> 0 then
     SelectObject(FHandle, FCurrentFont);
 end;
@@ -595,13 +598,52 @@ begin
   end;
 end;
 
+(*function TBCEditorTextDrawer.CalculateTextWidth(const AText: string; const ALength: Integer): Integer;
+var
+  X, Y: Integer;
+  LSize: TSize;
+  LRect: TRect;
+  LFound: Boolean;
+  LRGBColor: Cardinal;
+begin
+  GetTextExtentPoint32(FStockBitmap.Canvas.Handle, AText, ALength, LSize);
+  LRect := Rect(0, 0, LSize.cx, LSize.cy);
+  GetTextExtentPoint32(FStockBitmap.Canvas.Handle, AText[ALength], 1, LSize);
+  LRect.Width := LRect.Width + LSize.cx;
+
+  FStockBitmap.Height := 0; { clear }
+  FStockBitmap.Width := LRect.Width;
+  FStockBitmap.Height := LRect.Height;
+
+  DrawText(FStockBitmap.Canvas.Handle, AText, -1, LRect, DT_LEFT or DT_TOP or DT_SINGLELINE or DT_NOPREFIX);
+
+  Result := 0;
+  LFound := False;
+  X := LRect.Right - 1;
+  while (X >= 0) and not LFound do
+  begin
+    Y := 0;
+    while (Y <= LRect.Bottom - 1) and not LFound do
+    begin
+      LRGBColor := GetPixel(FStockBitmap.Canvas.Handle, X, Y);
+      if LRGBColor <> RGB(255, 255, 255) then
+      begin
+        Result := X + 1;
+        LFound := True;
+      end;
+      Inc(Y);
+    end;
+    Dec(X);
+  end;
+end; *)
+
 function TBCEditorTextDrawer.GetTextWidth(const AText: string; const AIndex: Integer): Integer;
 var
   i: Integer;
   LText: string;
-  LTextSize: TSize;
   LPText: PChar;
   LFrom, LCount: Integer;
+  LSize: TSize;
 begin
   Result := 0;
   if AIndex = 1 then
@@ -619,8 +661,9 @@ begin
       if LCount <> 0 then
       begin
         LText := Copy(AText, LFrom, LCount);
-        GetTextExtentPoint32(FStockBitmap.Canvas.Handle, LText, LCount, LTextSize);
-        Inc(Result, LTextSize.cx);
+        //Inc(Result, CalculateTextWidth(LText, LCount));
+        GetTextExtentPoint32(FStockBitmap.Canvas.Handle, AText, LCount, LSize);
+        Inc(Result, LSize.cx);
         Inc(LFrom, LCount);
         LCount := 0;
       end;
@@ -633,8 +676,9 @@ begin
   if LCount <> 0 then
   begin
     LText := Copy(AText, LFrom, LCount);
-    GetTextExtentPoint32(FStockBitmap.Canvas.Handle, LText, LCount, LTextSize);
-    Inc(Result, LTextSize.cx);
+    GetTextExtentPoint32(FStockBitmap.Canvas.Handle, AText, LCount, LSize);
+    Inc(Result, LSize.cx);
+    //Inc(Result, CalculateTextWidth(LText, LCount));
   end;
 end;
 

@@ -3551,11 +3551,12 @@ begin
         FUndoList.AddChange(crDelete, LTextCaretPosition, LCaretNewPosition, LTextCaretPosition, SLineBreak,
           smNormal);
 
-        FLines.Delete(LTextCaretPosition.Line);
-
+        FLines.BeginUpdate;
         if eoTrimTrailingSpaces in Options then
           LLineText := TrimRight(LLineText);
         FLines[LCaretNewPosition.Line] := FLines[LCaretNewPosition.Line] + LLineText;
+        FLines.Delete(LTextCaretPosition.Line);
+        FLines.EndUpdate;
 
         LHelper := BCEDITOR_CARRIAGE_RETURN + BCEDITOR_LINEFEED;
 
@@ -6807,7 +6808,7 @@ end;
 
 procedure TBCBaseEditor.UpdateFoldRanges(ACurrentLine, ALineCount: Integer);
 var
-  i, LPosition: Integer;
+  i: Integer;
   LCodeFoldingRange: TBCEditorCodeFoldingRange;
 begin
   for i := 0 to FAllCodeFoldingRanges.AllCount - 1 do
@@ -6827,13 +6828,8 @@ begin
       else
       if LCodeFoldingRange.FromLine = ACurrentLine then
       begin
-        LPosition := Pos(LCodeFoldingRange.RegionItem.OpenToken, AnsiUpperCase(Lines[LCodeFoldingRange.FromLine]));
-
-        if LPosition > 0 then
-        begin
-          LCodeFoldingRange.MoveBy(ALineCount);
-          Continue;
-        end;
+        LCodeFoldingRange.MoveBy(ALineCount);
+        Continue;
       end;
 
       if not LCodeFoldingRange.Collapsed then
@@ -10813,7 +10809,7 @@ var
     LCanAppend: Boolean;
     LEmptySpace: TBCEditorEmptySpace;
     LPToken: PChar;
-    LWToken: Word;
+  //  LWToken: Word;
   begin
     if (ABackground = clNone) or ((FActiveLine.Color <> clNone) and LIsCurrentLine and not ACustomBackgroundColor) then
       ABackground := GetBackgroundColor;
@@ -10823,7 +10819,7 @@ var
     LCanAppend := False;
 
     LPToken := PChar(AToken);
-    LWToken := Word(LPToken^);
+//    LWToken := Word(LPToken^);
 
     if LPToken^ = BCEDITOR_SPACE_CHAR then
       LEmptySpace := esSpace
@@ -10854,10 +10850,11 @@ var
 
         ((LTokenHelper.Background = ABackground) and ((LTokenHelper.Foreground = AForeground) )) and
 
-        ((LWToken < 128) and FTextDrawer.FontStock.IsFixedFont and
-          (not FSpecialChars.Visible or FSpecialChars.Visible and (LEmptySpace = LTokenHelper.EmptySpace)) or
-         (LWToken >= 128) and (LEmptySpace = LTokenHelper.EmptySpace) or
-         not FTextDrawer.FontStock.IsFixedFont and (LEmptySpace = LTokenHelper.EmptySpace) );
+        (LEmptySpace = LTokenHelper.EmptySpace);
+        //((LWToken < 128) and FTextDrawer.FontStock.IsFixedFont and
+        //  (not FSpecialChars.Visible or FSpecialChars.Visible and (LEmptySpace = LTokenHelper.EmptySpace)) or
+        // (LWToken >= 128) and (LEmptySpace = LTokenHelper.EmptySpace) or
+        // not FTextDrawer.FontStock.IsFixedFont and (LEmptySpace = LTokenHelper.EmptySpace) );
 
       if not LCanAppend then
       begin
