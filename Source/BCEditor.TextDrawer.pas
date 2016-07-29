@@ -30,7 +30,6 @@ type
     BaseLogFont: TLogFont;
     FontsData: TBCEditorFontsData;
   end;
-
   PBCEditorSharedFontsInfo = ^TBCEditorSharedFontsInfo;
 
   { TBCEditorFontsInfoManager }

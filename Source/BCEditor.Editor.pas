@@ -75,6 +75,7 @@ type
     property OnEndDock;
     property OnEndDrag;
     property OnEnter;
+    //property OnFocusChanged;
     property OnExit;
     property OnKeyDown;
     property OnKeyPress;

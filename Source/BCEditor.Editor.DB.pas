@@ -95,6 +95,7 @@ type
     property OnEndDrag;
     property OnEnter;
     property OnExit;
+    //property OnFocusChanged;
     property OnKeyDown;
     property OnKeyPress;
     property OnKeyUp;

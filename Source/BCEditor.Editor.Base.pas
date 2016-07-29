@@ -131,6 +131,7 @@ type
     FOnCustomLineColors: TBCEditorCustomLineColorsEvent;
     FOnCustomTokenAttribute: TBCEditorCustomTokenAttributeEvent;
     FOnDropFiles: TBCEditorDropFilesEvent;
+    //FOnFocusChanged: TNotifyEvent;
     FOnKeyPressW: TBCEditorKeyPressWEvent;
     FOnLeftMarginClick: TLeftMarginClickEvent;
     FOnLinesDeleted: TStringListChangeEvent;
@@ -670,6 +671,7 @@ type
     property OnCustomLineColors: TBCEditorCustomLineColorsEvent read FOnCustomLineColors write FOnCustomLineColors;
     property OnCustomTokenAttribute: TBCEditorCustomTokenAttributeEvent read FOnCustomTokenAttribute write FOnCustomTokenAttribute;
     property OnDropFiles: TBCEditorDropFilesEvent read FOnDropFiles write FOnDropFiles;
+    //property OnFocusChanged: TNotifyEvent read FOnFocusChanged write FOnFocusChanged;
     property OnKeyPress: TBCEditorKeyPressWEvent read FOnKeyPressW write FOnKeyPressW;
     property OnLeftMarginClick: TLeftMarginClickEvent read FOnLeftMarginClick write FOnLeftMarginClick;
     property OnLinesDeleted: TStringListChangeEvent read FOnLinesDeleted write FOnLinesDeleted;
@@ -6669,6 +6671,7 @@ var
 begin
   if Visible and HandleAllocated and (FTextDrawer.CharWidth <> 0) then
   begin
+    FTextDrawer.SetBaseFont(Font);
     FVisibleChars := Max(ClientWidth - FLeftMargin.GetWidth - FCodeFolding.GetWidth - 2 - FMinimap.GetWidth -
       FSearch.Map.GetWidth, 0) div FTextDrawer.CharWidth;
     FVisibleLines := ClientHeight div GetLineHeight;
@@ -7224,6 +7227,7 @@ end;
 procedure TBCBaseEditor.WMKillFocus(var AMessage: TWMKillFocus);
 begin
   inherited;
+
   FreeCompletionProposalPopupWindow;
   if FMultiCaretPosition.Row <> -1 then
   begin
@@ -7237,6 +7241,8 @@ begin
   Winapi.Windows.DestroyCaret;
   if not Selection.Visible and SelectionAvailable then
     Invalidate;
+  //if Assigned(FOnFocusChanged) then
+  //  FOnFocusChanged(Self);
 end;
 
 {$IFDEF USE_VCL_STYLES}
@@ -7330,6 +7336,9 @@ end;
 
 procedure TBCBaseEditor.WMSetFocus(var AMessage: TWMSetFocus);
 begin
+  //if Assigned(FOnFocusChanged) then
+  //  FOnFocusChanged(Self);
+
   CommandProcessor(ecGotFocus, BCEDITOR_NONE_CHAR, nil);
 
   ResetCaret;
@@ -10408,6 +10417,8 @@ var
   LVisibleChars: Integer;
   LCurrentLineText: string;
   LCurrentLineLength: Integer;
+  LPaintedColumn: Integer;
+  LPaintedWidth: Integer;
 
   function IsBookmarkOnCurrentLine: Boolean;
   var
@@ -10497,41 +10508,35 @@ var
 
   function GetTextWidth(const AIndex: Integer; const AMinimap: Boolean = False): Integer;
   var
-    LAfterLine: Integer;
-    LLastChar: Char;
+    LText: string;
+    LWidth: Integer;
   begin
+    Result := 0;
+
     if AMinimap then
     begin
       if FMinimap.Align = maRight then
-        Result := ClientRect.Width - FMinimap.GetWidth
-      else
-        Result := 0;
+        Result := ClientRect.Width - FMinimap.GetWidth;
       if FSearch.Map.Align = saRight then
         Dec(Result, FSearch.Map.GetWidth)
       else
         Inc(Result, FSearch.Map.GetWidth);
-    end
-    else
-      Result := 0;
+    end;
 
-    if (LCurrentLineLength <> 0) and (AIndex > 0) then
+    if (LCurrentLineLength <> 0) and (AIndex > 0) and (AIndex <= LCurrentLineLength + 1) then
     begin
-      Inc(Result, FTextDrawer.GetTextWidth(LCurrentLineText, Min(LCurrentLineLength + 1, AIndex)));
-
-      LAfterLine := AIndex - LCurrentLineLength - 1;
-      if LAfterLine = 0 then
-      begin
-        LLastChar := LCurrentLineText[LCurrentLineLength];
-        if (LLastChar <> BCEDITOR_SPACE_CHAR) and (LLastChar <> BCEDITOR_TAB_CHAR) then
-          Inc(Result);
-      end;
+      LText := Copy(LCurrentLineText, LPaintedColumn, AIndex - LPaintedColumn);
+      LWidth := FTextDrawer.GetTextWidth(LText, AIndex - LPaintedColumn + 1);
+      Inc(Result, LPaintedWidth + LWidth);
+      LPaintedColumn := AIndex;
+      LPaintedWidth := LPaintedWidth + LWidth;
     end;
 
     if (LCurrentLineLength = 0) and (AIndex > 1) then
       Inc(Result, (AIndex - 1) * FTextDrawer.CharWidth)
     else
     if AIndex - 1 > LCurrentLineLength then
-      Inc(Result, (AIndex - LCurrentLineLength - 1) * FTextDrawer.CharWidth);
+      Inc(Result, (AIndex - LCurrentLineLength - 1) * FTextDrawer.CharWidth + LPaintedWidth);
   end;
 
   procedure PaintToken(AToken: string; ATokenLength, ACharsBefore, AFirst, ALast: Integer);
@@ -10710,27 +10715,27 @@ var
         if LFirstUnselectedPartOfToken then
         begin
           SetDrawingColors(False);
-          LTokenRect.Right := GetTextWidth(LLineSelectionStart, AMinimap) {+ 1};
+          LTokenRect.Right := GetTextWidth(LLineSelectionStart, AMinimap);
           PaintToken(LTokenHelper.Text, LLineSelectionStart - LTokenHelper.CharsBefore - 1, LTokenHelper.CharsBefore, LFirstColumn, LLineSelectionStart);
         end;
         { selected part of the token }
         SetDrawingColors(True);
         LSelectionStart := Max(LLineSelectionStart, LFirstColumn);
         LSelectionEnd := Min(LLineSelectionEnd, LLastColumn);
-        LTokenRect.Right := GetTextWidth(LSelectionEnd, AMinimap) {+ 1};
+        LTokenRect.Right := GetTextWidth(LSelectionEnd, AMinimap);
         PaintToken(LTokenHelper.Text, LSelectionEnd - LSelectionStart, LTokenHelper.CharsBefore, LSelectionStart, LSelectionEnd);
         { second unselected part of the token }
         if LSecondUnselectedPartOfToken then
         begin
           SetDrawingColors(False);
-          LTokenRect.Right := GetTextWidth(LLastColumn, AMinimap) {+ 1};
+          LTokenRect.Right := GetTextWidth(LLastColumn, AMinimap);
           PaintToken(LTokenHelper.Text, LLastColumn - LSelectionEnd, LTokenHelper.CharsBefore, LLineSelectionEnd, LLastColumn);
         end;
       end
       else
       begin
         SetDrawingColors(LSelected);
-        LTokenRect.Right := GetTextWidth(LLastColumn, AMinimap) {+ 1};
+        LTokenRect.Right := GetTextWidth(LLastColumn, AMinimap);
         PaintToken(LTokenHelper.Text, LTokenHelper.Length, LTokenHelper.CharsBefore, LFirstColumn, LLastColumn);
       end;
     end;
@@ -10750,8 +10755,14 @@ var
 
       if LIsSelectionInsideLine then
       begin
-        X1 := GetTextWidth(LLineSelectionStart, AMinimap);
-        X2 := GetTextWidth(LLineSelectionEnd, AMinimap);
+        if LLineSelectionStart <= LPaintedColumn then
+          X1 := LPaintedWidth
+        else
+          X1 := GetTextWidth(LLineSelectionStart, AMinimap);
+        if LLineSelectionEnd <= LPaintedColumn then
+          X2 := LPaintedWidth
+        else
+          X2 := GetTextWidth(LLineSelectionEnd, AMinimap);
         if LTokenRect.Left < X1 then
         begin
           SetDrawingColors(soFromEndOfLine in FSelection.Options);
@@ -10809,7 +10820,6 @@ var
     LCanAppend: Boolean;
     LEmptySpace: TBCEditorEmptySpace;
     LPToken: PChar;
-  //  LWToken: Word;
   begin
     if (ABackground = clNone) or ((FActiveLine.Color <> clNone) and LIsCurrentLine and not ACustomBackgroundColor) then
       ABackground := GetBackgroundColor;
@@ -10819,7 +10829,6 @@ var
     LCanAppend := False;
 
     LPToken := PChar(AToken);
-//    LWToken := Word(LPToken^);
 
     if LPToken^ = BCEDITOR_SPACE_CHAR then
       LEmptySpace := esSpace
@@ -10851,10 +10860,6 @@ var
         ((LTokenHelper.Background = ABackground) and ((LTokenHelper.Foreground = AForeground) )) and
 
         (LEmptySpace = LTokenHelper.EmptySpace);
-        //((LWToken < 128) and FTextDrawer.FontStock.IsFixedFont and
-        //  (not FSpecialChars.Visible or FSpecialChars.Visible and (LEmptySpace = LTokenHelper.EmptySpace)) or
-        // (LWToken >= 128) and (LEmptySpace = LTokenHelper.EmptySpace) or
-        // not FTextDrawer.FontStock.IsFixedFont and (LEmptySpace = LTokenHelper.EmptySpace) );
 
       if not LCanAppend then
       begin
@@ -11064,6 +11069,8 @@ var
         LBookmarkOnCurrentLine := IsBookmarkOnCurrentLine;
 
       LCurrentLineText := FLines.GetExpandedString(LCurrentLine - 1, BCEDITOR_TAB_CHAR);
+      LPaintedColumn := 1;
+      LPaintedWidth := 0;
 
       LFoldRange := nil;
       if FCodeFolding.Visible then
