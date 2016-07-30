@@ -255,7 +255,6 @@ type
   );
 
   TBCEditorTokenHelper = record
-    Position: Integer;
     Length: Integer;
     MaxLength: Integer;
     CharsBefore: Integer;

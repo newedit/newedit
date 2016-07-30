@@ -1,4 +1,7 @@
-﻿unit BCEditor.Editor.Base;
+﻿{$message warn 'Painting under development.'}
+{$message warn 'Fix selection when a font style is italic.'}
+{$message warn 'Remove VisibleChars, it can''t work because character width can vary.'}
+unit BCEditor.Editor.Base;
 
 interface
 
@@ -10651,8 +10654,7 @@ var
             LPChar^ := BCEDITOR_SPACE_CHAR;
           Inc(LPChar);
         end;
-        Winapi.Windows.ExtTextOut(ACanvas.Handle, LTokenRect.Left, LTokenRect.Top, ETO_OPAQUE or ETO_CLIPPED, @LTokenRect,
-          PChar(LText), ATokenLength, nil);
+        FTextDrawer.TextOut(ACanvas, LTokenRect, PChar(LText), ATokenLength, LTokenHelper.CharsBefore + LTokenHelper.Length = LCurrentLineLength);
       end;
 
       if LTokenHelper.MatchingPairUnderline then
@@ -12146,13 +12148,10 @@ end;
 
 function TBCBaseEditor.CaretInView: Boolean;
 var
-  LDisplayPosition: TBCEditorDisplayPosition;
-  LColumn: Integer;
+  LCaretPoint: TPoint;
 begin
-  LDisplayPosition := DisplayCaretPosition;
-  LColumn := FHorizontalScrollPosition div FTextDrawer.CharWidth;
-  Result := (LDisplayPosition.Column >= LColumn) and (LDisplayPosition.Column <= LColumn + VisibleChars) and
-    (LDisplayPosition.Row >= TopLine) and (LDisplayPosition.Row <= TopLine + VisibleLines);
+  LCaretPoint := DisplayPositionToPixels(DisplayCaretPosition);
+  Result := PtInRect(ClientRect, LCaretPoint);
 end;
 
 function TBCBaseEditor.CreateFileStream(const AFileName: string): TStream;
@@ -13490,7 +13489,7 @@ begin
       LColumn := LVisibleX
     else
     if LVisibleX >= VisibleChars + LColumn then
-      LColumn := LVisibleX - VisibleChars {+ 1};
+      LColumn := LVisibleX - VisibleChars;
     SetHorizontalScrollPosition(LColumn * FTextDrawer.CharWidth);
 
     LCaretRow := DisplayCaretY;
