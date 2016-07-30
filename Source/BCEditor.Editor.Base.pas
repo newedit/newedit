@@ -134,7 +134,6 @@ type
     FOnCustomLineColors: TBCEditorCustomLineColorsEvent;
     FOnCustomTokenAttribute: TBCEditorCustomTokenAttributeEvent;
     FOnDropFiles: TBCEditorDropFilesEvent;
-    //FOnFocusChanged: TNotifyEvent;
     FOnKeyPressW: TBCEditorKeyPressWEvent;
     FOnLeftMarginClick: TLeftMarginClickEvent;
     FOnLinesDeleted: TStringListChangeEvent;
@@ -250,7 +249,7 @@ type
     function IsMultiEditCaretFound(const ALine: Integer): Boolean;
     function IsWordSelected: Boolean;
     function LeftSpaceCount(const ALine: string; AWantTabs: Boolean = False): Integer;
-    function NextSelectedWordPosition: Boolean;
+    //function NextSelectedWordPosition: Boolean;
     function NextWordPosition: TBCEditorTextPosition; overload;
     function NextWordPosition(const ATextPosition: TBCEditorTextPosition): TBCEditorTextPosition; overload;
     function OpenClipboard: Boolean;
@@ -674,7 +673,6 @@ type
     property OnCustomLineColors: TBCEditorCustomLineColorsEvent read FOnCustomLineColors write FOnCustomLineColors;
     property OnCustomTokenAttribute: TBCEditorCustomTokenAttributeEvent read FOnCustomTokenAttribute write FOnCustomTokenAttribute;
     property OnDropFiles: TBCEditorDropFilesEvent read FOnDropFiles write FOnDropFiles;
-    //property OnFocusChanged: TNotifyEvent read FOnFocusChanged write FOnFocusChanged;
     property OnKeyPress: TBCEditorKeyPressWEvent read FOnKeyPressW write FOnKeyPressW;
     property OnLeftMarginClick: TLeftMarginClickEvent read FOnLeftMarginClick write FOnLeftMarginClick;
     property OnLinesDeleted: TStringListChangeEvent read FOnLinesDeleted write FOnLinesDeleted;
@@ -5221,7 +5219,7 @@ begin
   MoveCaretAndSelection(FSelectionBeginPosition, LDestinationLineChar, ASelectionCommand);
 end;
 
-function TBCBaseEditor.NextSelectedWordPosition: Boolean;
+{function TBCBaseEditor.NextSelectedWordPosition: Boolean;
 var
   LSelectedText: string;
   LPreviousTextCaretPosition, LTextCaretPosition: TBCEditorTextPosition;
@@ -5246,7 +5244,7 @@ begin
   SelectionEndPosition := GetTextPosition(LTextCaretPosition.Char + Length(LSelectedText), LTextCaretPosition.Line);
 
   Result := True;
-end;
+end; }
 
 procedure TBCBaseEditor.MoveCharLeft;
 var
@@ -7244,8 +7242,6 @@ begin
   Winapi.Windows.DestroyCaret;
   if not Selection.Visible and SelectionAvailable then
     Invalidate;
-  //if Assigned(FOnFocusChanged) then
-  //  FOnFocusChanged(Self);
 end;
 
 {$IFDEF USE_VCL_STYLES}
@@ -7339,9 +7335,6 @@ end;
 
 procedure TBCBaseEditor.WMSetFocus(var AMessage: TWMSetFocus);
 begin
-  //if Assigned(FOnFocusChanged) then
-  //  FOnFocusChanged(Self);
-
   CommandProcessor(ecGotFocus, BCEDITOR_NONE_CHAR, nil);
 
   ResetCaret;
@@ -11073,6 +11066,7 @@ var
       LCurrentLineText := FLines.GetExpandedString(LCurrentLine - 1, BCEDITOR_TAB_CHAR);
       LPaintedColumn := 1;
       LPaintedWidth := 0;
+      FTextDrawer.ClearItalicBufferBitmap;
 
       LFoldRange := nil;
       if FCodeFolding.Visible then
@@ -12286,8 +12280,8 @@ begin
   Result := False;
   if Trim(FSearch.SearchText) = '' then
   begin
-    if not NextSelectedWordPosition then
-      SelectionEndPosition := SelectionBeginPosition;
+    //if not NextSelectedWordPosition then
+    //  SelectionEndPosition := SelectionBeginPosition;
     FSearchEngine.Clear;
     Exit;
   end;

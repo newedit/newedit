@@ -116,6 +116,7 @@ type
 
     function GetTextWidth(const AText: string; const AIndex: Integer): Integer;
     procedure BeginDrawing(AHandle: HDC);
+    procedure ClearItalicBufferBitmap;
     procedure EndDrawing;
     procedure SetBackgroundColor(AValue: TColor);
     procedure SetBaseFont(AValue: TFont);
@@ -684,6 +685,11 @@ begin
   end;
 end;
 
+procedure TBCEditorTextDrawer.ClearItalicBufferBitmap;
+begin
+  FItalicBufferBitmap.Height := 0;
+end;
+
 procedure TBCEditorTextDrawer.TextOut(ACanvas: TCanvas; var ARect: TRect; AText: PChar; ALength: Integer; const ALastToken: Boolean);
 var
   LRect: TRect;
@@ -709,6 +715,7 @@ begin
       FItalicBufferBitmap.Height := 0;
     end
     else
+    if AText^ <> BCEDITOR_SPACE_CHAR then
     begin
       FItalicBufferBitmap.Canvas.Brush := ACanvas.Brush;
       FItalicBufferBitmap.Height := CharHeight;
