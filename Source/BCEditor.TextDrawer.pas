@@ -54,7 +54,6 @@ type
   strict private
     FCurrentFont: HFont;
     FCurrentStyle: TFontStyles;
-    //FIsFixedFont: Boolean;
     FHandle: HDC;
     FHandleRefCount: Integer;
     FPSharedFontsInfo: PBCEditorSharedFontsInfo;
@@ -86,7 +85,6 @@ type
     property FontHandle: HFont read FCurrentFont;
     property CharAdvance: Integer read GetCharAdvance;
     property CharHeight: Integer read GetCharHeight;
-    //property IsFixedFont: Boolean read FIsFixedFont;
   end;
 
   EBCEditorFontStockException = class(Exception);
@@ -104,10 +102,8 @@ type
     FDrawingCount: Integer;
     FFontStock: TBCEditorFontStock;
     FHandle: HDC;
-    FItalicBufferBitmap: Vcl.Graphics.TBitmap;
     FSaveHandle: Integer;
     FStockBitmap: Vcl.Graphics.TBitmap;
-    //function CalculateTextWidth(const AText: string; const ALength: Integer): Integer;
   protected
     property DrawingCount: Integer read FDrawingCount;
   public
@@ -116,14 +112,12 @@ type
 
     function GetTextWidth(const AText: string; const AIndex: Integer): Integer;
     procedure BeginDrawing(AHandle: HDC);
-    procedure ClearItalicBufferBitmap;
     procedure EndDrawing;
     procedure SetBackgroundColor(AValue: TColor);
     procedure SetBaseFont(AValue: TFont);
     procedure SetBaseStyle(const AValue: TFontStyles);
     procedure SetForegroundColor(AValue: TColor);
     procedure SetStyle(AValue: TFontStyles);
-    procedure TextOut(ACanvas: TCanvas; var ARect: TRect; AText: PChar; ALength: Integer; const ALastToken: Boolean);
     property CharHeight: Integer read FCharHeight;
     property CharWidth: Integer read FCharWidth;
     property FontStock: TBCEditorFontStock read FFontStock;
@@ -293,8 +287,6 @@ var
   LHasABC: Boolean;
 begin
   GetTextMetrics(AHandle, LTextMetric);
-
-  //FIsFixedFont := not Odd(LTextMetric.tmPitchAndFamily);
 
   LHasABC := GetCharABCWidths(AHandle, Ord(' '), Ord(' '), LCharInfo);
   if not LHasABC then
@@ -490,8 +482,8 @@ begin
 
   FFontStock := TBCEditorFontStock.Create(ABaseFont);
   FStockBitmap := Vcl.Graphics.TBitmap.Create;
-  FItalicBufferBitmap := Vcl.Graphics.TBitmap.Create;
-  FItalicBufferBitmap.Height := 0;
+  //FItalicBufferBitmap := Vcl.Graphics.TBitmap.Create;
+  //FItalicBufferBitmap.Height := 0;
   FStockBitmap.Canvas.Brush.Color := clWhite;
   FCalcExtentBaseStyle := ACalcExtentBaseStyle;
   SetBaseFont(ABaseFont);
@@ -501,7 +493,7 @@ end;
 
 destructor TBCEditorTextDrawer.Destroy;
 begin
-  FItalicBufferBitmap.Free;
+  //FItalicBufferBitmap.Free;
   FStockBitmap.Free;
   FFontStock.Free;
 
@@ -603,45 +595,6 @@ begin
   end;
 end;
 
-(*function TBCEditorTextDrawer.CalculateTextWidth(const AText: string; const ALength: Integer): Integer;
-var
-  X, Y: Integer;
-  LSize: TSize;
-  LRect: TRect;
-  LFound: Boolean;
-  LRGBColor: Cardinal;
-begin
-  GetTextExtentPoint32(FStockBitmap.Canvas.Handle, AText, ALength, LSize);
-  LRect := Rect(0, 0, LSize.cx, LSize.cy);
-  GetTextExtentPoint32(FStockBitmap.Canvas.Handle, AText[ALength], 1, LSize);
-  LRect.Width := LRect.Width + LSize.cx;
-
-  FStockBitmap.Height := 0; { clear }
-  FStockBitmap.Width := LRect.Width;
-  FStockBitmap.Height := LRect.Height;
-
-  DrawText(FStockBitmap.Canvas.Handle, AText, -1, LRect, DT_LEFT or DT_TOP or DT_SINGLELINE or DT_NOPREFIX);
-
-  Result := 0;
-  LFound := False;
-  X := LRect.Right - 1;
-  while (X >= 0) and not LFound do
-  begin
-    Y := 0;
-    while (Y <= LRect.Bottom - 1) and not LFound do
-    begin
-      LRGBColor := GetPixel(FStockBitmap.Canvas.Handle, X, Y);
-      if LRGBColor <> RGB(255, 255, 255) then
-      begin
-        Result := X + 1;
-        LFound := True;
-      end;
-      Inc(Y);
-    end;
-    Dec(X);
-  end;
-end; *)
-
 function TBCEditorTextDrawer.GetTextWidth(const AText: string; const AIndex: Integer): Integer;
 var
   i: Integer;
@@ -683,49 +636,6 @@ begin
     GetTextExtentPoint32(FStockBitmap.Canvas.Handle, AText, LCount, LSize);
     Inc(Result, LSize.cx);
   end;
-end;
-
-procedure TBCEditorTextDrawer.ClearItalicBufferBitmap;
-begin
-  FItalicBufferBitmap.Height := 0;
-end;
-
-procedure TBCEditorTextDrawer.TextOut(ACanvas: TCanvas; var ARect: TRect; AText: PChar; ALength: Integer; const ALastToken: Boolean);
-var
-  LRect: TRect;
-  LIsItalic: Boolean;
-begin
-  LRect := ARect;
-  LIsItalic := fsItalic in FStockBitmap.Canvas.Font.Style;
-  if LIsItalic then
-    Inc(LRect.Right, CharWidth);
-  Winapi.Windows.ExtTextOut(ACanvas.Handle, LRect.Left, LRect.Top, ETO_OPAQUE or ETO_CLIPPED, @LRect, AText, ALength, nil);
-  if LIsItalic then
-  begin
-    if ALastToken then
-    begin
-      ARect.Right := LRect.Right;
-      FItalicBufferBitmap.Height := 0;
-    end
-    else
-    if FItalicBufferBitmap.Height <> 0 then
-    begin
-      if AText^ = BCEDITOR_SPACE_CHAR then
-        BitBlt(ACanvas.Handle, ARect.Left, LRect.Top, CharWidth, LRect.Height, FItalicBufferBitmap.Canvas.Handle, 0, 0, SRCCOPY);
-      FItalicBufferBitmap.Height := 0;
-    end
-    else
-    if AText^ <> BCEDITOR_SPACE_CHAR then
-    begin
-      FItalicBufferBitmap.Canvas.Brush := ACanvas.Brush;
-      FItalicBufferBitmap.Height := CharHeight;
-      FItalicBufferBitmap.Width := LRect.Right - ARect.Right;
-      BitBlt(FItalicBufferBitmap.Canvas.Handle, 0, 0, FItalicBufferBitmap.Width, FItalicBufferBitmap.Height,
-        ACanvas.Handle, ARect.Right, ARect.Top, SRCCOPY);
-    end;
-  end
-  else
-    FItalicBufferBitmap.Height := 0;
 end;
 
 initialization
