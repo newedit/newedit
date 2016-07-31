@@ -10540,6 +10540,7 @@ var
     LOldPenColor: TColor;
     LIsItalic: Boolean;
     LRect: TRect;
+    LX, LY: Integer;
 
     procedure PaintSpecialCharSpace;
     var
@@ -10617,7 +10618,7 @@ var
       Dec(AFirst, ACharsBefore);
 
       if LTokenHelper.EmptySpace <> esNone then
-        LText := StringOfChar(' ', ATokenLength)
+        LText := StringOfChar(BCEDITOR_SPACE_CHAR, ATokenLength)
       else
         LText := Copy(AToken, AFirst, ATokenLength);
 
@@ -10645,22 +10646,33 @@ var
         LPChar := PChar(LText);
         LRect := LTokenRect;
 
-        LIsItalic := fsItalic in LTokenHelper.FontStyle;
+        LIsItalic := not AMinimap and (fsItalic in LTokenHelper.FontStyle);
         if LIsItalic then
           Inc(LRect.Right, FTextDrawer.CharWidth);
-        if FItalicOffset <> 0 then
+        if (FItalicOffset <> 0) and (LPChar^ = BCEDITOR_SPACE_CHAR) then
         begin
           Inc(LRect.Left, FItalicOffset);
           Dec(LRect.Right, FItalicOffset);
         end;
 
         Winapi.Windows.ExtTextOut(ACanvas.Handle, LRect.Left, LRect.Top, ETO_OPAQUE or ETO_CLIPPED, @LRect, LPChar, ATokenLength, nil);
+
         if LIsItalic and (LPChar^ <> BCEDITOR_SPACE_CHAR) then
         begin
-          if LTokenHelper.CharsBefore + LTokenHelper.Length = LCurrentLineLength then
+          if LTokenHelper.CharsBefore + ATokenLength = LCurrentLineLength then
             LTokenRect.Right := LRect.Right
           else
-            FItalicOffset := FTextDrawer.CharWidth
+          for LX := LTokenRect.Right + 1 to LRect.Right do
+          begin
+            for LY := LTokenRect.Top to LTokenRect.Bottom do
+            if ACanvas.Pixels[LX, LY] <> ACanvas.Brush.Color then
+            begin
+              Inc(FItalicOffset);
+              Break;
+            end;
+            if LY = LTokenRect.Bottom then
+              Break;
+          end;
         end
         else
           FItalicOffset := 0;
