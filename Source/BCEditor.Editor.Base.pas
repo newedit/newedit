@@ -69,7 +69,7 @@ type
     FInsertMode: Boolean;
     FInternalBookmarkImage: TBCEditorInternalImage;
     FIsScrolling: Boolean;
-    FItalicBufferBitmap: Vcl.Graphics.TBitmap;
+    FItalicOffset: Byte;
     FKeyboardHandler: TBCEditorKeyboardHandler;
     FKeyCommands: TBCEditorKeyCommands;
     FLastDblClick: Cardinal;
@@ -836,8 +836,7 @@ begin
   Font.Assign(FFontDummy);
   Font.OnChange := FontChanged;
   { Painting }
-  FItalicBufferBitmap := Vcl.Graphics.TBitmap.Create;
-  FItalicBufferBitmap.Height := 0;
+  FItalicOffset := 0;
   FTextLinesBufferBitmap := Vcl.Graphics.TBitmap.Create;
   FTextDrawer := TBCEditorTextDrawer.Create([fsBold], FFontDummy);
   ParentFont := False;
@@ -988,7 +987,6 @@ begin
   FInternalBookmarkImage.Free;
   FFontDummy.Free;
   FOriginalLines.Free;
-  FItalicBufferBitmap.Free;
   FTextLinesBufferBitmap.Free;
   FreeScrollShadowBitmap;
   FreeMinimapBitmaps;
@@ -9377,8 +9375,8 @@ begin
   LOldBrushColor := Canvas.Brush.Color;
   LOldPenColor := Canvas.Pen.Color;
 
-  Canvas.Brush.Color := FCodeFolding.Colors.Background;
-  PatBlt(Canvas.Handle, AClipRect.Left, AClipRect.Top, AClipRect.Width, AClipRect.Height, PATCOPY); { fill code folding rect }
+  Canvas.Brush.Color := FCodeFolding.Colors.Background; { fill code folding rect }
+  Winapi.Windows.ExtTextOut(Canvas.Handle, 0, 0, ETO_OPAQUE, AClipRect, '', 0, nil);
   Canvas.Pen.Style := psSolid;
   Canvas.Brush.Color := FCodeFolding.Colors.FoldingLine;
 
@@ -9397,8 +9395,8 @@ begin
       Assigned(FMultiCarets) and IsMultiEditCaretFound(LLine))
       and (FCodeFolding.Colors.ActiveLineBackground <> clNone) then
     begin
-      Canvas.Brush.Color := FCodeFolding.Colors.ActiveLineBackground;
-      PatBlt(Canvas.Handle, AClipRect.Left, AClipRect.Top, AClipRect.Width, AClipRect.Height, PATCOPY); { active line background }
+      Canvas.Brush.Color := FCodeFolding.Colors.ActiveLineBackground; { active line background }
+      Winapi.Windows.ExtTextOut(Canvas.Handle, 0, 0, ETO_OPAQUE, AClipRect, '', 0, nil);
     end;
     if Assigned(LFoldRange) and (LLine >= LFoldRange.FromLine) and (LLine <= LFoldRange.ToLine) then
     begin
@@ -9739,7 +9737,7 @@ var
           FTextDrawer.SetBackgroundColor(FLeftMargin.Colors.ActiveLineBackground);
           Canvas.Brush.Color := FLeftMargin.Colors.ActiveLineBackground;
           if Assigned(FMultiCarets) then
-            PatBlt(Canvas.Handle, LLineRect.Left, LLineRect.Top, LLineRect.Width, LLineRect.Height, PATCOPY); { fill line rect when multi-caret }
+            Winapi.Windows.ExtTextOut(Canvas.Handle, 0, 0, ETO_OPAQUE, LLineRect, '', 0, nil); { fill line rect when multi-caret }
         end;
 
         LPreviousLine := LLine;
@@ -9803,7 +9801,7 @@ var
       if FLeftMargin.Colors.BookmarkPanelBackground <> clNone then
       begin
         Canvas.Brush.Color := FLeftMargin.Colors.BookmarkPanelBackground;
-        PatBlt(Canvas.Handle, LPanelRect.Left, LPanelRect.Top, LPanelRect.Width, LPanelRect.Height, PATCOPY); { fill bookmark panel rect }
+        Winapi.Windows.ExtTextOut(Canvas.Handle, 0, 0, ETO_OPAQUE, LPanelRect, '', 0, nil); { fill bookmark panel rect }
       end;
       if FLeftMargin.Colors.ActiveLineBackground <> clNone then
       begin
@@ -9817,8 +9815,7 @@ var
             LPanelActiveLineRect := System.Types.Rect(AClipRect.Left, (i - TopLine) * LLineHeight, AClipRect.Left + FLeftMargin.Bookmarks.Panel.Width,
               (i - TopLine + 1) * LLineHeight);
             Canvas.Brush.Color := FLeftMargin.Colors.ActiveLineBackground;
-            PatBlt(Canvas.Handle, LPanelActiveLineRect.Left, LPanelActiveLineRect.Top, LPanelActiveLineRect.Width,
-              LPanelActiveLineRect.Height, PATCOPY); { fill bookmark panel active line rect}
+            Winapi.Windows.ExtTextOut(Canvas.Handle, 0, 0, ETO_OPAQUE, LPanelActiveLineRect, '', 0, nil); { fill bookmark panel active line rect}
           end;
         end;
       end;
@@ -9956,8 +9953,7 @@ var
             Canvas.Brush.Color := FLeftMargin.Colors.LineStateNormal
           else
             Canvas.Brush.Color := FLeftMargin.Colors.LineStateModified;
-          PatBlt(Canvas.Handle, LLineStateRect.Left, LLineStateRect.Top, LLineStateRect.Width, LLineStateRect.Height,
-            PATCOPY); { fill line state rect }
+          Winapi.Windows.ExtTextOut(Canvas.Handle, 0, 0, ETO_OPAQUE, LLineStateRect, '', 0, nil); { fill line state rect }
         end;
       end;
       Canvas.Brush.Color := LOldColor;
@@ -9996,7 +9992,7 @@ var
 
 begin
   Canvas.Brush.Color := FLeftMargin.Colors.Background;
-  PatBlt(Canvas.Handle, AClipRect.Left, AClipRect.Top, AClipRect.Width, AClipRect.Height, PATCOPY); { fill left margin rect }
+  Winapi.Windows.ExtTextOut(Canvas.Handle, 0, 0, ETO_OPAQUE, AClipRect, '', 0, nil); { fill left margin rect }
   LLineHeight := GetLineHeight;
   PaintLineNumbers;
   PaintBookmarkPanel;
@@ -10144,13 +10140,13 @@ begin
   else
   {$ENDIF}
     Canvas.Brush.Color := FBackgroundColor;
-  PatBlt(Canvas.Handle, AClipRect.Left, AClipRect.Top, AClipRect.Width, AClipRect.Height, PATCOPY); { fill search map rect }
+  Winapi.Windows.ExtTextOut(Canvas.Handle, 0, 0, ETO_OPAQUE, AClipRect, '', 0, nil); { fill search map rect }
   { Lines in window }
   LHeight := ClientRect.Height / Max(Lines.Count, 1);
   AClipRect.Top := Round((TopLine - 1) * LHeight);
   AClipRect.Bottom := Max(Round((TopLine - 1 + VisibleLines) * LHeight), AClipRect.Top + 1);
   Canvas.Brush.Color := FBackgroundColor;
-  PatBlt(Canvas.Handle, AClipRect.Left, AClipRect.Top, AClipRect.Width, AClipRect.Height, PATCOPY); { fill lines in window rect }
+  Winapi.Windows.ExtTextOut(Canvas.Handle, 0, 0, ETO_OPAQUE, AClipRect, '', 0, nil); { fill lines in window rect }
   { draw lines }
   if FSearch.Map.Colors.Foreground <> clNone then
     Canvas.Pen.Color := FSearch.Map.Colors.Foreground
@@ -10619,9 +10615,11 @@ var
     if (ALast > AFirst) and (LTokenRect.Right > LTokenRect.Left) then
     begin
       Dec(AFirst, ACharsBefore);
-      //if AMinimap then
-      //  ATokenLength := Min(ATokenLength, LLastChar);
-      LText := Copy(AToken, AFirst, ATokenLength);
+
+      if LTokenHelper.EmptySpace <> esNone then
+        LText := StringOfChar(' ', ATokenLength)
+      else
+        LText := Copy(AToken, AFirst, ATokenLength);
 
       if FSpecialChars.Visible and (LTokenHelper.EmptySpace <> esNone) and
         (not AMinimap or AMinimap and (moShowSpecialChars in FMinimap.Options)) then
@@ -10630,7 +10628,7 @@ var
           ACanvas.Pen.Color := FSpecialChars.Selection.Color
         else
           ACanvas.Pen.Color := LTokenHelper.Foreground;
-        PatBlt(ACanvas.Handle, LTokenRect.Left, LTokenRect.Top, LTokenRect.Width, LTokenRect.Height, PATCOPY); { fill rect }
+        Winapi.Windows.ExtTextOut(ACanvas.Handle, 0, 0, ETO_OPAQUE, LTokenRect, '', 0, nil); { fill rect }
 
         if (FSpecialChars.Selection.Visible and
           (ACanvas.Brush.Color = FSelection.Colors.Background) or (ACanvas.Brush.Color <> FSelection.Colors.Background)) then
@@ -10645,45 +10643,27 @@ var
       else
       begin
         LPChar := PChar(LText);
-        while LPChar^ <> BCEDITOR_NONE_CHAR do
-        begin
-          if LPChar^ = BCEDITOR_TAB_CHAR then
-            LPChar^ := BCEDITOR_SPACE_CHAR;
-          Inc(LPChar);
-        end;
-        LPChar := PChar(LText);
-
         LRect := LTokenRect;
+
         LIsItalic := fsItalic in LTokenHelper.FontStyle;
         if LIsItalic then
-          Inc(LRect.Right, CharWidth);
+          Inc(LRect.Right, FTextDrawer.CharWidth);
+        if FItalicOffset <> 0 then
+        begin
+          Inc(LRect.Left, FItalicOffset);
+          Dec(LRect.Right, FItalicOffset);
+        end;
+
         Winapi.Windows.ExtTextOut(ACanvas.Handle, LRect.Left, LRect.Top, ETO_OPAQUE or ETO_CLIPPED, @LRect, LPChar, ATokenLength, nil);
-        if LIsItalic then
+        if LIsItalic and (LPChar^ <> BCEDITOR_SPACE_CHAR) then
         begin
           if LTokenHelper.CharsBefore + LTokenHelper.Length = LCurrentLineLength then
-          begin
-            LTokenRect.Right := LRect.Right;
-            FItalicBufferBitmap.Height := 0;
-          end
+            LTokenRect.Right := LRect.Right
           else
-          if FItalicBufferBitmap.Height <> 0 then
-          begin
-            if LPChar^ = BCEDITOR_SPACE_CHAR then
-              BitBlt(ACanvas.Handle, LTokenRect.Left, LRect.Top, CharWidth, LRect.Height, FItalicBufferBitmap.Canvas.Handle, 0, 0, SRCCOPY);
-            FItalicBufferBitmap.Height := 0;
-          end
-          else
-          if LPChar^ <> BCEDITOR_SPACE_CHAR then
-          begin
-            FItalicBufferBitmap.Canvas.Brush := ACanvas.Brush;
-            FItalicBufferBitmap.Height := FTextDrawer.CharHeight;
-            FItalicBufferBitmap.Width := LRect.Right - LTokenRect.Right;
-            BitBlt(FItalicBufferBitmap.Canvas.Handle, 0, 0, FItalicBufferBitmap.Width, FItalicBufferBitmap.Height,
-              ACanvas.Handle, LTokenRect.Right, LTokenRect.Top, SRCCOPY);
-          end;
+            FItalicOffset := FTextDrawer.CharWidth
         end
         else
-          FItalicBufferBitmap.Height := 0;
+          FItalicOffset := 0;
       end;
 
       if LTokenHelper.MatchingPairUnderline then
@@ -10801,7 +10781,7 @@ var
             LTokenRect.Right := LTokenRect.Left + FTextDrawer.CharWidth
           else
             LTokenRect.Right := X1;
-          PatBlt(ACanvas.Handle, LTokenRect.Left, LTokenRect.Top, LTokenRect.Width, LTokenRect.Height, PATCOPY); { fill end of line rect }
+          Winapi.Windows.ExtTextOut(ACanvas.Handle, 0, 0, ETO_OPAQUE, LTokenRect, '', 0, nil); { fill end of line rect }
           if (soFromEndOfLine in FSelection.Options) and (soToEndOfLine in FSelection.Options) then
             LTokenRect.Left := LTokenRect.Right - FTextDrawer.CharWidth
           else
@@ -10812,12 +10792,12 @@ var
           SetDrawingColors(not (soToEndOfLine in FSelection.Options) and not (soToEndOfLastLine in FSelection.Options) or
             (soToEndOfLastLine in FSelection.Options) and (LDisplayLine <> LSelectionEndPosition.Row) );
           LTokenRect.Right := X2;
-          PatBlt(ACanvas.Handle, LTokenRect.Left, LTokenRect.Top, LTokenRect.Width, LTokenRect.Height, PATCOPY); { fill end of line rect }
+          Winapi.Windows.ExtTextOut(ACanvas.Handle, 0, 0, ETO_OPAQUE, LTokenRect, '', 0, nil); { fill end of line rect }
           if (soFromEndOfLine in FSelection.Options) and (soToEndOfLine in FSelection.Options) then
           begin
             SetDrawingColors(True);
             LTokenRect.Right := LTokenRect.Left + FTextDrawer.CharWidth;
-            PatBlt(ACanvas.Handle, LTokenRect.Left, LTokenRect.Top, LTokenRect.Width, LTokenRect.Height, PATCOPY); { fill end of line rect }
+            Winapi.Windows.ExtTextOut(ACanvas.Handle, 0, 0, ETO_OPAQUE, LTokenRect, '', 0, nil); { fill end of line rect }
           end;
           LTokenRect.Right := X2;
           LTokenRect.Left := X2;
@@ -10826,19 +10806,19 @@ var
         begin
           SetDrawingColors(False);
           LTokenRect.Right := LLineRect.Right;
-          PatBlt(ACanvas.Handle, LTokenRect.Left, LTokenRect.Top, LTokenRect.Width, LTokenRect.Height, PATCOPY); { fill end of line rect }
+          Winapi.Windows.ExtTextOut(ACanvas.Handle, 0, 0, ETO_OPAQUE, LTokenRect, '', 0, nil); { fill end of line rect }
         end;
       end
       else
       begin
         SetDrawingColors(not (soToEndOfLine in FSelection.Options) and LIsLineSelected);
         LTokenRect.Right := LLineRect.Right;
-        PatBlt(ACanvas.Handle, LTokenRect.Left, LTokenRect.Top, LTokenRect.Width, LTokenRect.Height, PATCOPY); { fill end of line rect }
+        Winapi.Windows.ExtTextOut(ACanvas.Handle, 0, 0, ETO_OPAQUE, LTokenRect, '', 0, nil); { fill end of line rect }
         if (soFromEndOfLine in FSelection.Options) and (soToEndOfLine in FSelection.Options) and LIsLineSelected then
         begin
           SetDrawingColors(True);
           LTokenRect.Right := LTokenRect.Left + FTextDrawer.CharWidth;
-          PatBlt(ACanvas.Handle, LTokenRect.Left, LTokenRect.Top, LTokenRect.Width, LTokenRect.Height, PATCOPY); { fill end of line rect }
+          Winapi.Windows.ExtTextOut(ACanvas.Handle, 0, 0, ETO_OPAQUE, LTokenRect, '', 0, nil); { fill end of line rect }
         end;
       end;
     end;
@@ -11101,7 +11081,7 @@ var
       LCurrentLineText := FLines.GetExpandedString(LCurrentLine - 1, BCEDITOR_TAB_CHAR);
       LPaintedColumn := 1;
       LPaintedWidth := 0;
-      FItalicBufferBitmap.Height := 0;
+      FItalicOffset := 0;
 
       LFoldRange := nil;
       if FCodeFolding.Visible then
@@ -11344,7 +11324,7 @@ begin
   begin
     LBackgroundColor := FBackgroundColor;
     SetDrawingColors(False);
-    PatBlt(ACanvas.Handle, LTokenRect.Left, LTokenRect.Top, LTokenRect.Width, LTokenRect.Height, PATCOPY);
+    Winapi.Windows.ExtTextOut(ACanvas.Handle, 0, 0, ETO_OPAQUE, LTokenRect, '', 0, nil);
   end;
 end;
 

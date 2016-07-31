@@ -185,7 +185,7 @@ var
 begin
   ResetCanvas;
   TmpRect := ClientRect;
-  PatBlt(FBufferBitmap.Canvas.Handle, TmpRect.Left, TmpRect.Top, TmpRect.Width, TmpRect.Height, PATCOPY);
+  Winapi.Windows.ExtTextOut(FBufferBitmap.Canvas.Handle, 0, 0, ETO_OPAQUE, TmpRect, '', 0, nil);
   FBufferBitmap.Canvas.Pen.Color := FBorderColor;
   FBufferBitmap.Canvas.Rectangle(TmpRect);
 

@@ -128,7 +128,7 @@ type
 implementation
 
 uses
-  System.UITypes, BCEditor.Highlighter.Attributes, BCEditor.Consts;
+  System.UITypes, BCEditor.Highlighter.Attributes, BCEditor.Consts, System.Types;
 
 { TBCEditorPrint }
 
@@ -669,13 +669,17 @@ procedure TBCEditorPrint.PrintPage(APageNumber: Integer);
 var
   i, LEndLine: Integer;
   LSelectionStart, LSelectionLength: Integer;
+  LRect: TRect;
 begin
   PrintStatus(psNewPage, APageNumber, FAbort);
   if not FAbort then
   begin
     FCanvas.Brush.Color := Color;
-    with FMargins do
-      PatBlt(FCanvas.Handle, PixelLeft, PixelTop, PixelRight - PixelLeft, PixelBottom - PixelTop, PATCOPY);
+    LRect.Left := FMargins.PixelLeft;
+    LRect.Right := FMargins.PixelRight;
+    LRect.Top := FMargins.PixelTop;
+    LRect.Bottom := FMargins.PixelBottom;
+    Winapi.Windows.ExtTextOut(FCanvas.Handle, 0, 0, ETO_OPAQUE, LRect, '', 0, nil);
     FMargins.InitPage(FCanvas, APageNumber, FPrinterInfo, FLineNumbers, FLineNumbersInMargin, FLines.Count - 1 + FLineOffset);
     FHeader.Print(FCanvas, APageNumber + FPageOffset);
     if FPages.Count > 0 then
