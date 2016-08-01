@@ -10659,9 +10659,6 @@ var
 
         if LIsItalic and (LPChar^ <> BCEDITOR_SPACE_CHAR) then
         begin
-          if LTokenHelper.CharsBefore + ATokenLength = LCurrentLineLength then
-            LTokenRect.Right := LRect.Right
-          else
           for LX := LTokenRect.Right + 1 to LRect.Right do
           begin
             for LY := LTokenRect.Top to LTokenRect.Bottom do
@@ -10673,6 +10670,8 @@ var
             if LY = LTokenRect.Bottom then
               Break;
           end;
+          if ALast = LCurrentLineLength + 1 then
+            Inc(LTokenRect.Right, FItalicOffset);
         end
         else
           FItalicOffset := 0;
@@ -10700,7 +10699,7 @@ var
   begin
     { Compute some helper variables. }
     LFirstColumn := LTokenHelper.CharsBefore + 1;
-    LLastColumn := {Min(LLastChar,} LTokenHelper.CharsBefore + LTokenHelper.Length + 1{)};
+    LLastColumn := {Min(LLastChar,} LFirstColumn + LTokenHelper.Length{)};
     if LIsSelectionInsideLine then
     begin
       LFirstUnselectedPartOfToken := LFirstColumn < LLineSelectionStart;
@@ -10948,6 +10947,7 @@ var
     LPreviousFirstColumn: Integer;
     LTextCaretY: Integer;
     LWrappedRowCount: Integer;
+    LLastChar: Integer;
 
     function GetWordAtSelection(var ASelectedText: string): string;
     var
@@ -11198,14 +11198,16 @@ var
         LLineSelectionStart := 0;
         LLineSelectionEnd := 0;
 
+        {$message warn 'Refactor this. GetVisibleCharsWidth can''t work here.'}
         if LAnySelection and (LDisplayLine >= LSelectionBeginPosition.Row) and (LDisplayLine <= LSelectionEndPosition.Row) then
         begin
           LLineSelectionStart := 1;
-          LLineSelectionEnd := LCurrentLineLength + 1; //LLastChar + 1;
+          LLastChar := PixelsToTextPosition(ClientRect.Right, (LDisplayLine - 1) * FTextDrawer.CharHeight).Char;
+          LLineSelectionEnd := LLastChar + 1;
           if (FSelection.ActiveMode = smColumn) or
             ((FSelection.ActiveMode = smNormal) and (LDisplayLine = LSelectionBeginPosition.Row)) then
           begin
-            if LSelectionBeginPosition.Column > LCurrentLineLength then// LLastChar then
+            if LSelectionBeginPosition.Column > LLastChar then
             begin
               LLineSelectionStart := 0;
               LLineSelectionEnd := 0;
@@ -11226,7 +11228,7 @@ var
               LLineSelectionEnd := 0;
             end
             else
-            if LSelectionEndPosition.Column < LCurrentLineLength then // LLastChar then
+            if LSelectionEndPosition.Column < LLastChar then
             begin
               LLineSelectionEnd := LSelectionEndPosition.Column;
               LIsSelectionInsideLine := True;
