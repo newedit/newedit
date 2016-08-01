@@ -262,6 +262,7 @@ type
     function RescanHighlighterRangesFrom(const AIndex: Integer): Integer;
     function RowColumnToCharIndex(const ATextPosition: TBCEditorTextPosition): Integer;
     function SearchText(const ASearchText: string; AChanged: Boolean = False): Integer;
+    function ShortCutPressed: Boolean;
     function StringWordEnd(const ALine: string; AStart: Integer): Integer;
     function StringWordStart(const ALine: string; AStart: Integer): Integer;
     procedure ActiveLineChanged(ASender: TObject);
@@ -8897,6 +8898,22 @@ begin
   end;
 end;
 
+function TBCBaseEditor.ShortCutPressed: Boolean;
+var
+  i: Integer;
+  LKeyCommand: TBCEditorKeyCommand;
+begin
+  Result := False;
+
+  for i := 0 to FKeyCommands.Count - 1 do
+  begin
+    LKeyCommand := FKeyCommands[i];
+    if (LKeyCommand.ShiftState = [ssCtrl, ssShift]) or (LKeyCommand.ShiftState = [ssCtrl]) then
+      if GetKeyState(LKeyCommand.Key) < 0 then
+        Exit(True);
+  end;
+end;
+
 procedure TBCBaseEditor.MouseMove(AShift: TShiftState; X, Y: Integer);
 var
   i, j: Integer;
@@ -8917,19 +8934,19 @@ begin
   if FCaret.MultiEdit.Enabled and Focused then
   begin
     if (AShift = [ssCtrl, ssShift]) or (AShift = [ssCtrl]) then
-    begin
-      LMultiCaretPosition := PixelsToDisplayPosition(X, Y);
+      if not ShortCutPressed then
+      begin
+        LMultiCaretPosition := PixelsToDisplayPosition(X, Y);
 
-      if meoShowGhost in FCaret.MultiEdit.Options then
-        if LMultiCaretPosition.Row <= FLines.Count then
-          if (FMultiCaretPosition.Row <> LMultiCaretPosition.Row) or
-            (FMultiCaretPosition.Row = LMultiCaretPosition.Row) and
-            (FMultiCaretPosition.Column <> LMultiCaretPosition.Column) then
-          begin
-            FMultiCaretPosition := LMultiCaretPosition;
-            Invalidate;
-          end;
-    end;
+        if meoShowGhost in FCaret.MultiEdit.Options then
+          if LMultiCaretPosition.Row <= FLines.Count then
+            if (FMultiCaretPosition.Row <> LMultiCaretPosition.Row) or
+              (FMultiCaretPosition.Row = LMultiCaretPosition.Row) and (FMultiCaretPosition.Column <> LMultiCaretPosition.Column) then
+            begin
+              FMultiCaretPosition := LMultiCaretPosition;
+              Invalidate;
+            end;
+      end;
 
     if Assigned(FMultiCarets) and (FMultiCarets.Count > 0) then
       Exit;
@@ -10699,7 +10716,7 @@ var
   begin
     { Compute some helper variables. }
     LFirstColumn := LTokenHelper.CharsBefore + 1;
-    LLastColumn := {Min(LLastChar,} LFirstColumn + LTokenHelper.Length{)};
+    LLastColumn := LFirstColumn + LTokenHelper.Length;
     if LIsSelectionInsideLine then
     begin
       LFirstUnselectedPartOfToken := LFirstColumn < LLineSelectionStart;
@@ -11198,7 +11215,6 @@ var
         LLineSelectionStart := 0;
         LLineSelectionEnd := 0;
 
-        {$message warn 'Refactor this. GetVisibleCharsWidth can''t work here.'}
         if LAnySelection and (LDisplayLine >= LSelectionBeginPosition.Row) and (LDisplayLine <= LSelectionEndPosition.Row) then
         begin
           LLineSelectionStart := 1;
