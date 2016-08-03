@@ -1,8 +1,6 @@
-﻿{$message warn 'Painting under development.'}
-{$message warn 'Fix selection when a font style is italic.'}
-{$message warn 'Fix word wrap.'}
-{$message warn 'Fix GetVisibleCharsWidth calls.'}
+﻿{$message warn 'Fix word wrap. For example enter will cause AV.'}
 {$message warn 'Optimize PaintTextLines.'}
+{$message warn 'Run profiler.'}
 unit BCEditor.Editor.Base;
 
 interface
@@ -187,13 +185,12 @@ type
     FTabs: TBCEditorTabs;
     FTextDrawer: TBCEditorTextDrawer;
     FTextLinesBufferBitmap: Vcl.Graphics.TBitmap;
-    FTextOffset: Integer;
     FTopLine: Integer;
     FUndo: TBCEditorUndo;
     FUndoList: TBCEditorUndoList;
     FUndoRedo: Boolean;
     FURIOpener: Boolean;
-    FVisibleCharsWidth: Integer;
+    FScrollAreaWidth: Integer;
     FVisibleLines: Integer;
     FWantReturns: Boolean;
     FWindowProducedMessage: Boolean;
@@ -241,8 +238,7 @@ type
     function GetText: string;
     function GetTextBetween(ATextBeginPosition: TBCEditorTextPosition; ATextEndPosition: TBCEditorTextPosition): string;
     function GetTextCaretY: Integer;
-    function GetTextOffset: Integer;
-    function GetVisibleCharsWidth: Integer;
+    function GetVisibleChars(const ARow: Integer): Integer;
     function GetWordAtCursor: string;
     function GetWordAtMouse: string;
     function GetWordAtTextPosition(const ATextPosition: TBCEditorTextPosition): string;
@@ -298,6 +294,7 @@ type
     procedure DoImeStr(AData: Pointer);
     procedure DoLineBreak;
     procedure DoLineComment;
+    procedure DoPageLeftOrRight(const ACommand: TBCEditorCommand);
     procedure DoPageTopOrBottom(const ACommand: TBCEditorCommand);
     procedure DoPageUpOrDown(const ACommand: TBCEditorCommand);
     procedure DoPasteFromClipboard;
@@ -937,8 +934,6 @@ begin
   { Do update character constraints }
   FontChanged(nil);
   TabsChanged(nil);
-  { Text }
-  FTextOffset := GetTextOffset;
   { Highlighter }
   FHighlighter := TBCEditorHighlighter.Create(Self);
   { Mouse wheel scroll cursors }
@@ -2110,7 +2105,7 @@ begin
       begin
         LTextLine := FLines.ExpandedStrings[j - 1];
         LStringLength := Length(LTextLine);
-        LMaxRowLength := GetVisibleCharsWidth; {$message warn 'This can''t work.'}
+        LMaxRowLength := PixelsToTextPosition(ClientRect.Right, (j - 1) * FTextDrawer.CharHeight).Char;
         if (LStringLength > LMaxRowLength) and (LMaxRowLength > 0) then
         begin
           LRowBegin := PChar(LTextLine);
@@ -2248,7 +2243,7 @@ begin
   if FHighlighter.GetTokenPosition + FHighlighter.GetTokenLength + 1 < ADisplayPosition.Column then
     Inc(Result.X, (ADisplayPosition.Column - FHighlighter.GetTokenPosition - FHighlighter.GetTokenLength - 1) * FTextDrawer.CharWidth);
 
-  Inc(Result.X, FTextOffset);
+  Inc(Result.X, GetLeftMarginWidth - FHorizontalScrollPosition);
 end;
 
 function TBCBaseEditor.GetDisplayTextLineNumber(const ADisplayLineNumber: Integer): Integer;
@@ -2257,11 +2252,6 @@ begin
   CreateLineNumbersCache;
   if Assigned(FLineNumbersCache) and (ADisplayLineNumber <= FLineNumbersCount) then
     Result := FLineNumbersCache[ADisplayLineNumber];
-end;
-
-function TBCBaseEditor.GetTextOffset: Integer;
-begin
-  Result := GetLeftMarginWidth - FHorizontalScrollPosition;
 end;
 
 function TBCBaseEditor.GetWordAtCursor: string;
@@ -2312,17 +2302,15 @@ begin
   end;
 end;
 
-function TBCBaseEditor.GetVisibleCharsWidth: Integer;
+function TBCBaseEditor.GetVisibleChars(const ARow: Integer): Integer;
 begin
-  Result := FVisibleCharsWidth;
+  Result := PixelsToDisplayPosition(ClientRect.Right, (ARow - 1) * FTextDrawer.CharHeight).Column;
   if FWordWrap.Enabled then
   case FWordWrap.Style of
-    wwsClientWidth:
-      Result := FVisibleCharsWidth;
     wwsRightMargin:
-      Result := FRightMargin.Position * FTextDrawer.CharWidth;
+      Result := FRightMargin.Position;
     wwsSpecified:
-      Result := FWordWrap.Position * FTextDrawer.CharWidth;
+      Result := FWordWrap.Position;
   end
 end;
 
@@ -3210,7 +3198,6 @@ begin
       CodeFoldingUncollapseAll
     else
       InitCodeFolding;
-    FTextOffset := GetTextOffset;
   end
   else
   if AEvent = fcRescan then
@@ -3287,7 +3274,7 @@ begin
     end;
 
     LScrollBoundsLeft := GetLeftMarginWidth;
-    LScrollBoundsRight := LScrollBoundsLeft + GetVisibleCharsWidth + 4;
+    LScrollBoundsRight := LScrollBoundsLeft + FScrollAreaWidth + 4;
 
     LScrollBounds := Bounds(LScrollBoundsLeft, 0, LScrollBoundsRight, FVisibleLines * GetLineHeight);
 
@@ -3805,6 +3792,7 @@ var
   LSpaceBuffer: string;
   LBlockStartPosition: TBCEditorTextPosition;
   LHelper: string;
+  LVisibleChars: Integer;
 begin
   LTextCaretPosition := TextCaretPosition;
   if SelectionAvailable then
@@ -3899,11 +3887,13 @@ begin
         FLines.Attributes[LTextCaretPosition.Line].LineState := lsModified;
       end;
     end;
-    if FWordWrap.Enabled and (LTextCaretPosition.Char > GetVisibleCharsWidth div FTextDrawer.CharWidth) then
+
+    LVisibleChars := GetVisibleChars(DisplayCaretY);
+    if FWordWrap.Enabled and (LTextCaretPosition.Char > LVisibleChars) then
       CreateLineNumbersCache(True);
     TextCaretPosition := LTextCaretPosition;
-    if LTextCaretPosition.Char >= (FHorizontalScrollPosition + GetVisibleCharsWidth) div FTextDrawer.CharWidth then
-      SetHorizontalScrollPosition(FHorizontalScrollPosition + Min(25 * FTextDrawer.CharWidth, GetVisibleCharsWidth - 1));
+    if LTextCaretPosition.Char >= LVisibleChars + FHorizontalScrollPosition div FTextDrawer.CharWidth then
+      SetHorizontalScrollPosition(FHorizontalScrollPosition + Min(25 * FTextDrawer.CharWidth, LVisibleChars - 1));
   end;
   if FSyncEdit.Active then
     DoSyncEdit;
@@ -4096,6 +4086,7 @@ var
   LChangeScroll: Boolean;
   LTextCaretPosition: TBCEditorTextPosition;
   LBlockStartPosition: TBCEditorTextPosition;
+  LVisibleChars: Integer;
 begin
   LTextCaretPosition := TextCaretPosition;
   LLength := Length(PChar(AData));
@@ -4141,8 +4132,9 @@ begin
         LHelper := '';
       FUndoList.AddChange(crInsert, LTextCaretPosition, LBlockStartPosition, TextCaretPosition, LHelper,
         smNormal);
-      if DisplayCaretX >= (FHorizontalScrollPosition + GetVisibleCharsWidth) div FTextDrawer.CharWidth then
-        SetHorizontalScrollPosition(FHorizontalScrollPosition + Min(25 * FTextDrawer.CharWidth, GetVisibleCharsWidth - 1));
+      LVisibleChars := GetVisibleChars(DisplayCaretY);
+      if DisplayCaretX >= FHorizontalScrollPosition div FTextDrawer.CharWidth + LVisibleChars then
+        SetHorizontalScrollPosition(FHorizontalScrollPosition + Min(25 * FTextDrawer.CharWidth, LVisibleChars - 1));
     finally
       if LChangeScroll then
         FScroll.Options := FScroll.Options - [soPastEndOfLine];
@@ -4369,6 +4361,16 @@ begin
     RescanCodeFoldingRanges;
     ScanMatchingPair;
   end;
+end;
+
+procedure TBCBaseEditor.DoPageLeftOrRight(const ACommand: TBCEditorCommand);
+var
+  LVisibleChars: Integer;
+begin
+  LVisibleChars := GetVisibleChars(DisplayCaretPosition.Row);
+  if ACommand in [ecPageLeft, ecSelectionPageLeft] then
+    LVisibleChars := -LVisibleChars;
+  MoveCaretHorizontally(LVisibleChars, ACommand in [ecSelectionPageLeft, ecSelectionPageRight]);
 end;
 
 procedure TBCBaseEditor.DoPageTopOrBottom(const ACommand: TBCEditorCommand);
@@ -5182,7 +5184,7 @@ begin
   begin
     LCaretRowColumn := DisplayCaretPosition;
 
-    if (FWordWrapLineLengths[LCaretRowColumn.Row] = 0) and (LCaretRowColumn.Column - 1 > GetVisibleCharsWidth div FTextDrawer.CharWidth) or
+    if (FWordWrapLineLengths[LCaretRowColumn.Row] = 0) and (LCaretRowColumn.Column - 1 > GetVisibleChars(LCaretRowColumn.Row)) or
       (FWordWrapLineLengths[LCaretRowColumn.Row] <> 0) and (LCaretRowColumn.Column - 1 > FWordWrapLineLengths[LCaretRowColumn.Row]) then
     begin
       Inc(LCaretRowColumn.Row);
@@ -6316,25 +6318,28 @@ end;
 procedure TBCBaseEditor.SetHorizontalScrollPosition(AValue: Integer);
 var
   LMaxLineWidth: Integer;
+  LVisibleChars: Integer;
 begin
+  if FHorizontalScrollPosition = AValue then
+    Exit;
+
   if FWordWrap.Enabled then
     AValue := 0;
+
+  LVisibleChars := GetVisibleChars(DisplayCaretY);
 
   if soPastEndOfLine in FScroll.Options then
   begin
     if soAutoSizeMaxWidth in FScroll.Options then
-      LMaxLineWidth := MaxInt - GetVisibleCharsWidth
+      LMaxLineWidth := MaxInt
     else
-      LMaxLineWidth := FScroll.MaxWidth - GetVisibleCharsWidth + 1
+      LMaxLineWidth := FScroll.MaxWidth
   end
   else
   begin
-    if FWordWrap.Enabled then
-      LMaxLineWidth := GetVisibleCharsWidth
-    else
-      LMaxLineWidth := FLines.GetLengthOfLongestLine;
-    if LMaxLineWidth > GetVisibleCharsWidth then
-      LMaxLineWidth := LMaxLineWidth - GetVisibleCharsWidth + 1
+    LMaxLineWidth := FLines.GetLengthOfLongestLine;
+    if LMaxLineWidth > LVisibleChars then
+      LMaxLineWidth := LMaxLineWidth - LVisibleChars + 1
     else
       LMaxLineWidth := 0;
   end;
@@ -6342,10 +6347,9 @@ begin
   if FHorizontalScrollPosition <> AValue then
   begin
     FHorizontalScrollPosition := AValue;
-    FTextOffset := GetTextOffset;
     if ((soAutoSizeMaxWidth in FScroll.Options) or (soPastEndOfLine in FScroll.Options)) and
-      (FScroll.MaxWidth < (FHorizontalScrollPosition + GetVisibleCharsWidth) div FTextDrawer.CharWidth) then
-      FScroll.MaxWidth := (FHorizontalScrollPosition + GetVisibleCharsWidth) div FTextDrawer.CharWidth - 1
+      (FScroll.MaxWidth < LVisibleChars + FHorizontalScrollPosition div FTextDrawer.CharWidth) then
+      FScroll.MaxWidth := LVisibleChars + FHorizontalScrollPosition div FTextDrawer.CharWidth - 1
     else
       UpdateScrollBars;
     Invalidate;
@@ -6371,10 +6375,9 @@ begin
   if FLeftMargin.Width <> AValue then
   begin
     FLeftMargin.Width := AValue;
-    FTextOffset := GetTextOffset;
     if HandleAllocated then
     begin
-      FVisibleCharsWidth := Max(ClientWidth - FLeftMargin.GetWidth - FCodeFolding.GetWidth - 2 - FMinimap.GetWidth -
+      FScrollAreaWidth := Max(ClientWidth - FLeftMargin.GetWidth - FCodeFolding.GetWidth - 2 - FMinimap.GetWidth -
         FSearch.Map.GetWidth, 0);
       if FWordWrap.Enabled then
         FResetLineNumbersCache := True;
@@ -6677,7 +6680,7 @@ begin
   if Visible and HandleAllocated and (FTextDrawer.CharWidth <> 0) then
   begin
     FTextDrawer.SetBaseFont(Font);
-    FVisibleCharsWidth := Max(ClientWidth - FLeftMargin.GetWidth - FCodeFolding.GetWidth - 2 - FMinimap.GetWidth -
+    FScrollAreaWidth := Max(ClientWidth - FLeftMargin.GetWidth - FCodeFolding.GetWidth - 2 - FMinimap.GetWidth -
       FSearch.Map.GetWidth, 0);
     FVisibleLines := ClientHeight div GetLineHeight;
 
@@ -6928,7 +6931,7 @@ var
         LMaxScroll := FScroll.MaxWidth
       else
       if FWordWrap.Enabled then
-        LMaxScroll := GetVisibleCharsWidth
+        LMaxScroll := FScrollAreaWidth
       else
         LMaxScroll := Max(FLines.GetLengthOfLongestLine, 1);
 
@@ -6936,23 +6939,23 @@ var
       begin
         LScrollInfo.nMin := 0;
         LScrollInfo.nMax := LMaxScroll;
-        LScrollInfo.nPage := FVisibleCharsWidth;
+        LScrollInfo.nPage := FScrollAreaWidth;
         LScrollInfo.nPos := FHorizontalScrollPosition;
       end
       else
       begin
         LScrollInfo.nMin := 0;
         LScrollInfo.nMax := BCEDITOR_MAX_SCROLL_RANGE;
-        LScrollInfo.nPage := MulDiv(BCEDITOR_MAX_SCROLL_RANGE, FVisibleCharsWidth, LMaxScroll);
+        LScrollInfo.nPage := MulDiv(BCEDITOR_MAX_SCROLL_RANGE, FScrollAreaWidth, LMaxScroll);
         LScrollInfo.nPos := MulDiv(BCEDITOR_MAX_SCROLL_RANGE, FHorizontalScrollPosition, LMaxScroll);
       end;
 
-      ShowScrollBar(Handle, SB_HORZ, (LScrollInfo.nMin = 0) or (LScrollInfo.nMax > FVisibleCharsWidth));
+      ShowScrollBar(Handle, SB_HORZ, (LScrollInfo.nMin = 0) or (LScrollInfo.nMax > FScrollAreaWidth));
       SetScrollInfo(Handle, SB_HORZ, LScrollInfo, True);
 
-      if LMaxScroll <= FVisibleCharsWidth then
+      if LMaxScroll <= FScrollAreaWidth then
       begin
-        LRightChar := (FHorizontalScrollPosition + FVisibleCharsWidth) div FTextDrawer.CharWidth - 1;
+        LRightChar := (FHorizontalScrollPosition + FScrollAreaWidth) div FTextDrawer.CharWidth - 1;
         if (FHorizontalScrollPosition <= 0) and (LRightChar >= LMaxScroll) then
           EnableScrollBar(Handle, SB_HORZ, ESB_DISABLE_BOTH)
         else
@@ -7140,7 +7143,7 @@ begin
     SB_RIGHT:
       begin
         if soPastEndOfLine in FScroll.Options then
-          SetHorizontalScrollPosition(FScroll.MaxWidth - GetVisibleCharsWidth + 1)
+          SetHorizontalScrollPosition(FScroll.MaxWidth - GetVisibleChars(DisplayCaretY) + 1)
         else
           SetHorizontalScrollPosition(FLines.GetLengthOfLongestLine * FTextDrawer.CharWidth)
       end;
@@ -7149,9 +7152,9 @@ begin
     SB_LINELEFT:
       SetHorizontalScrollPosition(FHorizontalScrollPosition - 1);
     SB_PAGERIGHT:
-      SetHorizontalScrollPosition(FHorizontalScrollPosition + GetVisibleCharsWidth);
+      SetHorizontalScrollPosition(FHorizontalScrollPosition + GetVisibleChars(DisplayCaretY));
     SB_PAGELEFT:
-      SetHorizontalScrollPosition(FHorizontalScrollPosition - GetVisibleCharsWidth);
+      SetHorizontalScrollPosition(FHorizontalScrollPosition - GetVisibleChars(DisplayCaretY));
     SB_THUMBPOSITION, SB_THUMBTRACK:
       begin
         FIsScrolling := True;
@@ -8249,8 +8252,9 @@ begin
         LOldTextCaretPosition := TextCaretPosition;
         LDisplayPosition := PixelsToDisplayPosition(X, Y);
         LColumn := FHorizontalScrollPosition div FTextDrawer.CharWidth;
-        LDisplayPosition.Column := MinMax(LDisplayPosition.Column, LColumn, LColumn + GetVisibleCharsWidth div FTextDrawer.CharWidth - 1);
         LDisplayPosition.Row := MinMax(LDisplayPosition.Row, TopLine, TopLine + VisibleLines - 1);
+        LDisplayPosition.Column := MinMax(LDisplayPosition.Column, LColumn, LColumn + GetVisibleChars(LDisplayPosition.Row) - 1);
+
         TextCaretPosition := DisplayToTextPosition(LDisplayPosition);
         ComputeScroll(Point(X, Y));
         if (LOldTextCaretPosition.Line <> TextCaretPosition.Line) or
@@ -10285,7 +10289,7 @@ begin
         LPenColor := FSpecialChars.Color;
 
       ACanvas.Pen.Color := LPenColor;
-      LVisibleChars := GetVisibleCharsWidth div FTextDrawer.CharWidth;
+      LVisibleChars := GetVisibleChars(ALine);
 
       if FSpecialChars.EndOfLine.Visible and (ALine <> FLineNumbersCount) and (ALineLength - AFirstColumn < LVisibleChars) then
       with ACanvas do
@@ -10964,7 +10968,6 @@ var
     LPreviousFirstColumn: Integer;
     LTextCaretY: Integer;
     LWrappedRowCount: Integer;
-    LLastChar: Integer;
 
     function GetWordAtSelection(var ASelectedText: string): string;
     var
@@ -11177,7 +11180,8 @@ var
 
       LFirstColumn := 1;
       LPreviousFirstColumn := 1;
-      LLastColumn := LCurrentLineLength; //LLastChar;
+      //LLastColumn := LCurrentLineLength; //LLastChar;
+      LLastColumn := PixelsToDisplayPosition(ClientRect.Right, (LDisplayLine - 1) * FTextDrawer.CharHeight).Column;
       LTextCaretY := GetTextCaretY + 1;
 
       if FWordWrap.Enabled then
@@ -11218,12 +11222,12 @@ var
         if LAnySelection and (LDisplayLine >= LSelectionBeginPosition.Row) and (LDisplayLine <= LSelectionEndPosition.Row) then
         begin
           LLineSelectionStart := 1;
-          LLastChar := PixelsToTextPosition(ClientRect.Right, (LDisplayLine - 1) * FTextDrawer.CharHeight).Char;
-          LLineSelectionEnd := LLastChar + 1;
+          //LLastChar := PixelsToTextPosition(ClientRect.Right, (LDisplayLine - 1) * FTextDrawer.CharHeight).Char;
+          LLineSelectionEnd := LLastColumn + 1; // LLastChar + 1;
           if (FSelection.ActiveMode = smColumn) or
             ((FSelection.ActiveMode = smNormal) and (LDisplayLine = LSelectionBeginPosition.Row)) then
           begin
-            if LSelectionBeginPosition.Column > LLastChar then
+            if LSelectionBeginPosition.Column > LLastColumn then // LLastChar then
             begin
               LLineSelectionStart := 0;
               LLineSelectionEnd := 0;
@@ -11244,7 +11248,7 @@ var
               LLineSelectionEnd := 0;
             end
             else
-            if LSelectionEndPosition.Column < LLastChar then
+            if LSelectionEndPosition.Column < LLastColumn then // LLastChar then
             begin
               LLineSelectionEnd := LSelectionEndPosition.Column;
               LIsSelectionInsideLine := True;
@@ -11283,8 +11287,8 @@ var
 
           if LTokenPosition + LTokenLength >= LFirstColumn then
           begin
-           if FWordWrap.Enabled then
-           begin
+            if FWordWrap.Enabled then
+            begin
               if LTokenLength >= LLastColumn then
               begin
                 LTokenText := Copy(LTokenText, LFirstColumn, LLastColumn - LFirstColumn);
@@ -11294,8 +11298,8 @@ var
               begin
                 Inc(LWrappedRowCount);
                 LFirstColumn := LFirstColumn + FWordWrapLineLengths[LDisplayLine];
-                LLastColumn := LFirstColumn + LCurrentLineLength; // LVisibleChars;
-                if LTokenPosition + LTokenLength - LPreviousFirstColumn < LCurrentLineLength then // LVisibleChars then
+                LLastColumn := LFirstColumn + LLastColumn; // LLastChar;// LCurrentLineLength; // LVisibleChars;
+                if LTokenPosition + LTokenLength - LPreviousFirstColumn < LLastColumn then // LLastChar then // LCurrentLineLength then // LVisibleChars then
                   PrepareToken;
                 Break;
               end;
@@ -12780,7 +12784,7 @@ var
     if FWordWrapLineLengths[ARow] <> 0 then
       Result := FWordWrapLineLengths[ARow]
     else
-      Result := GetVisibleCharsWidth div FTextDrawer.CharWidth // TODO: can't work
+      Result := GetVisibleChars(ARow);
   end;
 
 begin
@@ -12802,7 +12806,7 @@ begin
       Inc(LPLine);
     end;
 
-    if GetVisibleCharsWidth > 0 then
+    if FScrollAreaWidth > 0 then
     begin
       if Result.Row >= Length(FWordWrapLineLengths) then
          Result.Row := Length(FWordWrapLineLengths) - 1;
@@ -13497,8 +13501,9 @@ var
   LVisibleX: Integer;
   LCaretRow: Integer;
   LColumn: Integer;
+  LVisibleChars: Integer;
 begin
-  if GetVisibleCharsWidth <= 0 then
+  if FScrollAreaWidth <= 0 then
     Exit;
   HandleNeeded;
   IncPaintLock;
@@ -13511,8 +13516,11 @@ begin
     if LVisibleX < LColumn then
       LColumn := LVisibleX
     else
-    if LVisibleX >= GetVisibleCharsWidth div FTextDrawer.CharWidth + LColumn then
-      LColumn := LVisibleX - GetVisibleCharsWidth div FTextDrawer.CharWidth;
+    begin
+      LVisibleChars := GetVisibleChars(DisplayCaretY);
+      if LVisibleX >= LVisibleChars + LColumn then
+        LColumn := LVisibleX - LVisibleChars;
+    end;
     SetHorizontalScrollPosition(LColumn * FTextDrawer.CharWidth);
 
     LCaretRow := DisplayCaretY;
@@ -13564,9 +13572,7 @@ begin
         if not FSyncEdit.Active or FSyncEdit.Active and (TextCaretPosition.Char < FSyncEdit.EditEndPosition.Char) then
           MoveCaretHorizontally(1, ACommand = ecSelectionRight);
       ecPageLeft, ecSelectionPageLeft:
-        MoveCaretHorizontally(-GetVisibleCharsWidth div FTextDrawer.CharWidth, ACommand = ecSelectionPageLeft);
-      ecPageRight, ecSelectionPageRight:
-        MoveCaretHorizontally(GetVisibleCharsWidth div FTextDrawer.CharWidth, ACommand = ecSelectionPageRight);
+        DoPageLeftOrRight(ACommand);
       ecLineBegin, ecSelectionLineBegin:
         DoHomeKey(ACommand = ecSelectionLineBegin);
       ecLineEnd, ecSelectionLineEnd:
@@ -14421,6 +14427,7 @@ var
   LCaretPoint: TPoint;
   LCompositionForm: TCompositionForm;
   LCaretStyle: TBCEditorCaretStyle;
+  LVisibleChars: Integer;
 begin
   if (PaintLock <> 0) or not (Focused or FAlwaysShowCaret) then
     Include(FStateFlags, sfCaretChanged)
@@ -14432,8 +14439,9 @@ begin
     begin
       if FWordWrapLineLengths[LCaretDisplayPosition.Row] = 0 then
       begin
-        if LCaretDisplayPosition.Column > GetVisibleCharsWidth div FTextDrawer.CharWidth + 1 then
-          LCaretDisplayPosition.Column := GetVisibleCharsWidth div FTextDrawer.CharWidth + 1;
+        LVisibleChars := GetVisibleChars(LCaretDisplayPosition.Row);
+        if LCaretDisplayPosition.Column > LVisibleChars + 1 then
+          LCaretDisplayPosition.Column := LVisibleChars + 1;
       end
       else
       if LCaretDisplayPosition.Column > FWordWrapLineLengths[LCaretDisplayPosition.Row] + 1 then
