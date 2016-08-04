@@ -482,8 +482,6 @@ begin
 
   FFontStock := TBCEditorFontStock.Create(ABaseFont);
   FStockBitmap := Vcl.Graphics.TBitmap.Create;
-  //FItalicBufferBitmap := Vcl.Graphics.TBitmap.Create;
-  //FItalicBufferBitmap.Height := 0;
   FStockBitmap.Canvas.Brush.Color := clWhite;
   FCalcExtentBaseStyle := ACalcExtentBaseStyle;
   SetBaseFont(ABaseFont);
@@ -493,7 +491,6 @@ end;
 
 destructor TBCEditorTextDrawer.Destroy;
 begin
-  //FItalicBufferBitmap.Free;
   FStockBitmap.Free;
   FFontStock.Free;
 

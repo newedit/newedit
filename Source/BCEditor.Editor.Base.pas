@@ -2105,7 +2105,7 @@ begin
       begin
         LTextLine := FLines.ExpandedStrings[j - 1];
         LStringLength := Length(LTextLine);
-        LMaxRowLength := PixelsToTextPosition(ClientRect.Right, (j - 1) * FTextDrawer.CharHeight).Char;
+        LMaxRowLength := GetVisibleChars(j);
         if (LStringLength > LMaxRowLength) and (LMaxRowLength > 0) then
         begin
           LRowBegin := PChar(LTextLine);
@@ -10562,6 +10562,8 @@ var
     LIsItalic: Boolean;
     LRect: TRect;
     LX, LY: Integer;
+    LColor: TColor;
+    LRGBColor: Cardinal;
 
     procedure PaintSpecialCharSpace;
     var
@@ -10680,10 +10682,13 @@ var
 
         if LIsItalic and (LPChar^ <> BCEDITOR_SPACE_CHAR) then
         begin
+          LColor := ACanvas.Brush.Color;
+          LRGBColor := RGB(LColor and $FF, (LColor shr 8) and $FF, (LColor shr 16) and $FF);
+
           for LX := LTokenRect.Right + 1 to LRect.Right do
           begin
             for LY := LTokenRect.Top to LTokenRect.Bottom do
-            if ACanvas.Pixels[LX, LY] <> ACanvas.Brush.Color then
+            if GetPixel(ACanvas.Handle, LX, LY) <> LRGBColor then
             begin
               Inc(FItalicOffset);
               Break;
@@ -11180,8 +11185,7 @@ var
 
       LFirstColumn := 1;
       LPreviousFirstColumn := 1;
-      //LLastColumn := LCurrentLineLength; //LLastChar;
-      LLastColumn := PixelsToDisplayPosition(ClientRect.Right, (LDisplayLine - 1) * FTextDrawer.CharHeight).Column;
+      LLastColumn := GetVisibleChars(LDisplayLine);
       LTextCaretY := GetTextCaretY + 1;
 
       if FWordWrap.Enabled then
@@ -11222,12 +11226,11 @@ var
         if LAnySelection and (LDisplayLine >= LSelectionBeginPosition.Row) and (LDisplayLine <= LSelectionEndPosition.Row) then
         begin
           LLineSelectionStart := 1;
-          //LLastChar := PixelsToTextPosition(ClientRect.Right, (LDisplayLine - 1) * FTextDrawer.CharHeight).Char;
-          LLineSelectionEnd := LLastColumn + 1; // LLastChar + 1;
+          LLineSelectionEnd := LLastColumn + 1;
           if (FSelection.ActiveMode = smColumn) or
             ((FSelection.ActiveMode = smNormal) and (LDisplayLine = LSelectionBeginPosition.Row)) then
           begin
-            if LSelectionBeginPosition.Column > LLastColumn then // LLastChar then
+            if LSelectionBeginPosition.Column > LLastColumn then
             begin
               LLineSelectionStart := 0;
               LLineSelectionEnd := 0;
