@@ -255,14 +255,16 @@ type
   );
 
   TBCEditorTokenHelper = record
-    Length: Integer;
-    MaxLength: Integer;
+    Background: TColor;
     CharsBefore: Integer;
-    Text: string;
-    Foreground, Background: TColor;
-    FontStyle: TFontStyles;
-    MatchingPairUnderline: Boolean;
     EmptySpace: TBCEditorEmptySpace;
+    FontStyle: TFontStyles;
+    Foreground: TColor;
+    IsItalic: Boolean;
+    Length: Integer;
+    MatchingPairUnderline: Boolean;
+    MaxLength: Integer;
+    Text: string;
   end;
 
   TBCEditorSpecialCharsEndOfLineStyle = (

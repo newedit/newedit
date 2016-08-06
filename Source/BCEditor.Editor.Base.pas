@@ -2727,6 +2727,7 @@ var
   LText: string;
   LHighlighterAttribute: TBCEditorHighlighterAttribute;
   LXInEditor: Integer;
+  LTextWidth: Integer;
 begin
   Result.Row := ARow;
   Result.Column := 1;
@@ -2748,6 +2749,7 @@ begin
   LFontStyles := [];
   LPreviousFontStyles := [];
   LText := '';
+  LTextWidth := 0;
   LXInEditor := X + FHorizontalScrollPosition - FLeftMarginWidth;
 
   LHighlighterAttribute := FHighlighter.GetTokenAttribute;
@@ -2768,7 +2770,8 @@ begin
 
     LText := LText + LToken;
 
-    if (LXInEditor > 0) and (FTextDrawer.GetTextWidth(LText, Length(LText) + 1) > LXInEditor) then
+    LTextWidth := FTextDrawer.GetTextWidth(LText, Length(LText) + 1);
+    if (LXInEditor > 0) and (LTextWidth > LXInEditor) then
     begin
       Inc(Result.Column, FHighlighter.GetTokenPosition + FHighlighter.GetTokenLength);
 
@@ -2786,9 +2789,7 @@ begin
 
   LText := FLines[Result.Row - 1];
   Inc(Result.Column, Length(LText));
-
-  Inc(Result.Column, (X + FHorizontalScrollPosition - FLeftMarginWidth -
-    FTextDrawer.GetTextWidth(LText, Length(LText) + 1)) div FTextDrawer.CharWidth);
+  Inc(Result.Column, (X + FHorizontalScrollPosition - FLeftMarginWidth - LTextWidth) div FTextDrawer.CharWidth);
 end;
 
 function TBCBaseEditor.PixelsToTextPosition(X, Y: Integer): TBCEditorTextPosition;
@@ -10568,7 +10569,6 @@ var
     LText: string;
     LPChar: PChar;
     LOldPenColor: TColor;
-    LIsItalic: Boolean;
     LTextRect: TRect;
     LX, LY: Integer;
 
@@ -10655,8 +10655,7 @@ var
       LPChar := PChar(LText);
       LTextRect := LTokenRect;
 
-      LIsItalic := not AMinimap and (fsItalic in LTokenHelper.FontStyle);
-      if LIsItalic and (LPChar^ <> BCEDITOR_SPACE_CHAR) then
+      if LTokenHelper.IsItalic and (LPChar^ <> BCEDITOR_SPACE_CHAR) then
         Inc(LTextRect.Right, FTextDrawer.CharWidth);
       if (FItalicOffset <> 0) and (LPChar^ = BCEDITOR_SPACE_CHAR) then
         Inc(LTextRect.Left, FItalicOffset + 1);
@@ -10685,7 +10684,7 @@ var
       begin
         Winapi.Windows.ExtTextOut(ACanvas.Handle, LTextRect.Left, LTextRect.Top, ETO_OPAQUE or ETO_CLIPPED, @LTextRect, LPChar, ATokenLength, nil);
 
-        if LIsItalic and (LPChar^ <> BCEDITOR_SPACE_CHAR) then
+        if LTokenHelper.IsItalic and (LPChar^ <> BCEDITOR_SPACE_CHAR) then
         begin
           FItalicOffset := 0;
           for LX := LTokenRect.Right + 1 to LTextRect.Right do
@@ -10953,6 +10952,7 @@ var
       LTokenHelper.Foreground := AForeground;
       LTokenHelper.Background := ABackground;
       LTokenHelper.FontStyle := AFontStyle;
+      LTokenHelper.IsItalic := not AMinimap and (fsItalic in AFontStyle);
       LTokenHelper.MatchingPairUnderline := AMatchingPairUnderline;
     end;
   end;
