@@ -32,7 +32,7 @@ type
     FMatchingPairs: TList;
     FMultiHighlighter: Boolean;
     FName: string;
-    FPrepared: Boolean;
+    //FPrepared: Boolean;
     FPreviousEndOfLine: Boolean;
     FRunPosition: LongInt;
     FSkipCloseKeyChars: TBCEditorCharSet;
@@ -130,7 +130,7 @@ begin
 
   FCompletionProposalSkipRegions := TBCEditorSkipRegions.Create(TBCEditorSkipRegionItem);
 
-  FPrepared := False;
+  //FPrepared := False;
 
   Info := TBCEditorHighlighterInfo.Create;
   FMainRules := TBCEditorRange.Create;
