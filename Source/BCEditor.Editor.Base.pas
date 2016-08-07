@@ -1,6 +1,4 @@
 ﻿{$message warn 'Fix word wrap painting.'}
-{$message warn 'Optimize PaintTextLines.'}
-{$message warn 'Run profiler.'}
 unit BCEditor.Editor.Base;
 
 interface
@@ -230,6 +228,7 @@ type
     function GetMatchingToken(const ADisplayPosition: TBCEditorDisplayPosition; var AMatch: TBCEditorMatchingPairMatch): TBCEditorMatchingTokenResult;
     function GetMouseMoveScrollCursors(AIndex: Integer): HCURSOR;
     function GetMouseMoveScrollCursorIndex: Integer;
+    function GetScrollAreaWidth: Integer;
     function GetSelectionAvailable: Boolean;
     function GetSelectedText: string;
     function GetSearchResultCount: Integer;
@@ -1821,6 +1820,11 @@ begin
     Exit(scEast);
 end;
 
+function TBCBaseEditor.GetScrollAreaWidth: Integer;
+begin
+  Result := Max(ClientWidth - FLeftMargin.GetWidth - FCodeFolding.GetWidth - 2 - FMinimap.GetWidth - FSearch.Map.GetWidth, 0);
+end;
+
 function TBCBaseEditor.GetSelectionAvailable: Boolean;
 begin
   Result := FSelection.Visible and
@@ -2771,14 +2775,15 @@ begin
 
     LText := LText + LToken;
 
-    LTextWidth := FTextDrawer.GetTextWidth(LText, Length(LText) + 1);
+    LTextWidth := LTextWidth + FTextDrawer.GetTextWidth(LToken, Length(LToken) + 1);
     if (LXInEditor > 0) and (LTextWidth > LXInEditor) then
     begin
       Inc(Result.Column, FHighlighter.GetTokenPosition + FHighlighter.GetTokenLength);
 
-      while FTextDrawer.GetTextWidth(LText, Length(LText) + 1) > LXInEditor do
+      while LTextWidth > LXInEditor do
       begin
-        LText := LText.Remove(LText.Length - 1);
+        LToken := LText[LText.Length]; // TODO: Unicode combined characters
+        Dec(LTextWidth, FTextDrawer.GetTextWidth(LToken, Length(LToken) + 1));
         Dec(Result.Column);
       end;
 
@@ -6395,8 +6400,7 @@ begin
     FLeftMargin.Width := AValue;
     if HandleAllocated then
     begin
-      FScrollAreaWidth := Max(ClientWidth - FLeftMargin.GetWidth - FCodeFolding.GetWidth - 2 - FMinimap.GetWidth -
-        FSearch.Map.GetWidth, 0);
+      FScrollAreaWidth := GetScrollAreaWidth;
       if FWordWrap.Enabled then
         FResetLineNumbersCache := True;
       UpdateScrollBars;
@@ -6698,8 +6702,7 @@ begin
   if Visible and HandleAllocated and (FTextDrawer.CharWidth <> 0) then
   begin
     FTextDrawer.SetBaseFont(Font);
-    FScrollAreaWidth := Max(ClientWidth - FLeftMargin.GetWidth - FCodeFolding.GetWidth - 2 - FMinimap.GetWidth -
-      FSearch.Map.GetWidth, 0);
+    FScrollAreaWidth := GetScrollAreaWidth;
     FVisibleLines := ClientHeight div GetLineHeight;
 
     if FMinimap.Visible then
@@ -10441,6 +10444,8 @@ var
   LPaintedWidth: Integer;
   LRGBColor: Cardinal;
   LLineEndRect: TRect;
+  LMinimapLeftWidth: Integer;
+  LSearchMapWidth: Integer;
 
   function IsBookmarkOnCurrentLine: Boolean;
   var
@@ -10539,11 +10544,11 @@ var
     if AMinimap then
     begin
       if FMinimap.Align = maRight then
-        Result := ClientRect.Width - FMinimap.GetWidth;
+        Result := LMinimapLeftWidth;
       if FSearch.Map.Align = saRight then
-        Dec(Result, FSearch.Map.GetWidth)
+        Dec(Result, LSearchMapWidth)
       else
-        Inc(Result, FSearch.Map.GetWidth);
+        Inc(Result, LSearchMapWidth);
     end;
 
     if (LCurrentLineLength <> 0) and (AIndex > 0) and (AIndex <= LCurrentLineLength + 1) then
@@ -10700,12 +10705,6 @@ var
             Inc(LTokenRect.Right, FItalicOffset + 1);
         end
       end;
-
-      {ACanvas.MoveTo(LTextRect.Left, LTextRect.Top);
-      ACanvas.LineTo(LTextRect.Right - 1, LTextRect.Top);
-      ACanvas.LineTo(LTextRect.Right - 1, LTextRect.Bottom - 1);
-      ACanvas.LineTo(LTextRect.Left, LTextRect.Bottom - 1);
-      ACanvas.LineTo(LTextRect.Left, LTextRect.Top);  }
 
       if LTokenHelper.MatchingPairUnderline then
       begin
@@ -10870,10 +10869,22 @@ var
   procedure PrepareTokenHelper(const AToken: string; ACharsBefore, ATokenLength: Integer; AForeground, ABackground: TColor;
     AFontStyle: TFontStyles; AMatchingPairUnderline: Boolean; ACustomBackgroundColor: Boolean);
   var
-    i: Integer;
     LCanAppend: Boolean;
     LEmptySpace: TBCEditorEmptySpace;
-    LPToken: PChar;
+    LPText, LPToken: PChar;
+
+    procedure CopyToken;
+    var
+      i: Integer;
+    begin
+      for i := 1 to ATokenLength do
+      begin
+        LPText^ := LPToken^;
+        Inc(LPToken);
+        Inc(LPText);
+      end;
+    end;
+
   begin
     if (ABackground = clNone) or ((FActiveLine.Color <> clNone) and LIsCurrentLine and not ACustomBackgroundColor) then
       ABackground := GetBackgroundColor;
@@ -10928,11 +10939,9 @@ var
         LTokenHelper.MaxLength := LTokenHelper.Length + ATokenLength + 32;
         SetLength(LTokenHelper.Text, LTokenHelper.MaxLength);
       end;
-      for i := 1 to ATokenLength do
-      begin
-        LTokenHelper.Text[LTokenHelper.Length + i] := LPToken^;
-        Inc(LPToken);
-      end;
+      LPText := PChar(LTokenHelper.Text);
+      Inc(LPText, LTokenHelper.Length);
+      CopyToken;
       Inc(LTokenHelper.Length, ATokenLength);
     end
     else
@@ -10943,11 +10952,8 @@ var
         LTokenHelper.MaxLength := LTokenHelper.Length + 32;
         SetLength(LTokenHelper.Text, LTokenHelper.MaxLength);
       end;
-      for i := 1 to ATokenLength do
-      begin
-        LTokenHelper.Text[i] := LPToken^;
-        Inc(LPToken);
-      end;
+      LPText := PChar(LTokenHelper.Text);
+      CopyToken;
       LTokenHelper.CharsBefore := ACharsBefore;
       LTokenHelper.Foreground := AForeground;
       LTokenHelper.Background := ABackground;
@@ -11349,6 +11355,12 @@ var
   end;
 
 begin
+  if AMinimap then
+  begin
+    LMinimapLeftWidth := ClientRect.Width - FMinimap.GetWidth;
+    LSearchMapWidth := FSearch.Map.GetWidth;
+  end;
+
   if ALastLine >= AFirstLine then
   begin
     ComputeSelectionInfo;
