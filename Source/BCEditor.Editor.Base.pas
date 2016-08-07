@@ -2727,7 +2727,7 @@ end;
 
 function TBCBaseEditor.PixelAndRowToDisplayPosition(const X, ARow: Integer; const ALineText: string = ''): TBCEditorDisplayPosition;
 var
-  LToken: string;
+  LToken, LLastChar: string;
   LFontStyles, LPreviousFontStyles: TFontStyles;
   LText: string;
   LHighlighterAttribute: TBCEditorHighlighterAttribute;
@@ -2755,7 +2755,7 @@ begin
   LPreviousFontStyles := [];
   LText := '';
   LTextWidth := 0;
-  LXInEditor := X + FHorizontalScrollPosition - FLeftMarginWidth;
+  LXInEditor := X + FHorizontalScrollPosition - FLeftMarginWidth + 4;
 
   LHighlighterAttribute := FHighlighter.GetTokenAttribute;
   if Assigned(LHighlighterAttribute) then
@@ -2779,11 +2779,11 @@ begin
     if (LXInEditor > 0) and (LTextWidth > LXInEditor) then
     begin
       Inc(Result.Column, FHighlighter.GetTokenPosition + FHighlighter.GetTokenLength);
-
       while LTextWidth > LXInEditor do
       begin
-        LToken := LText[LText.Length]; // TODO: Unicode combined characters
-        Dec(LTextWidth, FTextDrawer.GetTextWidth(LToken, Length(LToken) + 1));
+        LLastChar := LToken[LToken.Length]; // TODO: Unicode combined characters
+        LToken := LToken.Remove(LToken.Length - 1);
+        Dec(LTextWidth, FTextDrawer.GetTextWidth(LLastChar, Length(LLastChar) + 1));
         Dec(Result.Column);
       end;
 
