@@ -501,7 +501,8 @@ type
     procedure PaintScrollShadow(ACanvas: TCanvas; AClipRect: TRect);
     procedure PaintSearchMap(AClipRect: TRect);
     procedure PaintSearchResults(ACanvas: TCanvas);
-    procedure PaintSpecialCharsEndOfLine(ACanvas: TCanvas; ALine, ALineLength, AFirstColumn: Integer; ALineRect: TRect);
+    procedure PaintSpecialCharsEndOfLine(ACanvas: TCanvas; const ALine: Integer; const ALineEndRect: TRect;
+      const ALineEndInsideSelection: Boolean);
     procedure PaintSyncItems(ACanvas: TCanvas);
     procedure PaintTextLines(ACanvas: TCanvas; AClipRect: TRect; const AFirstLine, ALastLine: Integer; const AMinimap: Boolean);
     procedure RedoItem;
@@ -3903,7 +3904,7 @@ begin
       end;
     end;
 
-    LVisibleChars := GetVisibleChars(LTextCaretPosition.Line + 1, LLineText);
+    LVisibleChars := GetVisibleChars(LTextCaretPosition.Line + 1);
     if FWordWrap.Enabled and (LTextCaretPosition.Char > LVisibleChars) then
       CreateLineNumbersCache(True);
     TextCaretPosition := LTextCaretPosition;
@@ -4147,7 +4148,7 @@ begin
         LHelper := '';
       FUndoList.AddChange(crInsert, LTextCaretPosition, LBlockStartPosition, TextCaretPosition, LHelper,
         smNormal);
-      LVisibleChars := GetVisibleChars(LTextCaretPosition.Line + 1, LLineText);
+      LVisibleChars := GetVisibleChars(LTextCaretPosition.Line + 1);
       if DisplayCaretX >= FHorizontalScrollPosition div FTextDrawer.CharWidth + LVisibleChars then
         SetHorizontalScrollPosition(FHorizontalScrollPosition + Min(25 * FTextDrawer.CharWidth, LVisibleChars - 1));
     finally
@@ -10267,25 +10268,22 @@ begin
   end;
 end;
 
-procedure TBCBaseEditor.PaintSpecialCharsEndOfLine(ACanvas: TCanvas; ALine, ALineLength, AFirstColumn: Integer; ALineRect: TRect);
+procedure TBCBaseEditor.PaintSpecialCharsEndOfLine(ACanvas: TCanvas; const ALine: Integer; const ALineEndRect: TRect;
+  const ALineEndInsideSelection: Boolean);
 var
   Y: Integer;
   LCharRect: TRect;
   LPilcrow: string;
   LPenColor: TColor;
-  LVisibleChars: Integer;
-  LTextPositionInSelection: Boolean;
-  LTextCaretPosition: TBCEditorTextPosition;
 begin
   if FSpecialChars.Visible then
   begin
-    LTextCaretPosition.Line := ALine - 1;
-    LTextCaretPosition.Char := ALineLength;
-    LTextPositionInSelection := IsTextPositionInSelection(LTextCaretPosition);
+    if ALineEndRect.Left > ClientRect.Right then
+      Exit;
 
-    if FSpecialChars.Selection.Visible and LTextPositionInSelection or not LTextPositionInSelection then
+    if FSpecialChars.Selection.Visible and ALineEndInsideSelection or not ALineEndInsideSelection then
     begin
-      if FSpecialChars.Selection.Visible and LTextPositionInSelection then
+      if FSpecialChars.Selection.Visible and ALineEndInsideSelection then
         LPenColor := FSpecialChars.Selection.Color
       else
       if scoMiddleColor in FSpecialChars.Options then
@@ -10297,18 +10295,17 @@ begin
         LPenColor := FSpecialChars.Color;
 
       ACanvas.Pen.Color := LPenColor;
-      LVisibleChars := GetVisibleChars(ALine);
 
-      if FSpecialChars.EndOfLine.Visible and (ALine <> FLineNumbersCount) and (ALineLength - AFirstColumn < LVisibleChars) then
+      if FSpecialChars.EndOfLine.Visible and (ALine <> FLineNumbersCount) then
       with ACanvas do
       begin
         Pen.Color := LPenColor;
-        LCharRect.Top := ALineRect.Top;
+        LCharRect.Top := ALineEndRect.Top;
         if FSpecialChars.EndOfLine.Style = eolPilcrow then
-          LCharRect.Bottom := ALineRect.Bottom
+          LCharRect.Bottom := ALineEndRect.Bottom
         else
-          LCharRect.Bottom := ALineRect.Bottom - 3;
-        LCharRect.Left := ALineRect.Left; //FTextDrawer.GetTextWidth(FLines.ExpandedStrings[ALine - 1], ALineLength + 1);
+          LCharRect.Bottom := ALineEndRect.Bottom - 3;
+        LCharRect.Left := ALineEndRect.Left;
         if FSpecialChars.EndOfLine.Style = eolEnter then
           LCharRect.Left := LCharRect.Left + 4;
         if FSpecialChars.EndOfLine.Style = eolPilcrow then
@@ -10443,6 +10440,7 @@ var
   LPaintedColumn: Integer;
   LPaintedWidth: Integer;
   LRGBColor: Cardinal;
+  LLineEndRect: TRect;
 
   function IsBookmarkOnCurrentLine: Boolean;
   var
@@ -10707,7 +10705,7 @@ var
       ACanvas.LineTo(LTextRect.Right - 1, LTextRect.Top);
       ACanvas.LineTo(LTextRect.Right - 1, LTextRect.Bottom - 1);
       ACanvas.LineTo(LTextRect.Left, LTextRect.Bottom - 1);
-      ACanvas.LineTo(LTextRect.Left, LTextRect.Top);}
+      ACanvas.LineTo(LTextRect.Left, LTextRect.Top);  }
 
       if LTokenHelper.MatchingPairUnderline then
       begin
@@ -10720,6 +10718,8 @@ var
 
       LTokenRect.Left := LTokenRect.Right;
     end;
+    if FSpecialChars.Visible and (ALast >= LCurrentLineLength) then
+      LLineEndRect := LTokenRect;
   end;
 
   procedure PaintHighlightToken(AFillToEndOfLine: Boolean);
@@ -11265,6 +11265,7 @@ var
 
         LIsLineSelected := not LIsSelectionInsideLine and (LLineSelectionStart > 0);
         LTokenRect := LLineRect;
+        LLineEndRect := LLineRect;
 
         if LCurrentLine = 1 then
           FHighlighter.ResetCurrentRange
@@ -11322,10 +11323,12 @@ var
         if not AMinimap then
         begin
           PaintCodeFoldingCollapseMark(ACanvas, LFoldRange, LCurrentLineText, LTokenPosition, LTokenLength, LCurrentLine, FHorizontalScrollPosition, LLineRect);
-          PaintSpecialCharsEndOfLine(ACanvas, LCurrentLine, LCurrentLineLength, LPreviousFirstColumn, LTokenRect);
-          LPreviousFirstColumn := LFirstColumn;
+          PaintSpecialCharsEndOfLine(ACanvas, LCurrentLine, LLineEndRect,
+            (LCurrentLineLength + 1 >= LLineSelectionStart) and (LCurrentLineLength + 1 < LLineSelectionEnd));
           PaintCodeFoldingCollapsedLine(ACanvas, LFoldRange, LLineRect);
         end;
+
+        LPreviousFirstColumn := LFirstColumn;
 
         if Assigned(FOnAfterLinePaint) then
           FOnAfterLinePaint(Self, ACanvas, LLineRect, LCurrentLine, AMinimap);
