@@ -118,8 +118,10 @@ type
     procedure SetBaseStyle(const AValue: TFontStyles);
     procedure SetForegroundColor(AValue: TColor);
     procedure SetStyle(AValue: TFontStyles);
+    property BackgroundColor: TColor read FBackgroundColor;
     property CharHeight: Integer read FCharHeight;
     property CharWidth: Integer read FCharWidth;
+    property Color: TColor read FColor;
     property FontStock: TBCEditorFontStock read FFontStock;
   end;
 

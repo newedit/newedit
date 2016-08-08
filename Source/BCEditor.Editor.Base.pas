@@ -248,7 +248,6 @@ type
     function IsMultiEditCaretFound(const ALine: Integer): Boolean;
     function IsWordSelected: Boolean;
     function LeftSpaceCount(const ALine: string; AWantTabs: Boolean = False): Integer;
-    //function NextSelectedWordPosition: Boolean;
     function NextWordPosition: TBCEditorTextPosition; overload;
     function NextWordPosition(const ATextPosition: TBCEditorTextPosition): TBCEditorTextPosition; overload;
     function OpenClipboard: Boolean;
@@ -499,7 +498,6 @@ type
     procedure PaintRightMarginMove;
     procedure PaintScrollShadow(ACanvas: TCanvas; AClipRect: TRect);
     procedure PaintSearchMap(AClipRect: TRect);
-    procedure PaintSearchResults(ACanvas: TCanvas);
     procedure PaintSpecialCharsEndOfLine(ACanvas: TCanvas; const ALine: Integer; const ALineEndRect: TRect;
       const ALineEndInsideSelection: Boolean);
     procedure PaintSyncItems(ACanvas: TCanvas);
@@ -2712,17 +2710,8 @@ begin
 end;
 
 function TBCBaseEditor.PixelsToDisplayPosition(const X, Y: Integer): TBCEditorDisplayPosition;
-var
-  {LLinesY,} LRow: Integer;
 begin
-//  LLinesY := FVisibleLines * GetLineHeight;
-  { don't return a partially visible last line }
-  //if Y >= LLinesY then  TODO
-  //  Y := Max(LLinesY - 1, 0);
-
-  LRow := GetSelectedRow(Y);
-
-  Result := PixelAndRowToDisplayPosition(X, LRow);
+  Result := PixelAndRowToDisplayPosition(X, GetSelectedRow(Y));
 end;
 
 function TBCBaseEditor.PixelAndRowToDisplayPosition(const X, ARow: Integer; const ALineText: string = ''): TBCEditorDisplayPosition;
@@ -9252,9 +9241,6 @@ begin
     if FCodeFolding.Visible and (cfoShowIndentGuides in CodeFolding.Options) then
       PaintGuides(FTextLinesBufferBitmap.Canvas, FTopLine, FTopLine + FVisibleLines, False);
 
-    if soHighlightResults in FSearch.Options then
-      PaintSearchResults(FTextLinesBufferBitmap.Canvas);
-
     if FSyncEdit.Enabled and FSyncEdit.Active then
       PaintSyncItems(FTextLinesBufferBitmap.Canvas);
 
@@ -9763,6 +9749,7 @@ var
         LLineNumber := '';
 
         FTextDrawer.SetBackgroundColor(FLeftMargin.Colors.Background);
+
         if (not Assigned(FMultiCarets) and (LLine = GetTextCaretY + 1) or
           Assigned(FMultiCarets) and IsMultiEditCaretFound(LLine)) and
           (FLeftMargin.Colors.ActiveLineBackground <> clNone) then
@@ -10024,7 +10011,7 @@ var
   end;
 
 begin
-  Canvas.Brush.Color := FLeftMargin.Colors.Background;
+  FTextDrawer.SetBackgroundColor(FLeftMargin.Colors.Background);
   Winapi.Windows.ExtTextOut(Canvas.Handle, 0, 0, ETO_OPAQUE, AClipRect, '', 0, nil); { fill left margin rect }
   LLineHeight := GetLineHeight;
   PaintLineNumbers;
@@ -10215,62 +10202,6 @@ begin
   end;
 end;
 
-procedure TBCBaseEditor.PaintSearchResults(ACanvas: TCanvas);
-var
-  i: Integer;
-  LTextPosition: TBCEditorTextPosition;
-  LDisplayPosition: TBCEditorDisplayPosition;
-  LRect: TRect;
-  LText: string;
-  LLength: Integer;
-  LSelectionBeginPosition, LSelectionEndPosition: TBCEditorTextPosition;
-begin
-  if not Assigned(FSearch.Lines) then
-    Exit;
-  if not Assigned(FSearchEngine) then
-    Exit;
-  if FSearchEngine.ResultCount = 0 then
-    Exit;
-
-  if FSearch.Highlighter.Colors.Foreground <> clNone then
-    FTextDrawer.SetForegroundColor(FSearch.Highlighter.Colors.Foreground);
-  FTextDrawer.SetBackgroundColor(FSearch.Highlighter.Colors.Background);
-  LLength := Length(FSearch.SearchText);
-
-  for i := 0 to FSearch.Lines.Count - 1 do
-  begin
-    LTextPosition := PBCEditorTextPosition(FSearch.Lines.Items[i])^;
-
-    if LTextPosition.Line + 1 > TopLine + VisibleLines then
-      Exit
-    else
-    if LTextPosition.Line + 1 >= TopLine then
-    begin
-      LSelectionBeginPosition := SelectionBeginPosition;
-      LSelectionEndPosition := SelectionEndPosition;
-      if (LSelectionBeginPosition.Line = LTextPosition.Line) and
-        (LSelectionBeginPosition.Char >= LTextPosition.Char) and
-        (LSelectionBeginPosition.Char <= LTextPosition.Char + LLength) or
-        (LSelectionEndPosition.Line = LTextPosition.Line) and
-        (LSelectionEndPosition.Char >= LTextPosition.Char) and
-        (LSelectionEndPosition.Char <= LTextPosition.Char + LLength) then
-        Continue
-      else
-      begin
-        LText := Copy(FLines[LTextPosition.Line], LTextPosition.Char, LLength);
-        LRect.Top := (LTextPosition.Line - TopLine + 1) * LineHeight;
-        LRect.Bottom := LRect.Top + LineHeight;
-
-        LDisplayPosition := TextToDisplayPosition(LTextPosition);
-
-        LRect.Left := (LDisplayPosition.Column - 1) * FTextDrawer.CharWidth;
-        LRect.Right := LRect.Left + LLength * FTextDrawer.CharWidth;
-        Winapi.Windows.ExtTextOut(ACanvas.Handle, LRect.Left, LRect.Top, ETO_OPAQUE or ETO_CLIPPED, @LRect, PChar(LText), LLength, nil);
-      end;
-    end;
-  end;
-end;
-
 procedure TBCBaseEditor.PaintSpecialCharsEndOfLine(ACanvas: TCanvas; const ALine: Integer; const ALineEndRect: TRect;
   const ALineEndInsideSelection: Boolean);
 var
@@ -10446,6 +10377,8 @@ var
   LLineEndRect: TRect;
   LMinimapLeftWidth: Integer;
   LSearchMapWidth: Integer;
+  LCurrentSearchIndex: Integer;
+  LTextPosition: TBCEditorTextPosition;
 
   function IsBookmarkOnCurrentLine: Boolean;
   var
@@ -10574,6 +10507,9 @@ var
     LOldPenColor: TColor;
     LTextRect: TRect;
     LX, LY: Integer;
+    LToken: string;
+    LCharCount: Integer;
+    LSearchTextLength: Integer;
 
     procedure PaintSpecialCharSpace;
     var
@@ -10645,6 +10581,90 @@ var
       end;
     end;
 
+    {$message warn 'Fix PaintSearchResults.'}
+    procedure PaintSearchResults;
+    var
+      LSearchRect: TRect;
+      LOldColor, LOldBackgroundColor: TColor;
+
+      function NextItem: Boolean;
+      begin
+        Result := True;
+        Inc(LCurrentSearchIndex);
+        if LCurrentSearchIndex < FSearch.Lines.Count then
+          LTextPosition := PBCEditorTextPosition(FSearch.Lines.Items[LCurrentSearchIndex])^
+        else
+        begin
+          LCurrentSearchIndex := -1;
+          Result := False;
+        end;
+      end;
+      
+    begin
+      if soHighlightResults in FSearch.Options then
+        if LCurrentSearchIndex <> -1 then
+        begin
+          LOldColor := FTextDrawer.Color;
+          LOldBackgroundColor := FTextDrawer.BackgroundColor;
+
+          if FSearch.Highlighter.Colors.Foreground <> clNone then
+            FTextDrawer.SetForegroundColor(FSearch.Highlighter.Colors.Foreground);
+          FTextDrawer.SetBackgroundColor(FSearch.Highlighter.Colors.Background);
+            
+          LTextPosition := PBCEditorTextPosition(FSearch.Lines.Items[LCurrentSearchIndex])^;
+          LSearchTextLength := Length(FSearch.SearchText);
+
+          while LCurrentLine - 1 = LTextPosition.Line do
+          begin
+            if ACharsBefore + ATokenLength < LTextPosition.Char then
+              Break;                    
+              
+            if (FSelectionBeginPosition.Line = LTextPosition.Line) and
+              (FSelectionBeginPosition.Char >= LTextPosition.Char) and
+              (FSelectionBeginPosition.Char <= LTextPosition.Char + LSearchTextLength) or
+              (FSelectionEndPosition.Line = LTextPosition.Line) and
+              (FSelectionEndPosition.Char >= LTextPosition.Char) and
+              (FSelectionEndPosition.Char <= LTextPosition.Char + LSearchTextLength) then
+            begin
+              if not NextItem then
+                Break;
+              Continue;
+            end;
+          
+            LToken := LText;
+            LSearchRect := LTextRect;
+            
+            LCharCount := LTextPosition.Char - ACharsBefore - 1;
+            if LCharCount > 0 then
+            begin
+              LToken := Copy(LText, 1, LCharCount);
+              Inc(LSearchRect.Left, FTextDrawer.GetTextWidth(LToken, LCharCount + 1));
+              LToken := Copy(LText, LCharCount + 1, Length(LText));
+            end;
+
+            LCharCount := ACharsBefore + Length(LText) + 1 - LTextPosition.Char - LSearchTextLength; 
+            if LCharCount > 0 then
+            begin
+              LToken := LToken.Remove(Length(LToken) - LCharCount);
+              LSearchRect.Right := LSearchRect.Left + FTextDrawer.GetTextWidth(LToken, Length(LToken) + 1);
+            end;
+
+            Winapi.Windows.ExtTextOut(ACanvas.Handle, LSearchRect.Left, LSearchRect.Top, ETO_OPAQUE or ETO_CLIPPED, @LSearchRect,
+              PChar(LToken), Length(LToken), nil);
+
+            if LTextPosition.Char + LSearchTextLength < ALast then
+            begin
+              if not NextItem then
+                Break;
+            end
+            else
+              Break;
+          end;
+          FTextDrawer.SetForegroundColor(LOldColor);
+          FTextDrawer.SetBackgroundColor(LOldBackgroundColor); 
+        end;
+    end;
+
   begin
     if (ALast > AFirst) and (LTokenRect.Right > LTokenRect.Left) then
     begin
@@ -10685,7 +10705,10 @@ var
       end
       else
       begin
-        Winapi.Windows.ExtTextOut(ACanvas.Handle, LTextRect.Left, LTextRect.Top, ETO_OPAQUE or ETO_CLIPPED, @LTextRect, LPChar, ATokenLength, nil);
+        Winapi.Windows.ExtTextOut(ACanvas.Handle, LTextRect.Left, LTextRect.Top, ETO_OPAQUE or ETO_CLIPPED, @LTextRect,
+          LPChar, ATokenLength, nil);
+
+        PaintSearchResults;
 
         if LTokenHelper.IsItalic and (LPChar^ <> BCEDITOR_SPACE_CHAR) then
         begin
@@ -11359,6 +11382,21 @@ begin
   begin
     LMinimapLeftWidth := ClientRect.Width - FMinimap.GetWidth;
     LSearchMapWidth := FSearch.Map.GetWidth;
+  end;
+
+  LCurrentSearchIndex := -1;
+
+  if Assigned(FSearch.Lines) and (FSearch.Lines.Count > 0) then
+  begin
+    LCurrentSearchIndex := 0;
+    while LCurrentSearchIndex < FSearch.Lines.Count do
+    begin
+      LTextPosition := PBCEditorTextPosition(FSearch.Lines.Items[LCurrentSearchIndex])^;
+      if LTextPosition.Line + 1 >= TopLine then
+        Break
+      else
+        Inc(LCurrentSearchIndex);
+    end;
   end;
 
   if ALastLine >= AFirstLine then
