@@ -10581,7 +10581,6 @@ var
       end;
     end;
 
-    {$message warn 'Fix PaintSearchResults.'}
     procedure PaintSearchResults;
     var
       LSearchRect: TRect;
@@ -10652,7 +10651,7 @@ var
             Winapi.Windows.ExtTextOut(ACanvas.Handle, LSearchRect.Left, LSearchRect.Top, ETO_OPAQUE or ETO_CLIPPED, @LSearchRect,
               PChar(LToken), Length(LToken), nil);
 
-            if LTextPosition.Char + LSearchTextLength < ALast then
+            if LTextPosition.Char + LSearchTextLength - 1 <= LCurrentLineLength then
             begin
               if not NextItem then
                 Break;
