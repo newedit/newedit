@@ -301,6 +301,7 @@ type
   TBCEditorMinimapOption = (
     moShowBookmarks,
     moShowIndentGuides,
+    moShowSearchResults,
     moShowSpecialChars
   );
   TBCEditorMinimapOptions = set of TBCEditorMinimapOption;

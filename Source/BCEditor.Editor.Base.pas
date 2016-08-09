@@ -10707,7 +10707,8 @@ var
         Winapi.Windows.ExtTextOut(ACanvas.Handle, LTextRect.Left, LTextRect.Top, ETO_OPAQUE or ETO_CLIPPED, @LTextRect,
           LPChar, ATokenLength, nil);
 
-        PaintSearchResults;
+        if not AMinimap or AMinimap and (moShowSearchResults in FMinimap.Options) then
+          PaintSearchResults;
 
         if LTokenHelper.IsItalic and (LPChar^ <> BCEDITOR_SPACE_CHAR) then
         begin
