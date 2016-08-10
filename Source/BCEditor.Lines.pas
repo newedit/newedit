@@ -89,7 +89,7 @@ type
     function StringLength(AIndex: Integer): Integer;
     function Add(const AValue: string): Integer; override;
     function GetExpandedString(AIndex: Integer; ATabChar: Char): string; overload;
-    function GetLengthOfLongestLine: Integer; overload;
+    function GetLengthOfLongestLine: Integer;
     function GetLineText(ALine: Integer): string;
     procedure Clear; override;
     procedure Delete(AIndex: Integer); override;

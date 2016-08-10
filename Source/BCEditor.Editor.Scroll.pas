@@ -7,7 +7,7 @@ uses
   BCEditor.Editor.Scroll.Shadow;
 
 const
-  BCEDITOR_DEFAULT_SCROLL_OPTIONS = [soAutosizeMaxWidth, soPastEndOfLine, soShowHint, soWheelClickMove];
+  BCEDITOR_DEFAULT_SCROLL_OPTIONS = [{soAutosizeMaxWidth,} soPastEndOfLine, soShowVerticalScrollHint, soWheelClickMove];
 
 type
   TBCEditorScroll = class(TPersistent)

@@ -277,7 +277,7 @@ type
     procedure CreateLineNumbersCache(AResetCache: Boolean = False);
     procedure CreateShadowBitmap(const AClipRect: TRect; ABitmap: Vcl.Graphics.TBitmap;
       const AShadowAlphaArray: TBCEditorArrayOfSingle; const AShadowAlphaByteArray: PByteArray);
-    procedure DeflateMinimapRect(var ARect: TRect);
+    procedure DeflateMinimapAndSearchMapRect(var ARect: TRect);
     procedure DeleteChar;
     procedure DeleteLastWordOrBeginningOfLine(const ACommand: TBCEditorCommand);
     procedure DeleteLine;
@@ -2308,8 +2308,12 @@ begin
 end;
 
 function TBCBaseEditor.GetVisibleChars(const ARow: Integer; const ALineText: string = ''): Integer;
+var
+  LRect: TRect;
 begin
-  Result := PixelAndRowToDisplayPosition(ClientRect.Right, ARow, ALineText).Column;
+  LRect := ClientRect;
+  DeflateMinimapAndSearchMapRect(LRect);
+  Result := PixelAndRowToDisplayPosition(LRect.Right, ARow, ALineText).Column;
   if FWordWrap.Enabled then
   case FWordWrap.Style of
     wwsRightMargin:
@@ -3288,7 +3292,7 @@ begin
 
     LScrollBounds := Bounds(LScrollBoundsLeft, 0, LScrollBoundsRight, FVisibleLines * GetLineHeight);
 
-    DeflateMinimapRect(LScrollBounds);
+    DeflateMinimapAndSearchMapRect(LScrollBounds);
 
     if BorderStyle = bsNone then
       InflateRect(LScrollBounds, -2, -2);
@@ -3313,7 +3317,7 @@ begin
   end;
 end;
 
-procedure TBCBaseEditor.DeflateMinimapRect(var ARect: TRect);
+procedure TBCBaseEditor.DeflateMinimapAndSearchMapRect(var ARect: TRect);
 begin
   if FMinimap.Align = maRight then
     ARect.Right := ClientRect.Width - FMinimap.GetWidth
@@ -3836,8 +3840,8 @@ begin
 
     if FInsertMode then
     begin
-      if not FWordWrap.Enabled and not (soAutosizeMaxWidth in FScroll.Options) and (DisplayCaretX > FScroll.MaxWidth) then
-        Exit;
+      //if not FWordWrap.Enabled {and not (soAutosizeMaxWidth in FScroll.Options) and (DisplayCaretX > FScroll.MaxWidth)} then
+      //  Exit;
 
       if LSpaceCount1 > 0 then
         LLineText := LLineText + LSpaceBuffer + AChar
@@ -3903,7 +3907,7 @@ begin
       CreateLineNumbersCache(True);
     TextCaretPosition := LTextCaretPosition;
     if LTextCaretPosition.Char >= LVisibleChars + FHorizontalScrollPosition div FTextDrawer.CharWidth then
-      SetHorizontalScrollPosition(FHorizontalScrollPosition + Min(25 * FTextDrawer.CharWidth, LVisibleChars - 1));
+      SetHorizontalScrollPosition(FHorizontalScrollPosition + Min(25, LVisibleChars - 1));
   end;
   if FSyncEdit.Active then
     DoSyncEdit;
@@ -4144,7 +4148,7 @@ begin
         smNormal);
       LVisibleChars := GetVisibleChars(LTextCaretPosition.Line + 1);
       if DisplayCaretX >= FHorizontalScrollPosition div FTextDrawer.CharWidth + LVisibleChars then
-        SetHorizontalScrollPosition(FHorizontalScrollPosition + Min(25 * FTextDrawer.CharWidth, LVisibleChars - 1));
+        SetHorizontalScrollPosition(FHorizontalScrollPosition + Min(25, LVisibleChars - 1));
     finally
       if LChangeScroll then
         FScroll.Options := FScroll.Options - [soPastEndOfLine];
@@ -6328,24 +6332,21 @@ begin
 end;
 
 procedure TBCBaseEditor.SetHorizontalScrollPosition(AValue: Integer);
-var
-  LMaxLineWidth: Integer;
-  LVisibleChars: Integer;
+//var
+  //LMaxLineWidth: Integer;
+  //LVisibleChars: Integer;
 begin
-  if FHorizontalScrollPosition = AValue then
-    Exit;
-
   if FWordWrap.Enabled then
     AValue := 0;
 
-  LVisibleChars := GetVisibleChars(DisplayCaretY);
+ (* LVisibleChars := GetVisibleChars(DisplayCaretY);
 
   if soPastEndOfLine in FScroll.Options then
   begin
-    if soAutoSizeMaxWidth in FScroll.Options then
+    //if soAutoSizeMaxWidth in FScroll.Options then
       LMaxLineWidth := MaxInt
-    else
-      LMaxLineWidth := FScroll.MaxWidth
+    //else
+    //  LMaxLineWidth := FScroll.MaxWidth
   end
   else
   begin
@@ -6355,15 +6356,15 @@ begin
     else
       LMaxLineWidth := 0;
   end;
-  AValue := MinMax(AValue, 0, LMaxLineWidth);
+  AValue := MinMax(AValue, 0, LMaxLineWidth);  *)
   if FHorizontalScrollPosition <> AValue then
   begin
     FHorizontalScrollPosition := AValue;
-    if ((soAutoSizeMaxWidth in FScroll.Options) or (soPastEndOfLine in FScroll.Options)) and
-      (FScroll.MaxWidth < LVisibleChars + FHorizontalScrollPosition div FTextDrawer.CharWidth) then
-      FScroll.MaxWidth := LVisibleChars + FHorizontalScrollPosition div FTextDrawer.CharWidth - 1
-    else
-      UpdateScrollBars;
+    //if ((soAutoSizeMaxWidth in FScroll.Options) or (soPastEndOfLine in FScroll.Options)) and
+    //  (FScroll.MaxWidth < LVisibleChars + FHorizontalScrollPosition div FTextDrawer.CharWidth) then
+    //FScroll.MaxWidth := LVisibleChars + FHorizontalScrollPosition div FTextDrawer.CharWidth - 1;
+
+    UpdateScrollBars;
     Invalidate;
   end;
 end;
@@ -6513,10 +6514,10 @@ end;
 procedure TBCBaseEditor.SetSelectionBeginPosition(AValue: TBCEditorTextPosition);
 begin
   FSelection.ActiveMode := Selection.Mode;
-  if (soPastEndOfLine in FScroll.Options) and not FWordWrap.Enabled then
-    AValue.Char := MinMax(AValue.Char, 1, FScroll.MaxWidth + 1)
-  else
-    AValue.Char := Max(AValue.Char, 1);
+  //if (soPastEndOfLine in FScroll.Options) and not FWordWrap.Enabled then
+  //  AValue.Char := MinMax(AValue.Char, 1, FScroll.MaxWidth + 1)
+  //else
+  AValue.Char := Max(AValue.Char, 1);
 
   AValue.Line := MinMax(AValue.Line, 0, FLines.Count - 1);
 
@@ -6530,10 +6531,10 @@ begin
   FSelection.ActiveMode := Selection.Mode;
   if FSelection.Visible then
   begin
-    if (soPastEndOfLine in FScroll.Options) and not FWordWrap.Enabled then
-      AValue.Char := MinMax(AValue.Char, 1, FScroll.MaxWidth + 1)
-    else
-      AValue.Char := Max(AValue.Char, 1);
+    //if (soPastEndOfLine in FScroll.Options) and not FWordWrap.Enabled then
+    //  AValue.Char := MinMax(AValue.Char, 1, FScroll.MaxWidth + 1)
+    //else
+    AValue.Char := Max(AValue.Char, 1);
     AValue.Line := MinMax(AValue.Line, 0, FLines.Count - 1);
 
     if (AValue.Char <> FSelectionEndPosition.Char) or (AValue.Line <> FSelectionEndPosition.Line) then
@@ -6657,10 +6658,10 @@ var
   end;
 
 begin
-  if (soPastEndOfLine in FScroll.Options) and not FWordWrap.Enabled then
-    LTextPosition.Char := MinMax(ATextPosition.Char, 1, FScroll.MaxWidth + 1)
-  else
-    LTextPosition.Char := Max(ATextPosition.Char, 1);
+  //if (soPastEndOfLine in FScroll.Options) and not FWordWrap.Enabled then
+  //  LTextPosition.Char := MinMax(ATextPosition.Char, 1, FScroll.MaxWidth + 1)
+  //else
+  LTextPosition.Char := Max(ATextPosition.Char, 1);
   LTextPosition.Line := MinMax(ATextPosition.Line, 0, FLines.Count - 1);
   LTempString := FLines[LTextPosition.Line] + BCEDITOR_NONE_CHAR;
   LLength := Length(LTempString);
@@ -6700,6 +6701,7 @@ begin
       FMinimap.CharHeight := FTextDrawer.CharHeight - 1;
       FMinimap.VisibleLines := ClientHeight div FMinimap.CharHeight;
       FMinimap.TopLine := Max(FTopLine - Abs(Trunc((FMinimap.VisibleLines - FVisibleLines) * (FTopLine / Max(FLineNumbersCount - FVisibleLines, 1)))), 1);
+      FTextDrawer.SetBaseFont(Font);
     end;
 
     if FWordWrap.Enabled then
@@ -6712,15 +6714,12 @@ begin
     if AFontChanged then
     begin
       if LeftMargin.LineNumbers.Visible then
-        LeftMarginChanged(Self)
-      else
-        UpdateScrollBars;
+        LeftMarginChanged(Self);
       ResetCaret;
       Exclude(FStateFlags, sfCaretChanged);
       Invalidate;
-    end
-    else
-      UpdateScrollBars;
+    end;
+    UpdateScrollBars;
 
     Exclude(FStateFlags, sfScrollbarChanged);
   end;
@@ -6883,7 +6882,6 @@ procedure TBCBaseEditor.UpdateScrollBars;
 var
   LMaxScroll: Integer;
   LScrollInfo: TScrollInfo;
-  LRightChar: Integer;
 
   procedure UpdateVerticalScrollBar;
   begin
@@ -6900,86 +6898,57 @@ var
         LScrollInfo.nMax := Max(1, LMaxScroll);
         LScrollInfo.nPage := VisibleLines;
         LScrollInfo.nPos := TopLine;
+        LScrollInfo.nTrackPos := 0;
       end
       else
       begin
         LScrollInfo.nMax := BCEDITOR_MAX_SCROLL_RANGE;
         LScrollInfo.nPage := MulDiv(BCEDITOR_MAX_SCROLL_RANGE, VisibleLines, LMaxScroll);
         LScrollInfo.nPos := MulDiv(BCEDITOR_MAX_SCROLL_RANGE, TopLine, LMaxScroll);
+        LScrollInfo.nTrackPos := 0;
       end;
 
       ShowScrollBar(Handle, SB_VERT, (LScrollInfo.nMin = 0) or (LScrollInfo.nMax > VisibleLines));
       SetScrollInfo(Handle, SB_VERT, LScrollInfo, True);
-
-      if LMaxScroll <= VisibleLines then
-      begin
-        if (TopLine <= 1) and (LMaxScroll <= VisibleLines) then
-          EnableScrollBar(Handle, SB_VERT, ESB_DISABLE_BOTH)
-        else
-        begin
-          EnableScrollBar(Handle, SB_VERT, ESB_ENABLE_BOTH);
-          if TopLine <= 1 then
-            EnableScrollBar(Handle, SB_VERT, ESB_DISABLE_UP)
-          else
-          if FLineNumbersCount - TopLine - VisibleLines + 1 = 0 then
-            EnableScrollBar(Handle, SB_VERT, ESB_DISABLE_DOWN);
-        end;
-      end
-      else
-        EnableScrollBar(Handle, SB_VERT, ESB_ENABLE_BOTH);
+      EnableScrollBar(Handle, SB_VERT, ESB_ENABLE_BOTH);
     end
     else
       ShowScrollBar(Handle, SB_VERT, False);
   end;
 
   procedure UpdateHorizontalScrollBar;
+  var
+    LPage: Integer;
   begin
-    if (FScroll.Bars in [ssBoth, ssHorizontal]) and
-      not FWordWrap.Enabled then
+    if (FScroll.Bars in [ssBoth, ssHorizontal]) and not FWordWrap.Enabled then
     begin
       if soPastEndOfLine in FScroll.Options then
         LMaxScroll := FScroll.MaxWidth
       else
-      if FWordWrap.Enabled then
-        LMaxScroll := FScrollAreaWidth
-      else
         LMaxScroll := Max(FLines.GetLengthOfLongestLine, 1);
+
+      LPage := GetVisibleChars(DisplayCaretY);
 
       if LMaxScroll <= BCEDITOR_MAX_SCROLL_RANGE then
       begin
         LScrollInfo.nMin := 0;
         LScrollInfo.nMax := LMaxScroll;
-        LScrollInfo.nPage := FScrollAreaWidth;
+        LScrollInfo.nPage := LPage;
         LScrollInfo.nPos := FHorizontalScrollPosition;
+        LScrollInfo.nTrackPos := 0;
       end
       else
       begin
         LScrollInfo.nMin := 0;
         LScrollInfo.nMax := BCEDITOR_MAX_SCROLL_RANGE;
-        LScrollInfo.nPage := MulDiv(BCEDITOR_MAX_SCROLL_RANGE, FScrollAreaWidth, LMaxScroll);
+        LScrollInfo.nPage := MulDiv(BCEDITOR_MAX_SCROLL_RANGE, LPage, LMaxScroll);
         LScrollInfo.nPos := MulDiv(BCEDITOR_MAX_SCROLL_RANGE, FHorizontalScrollPosition, LMaxScroll);
+        LScrollInfo.nTrackPos := 0;
       end;
 
-      ShowScrollBar(Handle, SB_HORZ, (LScrollInfo.nMin = 0) or (LScrollInfo.nMax > FScrollAreaWidth));
+      ShowScrollBar(Handle, SB_HORZ, True);
       SetScrollInfo(Handle, SB_HORZ, LScrollInfo, True);
-
-      if LMaxScroll <= FScrollAreaWidth then
-      begin
-        LRightChar := (FHorizontalScrollPosition + FScrollAreaWidth) div FTextDrawer.CharWidth - 1;
-        if (FHorizontalScrollPosition <= 0) and (LRightChar >= LMaxScroll) then
-          EnableScrollBar(Handle, SB_HORZ, ESB_DISABLE_BOTH)
-        else
-        begin
-          EnableScrollBar(Handle, SB_HORZ, ESB_ENABLE_BOTH);
-          if (FHorizontalScrollPosition <= 0) then
-            EnableScrollBar(Handle, SB_HORZ, ESB_DISABLE_LEFT)
-          else
-          if LRightChar >= LMaxScroll then
-            EnableScrollBar(Handle, SB_HORZ, ESB_DISABLE_RIGHT)
-        end;
-      end
-      else
-        EnableScrollBar(Handle, SB_HORZ, ESB_ENABLE_BOTH);
+      EnableScrollBar(Handle, SB_HORZ, ESB_ENABLE_BOTH);
     end
     else
       ShowScrollBar(Handle, SB_HORZ, False);
@@ -7138,8 +7107,8 @@ begin
 end;
 
 procedure TBCBaseEditor.WMHScroll(var AMessage: TWMScroll);
-var
-  LMaxWidth: Integer;
+//var
+//  LMaxWidth: Integer;
 begin
   AMessage.Result := 0;
 
@@ -7152,10 +7121,10 @@ begin
       SetHorizontalScrollPosition(0);
     SB_RIGHT:
       begin
-        if soPastEndOfLine in FScroll.Options then
-          SetHorizontalScrollPosition(FScroll.MaxWidth - GetVisibleChars(DisplayCaretY) + 1)
-        else
-          SetHorizontalScrollPosition(FLines.GetLengthOfLongestLine * FTextDrawer.CharWidth)
+        //if soPastEndOfLine in FScroll.Options then
+        //  SetHorizontalScrollPosition(2 * GetVisibleChars(DisplayCaretY))
+        //else
+          SetHorizontalScrollPosition(FLines.GetLengthOfLongestLine)
       end;
     SB_LINERIGHT:
       SetHorizontalScrollPosition(FHorizontalScrollPosition + 1);
@@ -7168,15 +7137,14 @@ begin
     SB_THUMBPOSITION, SB_THUMBTRACK:
       begin
         FIsScrolling := True;
-        if soPastEndOfLine in FScroll.Options then
+       { if soPastEndOfLine in FScroll.Options then
           LMaxWidth := FScroll.MaxWidth
         else
-          LMaxWidth := Max(FLines.GetLengthOfLongestLine, 1);
-        LMaxWidth := LMaxWidth * FTextDrawer.CharWidth;
-        if LMaxWidth > BCEDITOR_MAX_SCROLL_RANGE then
-          SetHorizontalScrollPosition(MulDiv(LMaxWidth, AMessage.Pos, BCEDITOR_MAX_SCROLL_RANGE))
-        else
-          SetHorizontalScrollPosition(AMessage.Pos);
+          LMaxWidth := Max(FLines.GetLengthOfLongestLine, 1); }
+        //if LMaxWidth > MaxInt {BCEDITOR_MAX_SCROLL_RANGE} then // TODO: Check const...
+        //  SetHorizontalScrollPosition(MulDiv(LMaxWidth, AMessage.Pos, MaxInt {BCEDITOR_MAX_SCROLL_RANGE}))
+        //else
+        SetHorizontalScrollPosition(AMessage.Pos);
       end;
     SB_ENDSCROLL:
       FIsScrolling := False;
@@ -7419,7 +7387,7 @@ begin
         else
           TopLine := AMessage.Pos;
 
-        if soShowHint in FScroll.Options then
+        if soShowVerticalScrollHint in FScroll.Options then
         begin
           LScrollHintWindow := GetScrollHint;
           if FScroll.Hint.Format = shFTopLineOnly then
@@ -7452,7 +7420,7 @@ begin
     SB_ENDSCROLL:
       begin
         FIsScrolling := False;
-        if soShowHint in FScroll.Options then
+        if soShowVerticalScrollHint in FScroll.Options then
           ShowWindow(GetScrollHint.Handle, SW_HIDE);
       end;
   end;
@@ -8468,12 +8436,12 @@ var
   LLongestLineLength: Integer;
 begin
   Invalidate;
-  if soAutoSizeMaxWidth in FScroll.Options then
-  begin
+  //if soAutoSizeMaxWidth in FScroll.Options then
+  //begin
     LLongestLineLength := FLines.GetLengthOfLongestLine;
     if LLongestLineLength <> FScroll.MaxWidth then
       FScroll.MaxWidth := LLongestLineLength;
-  end;
+  //end;
   UpdateScrollBars;
 end;
 
@@ -8585,12 +8553,12 @@ begin
   if FLeftMargin.Autosize and (FLeftMargin.GetWidth <> LLength) then
     SetLeftMarginWidth(LLength);
 
-  if soAutoSizeMaxWidth in FScroll.Options then
-  begin
+  {if soAutoSizeMaxWidth in FScroll.Options then
+  begin }
     LLength := FLines.ExpandedStringLengths[AIndex];
     if LLength > FScroll.MaxWidth then
       FScroll.MaxWidth := LLength;
-  end;
+  //end;}
 
   Invalidate;
 end;
@@ -8618,12 +8586,12 @@ begin
   if Assigned(FOnLinesPutted) then
     FOnLinesPutted(Self, AIndex, ACount);
 
-  if soAutoSizeMaxWidth in FScroll.Options then
-  begin
+  {if soAutoSizeMaxWidth in FScroll.Options then
+  begin }
     LLength := FLines.ExpandedStringLengths[AIndex];
     if LLength > FScroll.MaxWidth then
       FScroll.MaxWidth := LLength;
-  end;
+  {end; }
 
   Invalidate;
 end;
@@ -9803,7 +9771,7 @@ var
         Winapi.Windows.ExtTextOut(Canvas.Handle, LLineRect.Left, LLineRect.Top, ETO_OPAQUE, @LLineRect, '', 0, nil);
       end;
     finally
-      FTextDrawer.SetBaseFont(Self.Font);
+      FTextDrawer.SetBaseFont(Font);
     end;
   end;
 
@@ -11686,7 +11654,7 @@ begin
   if not (soPastEndOfLine in FScroll.Options) then
     LMaxX := Length(Lines[GetDisplayTextLineNumber(AValue.Row) - 1]) + 1;
 
-  if (AValue.Column > LMaxX) and (not (soPastEndOfLine in FScroll.Options) or not (soAutosizeMaxWidth in FScroll.Options)) then
+  if (AValue.Column > LMaxX) and (not (soPastEndOfLine in FScroll.Options) {or not (soAutosizeMaxWidth in FScroll.Options)}) then
     AValue.Column := LMaxX;
 
   if AValue.Column < 1 then
@@ -13569,6 +13537,7 @@ begin
   IncPaintLock;
   try
     LVisibleX := DisplayCaretX;
+    {$message warn 'This is bull shit, fix it.'}
     LColumn := FHorizontalScrollPosition div FTextDrawer.CharWidth;
     if LVisibleX = 1 then
       LColumn := 0
@@ -13581,7 +13550,7 @@ begin
       if LVisibleX >= LVisibleChars + LColumn then
         LColumn := LVisibleX - LVisibleChars;
     end;
-    SetHorizontalScrollPosition(LColumn * FTextDrawer.CharWidth);
+    SetHorizontalScrollPosition(LColumn);
 
     LCaretRow := DisplayCaretY;
     if AForceToMiddle then
@@ -14482,7 +14451,7 @@ end;
 
 procedure TBCBaseEditor.UpdateCaret;
 var
-  LClientRect: TRect;
+  LRect: TRect;
   LCaretDisplayPosition: TBCEditorDisplayPosition;
   LCaretTextPosition: TBCEditorTextPosition;
   LCaretPoint: TPoint;
@@ -14520,12 +14489,12 @@ begin
       LCaretPoint.X := LCaretPoint.X + 1;
     LCaretPoint.Y := LCaretPoint.Y + FCaretOffset.Y;
 
-    LClientRect := ClientRect;
-    DeflateMinimapRect(LClientRect);
-    Inc(LClientRect.Left, FLeftMargin.GetWidth + FCodeFolding.GetWidth);
+    LRect := ClientRect;
+    DeflateMinimapAndSearchMapRect(LRect);
+    Inc(LRect.Left, FLeftMargin.GetWidth + FCodeFolding.GetWidth);
 
     SetCaretPos(LCaretPoint.X, LCaretPoint.Y);
-    if LClientRect.Contains(LCaretPoint) then
+    if LRect.Contains(LCaretPoint) then
       ShowCaret
     else
       HideCaret;
