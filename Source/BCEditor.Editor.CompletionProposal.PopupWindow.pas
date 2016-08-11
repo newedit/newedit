@@ -712,12 +712,12 @@ begin
     SB_PAGEUP:
       TopLine := Max(0, TopLine - FCompletionProposal.VisibleLines);
     SB_THUMBPOSITION, SB_THUMBTRACK:
-      begin
-        if GetItems.Count > BCEDITOR_MAX_SCROLL_RANGE then
-          TopLine := MulDiv(FCompletionProposal.VisibleLines + GetItems.Count - 1, AMessage.Pos, BCEDITOR_MAX_SCROLL_RANGE)
-        else
-          TopLine := AMessage.Pos;
-      end;
+      //begin  TODO
+        //if GetItems.Count > BCEDITOR_MAX_SCROLL_RANGE then
+        //  TopLine := MulDiv(FCompletionProposal.VisibleLines + GetItems.Count - 1, AMessage.Pos, BCEDITOR_MAX_SCROLL_RANGE)
+        //else
+      TopLine := AMessage.Pos;
+      //end;
   end;
   Invalidate;
 end;

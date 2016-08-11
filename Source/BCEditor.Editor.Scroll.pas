@@ -25,7 +25,7 @@ type
     procedure SetIndicator(const AValue: TBCEditorGlyph);
     procedure SetOnChange(AValue: TNotifyEvent);
     procedure SetOptions(const AValue: TBCEditorScrollOptions);
-    procedure SetMaxWidth(AValue: Integer);
+    //procedure SetMaxWidth(AValue: Integer);
   public
     constructor Create;
     destructor Destroy; override;
@@ -34,7 +34,7 @@ type
     property Bars: System.UITypes.TScrollStyle read FBars write SetBars default System.UITypes.TScrollStyle.ssBoth;
     property Hint: TBCEditorScrollHint read FHint write SetHint;
     property Indicator: TBCEditorGlyph read FIndicator write SetIndicator;
-    property MaxWidth: Integer read FMaxWidth write SetMaxWidth default 1024;
+    //property MaxWidth: Integer read FMaxWidth write SetMaxWidth default 1024;
     property OnChange: TNotifyEvent read FOnChange write SetOnChange;
     property Options: TBCEditorScrollOptions read FOptions write SetOptions default BCEDITOR_DEFAULT_SCROLL_OPTIONS;
     property Shadow: TBCEditorScrollShadow read FShadow write FShadow;
@@ -115,7 +115,7 @@ begin
   end;
 end;
 
-procedure TBCEditorScroll.SetMaxWidth(AValue: Integer);
+{procedure TBCEditorScroll.SetMaxWidth(AValue: Integer);
 begin
   AValue := MinMax(AValue, 1, MaxInt - 1);
   if FMaxWidth <> AValue then
@@ -123,7 +123,7 @@ begin
     FMaxWidth := AValue;
     DoChange;
   end;
-end;
+end; }
 
 procedure TBCEditorScroll.SetHint(const AValue: TBCEditorScrollHint);
 begin
