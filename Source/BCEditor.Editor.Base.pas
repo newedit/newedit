@@ -6856,7 +6856,10 @@ var
       LScrollInfo.nPos := TopLine;
       LScrollInfo.nTrackPos := 0;
 
-      ShowScrollBar(Handle, SB_VERT, (LScrollInfo.nMin = 0) or (LScrollInfo.nMax > VisibleLines));
+      if FLineNumbersCount <= VisibleLines then
+        TopLine := 1;
+
+      ShowScrollBar(Handle, SB_VERT, LScrollInfo.nMax > VisibleLines);
       SetScrollInfo(Handle, SB_VERT, LScrollInfo, True);
       EnableScrollBar(Handle, SB_VERT, ESB_ENABLE_BOTH);
     end
@@ -6872,7 +6875,7 @@ var
     begin
       LHorizontalScrollMax := Max(FLines.GetLengthOfLongestLine * FTextDrawer.CharWidth, FScrollPageWidth);
       if soPastEndOfLine in FScroll.Options then
-        LHorizontalScrollMax := LHorizontalScrollMax * 2;
+        LHorizontalScrollMax := LHorizontalScrollMax + FScrollPageWidth;
 
       LScrollInfo.nMin := 0;
       LScrollInfo.nMax := LHorizontalScrollMax;
@@ -10527,12 +10530,13 @@ var
               Break;
           end;
           FTextDrawer.SetForegroundColor(LOldColor);
-          FTextDrawer.SetBackgroundColor(LOldBackgroundColor); 
+          FTextDrawer.SetBackgroundColor(LOldBackgroundColor);
         end;
     end;
 
   begin
-    if (ALast > AFirst) and (LTokenRect.Right > LTokenRect.Left) then
+    if not AMinimap and (LTokenRect.Right >= FHorizontalScrollPosition) or
+      AMinimap and ((LTokenRect.Left < ClientRect.Width) or (LTokenRect.Left < FMinimap.Width)) then
     begin
       Dec(AFirst, ACharsBefore);
 
@@ -10543,6 +10547,10 @@ var
 
       LPChar := PChar(LText);
       LTextRect := LTokenRect;
+
+      if AMinimap then
+        if FMinimap.Align = maLeft then
+          LTextRect.Right := Min(LTextRect.Right, FMinimap.Width);
 
       if LTokenHelper.IsItalic and (LPChar^ <> BCEDITOR_SPACE_CHAR) then
         Inc(LTextRect.Right, FTextDrawer.CharWidth);
@@ -10604,9 +10612,10 @@ var
         ACanvas.LineTo(LTextRect.Right, LTextRect.Bottom - 1);
         ACanvas.Pen.Color := LOldPenColor;
       end;
-
-      LTokenRect.Left := LTokenRect.Right;
     end;
+
+    LTokenRect.Left := LTokenRect.Right;
+
     if FSpecialChars.Visible and (ALast >= LCurrentLineLength) then
       LLineEndRect := LTokenRect;
   end;
