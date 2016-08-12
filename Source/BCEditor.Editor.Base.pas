@@ -13424,7 +13424,7 @@ var
   LMiddle: Integer;
   LCaretRow: Integer;
   LPoint: TPoint;
-  LLeftMarginWidth: Integer;
+  LLeftMarginWidth, LTextWidth: Integer;
   LDisplayCaretPosition: TBCEditorDisplayPosition;
   LCurrentLineText: string;
 begin
@@ -13439,7 +13439,14 @@ begin
     if (LPoint.X < LLeftMarginWidth) or (LPoint.X >= LLeftMarginWidth + FScrollPageWidth) then
     begin
       LCurrentLineText := FLines.GetExpandedString(LDisplayCaretPosition.Row - 1, BCEDITOR_TAB_CHAR);
-      SetHorizontalScrollPosition(FTextDrawer.GetTextWidth(LCurrentLineText, LDisplayCaretPosition.Column))
+      LTextWidth := FTextDrawer.GetTextWidth(LCurrentLineText, LDisplayCaretPosition.Column);
+      if LPoint.X >= LLeftMarginWidth + FScrollPageWidth then
+      begin
+        LTextWidth := LTextWidth - FTextDrawer.GetTextWidth(LCurrentLineText, GetVisibleChars(LDisplayCaretPosition.Row,
+          LCurrentLineText));
+        LTextWidth := FHorizontalScrollPosition + LTextWidth;
+      end;
+      SetHorizontalScrollPosition(LTextWidth)
     end
     else
       SetHorizontalScrollPosition(FHorizontalScrollPosition);
