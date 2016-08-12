@@ -16,7 +16,6 @@ const
   BCEDITOR_HTTP = 'http://';
   { Max values }
   BCEDITOR_MAX_BOOKMARKS = 9;
-  //BCEDITOR_MAX_SCROLL_RANGE = 32767;
   { Characters }
   BCEDITOR_UNDERSCORE = '_';
   BCEDITOR_WORD_BREAK_CHARACTERS = ['.', ',', ';', ':', '"', '''', '!', '?', '[', ']', '(', ')', '{', '}', '^', '-',

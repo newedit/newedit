@@ -2774,7 +2774,7 @@ begin
       Inc(Result.Column, FHighlighter.GetTokenPosition + FHighlighter.GetTokenLength);
       while LTextWidth > LXInEditor do
       begin
-        LLastChar := LToken[LToken.Length]; // TODO: Unicode combined characters
+        LLastChar := LToken[LToken.Length]; // TODO: test Unicode combined characters
         LToken := LToken.Remove(LToken.Length - 1);
         Dec(LTextWidth, FTextDrawer.GetTextWidth(LLastChar, Length(LLastChar) + 1));
         Dec(Result.Column);
@@ -3903,8 +3903,6 @@ begin
     if FWordWrap.Enabled and (LTextCaretPosition.Char > LVisibleChars) then
       CreateLineNumbersCache(True);
     TextCaretPosition := LTextCaretPosition;
-    if LTextCaretPosition.Char >= LVisibleChars then
-      SetHorizontalScrollPosition(FHorizontalScrollPosition + Min(FScrollPageWidth div 4, LVisibleChars - 1));
   end;
   if FSyncEdit.Active then
     DoSyncEdit;
@@ -4088,7 +4086,7 @@ begin
   MoveCaretAndSelection(LTextCaretPosition, GetTextPosition(LSpaceCount, GetTextCaretY), ASelection);
 end;
 
-procedure TBCBaseEditor.DoImeStr(AData: Pointer); // TODO: Test
+procedure TBCBaseEditor.DoImeStr(AData: Pointer);
 var
   S: string;
   LLength: Integer;
@@ -4097,7 +4095,6 @@ var
   LChangeScroll: Boolean;
   LTextCaretPosition: TBCEditorTextPosition;
   LBlockStartPosition: TBCEditorTextPosition;
-  LVisibleChars: Integer;
 begin
   LTextCaretPosition := TextCaretPosition;
   LLength := Length(PChar(AData));
@@ -4143,9 +4140,6 @@ begin
         LHelper := '';
       FUndoList.AddChange(crInsert, LTextCaretPosition, LBlockStartPosition, TextCaretPosition, LHelper,
         smNormal);
-      LVisibleChars := GetVisibleChars(LTextCaretPosition.Line + 1);
-      if DisplayCaretX >= LVisibleChars then
-        SetHorizontalScrollPosition(FHorizontalScrollPosition + Min(FScrollPageWidth div 4, LVisibleChars - 1));
     finally
       if LChangeScroll then
         FScroll.Options := FScroll.Options - [soPastEndOfLine];
@@ -4374,7 +4368,7 @@ begin
   end;
 end;
 
-procedure TBCBaseEditor.DoPageLeftOrRight(const ACommand: TBCEditorCommand); // TODO: Test
+procedure TBCBaseEditor.DoPageLeftOrRight(const ACommand: TBCEditorCommand);
 var
   LVisibleChars: Integer;
 begin

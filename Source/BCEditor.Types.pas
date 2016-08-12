@@ -66,7 +66,6 @@ type
   TBCEditorCaretMultiEditOptions = set of TBCEditorCaretMultiEditOption;
 
   TBCEditorScrollOption = (
-    //soAutosizeMaxWidth, { Automatically resizes the MaxScrollWidth property when inserting text }
     soHalfPage, { When scrolling with page-up and page-down commands, only scroll a half page at a time }
     soHintFollows, { The scroll hint follows the mouse when scrolling vertically }
     soPastEndOfFileMarker, { Allows the cursor to go past the end of file marker }
