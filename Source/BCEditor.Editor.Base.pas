@@ -14192,9 +14192,12 @@ begin
       LOldSelectionEndPosition := GetSelectionEndPosition;
       SelectedText := S;
       FSelectionBeginPosition := LOldSelectionBeginPosition;
+      if LStringList.Count > 1 then
+      begin
+        LLastLength := Length(LStringList.Strings[LStringList.Count - 1]) + 1;
+        LOldSelectionEndPosition.Char := LLastLength;
+      end;
       FSelectionEndPosition := LOldSelectionEndPosition;
-      LLastLength := Length(LStringList.Strings[LStringList.Count - 1]) + 1;
-      FSelectionEndPosition.Char := LLastLength
     end
     else
       Text := S;
