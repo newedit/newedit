@@ -220,6 +220,7 @@ type
     function GetHighlighterAttributeAtRowColumn(const ATextPosition: TBCEditorTextPosition; var AToken: string;
       var ATokenType: TBCEditorRangeType; var AStart: Integer; var AHighlighterAttribute: TBCEditorHighlighterAttribute): Boolean;
     function GetHookedCommandHandlersCount: Integer;
+    function GetHorizontalScrollMax: Integer;
     function GetTextCaretPosition: TBCEditorTextPosition;
     function GetLeadingExpandedLength(const AStr: string; const ABorder: Integer = 0): Integer;
     function GetLeftMarginWidth: Integer;
@@ -1447,6 +1448,13 @@ begin
     Result := FHookedCommandHandlers.Count
   else
     Result := 0;
+end;
+
+function TBCBaseEditor.GetHorizontalScrollMax: Integer;
+begin
+  Result := Max(FLines.GetLengthOfLongestLine * FTextDrawer.CharWidth, FScrollPageWidth);
+  if soPastEndOfLine in FScroll.Options then
+    Result := Result + FScrollPageWidth;
 end;
 
 function TBCBaseEditor.GetTextCaretPosition: TBCEditorTextPosition;
@@ -6838,32 +6846,33 @@ end;
 
 procedure TBCBaseEditor.UpdateScrollBars;
 var
-  LMaxScroll: Integer;
   LScrollInfo: TScrollInfo;
 
   procedure UpdateVerticalScrollBar;
+  var
+    LVerticalMaxScroll: Integer;
   begin
     if FScroll.Bars in [ssBoth, ssVertical] then
     begin
-      LMaxScroll := FLineNumbersCount;
+      LVerticalMaxScroll := FLineNumbersCount;
 
       if soPastEndOfFileMarker in FScroll.Options then
-        Inc(LMaxScroll, VisibleLines - 1);
+        Inc(LVerticalMaxScroll, VisibleLines - 1);
 
       LScrollInfo.nMin := 1;
       LScrollInfo.nTrackPos := 0;
-      if LMaxScroll <= BCEDITOR_MAX_SCROLL_RANGE then
+      if LVerticalMaxScroll <= BCEDITOR_MAX_SCROLL_RANGE then
       begin
 
-        LScrollInfo.nMax := Max(1, LMaxScroll);
+        LScrollInfo.nMax := Max(1, LVerticalMaxScroll);
         LScrollInfo.nPage := VisibleLines;
         LScrollInfo.nPos := TopLine;
       end
       else
       begin
         LScrollInfo.nMax := BCEDITOR_MAX_SCROLL_RANGE;
-        LScrollInfo.nPage := MulDiv(BCEDITOR_MAX_SCROLL_RANGE, VisibleLines, LMaxScroll);
-        LScrollInfo.nPos := MulDiv(BCEDITOR_MAX_SCROLL_RANGE, TopLine, LMaxScroll);
+        LScrollInfo.nPage := MulDiv(BCEDITOR_MAX_SCROLL_RANGE, VisibleLines, LVerticalMaxScroll);
+        LScrollInfo.nPos := MulDiv(BCEDITOR_MAX_SCROLL_RANGE, TopLine, LVerticalMaxScroll);
       end;
 
       if FLineNumbersCount <= VisibleLines then
@@ -6883,13 +6892,11 @@ var
   begin
     if (FScroll.Bars in [ssBoth, ssHorizontal]) and not FWordWrap.Enabled then
     begin
-      LHorizontalScrollMax := Max(FLines.GetLengthOfLongestLine * FTextDrawer.CharWidth, FScrollPageWidth);
-      if soPastEndOfLine in FScroll.Options then
-        LHorizontalScrollMax := LHorizontalScrollMax + FScrollPageWidth;
+      LHorizontalScrollMax := GetHorizontalScrollMax;
 
       LScrollInfo.nMin := 0;
       LScrollInfo.nTrackPos := 0;
-      if LMaxScroll <= BCEDITOR_MAX_SCROLL_RANGE then
+      if LHorizontalScrollMax <= BCEDITOR_MAX_SCROLL_RANGE then
       begin
         LScrollInfo.nMax := LHorizontalScrollMax;
         LScrollInfo.nPage := FScrollPageWidth;
@@ -6898,8 +6905,8 @@ var
       else
       begin
         LScrollInfo.nMax := BCEDITOR_MAX_SCROLL_RANGE;
-        LScrollInfo.nPage := MulDiv(BCEDITOR_MAX_SCROLL_RANGE, FScrollPageWidth, LMaxScroll);
-        LScrollInfo.nPos := MulDiv(BCEDITOR_MAX_SCROLL_RANGE, FHorizontalScrollPosition, LMaxScroll);
+        LScrollInfo.nPage := MulDiv(BCEDITOR_MAX_SCROLL_RANGE, FScrollPageWidth, LHorizontalScrollMax);
+        LScrollInfo.nPos := MulDiv(BCEDITOR_MAX_SCROLL_RANGE, FHorizontalScrollPosition, LHorizontalScrollMax);
       end;
 
       ShowScrollBar(Handle, SB_HORZ, True);
@@ -7063,6 +7070,8 @@ begin
 end;
 
 procedure TBCBaseEditor.WMHScroll(var AMessage: TWMScroll);
+var
+  LHorizontalScrollMax: Integer;
 begin
   AMessage.Result := 0;
 
@@ -7086,10 +7095,11 @@ begin
     SB_THUMBPOSITION, SB_THUMBTRACK:
       begin
         FIsScrolling := True;
-        // TODO
-        //if LMaxWidth > BCEDITOR_MAX_SCROLL_RANGE then
-        //   := MulDiv(LMaxWidth, AMessage.Pos, BCEDITOR_MAX_SCROLL_RANGE)
-        SetHorizontalScrollPosition(AMessage.Pos);
+        LHorizontalScrollMax := GetHorizontalScrollMax;
+        if LHorizontalScrollMax > BCEDITOR_MAX_SCROLL_RANGE then
+          SetHorizontalScrollPosition(MulDiv(LHorizontalScrollMax, AMessage.Pos, BCEDITOR_MAX_SCROLL_RANGE))
+        else
+          SetHorizontalScrollPosition(AMessage.Pos);
       end;
     SB_ENDSCROLL:
       FIsScrolling := False;
