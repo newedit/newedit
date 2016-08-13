@@ -6850,21 +6850,20 @@ var
       if soPastEndOfFileMarker in FScroll.Options then
         Inc(LMaxScroll, VisibleLines - 1);
 
+      LScrollInfo.nMin := 1;
+      LScrollInfo.nTrackPos := 0;
       if LMaxScroll <= BCEDITOR_MAX_SCROLL_RANGE then
       begin
-        LScrollInfo.nMin := 1;
+
         LScrollInfo.nMax := Max(1, LMaxScroll);
         LScrollInfo.nPage := VisibleLines;
         LScrollInfo.nPos := TopLine;
-        LScrollInfo.nTrackPos := 0;
       end
       else
       begin
-        LScrollInfo.nMin := 1;
         LScrollInfo.nMax := BCEDITOR_MAX_SCROLL_RANGE;
         LScrollInfo.nPage := MulDiv(BCEDITOR_MAX_SCROLL_RANGE, VisibleLines, LMaxScroll);
         LScrollInfo.nPos := MulDiv(BCEDITOR_MAX_SCROLL_RANGE, TopLine, LMaxScroll);
-        LScrollInfo.nTrackPos := 0;
       end;
 
       if FLineNumbersCount <= VisibleLines then
@@ -6888,21 +6887,19 @@ var
       if soPastEndOfLine in FScroll.Options then
         LHorizontalScrollMax := LHorizontalScrollMax + FScrollPageWidth;
 
+      LScrollInfo.nMin := 0;
+      LScrollInfo.nTrackPos := 0;
       if LMaxScroll <= BCEDITOR_MAX_SCROLL_RANGE then
       begin
-        LScrollInfo.nMin := 0;
         LScrollInfo.nMax := LHorizontalScrollMax;
         LScrollInfo.nPage := FScrollPageWidth;
         LScrollInfo.nPos := FHorizontalScrollPosition;
-        LScrollInfo.nTrackPos := 0;
       end
       else
       begin
-        LScrollInfo.nMin := 0;
         LScrollInfo.nMax := BCEDITOR_MAX_SCROLL_RANGE;
         LScrollInfo.nPage := MulDiv(BCEDITOR_MAX_SCROLL_RANGE, FScrollPageWidth, LMaxScroll);
         LScrollInfo.nPos := MulDiv(BCEDITOR_MAX_SCROLL_RANGE, FHorizontalScrollPosition, LMaxScroll);
-        LScrollInfo.nTrackPos := 0;
       end;
 
       ShowScrollBar(Handle, SB_HORZ, True);
@@ -7089,6 +7086,9 @@ begin
     SB_THUMBPOSITION, SB_THUMBTRACK:
       begin
         FIsScrolling := True;
+        // TODO
+        //if LMaxWidth > BCEDITOR_MAX_SCROLL_RANGE then
+        //   := MulDiv(LMaxWidth, AMessage.Pos, BCEDITOR_MAX_SCROLL_RANGE)
         SetHorizontalScrollPosition(AMessage.Pos);
       end;
     SB_ENDSCROLL:

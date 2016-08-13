@@ -32,7 +32,6 @@ type
     FMatchingPairs: TList;
     FMultiHighlighter: Boolean;
     FName: string;
-    //FPrepared: Boolean;
     FPreviousEndOfLine: Boolean;
     FRunPosition: LongInt;
     FSkipCloseKeyChars: TBCEditorCharSet;
@@ -129,8 +128,6 @@ begin
   FComments := TBCEditorHighlighterComments.Create;
 
   FCompletionProposalSkipRegions := TBCEditorSkipRegions.Create(TBCEditorSkipRegionItem);
-
-  //FPrepared := False;
 
   Info := TBCEditorHighlighterInfo.Create;
   FMainRules := TBCEditorRange.Create;
@@ -245,6 +242,7 @@ begin
       end;
 
   FTokenPosition := FRunPosition;
+
   if Assigned(FCurrentRange) then
   begin
     LCloseParent := FCurrentRange.CloseParent;
@@ -256,10 +254,7 @@ begin
         if LCloseParent then
           FCurrentRange := FCurrentRange.Parent;
     end;
-  end;
-
-  if Assigned(FCurrentRange) then
-  begin
+  
     LParser := FCurrentRange.SymbolList[AnsiChar(FCurrentRange.CaseFunct(FCurrentLine[FRunPosition]))];
     if not Assigned(LParser) then
       Inc(FRunPosition)
