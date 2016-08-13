@@ -1,4 +1,4 @@
-﻿{$message warn 'Fix word wrap painting.'}
+﻿{$MESSAGE WARN 'Fix painting'}
 unit BCEditor.Editor.Base;
 
 interface
@@ -184,7 +184,7 @@ type
     FSyncEdit: TBCEditorSyncEdit;
     FTabs: TBCEditorTabs;
     FTextDrawer: TBCEditorTextDrawer;
-    FTextLinesBufferBitmap: Vcl.Graphics.TBitmap;
+    //FTextLinesBufferBitmap: Vcl.Graphics.TBitmap;
     FTopLine: Integer;
     FUndo: TBCEditorUndo;
     FUndoList: TBCEditorUndoList;
@@ -502,7 +502,7 @@ type
     procedure PaintSpecialCharsEndOfLine(ACanvas: TCanvas; const ALine: Integer; const ALineEndRect: TRect;
       const ALineEndInsideSelection: Boolean);
     procedure PaintSyncItems(ACanvas: TCanvas);
-    procedure PaintTextLines(ACanvas: TCanvas; AClipRect: TRect; const AFirstLine, ALastLine: Integer; const AMinimap: Boolean);
+    procedure PaintTextLines({ACanvas: TCanvas;} AClipRect: TRect; const AFirstLine, ALastLine: Integer; const AMinimap: Boolean);
     procedure RedoItem;
     procedure ResetCaret;
     procedure ScanCodeFoldingRanges; virtual;
@@ -836,7 +836,7 @@ begin
   Font.OnChange := FontChanged;
   { Painting }
   FItalicOffset := 0;
-  FTextLinesBufferBitmap := Vcl.Graphics.TBitmap.Create;
+  //FTextLinesBufferBitmap := Vcl.Graphics.TBitmap.Create;
   FTextDrawer := TBCEditorTextDrawer.Create([fsBold], FFontDummy);
   ParentFont := False;
   ParentColor := False;
@@ -984,7 +984,7 @@ begin
   FInternalBookmarkImage.Free;
   FFontDummy.Free;
   FOriginalLines.Free;
-  FTextLinesBufferBitmap.Free;
+  //FTextLinesBufferBitmap.Free;
   FreeScrollShadowBitmap;
   FreeMinimapBitmaps;
   FActiveLine.Free;
@@ -8182,7 +8182,7 @@ begin
       begin
         LOldTextCaretPosition := TextCaretPosition;
         LDisplayPosition := PixelsToDisplayPosition(X, Y);
-        LColumn := FHorizontalScrollPosition div FTextDrawer.CharWidth;
+        LColumn := FHorizontalScrollPosition div FTextDrawer.CharWidth; // TODO fix
         LDisplayPosition.Row := MinMax(LDisplayPosition.Row, TopLine, TopLine + VisibleLines - 1);
         LDisplayPosition.Column := MinMax(LDisplayPosition.Column, LColumn, LColumn + GetVisibleChars(LDisplayPosition.Row) - 1);
 
@@ -9096,10 +9096,9 @@ end;
 
 procedure TBCBaseEditor.Paint;
 var
-  LClipRect, DrawRect: TRect;
+  LClipRect, LDrawRect: TRect;
   LLine1, LLine2, LLine3, LTemp: Integer;
   LSelectionAvailable: Boolean;
-  LTextLinesLeft, LTextLinesRight: Integer;
 begin
   LClipRect := ClientRect;
 
@@ -9108,52 +9107,30 @@ begin
   LLine2 := MinMax(FTopLine + LTemp - 1, 1, FLineNumbersCount);
   LLine3 := FTopLine + LTemp;
 
-  LTextLinesLeft := FLeftMargin.GetWidth + FCodeFolding.GetWidth;
-  LTextLinesRight := ClientRect.Width;
-  if FMinimap.Align = maLeft then
-    Inc(LTextLinesLeft, FMinimap.GetWidth)
-  else
-    Dec(LTextLinesRight, FMinimap.GetWidth);
-  if FSearch.Map.Align = saLeft then
-    Inc(LTextLinesLeft, FSearch.Map.GetWidth)
-  else
-    Dec(LTextLinesRight, FSearch.Map.GetWidth);
-
   HideCaret;
 
   try
     Canvas.Brush.Color := FBackgroundColor;
 
-    { Text lines }
-    DrawRect.Top := 0;
-    DrawRect.Left := 0;
-    DrawRect.Right := LClipRect.Width + FHorizontalScrollPosition;
-    DrawRect.Bottom := LClipRect.Height;
-
-    FTextLinesBufferBitmap.Width := DrawRect.Width;
-    FTextLinesBufferBitmap.Height := DrawRect.Height; { Background color is used, no need to fill rect. }
-
-    FTextDrawer.BeginDrawing(FTextLinesBufferBitmap.Canvas.Handle);
+    FTextDrawer.BeginDrawing(Canvas.Handle);
     FTextDrawer.SetBaseFont(Font);
 
-    PaintTextLines(FTextLinesBufferBitmap.Canvas, DrawRect, LLine1, LLine2, False);
+    { Text lines }
+    LDrawRect.Top := 0;
+    LDrawRect.Left := FLeftMarginWidth - FHorizontalScrollPosition;
+    LDrawRect.Right := ClientRect.Width;
+    LDrawRect.Bottom := LClipRect.Height;
 
-    PaintRightMargin(FTextLinesBufferBitmap.Canvas, DrawRect);
+    // TODO: Continue here...
+    PaintTextLines(LDrawRect, LLine1, LLine2, False);
+
+    PaintRightMargin(Canvas, LDrawRect);
 
     if FCodeFolding.Visible and (cfoShowIndentGuides in CodeFolding.Options) then
-      PaintGuides(FTextLinesBufferBitmap.Canvas, FTopLine, FTopLine + FVisibleLines, False);
+      PaintGuides(Canvas, FTopLine, FTopLine + FVisibleLines, False);
 
     if FSyncEdit.Enabled and FSyncEdit.Active then
-      PaintSyncItems(FTextLinesBufferBitmap.Canvas);
-
-    FTextDrawer.EndDrawing;
-
-    BitBlt(Canvas.Handle, LTextLinesLeft, LClipRect.Top, LTextLinesRight - LTextLinesLeft, LClipRect.Height,
-      FTextLinesBufferBitmap.Canvas.Handle, FHorizontalScrollPosition, 0, SRCCOPY);
-
-    FTextLinesBufferBitmap.Height := 0;
-
-    FTextDrawer.BeginDrawing(Canvas.Handle);
+      PaintSyncItems(Canvas);
 
     if FCaret.NonBlinking.Enabled or Assigned(FMultiCarets) and (FMultiCarets.Count > 0) and FDrawMultiCarets then
       DrawCaret(Canvas);
@@ -9168,46 +9145,46 @@ begin
       PaintMouseMoveScrollPoint;
 
     { Left margin and code folding }
-    DrawRect := LClipRect;
-    DrawRect.Left := 0;
+    LDrawRect := LClipRect;
+    LDrawRect.Left := 0;
     if FMinimap.Align = maLeft then
-      Inc(DrawRect.Left, FMinimap.GetWidth);
+      Inc(LDrawRect.Left, FMinimap.GetWidth);
     if FSearch.Map.Align = saLeft then
-      Inc(DrawRect.Left, FSearch.Map.GetWidth);
+      Inc(LDrawRect.Left, FSearch.Map.GetWidth);
 
     if FLeftMargin.Visible then
     begin
-      DrawRect.Right := DrawRect.Left + FLeftMargin.GetWidth;
-      PaintLeftMargin(DrawRect, LLine1, LLine2, LLine3);
+      LDrawRect.Right := LDrawRect.Left + FLeftMargin.GetWidth;
+      PaintLeftMargin(LDrawRect, LLine1, LLine2, LLine3);
     end;
 
     if FCodeFolding.Visible then
     begin
-      Inc(DrawRect.Left, FLeftMargin.GetWidth);
-      DrawRect.Right := DrawRect.Left + FCodeFolding.GetWidth;
-      PaintCodeFolding(DrawRect, LLine1, LLine2);
+      Inc(LDrawRect.Left, FLeftMargin.GetWidth);
+      LDrawRect.Right := LDrawRect.Left + FCodeFolding.GetWidth;
+      PaintCodeFolding(LDrawRect, LLine1, LLine2);
     end;
 
     { Minimap }
     if FMinimap.Visible then
     begin
-      DrawRect := LClipRect;
+      LDrawRect := LClipRect;
 
       if FMinimap.Align = maRight then
       begin
-        DrawRect.Left := LTextLinesRight;
-        DrawRect.Right := ClientRect.Width;
+        LDrawRect.Left := FLeftMarginWidth + FScrollPageWidth;
+        LDrawRect.Right := ClientRect.Width;
         if FSearch.Map.Align = saRight then
-          Dec(DrawRect.Right, FSearch.Map.GetWidth);
+          Dec(LDrawRect.Right, FSearch.Map.GetWidth);
       end
       else
       begin
-        DrawRect.Left := 0;
-        DrawRect.Right := FMinimap.GetWidth;
+        LDrawRect.Left := 0;
+        LDrawRect.Right := FMinimap.GetWidth;
         if FSearch.Map.Align = saLeft then
         begin
-          Inc(DrawRect.Left, FSearch.Map.GetWidth);
-          Inc(DrawRect.Right, FSearch.Map.GetWidth);
+          Inc(LDrawRect.Left, FSearch.Map.GetWidth);
+          Inc(LDrawRect.Right, FSearch.Map.GetWidth);
         end;
       end;
 
@@ -9216,16 +9193,16 @@ begin
       LSelectionAvailable := SelectionAvailable;
 
       if not FMinimap.Dragging and
-        (DrawRect.Height = FMinimapBufferBitmap.Height) and (FLastTopLine = FTopLine) and
+        (LDrawRect.Height = FMinimapBufferBitmap.Height) and (FLastTopLine = FTopLine) and
         (FLastLineNumberCount = FLineNumbersCount) and (not LSelectionAvailable or
         LSelectionAvailable and
         (FSelectionBeginPosition.Line >= FTopLine) and (FSelectionEndPosition.Line <= FTopLine + FVisibleLines)) then
       begin
         LLine1 := FTopLine;
         LLine2 := FTopLine + FVisibleLines;
-        BitBlt(Canvas.Handle, DrawRect.Left, DrawRect.Top, DrawRect.Width, DrawRect.Height,
+        BitBlt(Canvas.Handle, LDrawRect.Left, LDrawRect.Top, LDrawRect.Width, LDrawRect.Height,
           FMinimapBufferBitmap.Canvas.Handle, 0, 0, SRCCOPY);
-        DrawRect.Top := (FTopLine - FMinimap.TopLine) * FMinimap.CharHeight;
+        LDrawRect.Top := (FTopLine - FMinimap.TopLine) * FMinimap.CharHeight;
       end
       else
       begin
@@ -9233,49 +9210,49 @@ begin
         LLine2 := Min(FLineNumbersCount, LLine1 + LClipRect.Height div Max(FMinimap.CharHeight - 1, 1));
       end;
 
-      PaintTextLines(Canvas, DrawRect, LLine1, LLine2, True);
+      PaintTextLines({Canvas,} LDrawRect, LLine1, LLine2, True);
       if FCodeFolding.Visible and (moShowIndentGuides in FMinimap.Options) then
         PaintGuides(Canvas, LLine1, LLine2, True);
       if ioUseBlending in FMinimap.Indicator.Options then
-        PaintMinimapIndicator(DrawRect);
+        PaintMinimapIndicator(LDrawRect);
 
-      FMinimapBufferBitmap.Width := DrawRect.Width;
-      FMinimapBufferBitmap.Height := DrawRect.Height;
-      BitBlt(FMinimapBufferBitmap.Canvas.Handle, 0, 0, DrawRect.Width, DrawRect.Height, Canvas.Handle, DrawRect.Left,
-        DrawRect.Top, SRCCOPY);
+      FMinimapBufferBitmap.Width := LDrawRect.Width;
+      FMinimapBufferBitmap.Height := LDrawRect.Height;
+      BitBlt(FMinimapBufferBitmap.Canvas.Handle, 0, 0, LDrawRect.Width, LDrawRect.Height, Canvas.Handle, LDrawRect.Left,
+        LDrawRect.Top, SRCCOPY);
       FTextDrawer.SetBaseFont(Font);
     end;
 
     { Search map }
     if FSearch.Map.Visible then
     begin
-      DrawRect := LClipRect;
+      LDrawRect := LClipRect;
       if FSearch.Map.Align = saRight then
-        DrawRect.Left := ClientRect.Width - FSearch.Map.GetWidth
+        LDrawRect.Left := ClientRect.Width - FSearch.Map.GetWidth
       else
       begin
-        DrawRect.Left := 0;
-        DrawRect.Right := FSearch.Map.GetWidth;
+        LDrawRect.Left := 0;
+        LDrawRect.Right := FSearch.Map.GetWidth;
       end;
-      PaintSearchMap(DrawRect);
+      PaintSearchMap(LDrawRect);
     end;
     FTextDrawer.EndDrawing;
 
     if FMinimap.Visible then
       if FMinimap.Shadow.Visible then
       begin
-        DrawRect := LClipRect;
-        DrawRect.Left := LTextLinesLeft - FLeftMargin.GetWidth - FCodeFolding.GetWidth;
-        DrawRect.Right := LTextLinesRight;
-        PaintMinimapShadow(Canvas, DrawRect);
+        LDrawRect := LClipRect;
+        LDrawRect.Left := 0; // TODO FLeftMarginWidth - FLeftMargin.GetWidth - FCodeFolding.GetWidth;
+        LDrawRect.Right := FLeftMarginWidth + FScrollPageWidth;
+        PaintMinimapShadow(Canvas, LDrawRect);
       end;
 
     if FScroll.Shadow.Visible and (FHorizontalScrollPosition <> 0) then
     begin
-      DrawRect := LClipRect;
-      DrawRect.Left := LTextLinesLeft;
-      DrawRect.Right := LTextLinesRight;
-      PaintScrollShadow(Canvas, DrawRect);
+      LDrawRect := LClipRect;
+      LDrawRect.Left := FLeftMarginWidth;
+      LDrawRect.Right := LDrawRect.Left + FScrollPageWidth;
+      PaintScrollShadow(Canvas, LDrawRect);
     end;
 
     DoOnPaint;
@@ -10254,7 +10231,7 @@ begin
   end;
 end;
 
-procedure TBCBaseEditor.PaintTextLines(ACanvas: TCanvas; AClipRect: TRect; const AFirstLine, ALastLine: Integer;
+procedure TBCBaseEditor.PaintTextLines({ACanvas: TCanvas;} AClipRect: TRect; const AFirstLine, ALastLine: Integer;
   const AMinimap: Boolean);
 var
   LAnySelection: Boolean;
@@ -10365,7 +10342,7 @@ var
       LColor := LBackgroundColor;
     end;
     FTextDrawer.SetBackgroundColor(LColor); { Text }
-    ACanvas.Brush.Color := LColor; { Rest of the line }
+    Canvas.Brush.Color := LColor; { Rest of the line }
     LRGBColor := RGB(LColor and $FF, (LColor shr 8) and $FF, (LColor shr 16) and $FF);
   end;
 
@@ -10374,7 +10351,7 @@ var
     LText: string;
     LWidth: Integer;
   begin
-    Result := 0;
+    Result := AClipRect.Left;
 
     if AMinimap then
     begin
@@ -10427,7 +10404,7 @@ var
       for i := 0 to ATokenLength - 1 do
       begin
         LRect.Right := LRect.Left + 2;
-        ACanvas.Rectangle(LRect);
+        Canvas.Rectangle(LRect);
         Inc(LRect.Left, LSpaceWidth);
       end;
     end;
@@ -10447,7 +10424,7 @@ var
         Inc(LRect.Right, LTabWidth);
 
       while LRect.Right <= LTokenRect.Right do
-      with ACanvas do
+      with Canvas do
       begin
         Y := (LRect.Bottom - LRect.Top) shr 1;
         { Line }
@@ -10550,7 +10527,7 @@ var
               LSearchRect.Right := LSearchRect.Left + FTextDrawer.GetTextWidth(LToken, Length(LToken) + 1);
             end;
 
-            Winapi.Windows.ExtTextOut(ACanvas.Handle, LSearchRect.Left, LSearchRect.Top, ETO_OPAQUE or ETO_CLIPPED, @LSearchRect,
+            Winapi.Windows.ExtTextOut(Canvas.Handle, LSearchRect.Left, LSearchRect.Top, ETO_OPAQUE or ETO_CLIPPED, @LSearchRect,
               PChar(LToken), Length(LToken), nil);
 
             if LTextPosition.Char + LSearchTextLength - 1 <= LCurrentLineLength then
@@ -10567,7 +10544,7 @@ var
     end;
 
   begin
-    if not AMinimap and (LTokenRect.Right >= FHorizontalScrollPosition) or
+    if not AMinimap and (LTokenRect.Right > FLeftMarginWidth) or
       AMinimap and ((LTokenRect.Left < ClientRect.Width) or (LTokenRect.Left < FMinimap.Width)) then
     begin
       Dec(AFirst, ACharsBefore);
@@ -10579,6 +10556,7 @@ var
 
       LPChar := PChar(LText);
       LTextRect := LTokenRect;
+      LTextRect.Right := ClientRect.Width;
 
       if AMinimap then
         if FMinimap.Align = maLeft then
@@ -10592,15 +10570,15 @@ var
       if FSpecialChars.Visible and (LTokenHelper.EmptySpace <> esNone) and
         (not AMinimap or AMinimap and (moShowSpecialChars in FMinimap.Options)) then
       begin
-        if FSpecialChars.Selection.Visible and (ACanvas.Brush.Color = FSelection.Colors.Background) then
-          ACanvas.Pen.Color := FSpecialChars.Selection.Color
+        if FSpecialChars.Selection.Visible and (Canvas.Brush.Color = FSelection.Colors.Background) then
+          Canvas.Pen.Color := FSpecialChars.Selection.Color
         else
-          ACanvas.Pen.Color := LTokenHelper.Foreground;
+          Canvas.Pen.Color := LTokenHelper.Foreground;
 
-        Winapi.Windows.ExtTextOut(ACanvas.Handle, 0, 0, ETO_OPAQUE, LTextRect, '', 0, nil); { fill rect }
+        Winapi.Windows.ExtTextOut(Canvas.Handle, 0, 0, ETO_OPAQUE, LTextRect, '', 0, nil); { fill rect }
 
         if (FSpecialChars.Selection.Visible and
-          (ACanvas.Brush.Color = FSelection.Colors.Background) or (ACanvas.Brush.Color <> FSelection.Colors.Background)) then
+          (Canvas.Brush.Color = FSelection.Colors.Background) or (Canvas.Brush.Color <> FSelection.Colors.Background)) then
         begin
           if LTokenHelper.EmptySpace = esSpace then
             PaintSpecialCharSpace;
@@ -10611,7 +10589,7 @@ var
       end
       else
       begin
-        Winapi.Windows.ExtTextOut(ACanvas.Handle, LTextRect.Left, LTextRect.Top, ETO_OPAQUE or ETO_CLIPPED, @LTextRect,
+        Winapi.Windows.ExtTextOut(Canvas.Handle, LTextRect.Left, LTextRect.Top, ETO_OPAQUE or ETO_CLIPPED, @LTextRect,
           LPChar, ATokenLength, nil);
 
         if not AMinimap or AMinimap and (moShowSearchResults in FMinimap.Options) then
@@ -10623,7 +10601,7 @@ var
           for LX := LTokenRect.Right + 1 to LTextRect.Right do
           begin
             for LY := LTokenRect.Top to LTokenRect.Bottom - 1 do
-            if GetPixel(ACanvas.Handle, LX, LY) <> LRGBColor then
+            if GetPixel(Canvas.Handle, LX, LY) <> LRGBColor then
             begin
               Inc(FItalicOffset);
               Break;
@@ -10638,11 +10616,11 @@ var
 
       if LTokenHelper.MatchingPairUnderline then
       begin
-        LOldPenColor := ACanvas.Pen.Color;
-        ACanvas.Pen.Color := FMatchingPair.Colors.Underline;
-        ACanvas.MoveTo(LTextRect.Left, LTextRect.Bottom - 1);
-        ACanvas.LineTo(LTextRect.Right, LTextRect.Bottom - 1);
-        ACanvas.Pen.Color := LOldPenColor;
+        LOldPenColor := Canvas.Pen.Color;
+        Canvas.Pen.Color := FMatchingPair.Colors.Underline;
+        Canvas.MoveTo(LTextRect.Left, LTextRect.Bottom - 1);
+        Canvas.LineTo(LTextRect.Right, LTextRect.Bottom - 1);
+        Canvas.Pen.Color := LOldPenColor;
       end;
     end;
 
@@ -10754,7 +10732,7 @@ var
             LTokenRect.Right := LTokenRect.Left + FTextDrawer.CharWidth
           else
             LTokenRect.Right := X1;
-          Winapi.Windows.ExtTextOut(ACanvas.Handle, 0, 0, ETO_OPAQUE, LTokenRect, '', 0, nil); { fill end of line rect }
+          Winapi.Windows.ExtTextOut(Canvas.Handle, 0, 0, ETO_OPAQUE, LTokenRect, '', 0, nil); { fill end of line rect }
           if (soFromEndOfLine in FSelection.Options) and (soToEndOfLine in FSelection.Options) then
             LTokenRect.Left := LTokenRect.Right - FTextDrawer.CharWidth
           else
@@ -10765,12 +10743,12 @@ var
           SetDrawingColors(not (soToEndOfLine in FSelection.Options) and not (soToEndOfLastLine in FSelection.Options) or
             (soToEndOfLastLine in FSelection.Options) and (LDisplayLine <> LSelectionEndPosition.Row) );
           LTokenRect.Right := X2;
-          Winapi.Windows.ExtTextOut(ACanvas.Handle, 0, 0, ETO_OPAQUE, LTokenRect, '', 0, nil); { fill end of line rect }
+          Winapi.Windows.ExtTextOut(Canvas.Handle, 0, 0, ETO_OPAQUE, LTokenRect, '', 0, nil); { fill end of line rect }
           if (soFromEndOfLine in FSelection.Options) and (soToEndOfLine in FSelection.Options) then
           begin
             SetDrawingColors(True);
             LTokenRect.Right := LTokenRect.Left + FTextDrawer.CharWidth;
-            Winapi.Windows.ExtTextOut(ACanvas.Handle, 0, 0, ETO_OPAQUE, LTokenRect, '', 0, nil); { fill end of line rect }
+            Winapi.Windows.ExtTextOut(Canvas.Handle, 0, 0, ETO_OPAQUE, LTokenRect, '', 0, nil); { fill end of line rect }
           end;
           LTokenRect.Right := X2;
           LTokenRect.Left := X2;
@@ -10779,19 +10757,19 @@ var
         begin
           SetDrawingColors(False);
           LTokenRect.Right := LLineRect.Right;
-          Winapi.Windows.ExtTextOut(ACanvas.Handle, 0, 0, ETO_OPAQUE, LTokenRect, '', 0, nil); { fill end of line rect }
+          Winapi.Windows.ExtTextOut(Canvas.Handle, 0, 0, ETO_OPAQUE, LTokenRect, '', 0, nil); { fill end of line rect }
         end;
       end
       else
       begin
         SetDrawingColors(not (soToEndOfLine in FSelection.Options) and LIsLineSelected);
         LTokenRect.Right := LLineRect.Right;
-        Winapi.Windows.ExtTextOut(ACanvas.Handle, 0, 0, ETO_OPAQUE, LTokenRect, '', 0, nil); { fill end of line rect }
+        Winapi.Windows.ExtTextOut(Canvas.Handle, 0, 0, ETO_OPAQUE, LTokenRect, '', 0, nil); { fill end of line rect }
         if (soFromEndOfLine in FSelection.Options) and (soToEndOfLine in FSelection.Options) and LIsLineSelected then
         begin
           SetDrawingColors(True);
           LTokenRect.Right := LTokenRect.Left + FTextDrawer.CharWidth;
-          Winapi.Windows.ExtTextOut(ACanvas.Handle, 0, 0, ETO_OPAQUE, LTokenRect, '', 0, nil); { fill end of line rect }
+          Winapi.Windows.ExtTextOut(Canvas.Handle, 0, 0, ETO_OPAQUE, LTokenRect, '', 0, nil); { fill end of line rect }
         end;
       end;
     end;
@@ -10847,7 +10825,7 @@ var
 
     if LTokenHelper.Length > 0 then
     begin
-      LCanAppend :=
+      LCanAppend := (LTokenHelper.Length < 128) and
         ( (LTokenHelper.FontStyle = AFontStyle) or
           ((LEmptySpace <> esNone) and not (fsUnderline in AFontStyle) and not (fsUnderline in LTokenHelper.FontStyle)) ) and
         (LTokenHelper.MatchingPairUnderline = AMatchingPairUnderline) and
@@ -11259,16 +11237,17 @@ var
 
         if not AMinimap then
         begin
-          PaintCodeFoldingCollapseMark(ACanvas, LFoldRange, LCurrentLineText, LTokenPosition, LTokenLength, LCurrentLine, FHorizontalScrollPosition, LLineRect);
-          PaintSpecialCharsEndOfLine(ACanvas, LCurrentLine, LLineEndRect,
+          // TODO remove FHorizontalScrollPosition parameter
+          PaintCodeFoldingCollapseMark(Canvas, LFoldRange, LCurrentLineText, LTokenPosition, LTokenLength, LCurrentLine, FHorizontalScrollPosition, LLineRect);
+          PaintSpecialCharsEndOfLine(Canvas, LCurrentLine, LLineEndRect,
             (LCurrentLineLength + 1 >= LLineSelectionStart) and (LCurrentLineLength + 1 < LLineSelectionEnd));
-          PaintCodeFoldingCollapsedLine(ACanvas, LFoldRange, LLineRect);
+          PaintCodeFoldingCollapsedLine(Canvas, LFoldRange, LLineRect);
         end;
 
         LPreviousFirstColumn := LFirstColumn;
 
         if Assigned(FOnAfterLinePaint) then
-          FOnAfterLinePaint(Self, ACanvas, LLineRect, LCurrentLine, AMinimap);
+          FOnAfterLinePaint(Self, Canvas, LLineRect, LCurrentLine, AMinimap);
 
         LLineRect.Top := LLineRect.Bottom;
         if AMinimap then
@@ -11326,7 +11305,7 @@ begin
   begin
     LBackgroundColor := FBackgroundColor;
     SetDrawingColors(False);
-    Winapi.Windows.ExtTextOut(ACanvas.Handle, 0, 0, ETO_OPAQUE, LTokenRect, '', 0, nil);
+    Winapi.Windows.ExtTextOut(Canvas.Handle, 0, 0, ETO_OPAQUE, LTokenRect, '', 0, nil);
   end;
 end;
 
