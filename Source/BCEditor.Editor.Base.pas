@@ -4142,7 +4142,7 @@ begin
       end;
 
       Insert(S, LLineText, LTextCaretPosition.Char);
-      DisplayCaretX := DisplayCaretX + LLength;
+      DisplayCaretX := DisplayCaretX + Length(S);
       SetLineWithRightTrim(GetTextCaretY, LLineText);
       if FInsertMode then
         LHelper := '';
