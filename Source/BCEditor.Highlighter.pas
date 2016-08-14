@@ -254,7 +254,7 @@ begin
         if LCloseParent then
           FCurrentRange := FCurrentRange.Parent;
     end;
-  
+
     LParser := FCurrentRange.SymbolList[AnsiChar(FCurrentRange.CaseFunct(FCurrentLine[FRunPosition]))];
     if not Assigned(LParser) then
       Inc(FRunPosition)
@@ -591,3 +591,4 @@ begin
 end;
 
 end.
+

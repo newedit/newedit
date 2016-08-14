@@ -9891,6 +9891,7 @@ var
 
 begin
   FTextDrawer.SetBackgroundColor(FLeftMargin.Colors.Background);
+  Canvas.Brush.Color := FLeftMargin.Colors.Background;
   Winapi.Windows.ExtTextOut(Canvas.Handle, 0, 0, ETO_OPAQUE, AClipRect, '', 0, nil); { fill left margin rect }
   LLineHeight := GetLineHeight;
   PaintLineNumbers;
@@ -9986,11 +9987,13 @@ end;
 
 procedure TBCBaseEditor.PaintRightMarginMove;
 var
+  LOldPenStyle: TPenStyle;
   LOldStyle: TBrushStyle;
 begin
   with Canvas do
   begin
     Pen.Width := 1;
+    LOldPenStyle := Pen.Style;
     Pen.Style := psDot;
     Pen.Color := FRightMargin.Colors.MovingEdge;
     LOldStyle := Brush.Style;
@@ -9998,6 +10001,7 @@ begin
     MoveTo(FRightMarginMovePosition, 0);
     LineTo(FRightMarginMovePosition, ClientHeight);
     Brush.Style := LOldStyle;
+    Pen.Style := LOldPenStyle;
   end;
 end;
 
