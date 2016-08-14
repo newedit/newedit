@@ -1,5 +1,4 @@
-﻿{$MESSAGE WARN 'Fix painting'}
-unit BCEditor.Editor.Base;
+﻿unit BCEditor.Editor.Base;
 
 interface
 
@@ -312,7 +311,7 @@ type
     procedure DoWordLeft(const ACommand: TBCEditorCommand);
     procedure DoWordRight(const ACommand: TBCEditorCommand);
     procedure DragMinimap(Y: Integer);
-    procedure DrawCaret(ACanvas: TCanvas);
+    procedure DrawCaret;
     procedure FindAll(const ASearchText: string = '');
     procedure FindWords(const AWord: string; AList: TList; ACaseSensitive: Boolean; AWholeWordsOnly: Boolean);
     procedure FontChanged(ASender: TObject);
@@ -484,24 +483,24 @@ type
     procedure NotifyHookedCommandHandlers(AAfterProcessing: Boolean; var ACommand: TBCEditorCommand; var AChar: Char;
       AData: pointer);
     procedure Paint; override;
-    procedure PaintCaretBlock(ACanvas: TCanvas; ADisplayCaretPosition: TBCEditorDisplayPosition);
+    procedure PaintCaretBlock(ADisplayCaretPosition: TBCEditorDisplayPosition);
     procedure PaintCodeFolding(AClipRect: TRect; AFirstRow, ALastRow: Integer);
     procedure PaintCodeFoldingLine(AClipRect: TRect; ALine: Integer);
     procedure PaintCodeFoldingCollapsedLine(ACanvas: TCanvas; AFoldRange: TBCEditorCodeFoldingRange; ALineRect: TRect);
     procedure PaintCodeFoldingCollapseMark(ACanvas: TCanvas; AFoldRange: TBCEditorCodeFoldingRange;
       const ACurrentLineText: string; ATokenPosition, ATokenLength, ALine, AScrolledXBy: Integer; ALineRect: TRect);
-    procedure PaintGuides(ACanvas: TCanvas; AFirstRow, ALastRow: Integer; AMinimap: Boolean);
+    procedure PaintGuides(const AFirstRow, ALastRow: Integer; const AMinimap: Boolean);
     procedure PaintLeftMargin(const AClipRect: TRect; AFirstLine, ALastTextLine, ALastLine: Integer);
     procedure PaintMinimapIndicator(AClipRect: TRect);
     procedure PaintMinimapShadow(ACanvas: TCanvas; AClipRect: TRect);
     procedure PaintMouseMoveScrollPoint;
-    procedure PaintRightMargin(ACanvas: TCanvas; AClipRect: TRect);
+    procedure PaintRightMargin(AClipRect: TRect);
     procedure PaintRightMarginMove;
     procedure PaintScrollShadow(ACanvas: TCanvas; AClipRect: TRect);
     procedure PaintSearchMap(AClipRect: TRect);
     procedure PaintSpecialCharsEndOfLine(ACanvas: TCanvas; const ALine: Integer; const ALineEndRect: TRect;
       const ALineEndInsideSelection: Boolean);
-    procedure PaintSyncItems(ACanvas: TCanvas);
+    procedure PaintSyncItems;
     procedure PaintTextLines({ACanvas: TCanvas;} AClipRect: TRect; const AFirstLine, ALastLine: Integer; const AMinimap: Boolean);
     procedure RedoItem;
     procedure ResetCaret;
@@ -1201,7 +1200,7 @@ begin
   end;
 end;
 
-procedure TBCBaseEditor.DrawCaret(ACanvas: TCanvas);
+procedure TBCBaseEditor.DrawCaret;
 var
   i: Integer;
 begin
@@ -1210,9 +1209,9 @@ begin
 
   if Assigned(FMultiCarets) and (FMultiCarets.Count > 0) then
   for i := 0 to FMultiCarets.Count - 1 do
-    PaintCaretBlock(ACanvas, PBCEditorDisplayPosition(FMultiCarets[i])^)
+    PaintCaretBlock(PBCEditorDisplayPosition(FMultiCarets[i])^)
   else
-    PaintCaretBlock(ACanvas, GetDisplayCaretPosition);
+    PaintCaretBlock(GetDisplayCaretPosition);
 end;
 
 function TBCBaseEditor.GetCanPaste: Boolean;
@@ -4746,7 +4745,7 @@ begin
   end;
 end;
 
-procedure TBCBaseEditor.PaintCaretBlock(ACanvas: TCanvas; ADisplayCaretPosition: TBCEditorDisplayPosition);
+procedure TBCBaseEditor.PaintCaretBlock(ADisplayCaretPosition: TBCEditorDisplayPosition);
 var
   LPoint: TPoint;
   LCaretStyle: TBCEditorCaretStyle;
@@ -4825,7 +4824,7 @@ begin
     if ADisplayCaretPosition.Column <= FLines[ADisplayCaretPosition.Row - 1].Length then
       LTempBitmap.Canvas.TextOut(X, 0, FLines[ADisplayCaretPosition.Row - 1][ADisplayCaretPosition.Column]);
 
-    ACanvas.CopyRect(Rect(LPoint.X + FCaret.Offsets.X, LPoint.Y + FCaret.Offsets.Y, LPoint.X + FCaret.Offsets.X + LCaretWidth,
+    Canvas.CopyRect(Rect(LPoint.X + FCaret.Offsets.X, LPoint.Y + FCaret.Offsets.Y, LPoint.X + FCaret.Offsets.X + LCaretWidth,
       LPoint.Y + FCaret.Offsets.Y + LCaretHeight), LTempBitmap.Canvas, Rect(0, Y, LCaretWidth, Y + LCaretHeight));
   finally
     LTempBitmap.Free
@@ -9121,22 +9120,21 @@ begin
     LDrawRect.Right := ClientRect.Width;
     LDrawRect.Bottom := LClipRect.Height;
 
-    // TODO: Continue here...
     PaintTextLines(LDrawRect, LLine1, LLine2, False);
 
-    PaintRightMargin(Canvas, LDrawRect);
+    PaintRightMargin(LDrawRect);
 
     if FCodeFolding.Visible and (cfoShowIndentGuides in CodeFolding.Options) then
-      PaintGuides(Canvas, FTopLine, FTopLine + FVisibleLines, False);
+      PaintGuides(FTopLine, FTopLine + FVisibleLines, False);
 
     if FSyncEdit.Enabled and FSyncEdit.Active then
-      PaintSyncItems(Canvas);
+      PaintSyncItems;
 
     if FCaret.NonBlinking.Enabled or Assigned(FMultiCarets) and (FMultiCarets.Count > 0) and FDrawMultiCarets then
-      DrawCaret(Canvas);
+      DrawCaret;
 
     if FCaret.MultiEdit.Enabled and (FMultiCaretPosition.Row <> -1) then
-      PaintCaretBlock(Canvas, FMultiCaretPosition);
+      PaintCaretBlock(FMultiCaretPosition);
 
     if FRightMargin.Moving then
       PaintRightMarginMove;
@@ -9210,9 +9208,9 @@ begin
         LLine2 := Min(FLineNumbersCount, LLine1 + LClipRect.Height div Max(FMinimap.CharHeight - 1, 1));
       end;
 
-      PaintTextLines({Canvas,} LDrawRect, LLine1, LLine2, True);
+      PaintTextLines(LDrawRect, LLine1, LLine2, True);
       if FCodeFolding.Visible and (moShowIndentGuides in FMinimap.Options) then
-        PaintGuides(Canvas, LLine1, LLine2, True);
+        PaintGuides(LLine1, LLine2, True);
       if ioUseBlending in FMinimap.Indicator.Options then
         PaintMinimapIndicator(LDrawRect);
 
@@ -9433,7 +9431,7 @@ begin
   ACanvas.Pen.Color := LOldPenColor;
 end;
 
-procedure TBCBaseEditor.PaintGuides(ACanvas: TCanvas; AFirstRow, ALastRow: Integer; AMinimap: Boolean);
+procedure TBCBaseEditor.PaintGuides(const AFirstRow, ALastRow: Integer; const AMinimap: Boolean);
 var
   i, j, k: Integer;
   X, Y, Z: Integer;
@@ -9477,7 +9475,7 @@ var
   end;
 
 begin
-  LOldColor := ACanvas.Pen.Color;
+  LOldColor := Canvas.Pen.Color;
 
   Y := 0;
   LCurrentLine := GetDisplayTextLineNumber(DisplayCaretY);
@@ -9521,21 +9519,24 @@ begin
         begin
           if not LCodeFoldingRange.RegionItem.ShowGuideLine then
             Continue;
-          X := GetLineIndentLevel(LCodeFoldingRange.ToLine - 1) * FTextDrawer.CharWidth;
+          X := FLeftMarginWidth + GetLineIndentLevel(LCodeFoldingRange.ToLine - 1) * FTextDrawer.CharWidth;
 
-          if (X - FHorizontalScrollPosition > 0) and not AMinimap or AMinimap and (X > 0) then
+          if not AMinimap then
+            Dec(X, FHorizontalScrollPosition);
+
+          if (X - FLeftMarginWidth > 0) and not AMinimap or AMinimap and (X > 0) then
           begin
             if (LDeepestLevel = LCodeFoldingRange.IndentLevel) and
               (LCurrentLine >= LCodeFoldingRange.FromLine) and (LCurrentLine <= LCodeFoldingRange.ToLine) and
               (cfoHighlightIndentGuides in FCodeFolding.Options) then
             begin
-              ACanvas.Pen.Color := FCodeFolding.Colors.IndentHighlight;
-              ACanvas.MoveTo(X, Y);
-              ACanvas.LineTo(X, Y + GetLineHeight);
+              Canvas.Pen.Color := FCodeFolding.Colors.IndentHighlight;
+              Canvas.MoveTo(X, Y);
+              Canvas.LineTo(X, Y + GetLineHeight);
             end
             else
             begin
-              ACanvas.Pen.Color := FCodeFolding.Colors.Indent;
+              Canvas.Pen.Color := FCodeFolding.Colors.Indent;
 
               Z := Y;
               if LIncY then
@@ -9543,9 +9544,9 @@ begin
 
               while Z < Y + GetLineHeight do
               begin
-                ACanvas.MoveTo(X, Z);
+                Canvas.MoveTo(X, Z);
                 Inc(Z);
-                ACanvas.LineTo(X, Z);
+                Canvas.LineTo(X, Z);
                 Inc(Z);
               end;
             end;
@@ -9555,7 +9556,7 @@ begin
     Inc(Y, GetLineHeight);
   end;
   SetLength(LCodeFoldingRanges, 0);
-  ACanvas.Pen.Color := LOldColor;
+  Canvas.Pen.Color := LOldColor;
 end;
 
 procedure TBCBaseEditor.PaintLeftMargin(const AClipRect: TRect; AFirstLine, ALastTextLine, ALastLine: Integer);
@@ -9968,18 +9969,18 @@ begin
   FScroll.Indicator.Draw(Canvas, FMouseMoveScrollingPoint.X - LHalfWidth, FMouseMoveScrollingPoint.Y - LHalfWidth);
 end;
 
-procedure TBCBaseEditor.PaintRightMargin(ACanvas: TCanvas; AClipRect: TRect);
+procedure TBCBaseEditor.PaintRightMargin(AClipRect: TRect);
 var
   LRightMarginPosition: Integer;
 begin
   if FRightMargin.Visible then
   begin
-    LRightMarginPosition := FRightMargin.Position * FTextDrawer.CharWidth;
+    LRightMarginPosition := FRightMargin.Position * FTextDrawer.CharWidth - FHorizontalScrollPosition;
     if (LRightMarginPosition >= AClipRect.Left) and (LRightMarginPosition <= AClipRect.Right) then
     begin
-      ACanvas.Pen.Color := FRightMargin.Colors.Edge;
-      ACanvas.MoveTo(LRightMarginPosition, 0);
-      ACanvas.LineTo(LRightMarginPosition, Height);
+      Canvas.Pen.Color := FRightMargin.Colors.Edge;
+      Canvas.MoveTo(LRightMarginPosition, 0);
+      Canvas.LineTo(LRightMarginPosition, Height);
     end;
   end;
 end;
@@ -10187,11 +10188,13 @@ begin
   end;
 end;
 
-procedure TBCBaseEditor.PaintSyncItems(ACanvas: TCanvas);
+procedure TBCBaseEditor.PaintSyncItems;
 var
   i: Integer;
   LTextPosition: TBCEditorTextPosition;
   LLength: Integer;
+  LOldPenColor: TColor;
+  LOldBrushStyle: TBrushStyle;
 
   procedure DrawRectangle(ATextPosition: TBCEditorTextPosition);
   var
@@ -10201,9 +10204,10 @@ var
     LRect.Top := (ATextPosition.Line - TopLine + 1) * LineHeight;
     LRect.Bottom := LRect.Top + LineHeight;
     LDisplayPosition := TextToDisplayPosition(ATextPosition);
-    LRect.Left := (LDisplayPosition.Column - 1) * FTextDrawer.CharWidth;
-    LRect.Right := LRect.Left + LLength * FTextDrawer.CharWidth + 2;
-    ACanvas.Rectangle(LRect);
+    LRect.Left := DisplayPositionToPixels(LDisplayPosition).X;
+    Inc(LDisplayPosition.Column, LLength);
+    LRect.Right := DisplayPositionToPixels(LDisplayPosition).X;
+    Canvas.Rectangle(LRect);
   end;
 
 begin
@@ -10212,8 +10216,10 @@ begin
 
   LLength := FSyncEdit.EditEndPosition.Char - FSyncEdit.EditBeginPosition.Char;
 
-  ACanvas.Brush.Style := bsClear;
-  ACanvas.Pen.Color := FSyncEdit.Colors.EditBorder;
+  LOldPenColor := Canvas.Pen.Color;
+  LOldBrushStyle := Canvas.Brush.Style;
+  Canvas.Brush.Style := bsClear;
+  Canvas.Pen.Color := FSyncEdit.Colors.EditBorder;
   DrawRectangle(FSyncEdit.EditBeginPosition);
 
   for i := 0 to FSyncEdit.SyncItems.Count - 1 do
@@ -10225,10 +10231,12 @@ begin
     else
     if LTextPosition.Line + 1 >= TopLine then
     begin
-      ACanvas.Pen.Color := FSyncEdit.Colors.WordBorder;
+      Canvas.Pen.Color := FSyncEdit.Colors.WordBorder;
       DrawRectangle(LTextPosition);
     end;
   end;
+  Canvas.Pen.Color := LOldPenColor;
+  Canvas.Brush.Style := LOldBrushStyle;
 end;
 
 procedure TBCBaseEditor.PaintTextLines({ACanvas: TCanvas;} AClipRect: TRect; const AFirstLine, ALastLine: Integer;
