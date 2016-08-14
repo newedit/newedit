@@ -11569,7 +11569,7 @@ begin
     AValue.Row := 1
   else
   if AValue.Row > FLineNumbersCount then
-    AValue.Row := FLineNumbersCount;
+    AValue.Row := Max(FLineNumbersCount, 1);
 
   if AValue.Column < 1 then
     AValue.Column := 1
@@ -12790,7 +12790,7 @@ begin
         Inc(LPLine);
       end
       else
-        Inc(LChar);
+        Inc(LChar);   // TODO: Fix, this is unnecessary loop after none char
       Inc(i);
     end;
 
