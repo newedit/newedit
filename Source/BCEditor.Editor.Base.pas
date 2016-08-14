@@ -2729,7 +2729,7 @@ function TBCBaseEditor.PixelAndRowToDisplayPosition(const X, ARow: Integer; cons
 var
   LToken, LLastChar: string;
   LFontStyles, LPreviousFontStyles: TFontStyles;
-  LText: string;
+  LLineText, LText: string;
   LHighlighterAttribute: TBCEditorHighlighterAttribute;
   LXInEditor: Integer;
   LTextWidth: Integer;
@@ -2741,15 +2741,15 @@ begin
     Exit;
 
   if ALineText = '' then
-    LText := FLines.GetExpandedString(Result.Row - 1, BCEDITOR_TAB_CHAR)
+    LLineText := FLines.GetExpandedString(Result.Row - 1, BCEDITOR_TAB_CHAR)
   else
-    LText := ALineText;
+    LLineText := ALineText;
 
   if Result.Row = 1 then
     FHighlighter.ResetCurrentRange
   else
     FHighlighter.SetCurrentRange(FLines.Ranges[Result.Row - 2]);
-  FHighlighter.SetCurrentLine(LText);
+  FHighlighter.SetCurrentLine(LLineText);
 
   LFontStyles := [];
   LPreviousFontStyles := [];
@@ -2793,8 +2793,7 @@ begin
     FHighlighter.Next;
   end;
 
-  LText := FLines[Result.Row - 1];
-  Inc(Result.Column, Length(LText));
+  Inc(Result.Column, Length(LLineText));
   Inc(Result.Column, (X + FHorizontalScrollPosition - FLeftMarginWidth - LTextWidth) div FTextDrawer.CharWidth);
 end;
 
