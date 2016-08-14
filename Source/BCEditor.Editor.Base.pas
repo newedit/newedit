@@ -9975,7 +9975,7 @@ var
 begin
   if FRightMargin.Visible then
   begin
-    LRightMarginPosition := FRightMargin.Position * FTextDrawer.CharWidth - FHorizontalScrollPosition;
+    LRightMarginPosition := FLeftMarginWidth + FRightMargin.Position * FTextDrawer.CharWidth - FHorizontalScrollPosition;
     if (LRightMarginPosition >= AClipRect.Left) and (LRightMarginPosition <= AClipRect.Right) then
     begin
       Canvas.Pen.Color := FRightMargin.Colors.Edge;
@@ -10239,8 +10239,7 @@ begin
   Canvas.Brush.Style := LOldBrushStyle;
 end;
 
-procedure TBCBaseEditor.PaintTextLines({ACanvas: TCanvas;} AClipRect: TRect; const AFirstLine, ALastLine: Integer;
-  const AMinimap: Boolean);
+procedure TBCBaseEditor.PaintTextLines(AClipRect: TRect; const AFirstLine, ALastLine: Integer; const AMinimap: Boolean);
 var
   LAnySelection: Boolean;
   LDisplayLine, LCurrentLine: Integer;
@@ -10564,7 +10563,6 @@ var
 
       LPChar := PChar(LText);
       LTextRect := LTokenRect;
-      LTextRect.Right := ClientRect.Width;
 
       if AMinimap then
         if FMinimap.Align = maLeft then
