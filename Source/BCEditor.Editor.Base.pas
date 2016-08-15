@@ -486,9 +486,9 @@ type
     procedure PaintCaretBlock(ADisplayCaretPosition: TBCEditorDisplayPosition);
     procedure PaintCodeFolding(AClipRect: TRect; AFirstRow, ALastRow: Integer);
     procedure PaintCodeFoldingLine(AClipRect: TRect; ALine: Integer);
-    procedure PaintCodeFoldingCollapsedLine(ACanvas: TCanvas; AFoldRange: TBCEditorCodeFoldingRange; ALineRect: TRect);
-    procedure PaintCodeFoldingCollapseMark(ACanvas: TCanvas; AFoldRange: TBCEditorCodeFoldingRange;
-      const ACurrentLineText: string; ATokenPosition, ATokenLength, ALine, AScrolledXBy: Integer; ALineRect: TRect);
+    procedure PaintCodeFoldingCollapsedLine(AFoldRange: TBCEditorCodeFoldingRange; const ALineRect: TRect);
+    procedure PaintCodeFoldingCollapseMark(AFoldRange: TBCEditorCodeFoldingRange; const ACurrentLineText: string;
+      const ATokenPosition, ATokenLength, ALine: Integer; ALineRect: TRect);
     procedure PaintGuides(const AFirstRow, ALastRow: Integer; const AMinimap: Boolean);
     procedure PaintLeftMargin(const AClipRect: TRect; AFirstLine, ALastTextLine, ALastLine: Integer);
     procedure PaintMinimapIndicator(AClipRect: TRect);
@@ -498,8 +498,7 @@ type
     procedure PaintRightMarginMove;
     procedure PaintScrollShadow(ACanvas: TCanvas; AClipRect: TRect);
     procedure PaintSearchMap(AClipRect: TRect);
-    procedure PaintSpecialCharsEndOfLine(ACanvas: TCanvas; const ALine: Integer; const ALineEndRect: TRect;
-      const ALineEndInsideSelection: Boolean);
+    procedure PaintSpecialCharsEndOfLine(const ALine: Integer; const ALineEndRect: TRect; const ALineEndInsideSelection: Boolean);
     procedure PaintSyncItems;
     procedure PaintTextLines({ACanvas: TCanvas;} AClipRect: TRect; const AFirstLine, ALastLine: Integer; const AMinimap: Boolean);
     procedure RedoItem;
@@ -1122,18 +1121,15 @@ begin
   if Assigned(LFoldRange) and LFoldRange.Collapsed then
   begin
     LCollapseMarkRect := LFoldRange.CollapseMarkRect;
+    OffsetRect(LCollapseMarkRect, -FLeftMarginWidth, 0);
 
-    if LCollapseMarkRect.Right - FHorizontalScrollPosition > 0 then
-    begin
-      OffsetRect(LCollapseMarkRect, -FHorizontalScrollPosition, 0);
-
+    if LCollapseMarkRect.Right > FLeftMarginWidth then
       if PtInRect(LCollapseMarkRect, APoint) then
       begin
         FreeHintForm(FCodeFoldingHintForm);
         CodeFoldingUncollapse(LFoldRange);
         Exit;
       end;
-    end;
   end;
 
   Result := False;
@@ -8930,10 +8926,10 @@ begin
     begin
       LPoint := Point(X, Y);
       LRect := LFoldRange.CollapseMarkRect;
+      OffsetRect(LRect, -FLeftMarginWidth, 0);
 
-      if LRect.Right - FHorizontalScrollPosition > 0 then
+      if LRect.Right > FLeftMarginWidth then
       begin
-        OffsetRect(LRect, -FHorizontalScrollPosition, 0);
         FCodeFolding.MouseOverHint := False;
         if PtInRect(LRect, LPoint) then
         begin
@@ -9368,23 +9364,23 @@ begin
   end;
 end;
 
-procedure TBCBaseEditor.PaintCodeFoldingCollapsedLine(ACanvas: TCanvas; AFoldRange: TBCEditorCodeFoldingRange; ALineRect: TRect);
+procedure TBCBaseEditor.PaintCodeFoldingCollapsedLine(AFoldRange: TBCEditorCodeFoldingRange; const ALineRect: TRect);
 var
   LOldPenColor: TColor;
 begin
   if FCodeFolding.Visible and (cfoShowCollapsedLine in CodeFolding.Options) and Assigned(AFoldRange) and
     AFoldRange.Collapsed and not AFoldRange.ParentCollapsed then
   begin
-    LOldPenColor := ACanvas.Pen.Color;
-    ACanvas.Pen.Color := CodeFolding.Colors.CollapsedLine;
-    ACanvas.MoveTo(ALineRect.Left, ALineRect.Bottom - 1);
-    ACanvas.LineTo(Width, ALineRect.Bottom - 1);
-    ACanvas.Pen.Color := LOldPenColor;
+    LOldPenColor := Canvas.Pen.Color;
+    Canvas.Pen.Color := CodeFolding.Colors.CollapsedLine;
+    Canvas.MoveTo(ALineRect.Left, ALineRect.Bottom - 1);
+    Canvas.LineTo(Width, ALineRect.Bottom - 1);
+    Canvas.Pen.Color := LOldPenColor;
   end;
 end;
 
-procedure TBCBaseEditor.PaintCodeFoldingCollapseMark(ACanvas: TCanvas; AFoldRange: TBCEditorCodeFoldingRange;
-  const ACurrentLineText: string; ATokenPosition, ATokenLength, ALine, AScrolledXBy: Integer; ALineRect: TRect);
+procedure TBCBaseEditor.PaintCodeFoldingCollapseMark(AFoldRange: TBCEditorCodeFoldingRange;
+  const ACurrentLineText: string; const ATokenPosition, ATokenLength, ALine: Integer; ALineRect: TRect);
 var
   LOldPenColor: TColor;
   LCollapseMarkRect: TRect;
@@ -9395,29 +9391,29 @@ begin
   if FCodeFolding.Visible and (cfoShowCollapsedCodeHint in CodeFolding.Options) and Assigned(AFoldRange) and
     AFoldRange.Collapsed and not AFoldRange.ParentCollapsed then
   begin
-    LCollapseMarkRect.Left := FHorizontalScrollPosition +
-      FTextDrawer.GetTextWidth(ACurrentLineText, ATokenPosition + ATokenLength + 1) + FTextDrawer.CharWidth;
+    LCollapseMarkRect.Left := FLeftMarginWidth +
+      FTextDrawer.GetTextWidth(ACurrentLineText, ATokenPosition + ATokenLength + 1) + 2 * FTextDrawer.CharWidth -
+      FHorizontalScrollPosition;
     LCollapseMarkRect.Right := LCollapseMarkRect.Left + FTextDrawer.CharWidth * 4 - 2;
     LCollapseMarkRect.Top := ALineRect.Top + 2;
     LCollapseMarkRect.Bottom := ALineRect.Bottom - 2;
 
-    if LCollapseMarkRect.Right - AScrolledXBy > 0 then
+    if LCollapseMarkRect.Right > FLeftMarginWidth then
     begin
-      OffsetRect(LCollapseMarkRect, -AScrolledXBy, 0);
       LBrush := TBrush.Create;
       try
         LBrush.Color := FCodeFolding.Colors.FoldingLine;
-        Winapi.Windows.FrameRect(ACanvas.Handle, LCollapseMarkRect, LBrush.Handle);
+        Winapi.Windows.FrameRect(Canvas.Handle, LCollapseMarkRect, LBrush.Handle);
       finally
         LBrush.Free;
       end;
-      ACanvas.Pen.Color := FCodeFolding.Colors.FoldingLine;
+      Canvas.Pen.Color := FCodeFolding.Colors.FoldingLine;
       { paint [...] }
       Y := LCollapseMarkRect.Top + (LCollapseMarkRect.Bottom - LCollapseMarkRect.Top) div 2;
       X := LCollapseMarkRect.Left + FTextDrawer.CharWidth - 1;
       for i := 1 to 3 do //FI:W528 FixInsight ignore
       begin
-        ACanvas.Rectangle(X, Y, X + 2, Y + 2);
+        Canvas.Rectangle(X, Y, X + 2, Y + 2);
         X := X + FTextDrawer.CharWidth - 1;
       end;
     end;
@@ -9427,7 +9423,7 @@ begin
 
     AFoldRange.CollapseMarkRect := LCollapseMarkRect;
   end;
-  ACanvas.Pen.Color := LOldPenColor;
+  Canvas.Pen.Color := LOldPenColor;
 end;
 
 procedure TBCBaseEditor.PaintGuides(const AFirstRow, ALastRow: Integer; const AMinimap: Boolean);
@@ -10085,8 +10081,7 @@ begin
   end;
 end;
 
-procedure TBCBaseEditor.PaintSpecialCharsEndOfLine(ACanvas: TCanvas; const ALine: Integer; const ALineEndRect: TRect;
-  const ALineEndInsideSelection: Boolean);
+procedure TBCBaseEditor.PaintSpecialCharsEndOfLine(const ALine: Integer; const ALineEndRect: TRect; const ALineEndInsideSelection: Boolean);
 var
   Y: Integer;
   LCharRect: TRect;
@@ -10111,10 +10106,10 @@ begin
       else
         LPenColor := FSpecialChars.Color;
 
-      ACanvas.Pen.Color := LPenColor;
+      Canvas.Pen.Color := LPenColor;
 
       if FSpecialChars.EndOfLine.Visible and (ALine <> FLineNumbersCount) then
-      with ACanvas do
+      with Canvas do
       begin
         Pen.Color := LPenColor;
         LCharRect.Top := ALineEndRect.Top;
@@ -10142,10 +10137,10 @@ begin
             FTextDrawer.SetBackgroundColor(FActiveLine.Color)
           else
             FTextDrawer.SetBackgroundColor(FBackgroundColor);
-          FTextDrawer.SetForegroundColor(ACanvas.Pen.Color);
+          FTextDrawer.SetForegroundColor(Canvas.Pen.Color);
           FTextDrawer.SetStyle([]);
           LPilcrow := Char($00B6);
-          Winapi.Windows.ExtTextOut(ACanvas.Handle, LCharRect.Left, LCharRect.Top, ETO_OPAQUE or ETO_CLIPPED, @LCharRect, PChar(LPilcrow), 1, nil);
+          Winapi.Windows.ExtTextOut(Canvas.Handle, LCharRect.Left, LCharRect.Top, ETO_OPAQUE or ETO_CLIPPED, @LCharRect, PChar(LPilcrow), 1, nil);
         end
         else
         if FSpecialChars.EndOfLine.Style = eolArrow then
@@ -11246,11 +11241,10 @@ var
 
         if not AMinimap then
         begin
-          // TODO remove FHorizontalScrollPosition parameter
-          PaintCodeFoldingCollapseMark(Canvas, LFoldRange, LCurrentLineText, LTokenPosition, LTokenLength, LCurrentLine, FHorizontalScrollPosition, LLineRect);
-          PaintSpecialCharsEndOfLine(Canvas, LCurrentLine, LLineEndRect,
+          PaintCodeFoldingCollapseMark(LFoldRange, LCurrentLineText, LTokenPosition, LTokenLength, LCurrentLine, LLineRect);
+          PaintSpecialCharsEndOfLine(LCurrentLine, LLineEndRect,
             (LCurrentLineLength + 1 >= LLineSelectionStart) and (LCurrentLineLength + 1 < LLineSelectionEnd));
-          PaintCodeFoldingCollapsedLine(Canvas, LFoldRange, LLineRect);
+          PaintCodeFoldingCollapsedLine(LFoldRange, LLineRect);
         end;
 
         LPreviousFirstColumn := LFirstColumn;
