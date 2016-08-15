@@ -9392,7 +9392,7 @@ begin
     AFoldRange.Collapsed and not AFoldRange.ParentCollapsed then
   begin
     LCollapseMarkRect.Left := FLeftMarginWidth +
-      FTextDrawer.GetTextWidth(ACurrentLineText, ATokenPosition + ATokenLength + 1) + 2 * FTextDrawer.CharWidth -
+      FTextDrawer.GetTextWidth(ACurrentLineText, ATokenPosition + ATokenLength + 1) + FTextDrawer.CharWidth -
       FHorizontalScrollPosition;
     LCollapseMarkRect.Right := LCollapseMarkRect.Left + FTextDrawer.CharWidth * 4 - 2;
     LCollapseMarkRect.Top := ALineRect.Top + 2;
@@ -12426,8 +12426,8 @@ begin
       end;
   end;
 
-  if not SelectionAvailable then
-    FReplace.Options := FReplace.Options - [roSelectedOnly];
+  //if not SelectionAvailable then
+  //  FReplace.Options := FReplace.Options - [roSelectedOnly];
 
   if roSelectedOnly in FReplace.Options then
   begin
@@ -12521,6 +12521,7 @@ begin
           begin
             ExecuteCommand(ecDeleteLine, 'Y', nil);
             Dec(LCurrentTextPosition.Line);
+            Dec(LEndTextPosition.Line);
           end
           else
           begin
@@ -12528,7 +12529,7 @@ begin
             LReplaceLength := TextCaretPosition.Char - LFound;
           end
         end;
-        if not LIsBackward then
+        if not LIsBackward and not LIsDeleteLine then
         begin
           SetTextCaretX(LFound + LReplaceLength);
           if (LSearchLength <> LReplaceLength) and (LActionReplace <> raSkip) then
