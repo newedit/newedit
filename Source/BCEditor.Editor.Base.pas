@@ -2209,7 +2209,7 @@ begin
     FHighlighter.ResetCurrentRange
   else
     FHighlighter.SetCurrentRange(FLines.Ranges[ADisplayPosition.Row - 2]);
-  FHighlighter.SetCurrentLine(FLines.GetExpandedString(ADisplayPosition.Row - 1, BCEDITOR_TAB_CHAR));
+  FHighlighter.SetCurrentLine(FLines.ExpandedStrings[ADisplayPosition.Row - 1]);
   LFontStyles := [];
   LPreviousFontStyles := [];
   LText := '';
@@ -2224,7 +2224,8 @@ begin
     LHighlighterAttribute := FHighlighter.GetTokenAttribute;
     if Assigned(LHighlighterAttribute) then
       LFontStyles := LHighlighterAttribute.FontStyles;
-    if (LText <> '') and (LFontStyles <> LPreviousFontStyles) then
+    if (LText <> '') and (LFontStyles <> LPreviousFontStyles) or (LToken = BCEDITOR_SPACE_CHAR) or
+      (LText <> '') and (LText[1] = BCEDITOR_SPACE_CHAR) and (LToken <> BCEDITOR_SPACE_CHAR) then
     begin
       LPreviousFontStyles := LFontStyles;
       Inc(LLength, Length(LText));
