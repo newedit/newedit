@@ -2244,6 +2244,7 @@ begin
 
     FHighlighter.Next;
   end;
+  // TODO: Fix unicode
 
   if LText <> '' then
     Inc(Result.X, FTextDrawer.GetTextWidth(LText, Length(LText) + 1));
@@ -2729,6 +2730,7 @@ var
   LHighlighterAttribute: TBCEditorHighlighterAttribute;
   LXInEditor: Integer;
   LTextWidth: Integer;
+  LPToken: PChar;
 begin
   Result.Row := ARow;
   Result.Column := 1;
@@ -2775,12 +2777,32 @@ begin
     if (LXInEditor > 0) and (LTextWidth > LXInEditor) then
     begin
       Inc(Result.Column, FHighlighter.GetTokenPosition + FHighlighter.GetTokenLength);
+
       while LTextWidth > LXInEditor do
       begin
-        LLastChar := LToken[LToken.Length]; // TODO: test Unicode combined characters
-        LToken := LToken.Remove(LToken.Length - 1);
-        Dec(LTextWidth, FTextDrawer.GetTextWidth(LLastChar, Length(LLastChar) + 1));
-        Dec(Result.Column);
+        LLastChar := '';
+        LPToken := PChar(LToken);
+        Inc(LPToken, LToken.Length - 1);
+        while (LPToken^ <> BCEDITOR_NONE_CHAR) and
+          ( (LPToken^.GetUnicodeCategory in [TUnicodeCategory.ucCombiningMark, TUnicodeCategory.ucNonSpacingMark]) or
+            ((LPToken - 1)^ <> BCEDITOR_NONE_CHAR) and ((LPToken - 1)^.GetUnicodeCategory = TUnicodeCategory.ucNonSpacingMark) and
+            not IsCombiningDiacriticalMark((LPToken - 1)^) ) do
+        begin
+          LLastChar := LPToken^ + LLastChar;
+          Dec(LPToken);
+        end;
+        if LLastChar = '' then
+        begin
+          LLastChar := LToken[LToken.Length];
+          LToken := LToken.Remove(LToken.Length - 1);
+        end
+        else
+        begin
+          LLastChar := LPToken^ + LLastChar;
+          Delete(LToken, LToken.Length - LLastChar.Length + 1, LToken.Length);
+        end;
+        Dec(LTextWidth, FTextDrawer.GetTextWidth(LLastChar, LLastChar.Length + 1));
+        Dec(Result.Column, LLastChar.Length);
       end;
 
       Exit;
