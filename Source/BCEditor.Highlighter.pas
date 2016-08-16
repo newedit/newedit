@@ -255,7 +255,11 @@ begin
           FCurrentRange := FCurrentRange.Parent;
     end;
 
-    LParser := FCurrentRange.SymbolList[AnsiChar(FCurrentRange.CaseFunct(FCurrentLine[FRunPosition]))];
+    if Ord(FCurrentLine[FRunPosition]) < 256 then
+      LParser := FCurrentRange.SymbolList[AnsiChar(FCurrentRange.CaseFunct(FCurrentLine[FRunPosition]))]
+    else
+      LParser := FCurrentRange.SymbolList['a'];
+
     if not Assigned(LParser) then
       Inc(FRunPosition)
     else
