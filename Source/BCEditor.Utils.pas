@@ -24,7 +24,7 @@ uses
 function IsCombiningDiacriticalMark(const AChar: Char): Boolean;
 begin
   case Word(AChar) of
-    $0300..$036F:
+    $0300..$036F, $1DC0..$1DFF, $20D0..$20FF:
       Result := True
   else
     Result := False;

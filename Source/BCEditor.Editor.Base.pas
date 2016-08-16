@@ -1354,6 +1354,10 @@ var
   LFound: Boolean;
 begin
   Result := ADisplayLineNumber;
+
+  if Assigned(FLineNumbersCache) and (ADisplayLineNumber > Length(FLineNumbersCache)) then
+    CreateLineNumbersCache(True);
+
   if Assigned(FLineNumbersCache) and (FLineNumbersCache[ADisplayLineNumber] = ADisplayLineNumber) then
     Result := ADisplayLineNumber
   else
@@ -10625,7 +10629,7 @@ var
         if LTokenHelper.IsItalic and (LPChar^ <> BCEDITOR_SPACE_CHAR) then
         begin
           FItalicOffset := 0;
-          for LX := LTokenRect.Right + 1 to LTextRect.Right do
+          for LX := LTokenRect.Right + 1 to LTextRect.Right - 1 do
           begin
             for LY := LTokenRect.Top to LTokenRect.Bottom - 1 do
             if GetPixel(Canvas.Handle, LX, LY) <> LRGBColor then
