@@ -5061,6 +5061,7 @@ begin
       end;
 
       FMinimapShadowBitmap.Canvas.Brush.Color := FMinimap.Shadow.Color;
+      FMinimapShadowBitmap.Height := 0;
       FMinimapShadowBitmap.Width := Max(FMinimap.Shadow.Width, 1);
 
       SetLength(FMinimapShadowAlphaArray, FMinimapShadowBitmap.Width);
@@ -9262,7 +9263,7 @@ begin
       if FMinimap.Shadow.Visible then
       begin
         LDrawRect := LClipRect;
-        LDrawRect.Left := 0; // TODO FLeftMarginWidth - FLeftMargin.GetWidth - FCodeFolding.GetWidth;
+        LDrawRect.Left := FLeftMarginWidth - FLeftMargin.GetWidth - FCodeFolding.GetWidth;
         LDrawRect.Right := FLeftMarginWidth + FScrollPageWidth;
         PaintMinimapShadow(Canvas, LDrawRect);
       end;
