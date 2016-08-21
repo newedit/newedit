@@ -35,7 +35,7 @@ resourcestring
   { BCEditor.Search }
   SBCEditorPatternIsEmpty = 'Pattern is empty';
 
-  { BCEditor.TextDrawer }
+  { BCEditor.PaintHelper }
   SBCEditorValueMustBeSpecified = 'SetBaseFont: ''Value'' must be specified.';
 
 implementation

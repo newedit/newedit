@@ -5,7 +5,7 @@ interface
 uses
   Winapi.Windows, System.SysUtils, System.Classes, Vcl.Graphics, Vcl.Printers, BCEditor.Editor.Base, BCEditor.Types,
   BCEditor.Print.Types, BCEditor.Print.HeaderFooter, BCEditor.Print.PrinterInfo, BCEditor.Print.Margins,
-  BCEditor.Utils, BCEditor.Highlighter, BCEditor.Editor.Selection, BCEditor.TextDrawer;
+  BCEditor.Utils, BCEditor.Highlighter, BCEditor.Editor.Selection, BCEditor.PaintHelper;
 
 type
   TBCEditorPageLine = class

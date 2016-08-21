@@ -1,4 +1,4 @@
-unit BCEditor.TextDrawer;
+unit BCEditor.PaintHelper;     // TODO: Change name PaintHelper
 
 interface
 
@@ -125,7 +125,7 @@ type
     property FontStock: TBCEditorFontStock read FFontStock;
   end;
 
-  EBCEditorTextDrawerException = class(Exception);
+  EBCEditorPaintHelperException = class(Exception);
 
 implementation
 
@@ -545,7 +545,7 @@ begin
     SetStyle(AValue.Style);
   end
   else
-    raise EBCEditorTextDrawerException.Create(SBCEditorValueMustBeSpecified);
+    raise EBCEditorPaintHelperException.Create(SBCEditorValueMustBeSpecified);
 end;
 
 procedure TBCEditorPaintHelper.SetBaseStyle(const AValue: TFontStyles);

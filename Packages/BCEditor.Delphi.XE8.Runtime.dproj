@@ -217,7 +217,7 @@
         <DCCReference Include="..\Source\BCEditor.Search.RegularExpressions.pas"/>
         <DCCReference Include="..\Source\BCEditor.Search.Wildcard.pas"/>
         <DCCReference Include="..\Source\BCEditor.StyleHooks.pas"/>
-        <DCCReference Include="..\Source\BCEditor.TextDrawer.pas"/>
+        <DCCReference Include="..\Source\BCEditor.PaintHelper.pas"/>
         <DCCReference Include="..\Source\BCEditor.Types.pas"/>
         <DCCReference Include="..\Source\BCEditor.Utils.pas"/>
         <DCCReference Include="..\Source\BCEditor.Editor.Scroll.Shadow.pas"/>

@@ -130,7 +130,7 @@ contains
   BCEditor.Search.RegularExpressions in '..\Source\BCEditor.Search.RegularExpressions.pas',
   BCEditor.Search.Wildcard in '..\Source\BCEditor.Search.Wildcard.pas',
   BCEditor.StyleHooks in '..\Source\BCEditor.StyleHooks.pas',
-  BCEditor.TextDrawer in '..\Source\BCEditor.TextDrawer.pas',
+  BCEditor.PaintHelper in '..\Source\BCEditor.PaintHelper.pas',
   BCEditor.Types in '..\Source\BCEditor.Types.pas',
   BCEditor.Utils in '..\Source\BCEditor.Utils.pas';
 

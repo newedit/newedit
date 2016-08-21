@@ -14,7 +14,7 @@ uses
   BCEditor.Editor.SpecialChars, BCEditor.Editor.Tabs, BCEditor.Editor.Undo, BCEditor.Editor.Undo.List,
   BCEditor.Editor.WordWrap, BCEditor.Editor.CodeFolding.Hint.Form, BCEditor.Highlighter,
   BCEditor.Highlighter.Attributes, BCEditor.KeyboardHandler, BCEditor.Lines, BCEditor.Search,
-  BCEditor.Search.RegularExpressions, BCEditor.Search.WildCard, BCEditor.TextDrawer, BCEditor.Editor.SyncEdit,
+  BCEditor.Search.RegularExpressions, BCEditor.Search.WildCard, BCEditor.PaintHelper, BCEditor.Editor.SyncEdit,
   BCEditor.Utils{$IFDEF USE_ALPHASKINS}, sCommonData, acSBUtils{$ENDIF};
 
 const
