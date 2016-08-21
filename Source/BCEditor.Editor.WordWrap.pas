@@ -13,7 +13,6 @@ type
     FEnabled: Boolean;
     FIndicator: TBCEditorGlyph;
     FOnChange: TNotifyEvent;
-    FPosition: Integer;
     FStyle: TBCEditorWordWrapStyle;
     procedure CreateInternalBitmap;
     procedure DoChange;
@@ -22,7 +21,6 @@ type
     procedure SetEnabled(const AValue: Boolean);
     procedure SetIndicator(const AValue: TBCEditorGlyph);
     procedure SetOnChange(AValue: TNotifyEvent);
-    procedure SetPosition(const AValue: Integer);
     procedure SetStyle(const AValue: TBCEditorWordWrapStyle);
   public
     constructor Create;
@@ -33,7 +31,6 @@ type
     property Enabled: Boolean read FEnabled write SetEnabled;
     property Indicator: TBCEditorGlyph read FIndicator write SetIndicator;
     property OnChange: TNotifyEvent read FOnChange write SetOnChange;
-    property Position: Integer read FPosition write SetPosition;
     property Style: TBCEditorWordWrapStyle read FStyle write SetStyle;
   end;
 
@@ -48,10 +45,9 @@ begin
   FColors := TBCEditorWordWrapColors.Create;
 
   FEnabled := False;
-  FPosition := 80;
   FIndicator := TBCEditorGlyph.Create(HInstance, '', clFuchsia);
   CreateInternalBitmap;
-  FStyle := wwsClientWidth;
+  FStyle := wwsPageWidth;
 end;
 
 destructor TBCEditorWordWrap.Destroy;
@@ -70,7 +66,6 @@ begin
   begin
     Self.FColors.Assign(FColors);
     Self.FEnabled := FEnabled;
-    Self.FPosition := FPosition;
     Self.FStyle := FStyle;
     Self.FIndicator.Assign(FIndicator);
     Self.DoChange;
@@ -142,15 +137,6 @@ end;
 procedure TBCEditorWordWrap.SetIndicator(const AValue: TBCEditorGlyph);
 begin
   FIndicator.Assign(AValue);
-end;
-
-procedure TBCEditorWordWrap.SetPosition(const AValue: Integer);
-begin
-  if FPosition <> AValue then
-  begin
-    FPosition := AValue;
-    DoChange;
-  end;
 end;
 
 procedure TBCEditorWordWrap.SetStyle(const AValue: TBCEditorWordWrapStyle);

@@ -323,7 +323,7 @@ type
   TBCEditorChangeReason = (crInsert, crPaste, crDragDropInsert, crDelete, crLineBreak, crIndent, crUnindent,
     crCaret, crSelection, crNothing, crGroupBreak);
 
-  TBCEditorWordWrapStyle = (wwsClientWidth, wwsRightMargin, wwsSpecified);
+  TBCEditorWordWrapStyle = (wwsPageWidth, wwsRightMargin);
 
   TBCEditorCodeFoldingMarkStyle = (msSquare, msCircle);
   TBCEditorCodeFoldingChanges = (fcEnabled, fcRefresh, fcRescan);

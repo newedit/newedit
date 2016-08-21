@@ -89,9 +89,9 @@ type
 
   EBCEditorFontStockException = class(Exception);
 
-  { TBCEditorTextDrawer }
+  { TBCEditorPaintHelper }
 
-  TBCEditorTextDrawer = class(TObject)
+  TBCEditorPaintHelper = class(TObject)
   strict private
     FBackgroundColor: TColor;
     FCharHeight: Integer;
@@ -476,9 +476,9 @@ begin
     end;
 end;
 
-{ TBCEditorTextDrawer }
+{ TBCEditorPaintHelper }
 
-constructor TBCEditorTextDrawer.Create(ACalcExtentBaseStyle: TFontStyles; ABaseFont: TFont);
+constructor TBCEditorPaintHelper.Create(ACalcExtentBaseStyle: TFontStyles; ABaseFont: TFont);
 begin
   inherited Create;
 
@@ -491,7 +491,7 @@ begin
   FBackgroundColor := clWindow;
 end;
 
-destructor TBCEditorTextDrawer.Destroy;
+destructor TBCEditorPaintHelper.Destroy;
 begin
   FStockBitmap.Free;
   FFontStock.Free;
@@ -499,7 +499,7 @@ begin
   inherited;
 end;
 
-procedure TBCEditorTextDrawer.BeginDrawing(AHandle: HDC);
+procedure TBCEditorPaintHelper.BeginDrawing(AHandle: HDC);
 begin
   if FHandle = AHandle then
     Assert(FHandle <> 0)
@@ -515,7 +515,7 @@ begin
   Inc(FDrawingCount);
 end;
 
-procedure TBCEditorTextDrawer.EndDrawing;
+procedure TBCEditorPaintHelper.EndDrawing;
 begin
   Assert(FDrawingCount >= 1);
   Dec(FDrawingCount);
@@ -529,7 +529,7 @@ begin
   end;
 end;
 
-procedure TBCEditorTextDrawer.SetBaseFont(AValue: TFont);
+procedure TBCEditorPaintHelper.SetBaseFont(AValue: TFont);
 begin
   if Assigned(AValue) then
   begin
@@ -548,7 +548,7 @@ begin
     raise EBCEditorTextDrawerException.Create(SBCEditorValueMustBeSpecified);
 end;
 
-procedure TBCEditorTextDrawer.SetBaseStyle(const AValue: TFontStyles);
+procedure TBCEditorPaintHelper.SetBaseStyle(const AValue: TFontStyles);
 begin
   if FCalcExtentBaseStyle <> AValue then
   begin
@@ -562,7 +562,7 @@ begin
   end;
 end;
 
-procedure TBCEditorTextDrawer.SetStyle(AValue: TFontStyles);
+procedure TBCEditorPaintHelper.SetStyle(AValue: TFontStyles);
 begin
   with FFontStock do
   begin
@@ -574,7 +574,7 @@ begin
     SelectObject(FHandle, FCurrentFont);
 end;
 
-procedure TBCEditorTextDrawer.SetForegroundColor(AValue: TColor);
+procedure TBCEditorPaintHelper.SetForegroundColor(AValue: TColor);
 begin
   if FColor <> AValue then
   begin
@@ -584,7 +584,7 @@ begin
   end;
 end;
 
-procedure TBCEditorTextDrawer.SetBackgroundColor(AValue: TColor);
+procedure TBCEditorPaintHelper.SetBackgroundColor(AValue: TColor);
 begin
   if FBackgroundColor <> AValue then
   begin
@@ -594,7 +594,7 @@ begin
   end;
 end;
 
-function TBCEditorTextDrawer.GetTextWidth(const AText: string; const AIndex: Integer): Integer;
+function TBCEditorPaintHelper.GetTextWidth(const AText: string; const AIndex: Integer): Integer;
 var
   i: Integer;
   LText: string;
