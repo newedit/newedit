@@ -2060,7 +2060,6 @@ end;
 procedure TBCBaseEditor.CreateLineNumbersCache(AResetCache: Boolean = False);
 var
   i, j, k: Integer;
-  LAdded: Boolean;
   LCodeFoldingRange: TBCEditorCodeFoldingRange;
   LCollapsedCodeFolding: array of Boolean;
   LLineNumbersCacheLength: Integer;
@@ -2083,7 +2082,7 @@ var
     ResizeCacheArray;
   end;
 
-  procedure ParseLine;
+  procedure AddWrappedLineNumberIntoCache;
   var
     LText, LToken: string;
     LFontStyles, LPreviousFontStyles: TFontStyles;
@@ -2097,7 +2096,6 @@ var
         FWordWrapLineLengths[k] := LPreviousLength;
         LWidth := 0;
         LLength := 0;
-        LAdded := True;
         AddLineNumberIntoCache;
       end;
     end;
@@ -2144,6 +2142,7 @@ var
       FHighlighter.Next;
     end;
     FWordWrapLineLengths[k] := LLength;
+    AddLineNumberIntoCache;
     // TODO: Divide long line without break chars
   end;
 
@@ -2177,12 +2176,9 @@ begin
       if j > Lines.Count then
         Break;
 
-      LAdded := False;
-
       if FWordWrap.Enabled then
-        ParseLine;
-
-      if not LAdded then
+        AddWrappedLineNumberIntoCache
+      else
         AddLineNumberIntoCache;
 
       Inc(j);
@@ -2257,7 +2253,7 @@ begin
     if Assigned(LHighlighterAttribute) then
       LFontStyles := LHighlighterAttribute.FontStyles;
     if (LText <> '') and
-      ((LFontStyles <> LPreviousFontStyles) or //(LToken = BCEDITOR_SPACE_CHAR) or
+      ((LFontStyles <> LPreviousFontStyles) or (LToken = BCEDITOR_SPACE_CHAR) or
        (LText[1] = BCEDITOR_SPACE_CHAR) and (LToken <> BCEDITOR_SPACE_CHAR)) then
     begin
       LPreviousFontStyles := LFontStyles;
@@ -11165,8 +11161,7 @@ var
       LTextCaretY := GetTextCaretY + 1;
 
       if FWordWrap.Enabled then
-        LLastColumn := FWordWrapLineLengths[LDisplayLine];
-        {if FWordWrapLineLengths[LDisplayLine] <> 0 then
+        if FWordWrapLineLengths[LDisplayLine] <> 0 then
         begin
           i := LDisplayLine - 1;
           if i > 0 then
@@ -11178,7 +11173,7 @@ var
             end;
             LLastColumn := LFirstColumn + FWordWrapLineLengths[LDisplayLine];
           end;
-        end; }
+        end;
 
       LWrappedRowCount := 0;
 
@@ -11270,18 +11265,18 @@ var
           begin
             if FWordWrap.Enabled then
             begin
-              {if LTokenLength >= LLastColumn then
+              if LTokenLength >= LLastColumn then
               begin
                 LTokenText := Copy(LTokenText, LFirstColumn, LLastColumn - LFirstColumn);
                 PrepareToken;
-              end;  }
-              if LTokenPosition + LTokenLength >= LLastColumn then
+              end;
+              if LTokenPosition + LTokenLength >{=} LLastColumn then
               begin
                 Inc(LWrappedRowCount);
                 LFirstColumn := LFirstColumn + FWordWrapLineLengths[LDisplayLine];
-                LLastColumn := LFirstColumn + LLastColumn; // LLastChar;// LCurrentLineLength; // LVisibleChars;
-                if LTokenPosition + LTokenLength - LPreviousFirstColumn < LLastColumn then // LLastChar then // LCurrentLineLength then // LVisibleChars then
-                  PrepareToken;
+                LLastColumn := LFirstColumn + FWordWrapLineLengths[LDisplayLine + 1]; //LLastColumn; // LLastChar;// LCurrentLineLength; // LVisibleChars;
+                //if LTokenPosition + LTokenLength - LPreviousFirstColumn < LLastColumn then // LLastChar then // LCurrentLineLength then // LVisibleChars then
+                //  PrepareToken;
                 Break;
               end;
               Dec(LTokenPosition, LFirstColumn - 1);
@@ -12840,7 +12835,7 @@ begin
         Inc(LPLine);
       end
       else
-        Inc(LChar);   // TODO: Fix, this is unnecessary loop after none char
+        Inc(LChar); // TODO: Fix, this is unnecessary loop after none char
       Inc(i);
     end;
 
@@ -13497,7 +13492,7 @@ var
   LMiddle: Integer;
   LCaretRow: Integer;
   LPoint: TPoint;
-  LLeftMarginWidth, LTextWidth: Integer;
+  LLeftMarginWidth, LScrollPosition: Integer;
   LDisplayCaretPosition: TBCEditorDisplayPosition;
   LCurrentLineText: string;
 begin
@@ -13511,16 +13506,11 @@ begin
     LLeftMarginWidth := GetLeftMarginWidth;
     if (LPoint.X < LLeftMarginWidth) or (LPoint.X >= LLeftMarginWidth + FScrollPageWidth) then
     begin
-      LCurrentLineText := FLines.GetExpandedString(LDisplayCaretPosition.Row - 1, BCEDITOR_TAB_CHAR);
-      LTextWidth := FPaintHelper.GetTextWidth(LCurrentLineText, LDisplayCaretPosition.Column);
+      LScrollPosition := LPoint.X - FLeftMarginWidth + FHorizontalScrollPosition;
       if LPoint.X >= LLeftMarginWidth + FScrollPageWidth then
-      begin
-        LTextWidth := LTextWidth - FPaintHelper.GetTextWidth(LCurrentLineText, GetVisibleChars(LDisplayCaretPosition.Row,
-          LCurrentLineText));
-        LTextWidth := FHorizontalScrollPosition + LTextWidth;
-      end;
-      SetHorizontalScrollPosition(LTextWidth)
-    end
+        Dec(LScrollPosition, FScrollPageWidth);
+      SetHorizontalScrollPosition(LScrollPosition)
+    end 
     else
       SetHorizontalScrollPosition(FHorizontalScrollPosition);
 
