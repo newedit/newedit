@@ -2084,22 +2084,9 @@ var
 
   procedure AddWrappedLineNumberIntoCache;
   var
-    LText, LToken: string;
-    LFontStyles, LPreviousFontStyles: TFontStyles;
+    LToken: string;
     LHighlighterAttribute: TBCEditorHighlighterAttribute;
-    LWidth, LMaxWidth, LLength, LPreviousLength: Integer;
-
-    procedure CheckMaxWidth;
-    begin
-      if LWidth > LMaxWidth then
-      begin
-        FWordWrapLineLengths[k] := LPreviousLength;
-        LWidth := 0;
-        LLength := 0;
-        AddLineNumberIntoCache;
-      end;
-    end;
-
+    LLength, LTokenWidth, LWidth, LMaxWidth: Integer;
   begin
     LMaxWidth := WordWrapWidth;
     if j = 1 then
@@ -2107,38 +2094,24 @@ var
     else
       FHighlighter.SetCurrentRange(FLines.Ranges[j - 2]);
     FHighlighter.SetCurrentLine(FLines.ExpandedStrings[j - 1]);
-    LFontStyles := [];
-    LPreviousFontStyles := [];
     LWidth := 0;
     LLength := 0;
-    LHighlighterAttribute := FHighlighter.GetTokenAttribute;
-    if Assigned(LHighlighterAttribute) then
-      LPreviousFontStyles := LHighlighterAttribute.FontStyles;
-    FPaintHelper.SetStyle(LPreviousFontStyles);
     while not FHighlighter.GetEndOfLine do
     begin
       FHighlighter.GetToken(LToken);
       LHighlighterAttribute := FHighlighter.GetTokenAttribute;
       if Assigned(LHighlighterAttribute) then
-        LFontStyles := LHighlighterAttribute.FontStyles;
-
-      if (LText <> '') and
-        ((LFontStyles <> LPreviousFontStyles) or
-         (LText[1] = BCEDITOR_SPACE_CHAR) and (LToken <> BCEDITOR_SPACE_CHAR) or
-          IsWordBreakChar(LToken[1]) or IsWordBreakChar(LText[1])) then
+        FPaintHelper.SetStyle(LHighlighterAttribute.FontStyles);
+      LTokenWidth := FPaintHelper.GetTextWidth(LToken, Length(LToken) + 1);
+      Inc(LWidth, LTokenWidth);
+      if LWidth > LMaxWidth then
       begin
-        LPreviousFontStyles := LFontStyles;
-        Inc(LWidth, FPaintHelper.GetTextWidth(LText, Length(LText) + 1));
-        LText := '';
-        FPaintHelper.SetStyle(LFontStyles);
+        FWordWrapLineLengths[k] := LLength;
+        AddLineNumberIntoCache;
+        LWidth := LTokenWidth;
+        LLength := 0;
       end;
-      LText := LText + LToken;
-
-      CheckMaxWidth;
-
-      LPreviousLength := LLength;
       Inc(LLength, FHighlighter.GetTokenLength);
-
       FHighlighter.Next;
     end;
     FWordWrapLineLengths[k] := LLength;
@@ -2224,10 +2197,8 @@ function TBCBaseEditor.DisplayPositionToPixels(const ADisplayPosition: TBCEditor
 var
   LPositionY: Integer;
   LToken: string;
-  LText: string;
   LHighlighterAttribute: TBCEditorHighlighterAttribute;
-  LFontStyles, LPreviousFontStyles: TFontStyles;
-  LLength: Integer;
+  LTokenLength, LLength: Integer;
 begin
   LPositionY := ADisplayPosition.Row - FTopLine;
   Result.Y := LPositionY * GetLineHeight;
@@ -2238,47 +2209,33 @@ begin
   else
     FHighlighter.SetCurrentRange(FLines.Ranges[ADisplayPosition.Row - 2]);
   FHighlighter.SetCurrentLine(FLines.ExpandedStrings[ADisplayPosition.Row - 1]);
-  LFontStyles := [];
-  LPreviousFontStyles := [];
-  LText := '';
+
   LLength := 0;
-  LHighlighterAttribute := FHighlighter.GetTokenAttribute;
-  if Assigned(LHighlighterAttribute) then
-    LPreviousFontStyles := LHighlighterAttribute.FontStyles;
-  FPaintHelper.SetStyle(LPreviousFontStyles);
+
   while not FHighlighter.GetEndOfLine do
   begin
     FHighlighter.GetToken(LToken);
     LHighlighterAttribute := FHighlighter.GetTokenAttribute;
     if Assigned(LHighlighterAttribute) then
-      LFontStyles := LHighlighterAttribute.FontStyles;
-    if (LText <> '') and
-      ((LFontStyles <> LPreviousFontStyles) or (LToken = BCEDITOR_SPACE_CHAR) or
-       (LText[1] = BCEDITOR_SPACE_CHAR) and (LToken <> BCEDITOR_SPACE_CHAR)) then
-    begin
-      LPreviousFontStyles := LFontStyles;
-      Inc(LLength, Length(LText));
-      Inc(Result.X, FPaintHelper.GetTextWidth(LText, Length(LText) + 1));
-      LText := '';
-      FPaintHelper.SetStyle(LFontStyles);
-    end;
+      FPaintHelper.SetStyle(LHighlighterAttribute.FontStyles);
 
-    LText := LText + LToken;
+    LTokenLength := FHighlighter.GetTokenLength;
 
-    if FHighlighter.GetTokenPosition + FHighlighter.GetTokenLength + 1 >= ADisplayPosition.Column then
+    if LLength + LTokenLength >= ADisplayPosition.Column then
     begin
-      Inc(Result.X, FPaintHelper.GetTextWidth(LText, ADisplayPosition.Column - LLength));
-      LText := '';
+      Inc(Result.X, FPaintHelper.GetTextWidth(LToken, ADisplayPosition.Column - LLength));
+      Inc(LLength, LTokenLength);
       Break;
     end;
 
+    Inc(Result.X, FPaintHelper.GetTextWidth(LToken, Length(LToken) + 1));
+    Inc(LLength, LTokenLength);
+
     FHighlighter.Next;
   end;
-  if LText <> '' then
-    Inc(Result.X, FPaintHelper.GetTextWidth(LText, Length(LText) + 1));
 
-  if FHighlighter.GetTokenPosition + FHighlighter.GetTokenLength + 1 < ADisplayPosition.Column then
-    Inc(Result.X, (ADisplayPosition.Column - FHighlighter.GetTokenPosition - FHighlighter.GetTokenLength - 1) * FPaintHelper.CharWidth);
+  if LLength < ADisplayPosition.Column then
+    Inc(Result.X, (ADisplayPosition.Column - LLength - 1) * FPaintHelper.CharWidth);
 
   Inc(Result.X, FLeftMarginWidth - FHorizontalScrollPosition);
 end;
@@ -11270,13 +11227,14 @@ var
                 LTokenText := Copy(LTokenText, LFirstColumn, LLastColumn - LFirstColumn);
                 PrepareToken;
               end;
-              if LTokenPosition + LTokenLength >{=} LLastColumn then
+              if LTokenPosition + LTokenLength >= LLastColumn then
               begin
                 Inc(LWrappedRowCount);
+
                 LFirstColumn := LFirstColumn + FWordWrapLineLengths[LDisplayLine];
                 LLastColumn := LFirstColumn + FWordWrapLineLengths[LDisplayLine + 1]; //LLastColumn; // LLastChar;// LCurrentLineLength; // LVisibleChars;
-                //if LTokenPosition + LTokenLength - LPreviousFirstColumn < LLastColumn then // LLastChar then // LCurrentLineLength then // LVisibleChars then
-                //  PrepareToken;
+                if LTokenPosition + LTokenLength - LPreviousFirstColumn < LLastColumn then // LLastChar then // LCurrentLineLength then // LVisibleChars then
+                  PrepareToken;
                 Break;
               end;
               Dec(LTokenPosition, LFirstColumn - 1);
@@ -13494,7 +13452,6 @@ var
   LPoint: TPoint;
   LLeftMarginWidth, LScrollPosition: Integer;
   LDisplayCaretPosition: TBCEditorDisplayPosition;
-  LCurrentLineText: string;
 begin
   if FScrollPageWidth <= 0 then
     Exit;
