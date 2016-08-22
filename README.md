@@ -12,7 +12,7 @@ A syntax highlighting edit control for RAD Studio (Delphi/C++ Builder) with code
 
 * <a href="https://github.com/ahausladen/JsonDataObjects">Json Data Objects</a> (included)
 * Delphi versions XE4-8, Seattle, and Berlin are supported 
-* C++ Builder versions XE7-8, and Seattle are supported
+* C++ Builder versions XE7-8, Seattle, and Berlin are supported
 
 <b>Note!</b> Do not offer me older versions to support. I don't have time to keep up with those.
 
