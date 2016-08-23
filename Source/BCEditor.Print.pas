@@ -185,11 +185,9 @@ end;
 procedure TBCEditorPrint.SetLines(const AValue: TStrings);
 var
   i, j: Integer;
-  LTabConvertProc: TBCEditorTabConvertProc;
   LLine: string;
   LHasTabs: Boolean;
 begin
-  LTabConvertProc := GetTabConvertProc(FColumns);
   with FLines do
   begin
     BeginUpdate;
@@ -197,7 +195,7 @@ begin
       Clear;
       for i := 0 to AValue.Count - 1 do
       begin
-        LLine := LTabConvertProc(AValue[i], FTabWidth, LHasTabs);
+        LLine := ConvertTabs(AValue[i], FTabWidth, LHasTabs, BCEDITOR_SPACE_CHAR, FColumns);
         j := Pos(BCEDITOR_TAB_CHAR, LLine);
         while j > 0 do
         begin

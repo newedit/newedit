@@ -60,7 +60,6 @@ type
     FOnPutted: TStringListChangeEvent;
     FOwner: TObject;
     FStreaming: Boolean;
-    FTabConvertProc: TBCEditorTabConvertProc;
     FTabWidth: Integer;
     FUpdateCount: Integer;
     function ExpandString(AIndex: Integer; ATabChar: Char = BCEDITOR_SPACE_CHAR): string;
@@ -318,7 +317,7 @@ begin
     end
     else
     begin
-      Result := FTabConvertProc(Value, FTabWidth, LHasTabs, ATabChar);
+      Result := ConvertTabs(Value, FTabWidth, LHasTabs, ATabChar, FColumns);
 
       ExpandedLength := Length(Result);
       Exclude(Flags, sfExpandedLengthUnknown);
@@ -618,7 +617,8 @@ begin
       Attribute^.LineState := lsModified;
     end;
     if FIndexOfLongestLine <> -1 then
-      if FList^[FIndexOfLongestLine].ExpandedLength < Length(FTabConvertProc(AValue, FTabWidth, LHasTabs)) then
+      if FList^[FIndexOfLongestLine].ExpandedLength < Length(ConvertTabs(AValue, FTabWidth, LHasTabs,
+        BCEDITOR_SPACE_CHAR, FColumns)) then
         FIndexOfLongestLine := AIndex;
 
     if Assigned(FOnPutted) then
@@ -671,7 +671,6 @@ end;
 
 procedure TBCEditorLines.SetColumns(AValue: Boolean);
 begin
-  FTabConvertProc := GetTabConvertProc(AValue);
   FColumns := AValue;
 end;
 
