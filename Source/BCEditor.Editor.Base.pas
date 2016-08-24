@@ -500,7 +500,7 @@ type
     procedure PaintSearchMap(AClipRect: TRect);
     procedure PaintSpecialCharsEndOfLine(const ALine: Integer; const ALineEndRect: TRect; const ALineEndInsideSelection: Boolean);
     procedure PaintSyncItems;
-    procedure PaintTextLines({ACanvas: TCanvas;} AClipRect: TRect; const AFirstLine, ALastLine: Integer; const AMinimap: Boolean);
+    procedure PaintTextLines(AClipRect: TRect; const AFirstLine, ALastLine: Integer; const AMinimap: Boolean);
     procedure RedoItem;
     procedure ResetCaret;
     procedure ScanCodeFoldingRanges; virtual;
@@ -2113,6 +2113,11 @@ var
       end;
       Inc(LLength, FHighlighter.GetTokenLength);
       FHighlighter.Next;
+    end;
+    while LWidth < LMaxWidth do
+    begin
+      Inc(LWidth, FPaintHelper.CharWidth);
+      Inc(LLength);
     end;
     FWordWrapLineLengths[k] := LLength;
     AddLineNumberIntoCache;
@@ -10380,7 +10385,7 @@ var
       LWidth := FPaintHelper.GetTextWidth(LText, AIndex - LPaintedColumn + 1);
       Inc(Result, LPaintedWidth + LWidth);
       LPaintedColumn := AIndex;
-      LPaintedWidth := LPaintedWidth + LWidth;
+      Inc(LPaintedWidth, LWidth);
     end;
 
     if (LCurrentLineLength = 0) and (AIndex > 1) then
@@ -11046,7 +11051,7 @@ var
 
       LCurrentLineText := FLines.GetExpandedString(LCurrentLine - 1, BCEDITOR_TAB_CHAR);
       LPaintedColumn := 1;
-      LPaintedWidth := 0;
+      //LPaintedWidth := 0;
       FItalicOffset := 0;
 
       LFoldRange := nil;
@@ -11136,6 +11141,8 @@ var
 
       while LCurrentRow = LCurrentLine do
       begin
+        LPaintedWidth := 0;
+
         if Assigned(FMultiCarets) then
           LIsCurrentLine := IsMultiEditCaretFound(LCurrentLine)
         else
@@ -11232,8 +11239,9 @@ var
                 Inc(LWrappedRowCount);
 
                 LFirstColumn := LFirstColumn + FWordWrapLineLengths[LDisplayLine];
-                LLastColumn := LFirstColumn + FWordWrapLineLengths[LDisplayLine + 1]; //LLastColumn; // LLastChar;// LCurrentLineLength; // LVisibleChars;
-                if LTokenPosition + LTokenLength - LPreviousFirstColumn < LLastColumn then // LLastChar then // LCurrentLineLength then // LVisibleChars then
+                LLastColumn := LFirstColumn + FWordWrapLineLengths[LDisplayLine + 1];
+
+                if LTokenPosition + LTokenLength - LPreviousFirstColumn < LLastColumn then
                   PrepareToken;
                 Break;
               end;
