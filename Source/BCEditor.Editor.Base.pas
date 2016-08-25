@@ -2114,11 +2114,7 @@ var
       Inc(LLength, FHighlighter.GetTokenLength);
       FHighlighter.Next;
     end;
-    while LWidth < LMaxWidth do
-    begin
-      Inc(LWidth, FPaintHelper.CharWidth);
-      Inc(LLength);
-    end;
+    Inc(LLength, (LMaxWidth - LWidth) div FPaintHelper.CharWidth);
     FWordWrapLineLengths[k] := LLength;
     AddLineNumberIntoCache;
     // TODO: Divide long line without break chars
@@ -10904,7 +10900,6 @@ var
     LElement: string;
     LIsCustomBackgroundColor: Boolean;
     LTextPosition: TBCEditorTextPosition;
-    LPreviousFirstColumn: Integer;
     LTextCaretY: Integer;
     LWrappedRowCount: Integer;
 
@@ -11051,7 +11046,6 @@ var
 
       LCurrentLineText := FLines.GetExpandedString(LCurrentLine - 1, BCEDITOR_TAB_CHAR);
       LPaintedColumn := 1;
-      //LPaintedWidth := 0;
       FItalicOffset := 0;
 
       LFoldRange := nil;
@@ -11118,24 +11112,22 @@ var
       LCurrentRow := LCurrentLine;
 
       LFirstColumn := 1;
-      LPreviousFirstColumn := 1;
       LLastColumn := GetVisibleChars(LCurrentLine, LCurrentLineText);
       LTextCaretY := GetTextCaretY + 1;
 
       if FWordWrap.Enabled then
-        if FWordWrapLineLengths[LDisplayLine] <> 0 then
+      begin
+        i := LDisplayLine - 1;
+        if i > 0 then
         begin
-          i := LDisplayLine - 1;
-          if i > 0 then
+          while (i > 0) and (GetDisplayTextLineNumber(i) = LCurrentLine) do
           begin
-            while (i > 0) and (GetDisplayTextLineNumber(i) = LCurrentLine) do
-            begin
-              LFirstColumn := LFirstColumn + FWordWrapLineLengths[i];
-              Dec(i);
-            end;
-            LLastColumn := LFirstColumn + FWordWrapLineLengths[LDisplayLine];
+            LFirstColumn := LFirstColumn + FWordWrapLineLengths[i];
+            Dec(i);
           end;
         end;
+        LLastColumn := LFirstColumn + FWordWrapLineLengths[LDisplayLine];
+      end;
 
       LWrappedRowCount := 0;
 
@@ -11228,12 +11220,6 @@ var
           if LTokenPosition + LTokenLength >= LFirstColumn then
           begin
             if FWordWrap.Enabled then
-            begin
-              if LTokenLength >= LLastColumn then
-              begin
-                LTokenText := Copy(LTokenText, LFirstColumn, LLastColumn - LFirstColumn);
-                PrepareToken;
-              end;
               if LTokenPosition + LTokenLength >= LLastColumn then
               begin
                 Inc(LWrappedRowCount);
@@ -11241,12 +11227,8 @@ var
                 LFirstColumn := LFirstColumn + FWordWrapLineLengths[LDisplayLine];
                 LLastColumn := LFirstColumn + FWordWrapLineLengths[LDisplayLine + 1];
 
-                if LTokenPosition + LTokenLength - LPreviousFirstColumn < LLastColumn then
-                  PrepareToken;
                 Break;
               end;
-              Dec(LTokenPosition, LFirstColumn - 1);
-            end;
             PrepareToken;
           end;
           FHighlighter.Next;
@@ -11261,8 +11243,6 @@ var
             (LCurrentLineLength + 1 >= LLineSelectionStart) and (LCurrentLineLength + 1 < LLineSelectionEnd));
           PaintCodeFoldingCollapsedLine(LFoldRange, LLineRect);
         end;
-
-        LPreviousFirstColumn := LFirstColumn;
 
         if Assigned(FOnAfterLinePaint) then
           FOnAfterLinePaint(Self, Canvas, LLineRect, LCurrentLine, AMinimap);
