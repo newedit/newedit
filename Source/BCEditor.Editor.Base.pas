@@ -10893,7 +10893,7 @@ var
   procedure PaintLines;
   var
     i: Integer;
-    LFirstColumn, LLastColumn: Integer;
+    LLastColumn: Integer;
     LFromLineText, LToLineText: string;
     LCurrentRow: Integer;
     LFoldRange: TBCEditorCodeFoldingRange;
@@ -11117,23 +11117,11 @@ var
       LTokenLength := 0;
       LCurrentRow := LCurrentLine;
 
-      LFirstColumn := 1;
       LLastColumn := GetVisibleChars(LCurrentLine, LCurrentLineText);
       LTextCaretY := GetTextCaretY + 1;
 
       if FWordWrap.Enabled then
-      begin
-        i := LDisplayLine - 1;
-        if i > 0 then
-        begin
-          while (i > 0) and (GetDisplayTextLineNumber(i) = LCurrentLine) do
-          begin
-            LFirstColumn := LFirstColumn + FWordWrapLineLengths[i];
-            Dec(i);
-          end;
-        end;
-        LLastColumn := LFirstColumn + FWordWrapLineLengths[LDisplayLine];
-      end;
+        LLastColumn := FWordWrapLineLengths[LDisplayLine];
 
       LWrappedRowCount := 0;
 
@@ -11225,18 +11213,16 @@ var
               LIsSyncEditBlock := True;
           end;
 
-          if LTokenPosition + LTokenLength >= LFirstColumn then
-          begin
-            if FWordWrap.Enabled then
-              if LTokenPosition + LTokenLength >= LLastColumn then
-              begin
-                LFirstColumn := LFirstColumn + FWordWrapLineLengths[LDisplayLine + LWrappedRowCount];
-                Inc(LWrappedRowCount);
-                LLastColumn := LFirstColumn + FWordWrapLineLengths[LDisplayLine + LWrappedRowCount];
-                Break;
-              end;
-            PrepareToken;
-          end;
+          if FWordWrap.Enabled then
+            if LTokenPosition + LTokenLength > LLastColumn then
+            begin
+              Inc(LWrappedRowCount);
+              Inc(LLastColumn, FWordWrapLineLengths[LDisplayLine + LWrappedRowCount]);
+              Break;
+            end;
+
+          PrepareToken;
+
           FHighlighter.Next;
         end;
 
