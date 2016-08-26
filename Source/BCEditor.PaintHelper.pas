@@ -110,7 +110,7 @@ type
     constructor Create(ACalcExtentBaseStyle: TFontStyles; ABaseFont: TFont);
     destructor Destroy; override;
 
-    function GetTextWidth(const AText: string; const AIndex: Integer): Integer;
+    function GetTokenWidth(const AToken: string; const ALength: Integer): Integer;
     procedure BeginDrawing(AHandle: HDC);
     procedure EndDrawing;
     procedure SetBackgroundColor(AValue: TColor);
@@ -594,47 +594,19 @@ begin
   end;
 end;
 
-function TBCEditorPaintHelper.GetTextWidth(const AText: string; const AIndex: Integer): Integer;
+function TBCEditorPaintHelper.GetTokenWidth(const AToken: string; const ALength: Integer): Integer;
 var
-  i: Integer;
-  LText: string;
-  LPText: PChar;
-  LFrom, LCount: Integer;
   LSize: TSize;
+  LPToken: PChar;
 begin
   Result := 0;
-  if AIndex = 1 then
+  if (AToken = '') or (ALength = 0) then
     Exit;
-
-  LText := '';
-  LCount := 0;
-  LFrom := 1;
-  LPText := PChar(AText);
-  for i := 1 to AIndex - 1 do
-  begin
-    if (LPText^ = BCEDITOR_SPACE_CHAR) or (LPText^ = BCEDITOR_TAB_CHAR) then
-    begin
-      Inc(Result, CharWidth);
-      if LCount <> 0 then
-      begin
-        LText := Copy(AText, LFrom, LCount);
-        GetTextExtentPoint32(FStockBitmap.Canvas.Handle, AText, LCount, LSize);
-        Inc(Result, LSize.cx);
-        Inc(LFrom, LCount);
-        LCount := 0;
-      end;
-      Inc(LFrom);
-    end
-    else
-      Inc(LCount);
-    Inc(LPText);
-  end;
-  if LCount <> 0 then
-  begin
-    LText := Copy(AText, LFrom, LCount);
-    GetTextExtentPoint32(FStockBitmap.Canvas.Handle, AText, LCount, LSize);
-    Inc(Result, LSize.cx);
-  end;
+  LPToken := PChar(AToken);
+  if (LPToken^ = BCEDITOR_SPACE_CHAR) or (LPToken^ = BCEDITOR_TAB_CHAR) then
+    Exit(CharWidth * ALength);
+  GetTextExtentPoint32(FStockBitmap.Canvas.Handle, AToken, ALength, LSize);
+  Inc(Result, LSize.cx);
 end;
 
 initialization

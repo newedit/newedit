@@ -419,7 +419,7 @@ type
     procedure WMVScroll(var AMessage: TWMScroll); message WM_VSCROLL;
     procedure WordWrapChanged(ASender: TObject);
   protected
-    function DisplayPositionToPixels(const ADisplayPosition: TBCEditorDisplayPosition): TPoint;
+    function DisplayPositionToPixels(const ADisplayPosition: TBCEditorDisplayPosition; const ALineText: string = ''): TPoint;
     function DoMouseWheel(AShift: TShiftState; AWheelDelta: Integer; AMousePos: TPoint): Boolean; override;
     function DoOnReplaceText(const ASearch, AReplace: string; ALine, AColumn: Integer; DeleteLine: Boolean): TBCEditorReplaceAction;
     function DoSearchMatchNotFoundWraparoundDialog: Boolean; virtual;
@@ -2102,7 +2102,7 @@ var
       LHighlighterAttribute := FHighlighter.GetTokenAttribute;
       if Assigned(LHighlighterAttribute) then
         FPaintHelper.SetStyle(LHighlighterAttribute.FontStyles);
-      LTokenWidth := FPaintHelper.GetTextWidth(LToken, Length(LToken) + 1);
+      LTokenWidth := FPaintHelper.GetTokenWidth(LToken, Length(LToken));
       Inc(LWidth, LTokenWidth);
       if LWidth > LMaxWidth then
       begin
@@ -2194,7 +2194,8 @@ begin
   end;
 end;
 
-function TBCBaseEditor.DisplayPositionToPixels(const ADisplayPosition: TBCEditorDisplayPosition): TPoint;
+function TBCBaseEditor.DisplayPositionToPixels(const ADisplayPosition: TBCEditorDisplayPosition;
+  const ALineText: string = ''): TPoint;
 var
   LPositionY: Integer;
   LToken: string;
@@ -2209,7 +2210,11 @@ begin
     FHighlighter.ResetCurrentRange
   else
     FHighlighter.SetCurrentRange(FLines.Ranges[ADisplayPosition.Row - 2]);
-  FHighlighter.SetCurrentLine(FLines.ExpandedStrings[ADisplayPosition.Row - 1]);
+
+  if ALineText = '' then
+    FHighlighter.SetCurrentLine(FLines.ExpandedStrings[ADisplayPosition.Row - 1])
+  else
+    FHighlighter.SetCurrentLine(ALineText);
 
   LLength := 0;
 
@@ -2224,12 +2229,12 @@ begin
 
     if LLength + LTokenLength >= ADisplayPosition.Column then
     begin
-      Inc(Result.X, FPaintHelper.GetTextWidth(LToken, ADisplayPosition.Column - LLength));
+      Inc(Result.X, FPaintHelper.GetTokenWidth(LToken, ADisplayPosition.Column - LLength - 1));
       Inc(LLength, LTokenLength);
       Break;
     end;
 
-    Inc(Result.X, FPaintHelper.GetTextWidth(LToken, Length(LToken) + 1));
+    Inc(Result.X, FPaintHelper.GetTokenWidth(LToken, Length(LToken)));
     Inc(LLength, LTokenLength);
 
     FHighlighter.Next;
@@ -2710,7 +2715,7 @@ function TBCBaseEditor.PixelAndRowToDisplayPosition(const X, ARow: Integer; cons
 var
   LToken, LLastChar: string;
   LFontStyles, LPreviousFontStyles: TFontStyles;
-  LLineText, LText: string;
+  LLineText{, LText}: string;
   LHighlighterAttribute: TBCEditorHighlighterAttribute;
   LXInEditor: Integer;
   LTextWidth: Integer;
@@ -2735,7 +2740,7 @@ begin
 
   LFontStyles := [];
   LPreviousFontStyles := [];
-  LText := '';
+  //LText := '';
   LTextWidth := 0;
   LXInEditor := X + FHorizontalScrollPosition - FLeftMarginWidth + 4;
 
@@ -2755,9 +2760,9 @@ begin
       LPreviousFontStyles := LFontStyles;
     end;
 
-    LText := LText + LToken;
+    //LText := LText + LToken;
 
-    LTextWidth := LTextWidth + FPaintHelper.GetTextWidth(LToken, Length(LToken) + 1);
+    LTextWidth := LTextWidth + FPaintHelper.GetTokenWidth(LToken, Length(LToken));
     if (LXInEditor > 0) and (LTextWidth > LXInEditor) then
     begin
       Inc(Result.Column, FHighlighter.GetTokenPosition + FHighlighter.GetTokenLength);
@@ -2785,7 +2790,7 @@ begin
           LLastChar := LPToken^ + LLastChar;
           Delete(LToken, LToken.Length - LLastChar.Length + 1, LToken.Length);
         end;
-        Dec(LTextWidth, FPaintHelper.GetTextWidth(LLastChar, LLastChar.Length + 1));
+        Dec(LTextWidth, FPaintHelper.GetTokenWidth(LLastChar, LLastChar.Length));
         Dec(Result.Column, LLastChar.Length);
       end;
 
@@ -9393,14 +9398,17 @@ var
   LCollapseMarkRect: TRect;
   i, X, Y: Integer;
   LBrush: TBrush;
+  LDisplayPosition: TBCEditorDisplayPosition;
 begin
   LOldPenColor := Canvas.Pen.Color;
   if FCodeFolding.Visible and (cfoShowCollapsedCodeHint in CodeFolding.Options) and Assigned(AFoldRange) and
     AFoldRange.Collapsed and not AFoldRange.ParentCollapsed then
   begin
-    LCollapseMarkRect.Left := FLeftMarginWidth +
-      FPaintHelper.GetTextWidth(ACurrentLineText, ATokenPosition + ATokenLength + 1) + FPaintHelper.CharWidth -
-      FHorizontalScrollPosition;
+    LDisplayPosition.Row := ALine;
+    LDisplayPosition.Column := ATokenPosition + ATokenLength + 2;
+    if FSpecialChars.Visible then
+      Inc(LDisplayPosition.Column);
+    LCollapseMarkRect.Left := DisplayPositionToPixels(LDisplayPosition, ACurrentLineText).X - FHorizontalScrollPosition;
     LCollapseMarkRect.Right := LCollapseMarkRect.Left + FPaintHelper.CharWidth * 4 - 2;
     LCollapseMarkRect.Top := ALineRect.Top + 2;
     LCollapseMarkRect.Bottom := ALineRect.Bottom - 2;
@@ -10379,7 +10387,7 @@ var
     if (LCurrentLineLength <> 0) and (AIndex > 0) and (AIndex <= LCurrentLineLength + 1) then
     begin
       LText := Copy(LCurrentLineText, LPaintedColumn, AIndex - LPaintedColumn);
-      LWidth := FPaintHelper.GetTextWidth(LText, AIndex - LPaintedColumn + 1);
+      LWidth := FPaintHelper.GetTokenWidth(LText, AIndex - LPaintedColumn);
       Inc(Result, LPaintedWidth + LWidth);
       LPaintedColumn := AIndex;
       Inc(LPaintedWidth, LWidth);
@@ -10508,8 +10516,8 @@ var
           while LCurrentLine - 1 = LTextPosition.Line do
           begin
             if ACharsBefore + ATokenLength < LTextPosition.Char then
-              Break;                    
-              
+              Break;
+
             if (FSelectionBeginPosition.Line = LTextPosition.Line) and
               (FSelectionBeginPosition.Char >= LTextPosition.Char) and
               (FSelectionBeginPosition.Char <= LTextPosition.Char + LSearchTextLength) or
@@ -10521,15 +10529,15 @@ var
                 Break;
               Continue;
             end;
-          
+
             LToken := LText;
             LSearchRect := LTextRect;
-            
+
             LCharCount := LTextPosition.Char - ACharsBefore - 1;
             if LCharCount > 0 then
             begin
               LToken := Copy(LText, 1, LCharCount);
-              Inc(LSearchRect.Left, FPaintHelper.GetTextWidth(LToken, LCharCount + 1));
+              Inc(LSearchRect.Left, FPaintHelper.GetTokenWidth(LToken, LCharCount));
               LToken := Copy(LText, LCharCount + 1, Length(LText));
             end;
 
@@ -10537,7 +10545,7 @@ var
             if LCharCount > 0 then
             begin
               LToken := LToken.Remove(Length(LToken) - LCharCount);
-              LSearchRect.Right := LSearchRect.Left + FPaintHelper.GetTextWidth(LToken, Length(LToken) + 1);
+              LSearchRect.Right := LSearchRect.Left + FPaintHelper.GetTokenWidth(LToken, Length(LToken));
             end;
 
             Winapi.Windows.ExtTextOut(Canvas.Handle, LSearchRect.Left, LSearchRect.Top, ETO_OPAQUE or ETO_CLIPPED, @LSearchRect,
@@ -11117,11 +11125,12 @@ var
       LTokenLength := 0;
       LCurrentRow := LCurrentLine;
 
-      LLastColumn := GetVisibleChars(LCurrentLine, LCurrentLineText);
       LTextCaretY := GetTextCaretY + 1;
 
       if FWordWrap.Enabled then
-        LLastColumn := FWordWrapLineLengths[LDisplayLine];
+        LLastColumn := FWordWrapLineLengths[LDisplayLine]
+      else
+        LLastColumn := GetVisibleChars(LCurrentLine, LCurrentLineText);
 
       LWrappedRowCount := 0;
 
