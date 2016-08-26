@@ -10270,6 +10270,7 @@ var
   LSearchMapWidth: Integer;
   LCurrentSearchIndex: Integer;
   LTextPosition: TBCEditorTextPosition;
+  LWrappedRowCount: Integer;
 
   function IsBookmarkOnCurrentLine: Boolean;
   var
@@ -10500,7 +10501,7 @@ var
           if FSearch.Highlighter.Colors.Foreground <> clNone then
             FPaintHelper.SetForegroundColor(FSearch.Highlighter.Colors.Foreground);
           FPaintHelper.SetBackgroundColor(FSearch.Highlighter.Colors.Background);
-            
+
           LTextPosition := PBCEditorTextPosition(FSearch.Lines.Items[LCurrentSearchIndex])^;
           LSearchTextLength := Length(FSearch.SearchText);
 
@@ -10622,6 +10623,12 @@ var
           end;
           if ALast = LCurrentLineLength + 1 then
             Inc(LTokenRect.Right, FItalicOffset + 1);
+          if FWordWrap.Enabled then
+            if ALast = FWordWrapLineLengths[LDisplayLine + LWrappedRowCount - 1] + 1 then
+            begin
+              Inc(LTokenRect.Right, FItalicOffset + 1);
+              FItalicOffset := 0;
+            end;
         end
       end;
 
@@ -10901,7 +10908,6 @@ var
     LIsCustomBackgroundColor: Boolean;
     LTextPosition: TBCEditorTextPosition;
     LTextCaretY: Integer;
-    LWrappedRowCount: Integer;
 
     function GetWordAtSelection(var ASelectedText: string): string;
     var
@@ -11191,13 +11197,15 @@ var
         LTokenRect := LLineRect;
         LLineEndRect := LLineRect;
 
-        if LCurrentLine = 1 then
-          FHighlighter.ResetCurrentRange
-        else
         if LWrappedRowCount = 0 then
-          FHighlighter.SetCurrentRange(FLines.Ranges[LCurrentLine - 2]);
-        if LWrappedRowCount = 0 then
+        begin
+          if LCurrentLine = 1 then
+            FHighlighter.ResetCurrentRange
+          else
+            FHighlighter.SetCurrentRange(FLines.Ranges[LCurrentLine - 2]);
+
           FHighlighter.SetCurrentLine(LCurrentLineText);
+        end;
 
         LTokenHelper.Length := 0;
         LTokenHelper.EmptySpace := esNone;
@@ -11222,11 +11230,9 @@ var
             if FWordWrap.Enabled then
               if LTokenPosition + LTokenLength >= LLastColumn then
               begin
+                LFirstColumn := LFirstColumn + FWordWrapLineLengths[LDisplayLine + LWrappedRowCount];
                 Inc(LWrappedRowCount);
-
-                LFirstColumn := LFirstColumn + FWordWrapLineLengths[LDisplayLine];
-                LLastColumn := LFirstColumn + FWordWrapLineLengths[LDisplayLine + 1];
-
+                LLastColumn := LFirstColumn + FWordWrapLineLengths[LDisplayLine + LWrappedRowCount];
                 Break;
               end;
             PrepareToken;

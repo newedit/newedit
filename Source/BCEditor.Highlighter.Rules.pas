@@ -307,16 +307,14 @@ begin
 
       if FindTokenNode.BreakType = btAny then
       begin
-        Result := True;
         AToken := FindTokenNode.Token;
-        Exit;
+        Exit(True);
       end;
 
       if CharInSet(APLine[ARun], ACurrentRange.Delimiters) then
       begin
-        Result := True;
         AToken := FindTokenNode.Token;
-        Exit;
+        Exit(True);
       end;
     until not Assigned(StartTokenNode);
   end;
@@ -335,10 +333,9 @@ begin
 
     if CharInSet(APLine[ARun], AllowedDelimiters) then
     begin
-      Result := True;
       AToken := TBCEditorToken.Create(TBCEditorSet(Sets[i]).Attribute);
       AToken.Temporary := True;
-      Exit;
+      Exit(True);
     end;
   end;
   ARun := StartPosition + 1;
