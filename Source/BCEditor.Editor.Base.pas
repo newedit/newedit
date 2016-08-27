@@ -2715,7 +2715,7 @@ function TBCBaseEditor.PixelAndRowToDisplayPosition(const X, ARow: Integer; cons
 var
   LToken, LLastChar: string;
   LFontStyles, LPreviousFontStyles: TFontStyles;
-  LLineText{, LText}: string;
+  LLineText: string;
   LHighlighterAttribute: TBCEditorHighlighterAttribute;
   LXInEditor: Integer;
   LTextWidth: Integer;
@@ -2740,7 +2740,6 @@ begin
 
   LFontStyles := [];
   LPreviousFontStyles := [];
-  //LText := '';
   LTextWidth := 0;
   LXInEditor := X + FHorizontalScrollPosition - FLeftMarginWidth + 4;
 
@@ -2759,8 +2758,6 @@ begin
       FPaintHelper.SetStyle(LFontStyles);
       LPreviousFontStyles := LFontStyles;
     end;
-
-    //LText := LText + LToken;
 
     LTextWidth := LTextWidth + FPaintHelper.GetTokenWidth(LToken, Length(LToken));
     if (LXInEditor > 0) and (LTextWidth > LXInEditor) then
@@ -10806,20 +10803,7 @@ var
   var
     LCanAppend: Boolean;
     LEmptySpace: TBCEditorEmptySpace;
-    LPText, LPToken: PChar;
-
-    procedure CopyToken;
-    var
-      i: Integer;
-    begin
-      for i := 1 to ATokenLength do
-      begin
-        LPText^ := LPToken^;
-        Inc(LPToken);
-        Inc(LPText);
-      end;
-    end;
-
+    LPToken: PChar;
   begin
     if (ABackground = clNone) or ((FActiveLine.Color <> clNone) and LIsCurrentLine and not ACustomBackgroundColor) then
       ABackground := GetBackgroundColor;
@@ -10874,9 +10858,7 @@ var
         LTokenHelper.MaxLength := LTokenHelper.Length + ATokenLength + 32;
         SetLength(LTokenHelper.Text, LTokenHelper.MaxLength);
       end;
-      LPText := PChar(LTokenHelper.Text);
-      Inc(LPText, LTokenHelper.Length);
-      CopyToken;
+      Insert(AToken, LTokenHelper.Text, LTokenHelper.Length + 1);
       Inc(LTokenHelper.Length, ATokenLength);
     end
     else
@@ -10887,8 +10869,7 @@ var
         LTokenHelper.MaxLength := LTokenHelper.Length + 32;
         SetLength(LTokenHelper.Text, LTokenHelper.MaxLength);
       end;
-      LPText := PChar(LTokenHelper.Text);
-      CopyToken;
+      Insert(AToken, LTokenHelper.Text, 1);
       LTokenHelper.CharsBefore := ACharsBefore;
       LTokenHelper.Foreground := AForeground;
       LTokenHelper.Background := ABackground;
