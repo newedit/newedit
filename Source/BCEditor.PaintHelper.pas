@@ -62,7 +62,6 @@ type
     FPSharedFontsInfo: PBCEditorSharedFontsInfo;
     FUsingFontHandles: Boolean;
     function GetBaseFont: TFont;
-    function IsFixedSizeFont(AHandle: HDC): Boolean;
   protected
     function GetCharWidth: Integer;
     function GetCharHeight: Integer;
@@ -86,9 +85,6 @@ type
     property BaseFont: TFont read GetBaseFont;
     property Style: TFontStyles read FCurrentStyle write SetStyle;
     property FontHandle: HFont read FCurrentFont;
-    property CharWidth: Integer read GetCharWidth;
-    property CharHeight: Integer read GetCharHeight;
-    property FixedSizeFont: Boolean read GetFixedSizeFont;
   end;
 
   EBCEditorFontStockException = class(Exception);
@@ -127,6 +123,7 @@ type
     property CharHeight: Integer read FCharHeight;
     property CharWidth: Integer read FCharWidth;
     property Color: TColor read FColor;
+    property FixedSizeFont: Boolean read FFixedSizeFont;
     property FontStock: TBCEditorFontStock read FFontStock;
   end;
 
@@ -312,15 +309,6 @@ begin
   ACharHeight^ := Abs(LTextMetric.tmHeight)
 end;
 
-function TBCEditorFontStock.IsFixedSizeFont(AHandle: HDC): Boolean;
-var
-  LSize1, LSize2: TSize;
-begin
-  GetTextExtentPoint32(AHandle, '!', 1, LSize1);
-  GetTextExtentPoint32(AHandle, 'W', 1, LSize2);
-  Result := LSize1.cx = LSize2.cx;
-end;
-
 constructor TBCEditorFontStock.Create(AInitialFont: TFont);
 begin
   inherited Create;
@@ -450,6 +438,7 @@ var
   LHandle: HDC;
   LOldFont: HFont;
   LFontDataPointer: PBCEditorFontData;
+  LSize1, LSize2: TSize;
 begin
   Assert(SizeOf(TFontStyles) = 1);
 
@@ -474,11 +463,14 @@ begin
   LHandle := InternalGetHandle;
   LOldFont := SelectObject(LHandle, FCurrentFont);
 
+  GetTextExtentPoint32(LHandle, 'W', 1, LSize1);
+  GetTextExtentPoint32(LHandle, '!', 1, LSize2);
+
   with FPCurrentFontData^ do
   begin
     Handle := FCurrentFont;
     CalculateFontMetrics(LHandle, @CharHeight, @CharWidth);
-    FixedSize := IsFixedSizeFont(LHandle);
+    FixedSize := LSize1.cx = LSize2.cx;
   end;
 
   SelectObject(LHandle, LOldFont);
@@ -558,8 +550,9 @@ begin
     begin
       SetBaseFont(AValue);
       Style := FCalcExtentBaseStyle;
-      FCharWidth := CharWidth;
-      FCharHeight := CharHeight;
+      FCharWidth := GetCharWidth;
+      FCharHeight := GetCharHeight;
+      FFixedSizeFont := GetFixedSizeFont;
     end;
     SetStyle(AValue.Style);
   end
@@ -575,9 +568,9 @@ begin
     with FFontStock do
     begin
       Style := AValue;
-      FCharWidth := CharWidth;
-      FCharHeight := CharHeight;
-      FFixedSizeFont := FixedSizeFont;
+      FCharWidth := GetCharWidth;
+      FCharHeight := GetCharHeight;
+      FFixedSizeFont := GetFixedSizeFont;
     end;
   end;
 end;
@@ -623,12 +616,12 @@ begin
   if (AToken = '') or (ALength = 0) then
     Exit;
   if FFixedSizeFont then
-    Exit(CharWidth * ALength)
+    Exit(FFontStock.GetCharWidth * ALength)
   else
   begin
     LPToken := PChar(AToken);
     if (LPToken^ = BCEDITOR_SPACE_CHAR) or (LPToken^ = BCEDITOR_TAB_CHAR) then
-      Exit(CharWidth * ALength);
+      Exit(FFontStock.GetCharWidth * ALength);
     GetTextExtentPoint32(FStockBitmap.Canvas.Handle, AToken, ALength, LSize);
     Inc(Result, LSize.cx);
   end;

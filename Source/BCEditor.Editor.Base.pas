@@ -6118,7 +6118,7 @@ end;
 
 procedure TBCBaseEditor.ScrollTimerHandler(ASender: TObject);
 var
-  Y: Integer;
+  LLine: Integer;
   LCursorPoint: TPoint;
   LDisplayPosition: TBCEditorDisplayPosition;
   LTextPosition: TBCEditorTextPosition;
@@ -6140,10 +6140,10 @@ begin
         TopLine := TopLine + FScrollDeltaY * VisibleLines
       else
         TopLine := TopLine + FScrollDeltaY;
-      Y := TopLine;
+      LLine := TopLine;
       if FScrollDeltaY > 0 then
-        Inc(Y, VisibleLines - 1);
-      LDisplayPosition.Row := MinMax(Y, 1, FLineNumbersCount);
+        Inc(LLine, VisibleLines - 1);
+      LDisplayPosition.Row := MinMax(LLine, 1, FLineNumbersCount);
     end;
     if not FMouseMoveScrolling then
     begin
