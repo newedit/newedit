@@ -834,7 +834,7 @@ begin
   Font.OnChange := FontChanged;
   { Painting }
   FItalicOffset := 0;
-  FPaintHelper := TBCEditorPaintHelper.Create([fsBold], FFontDummy);
+  FPaintHelper := TBCEditorPaintHelper.Create([], FFontDummy);
   ParentFont := False;
   ParentColor := False;
   { Undo & Redo }
