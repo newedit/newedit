@@ -615,7 +615,7 @@ begin
   Result := 0;
   if (AToken = '') or (ALength = 0) then
     Exit;
-  if FFixedSizeFont then
+  if FFixedSizeFont and (Word(AToken[1]) < 256) then
     Exit(FFontStock.GetCharWidth * ALength)
   else
   begin

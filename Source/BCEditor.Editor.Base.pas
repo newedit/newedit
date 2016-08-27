@@ -2143,7 +2143,7 @@ begin
     SetLength(FLineNumbersCache, LLineNumbersCacheLength);
     j := 1;
     k := 1;
-    for i := 1 to Lines.Count do //FI:W528 FixInsight ignore
+    for i := 1 to Lines.Count do
     begin
       while (j <= Lines.Count) and LCollapsedCodeFolding[j] do { skip collapsed lines }
         Inc(j);
@@ -2177,7 +2177,7 @@ var
   LAlpha: Single;
 begin
   ABitmap.Height := 0;
-  ABitmap.Height := AClipRect.Height; //FI:W508 FixInsight ignore
+  ABitmap.Height := AClipRect.Height;
 
   for LRow := 0 to ABitmap.Height - 1 do
   begin
@@ -7113,7 +7113,7 @@ begin
 end;
 
 procedure TBCBaseEditor.WMIMEChar(var AMessage: TMessage);
-begin //FI:W519 FixInsight ignore
+begin
   { Do nothing here, the IME string is retrieved in WMIMEComposition
     Handling the WM_IME_CHAR message stops Windows from sending WM_CHAR messages while using the IME }
 end;
@@ -7247,10 +7247,8 @@ begin
     LOldBitmap := SelectObject(LCompatibleDC, LCompatibleBitmap);
     try
       LDC := BeginPaint(Handle, LPaintStruct);
-      //Perform(WM_ERASEBKGND, LCompatibleDC, LCompatibleDC);
       Message.DC := LCompatibleDC;
       WMPaint(Message);
-      //Message.DC := 0;
       BitBlt(LDC, 0, 0, ClientRect.Right, ClientRect.Bottom, LCompatibleDC, 0, 0, SRCCOPY);
       EndPaint(Handle, LPaintStruct);
     finally
@@ -7434,7 +7432,7 @@ end;
 
 function TBCBaseEditor.DoSearchMatchNotFoundWraparoundDialog: Boolean;
 begin
-  Result := MessageDialog(Format(SBCEditorSearchMatchNotFound, [SLineBreak + SLineBreak]), mtConfirmation, [mbYes, mbNo]) = mrYes; //FI:W510 FixInsight ignore
+  Result := MessageDialog(Format(SBCEditorSearchMatchNotFound, [SLineBreak + SLineBreak]), mtConfirmation, [mbYes, mbNo]) = mrYes;
 end;
 
 function TBCBaseEditor.GetReadOnly: Boolean;
@@ -7608,13 +7606,8 @@ begin
   Assert(FPaintLock > 0);
   Dec(FPaintLock);
   if (FPaintLock = 0) and HandleAllocated then
-  begin
     if sfScrollbarChanged in FStateFlags then
       UpdateScrollBars;
-
-    //if sfCaretChanged in FStateFlags then
-    //  UpdateCaret;
-  end;
 end;
 
 procedure TBCBaseEditor.DestroyWnd;
@@ -7661,7 +7654,7 @@ begin
       LSpaces := StringOfChar(BCEDITOR_SPACE_CHAR, FTabs.Width)
     else
       LSpaces := BCEDITOR_TAB_CHAR;
-    for i := LBlockBeginPosition.Line to LEndOfLine - 1 do //FI:W528 FixInsight ignore
+    for i := LBlockBeginPosition.Line to LEndOfLine - 1 do
       LStringToInsert := LStringToInsert + LSpaces + BCEDITOR_CARRIAGE_RETURN + BCEDITOR_LINEFEED;
     LStringToInsert := LStringToInsert + LSpaces;
 
@@ -8397,17 +8390,17 @@ begin
 end;
 
 procedure TBCBaseEditor.LinesBeforeDeleted(ASender: TObject; AIndex: Integer; ACount: Integer);
-begin //FI:W519 FixInsight ignore
+begin
   { Do nothing }
 end;
 
 procedure TBCBaseEditor.LinesBeforeInserted(ASender: TObject; AIndex: Integer; ACount: Integer);
-begin //FI:W519 FixInsight ignore
+begin
   { Do nothing }
 end;
 
 procedure TBCBaseEditor.LinesBeforePutted(ASender: TObject; AIndex: Integer; ACount: Integer);
-begin //FI:W519 FixInsight ignore
+begin
   { Do nothing }
 end;
 
@@ -9423,7 +9416,7 @@ begin
       { paint [...] }
       Y := LCollapseMarkRect.Top + (LCollapseMarkRect.Bottom - LCollapseMarkRect.Top) div 2;
       X := LCollapseMarkRect.Left + FPaintHelper.CharWidth - 1;
-      for i := 1 to 3 do //FI:W528 FixInsight ignore
+      for i := 1 to 3 do
       begin
         Canvas.Rectangle(X, Y, X + 2, Y + 2);
         X := X + FPaintHelper.CharWidth - 1;
@@ -10804,6 +10797,7 @@ var
     LCanAppend: Boolean;
     LEmptySpace: TBCEditorEmptySpace;
     LPToken: PChar;
+    LAppendAnsiChars: Boolean;
   begin
     if (ABackground = clNone) or ((FActiveLine.Color <> clNone) and LIsCurrentLine and not ACustomBackgroundColor) then
       ABackground := GetBackgroundColor;
@@ -10833,6 +10827,8 @@ var
         AForeground := FSpecialChars.Color;
     end;
 
+    LAppendAnsiChars := (LTokenHelper.Length > 0) and (Word(LTokenHelper.Text[LTokenHelper.Length]) < 256) and (Word(LPToken^) < 256);
+
     if LTokenHelper.Length > 0 then
     begin
       LCanAppend := (LTokenHelper.Length < 128) and
@@ -10840,7 +10836,7 @@ var
           ((LEmptySpace <> esNone) and not (fsUnderline in AFontStyle) and not (fsUnderline in LTokenHelper.FontStyle)) ) and
         (LTokenHelper.MatchingPairUnderline = AMatchingPairUnderline) and
         ((LTokenHelper.Background = ABackground) and (LTokenHelper.Foreground = AForeground)) and
-        (LEmptySpace = LTokenHelper.EmptySpace);
+        (LEmptySpace = LTokenHelper.EmptySpace) and LAppendAnsiChars;
 
       if not LCanAppend then
       begin
@@ -11163,7 +11159,7 @@ var
               LLineSelectionEnd := 0;
             end
             else
-            if LSelectionEndPosition.Column < LLastColumn then // LLastChar then
+            if LSelectionEndPosition.Column < LLastColumn then
             begin
               LLineSelectionEnd := LSelectionEndPosition.Column;
               LIsSelectionInsideLine := True;
@@ -12229,8 +12225,6 @@ begin
   Result := False;
   if Trim(FSearch.SearchText) = '' then
   begin
-    //if not NextSelectedWordPosition then
-    //  SelectionEndPosition := SelectionBeginPosition;
     FSearchEngine.Clear;
     Exit;
   end;
@@ -12402,9 +12396,6 @@ begin
         TBCEditorNormalSearch(FSearchEngine).WholeWordsOnly := roWholeWordsOnly in FReplace.Options;
       end;
   end;
-
-  //if not SelectionAvailable then
-  //  FReplace.Options := FReplace.Options - [roSelectedOnly];
 
   if roSelectedOnly in FReplace.Options then
   begin
