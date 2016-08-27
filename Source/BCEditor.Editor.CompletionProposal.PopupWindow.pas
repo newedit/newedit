@@ -249,9 +249,10 @@ begin
       Hide;
     BCEDITOR_SPACE_CHAR .. High(Char):
       begin
-        if (Owner as TBCBaseEditor).IsWordBreakChar(AKey) and Assigned(OnValidate) then
-          if AKey = BCEDITOR_SPACE_CHAR then
-            OnValidate(Self, [], BCEDITOR_NONE_CHAR);
+        if not (cpoAutoInvoke in FCompletionProposal.Options) then
+          if (Owner as TBCBaseEditor).IsWordBreakChar(AKey) and Assigned(OnValidate) then
+            if AKey = BCEDITOR_SPACE_CHAR then
+              OnValidate(Self, [], BCEDITOR_NONE_CHAR);
         CurrentString := FCurrentString + AKey;
         if (cpoAutoInvoke in FCompletionProposal.Options) and (Length(FItemIndexArray) = 0) or
           (Pos(AKey, FCompletionProposal.CloseChars) <> 0) then

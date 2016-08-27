@@ -8322,7 +8322,8 @@ begin
   begin
     ShortCutToKey(FCompletionProposal.ShortCut, LShortCutKey, LShortCutShift);
     if (AShift = LShortCutShift) and (AKey = LShortCutKey) or
-      (AKey <> LShortCutKey) and (cpoAutoInvoke in FCompletionProposal.Options) and Chr(AKey).IsLetter then
+      (AKey <> LShortCutKey) and not (ssAlt in AShift) and not (ssCtrl in AShift) and
+      (cpoAutoInvoke in FCompletionProposal.Options) and Chr(AKey).IsLetter then
     begin
       DoExecuteCompletionProposal;
       if not (cpoAutoInvoke in FCompletionProposal.Options) then
