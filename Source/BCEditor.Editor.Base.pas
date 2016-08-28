@@ -312,6 +312,7 @@ type
     procedure DoWordRight(const ACommand: TBCEditorCommand);
     procedure DragMinimap(Y: Integer);
     procedure DrawCaret;
+    procedure FillRect(const ARect: TRect);
     procedure FindAll(const ASearchText: string = '');
     procedure FindWords(const AWord: string; AList: TList; ACaseSensitive: Boolean; AWholeWordsOnly: Boolean);
     procedure FontChanged(ASender: TObject);
@@ -974,7 +975,7 @@ begin
   FOriginalUndoList.Free;
   FOriginalRedoList.Free;
   FLeftMargin.Free;
-  FLeftMargin := nil; { notification has a check }
+  FLeftMargin := nil; { Notification has a check }
   FMinimap.Free;
   FWordWrap.Free;
   FPaintHelper.Free;
@@ -1206,6 +1207,11 @@ begin
     PaintCaretBlock(PBCEditorDisplayPosition(FMultiCarets[i])^)
   else
     PaintCaretBlock(GetDisplayCaretPosition);
+end;
+
+procedure TBCBaseEditor.FillRect(const ARect: TRect);
+begin
+  Winapi.Windows.ExtTextOut(Canvas.Handle, 0, 0, ETO_OPAQUE, ARect, '', 0, nil);
 end;
 
 function TBCBaseEditor.GetCanPaste: Boolean;
@@ -2066,7 +2072,7 @@ var
 
   procedure ResizeCacheArray;
   begin
-    if FWordWrap.Enabled and (k >= LLineNumbersCacheLength) then { resize }
+    if FWordWrap.Enabled and (k >= LLineNumbersCacheLength) then
     begin
       Inc(LLineNumbersCacheLength, 256);
       SetLength(FLineNumbersCache, LLineNumbersCacheLength);
@@ -2145,7 +2151,7 @@ begin
     k := 1;
     for i := 1 to Lines.Count do
     begin
-      while (j <= Lines.Count) and LCollapsedCodeFolding[j] do { skip collapsed lines }
+      while (j <= Lines.Count) and LCollapsedCodeFolding[j] do { Skip collapsed lines }
         Inc(j);
       if j > Lines.Count then
         Break;
@@ -2526,24 +2532,24 @@ begin
         SkipEmptySpace;
 
         LBookmarkTextPtr := LTextPtr;
-        { check if the open keyword found }
+        { Check if the open keyword found }
         LKeyWordPtr := PChar(LFoldRegionItem.OpenToken);
         while (LTextPtr^ <> BCEDITOR_NONE_CHAR) and (LKeyWordPtr^ <> BCEDITOR_NONE_CHAR) and (UpCase(LTextPtr^) = LKeyWordPtr^) do
         begin
           Inc(LTextPtr);
           Inc(LKeyWordPtr);
         end;
-        if LKeyWordPtr^ = BCEDITOR_NONE_CHAR then { if found, pop skip region from the stack }
+        if LKeyWordPtr^ = BCEDITOR_NONE_CHAR then { If found, pop skip region from the stack }
         begin
-          if IsWholeWord(LBookmarkTextPtr - 1, LTextPtr) then { not interested in partial hits }
+          if IsWholeWord(LBookmarkTextPtr - 1, LTextPtr) then { Not interested in partial hits }
             Exit(True)
           else
-            LTextPtr := LBookmarkTextPtr; { skip region close not found, return pointer back }
+            LTextPtr := LBookmarkTextPtr; { Skip region close not found, return pointer back }
         end
         else
-          LTextPtr := LBookmarkTextPtr; { skip region close not found, return pointer back }
+          LTextPtr := LBookmarkTextPtr; { Skip region close not found, return pointer back }
 
-        { check if the close keyword found }
+        { Check if the close keyword found }
         LKeyWordPtr := PChar(LFoldRegionItem.CloseToken);
 
         while (LTextPtr^ <> BCEDITOR_NONE_CHAR) and (LKeyWordPtr^ <> BCEDITOR_NONE_CHAR) and (UpCase(LTextPtr^) = LKeyWordPtr^) do
@@ -2551,18 +2557,18 @@ begin
           Inc(LTextPtr);
           Inc(LKeyWordPtr);
         end;
-        if LKeyWordPtr^ = BCEDITOR_NONE_CHAR then { if found, pop skip region from the stack }
+        if LKeyWordPtr^ = BCEDITOR_NONE_CHAR then { If found, pop skip region from the stack }
         begin
-          if IsWholeWord(LBookmarkTextPtr - 1, LTextPtr) then { not interested in partial hits }
+          if IsWholeWord(LBookmarkTextPtr - 1, LTextPtr) then { Not interested in partial hits }
             Exit(True)
           else
-            LTextPtr := LBookmarkTextPtr; { skip region close not found, return pointer back }
+            LTextPtr := LBookmarkTextPtr; { Skip region close not found, return pointer back }
         end
         else
-          LTextPtr := LBookmarkTextPtr; { skip region close not found, return pointer back }
+          LTextPtr := LBookmarkTextPtr; { Skip region close not found, return pointer back }
 
         Inc(LTextPtr);
-        { skip until next word }
+        { Skip until next word }
         while (LTextPtr^ <> BCEDITOR_NONE_CHAR) and IsValidChar(LTextPtr - 1) do
           Inc(LTextPtr);
       end;
@@ -3185,12 +3191,12 @@ begin
     Exit;
 
   LLength := FLines.Count + 1;
-  SetLength(FCodeFoldingTreeLine, 0); { empty }
-  SetLength(FCodeFoldingTreeLine, LLength); { max }
-  SetLength(FCodeFoldingRangeFromLine, 0); { empty }
-  SetLength(FCodeFoldingRangeFromLine, LLength); { max }
-  SetLength(FCodeFoldingRangeToLine, 0); { empty }
-  SetLength(FCodeFoldingRangeToLine, LLength); { max }
+  SetLength(FCodeFoldingTreeLine, 0);
+  SetLength(FCodeFoldingTreeLine, LLength);
+  SetLength(FCodeFoldingRangeFromLine, 0);
+  SetLength(FCodeFoldingRangeFromLine, LLength);
+  SetLength(FCodeFoldingRangeToLine, 0);
+  SetLength(FCodeFoldingRangeToLine, LLength);
   for i := FAllCodeFoldingRanges.AllCount - 1 downto 0 do
   begin
     LCodeFoldingRange := FAllCodeFoldingRanges[i];
@@ -4878,11 +4884,11 @@ begin
     LTextPtr := PChar(LLine);
     while LTextPtr^ <> BCEDITOR_NONE_CHAR do
     begin
-      if AreCharsSame(LTextPtr, PChar(AWord)) then { if the first character is a match }
+      if AreCharsSame(LTextPtr, PChar(AWord)) then { If the first character is a match }
       begin
         LKeyWordPtr := PChar(AWord);
         LBookmarkTextPtr := LTextPtr;
-        { check if the keyword found }
+        { Check if the keyword found }
         while (LTextPtr^ <> BCEDITOR_NONE_CHAR) and (LKeyWordPtr^ <> BCEDITOR_NONE_CHAR) and AreCharsSame(LTextPtr, LKeyWordPtr) do
         begin
           Inc(LTextPtr);
@@ -4898,7 +4904,7 @@ begin
           AList.Add(LPTextPosition)
         end
         else
-          LTextPtr := LBookmarkTextPtr; { not found, return pointer back }
+          LTextPtr := LBookmarkTextPtr; { Not found, return pointer back }
       end;
       Inc(LTextPtr);
     end;
@@ -5242,33 +5248,6 @@ begin
   MoveCaretAndSelection(FSelectionBeginPosition, LDestinationLineChar, ASelectionCommand);
 end;
 
-{function TBCBaseEditor.NextSelectedWordPosition: Boolean;
-var
-  LSelectedText: string;
-  LPreviousTextCaretPosition, LTextCaretPosition: TBCEditorTextPosition;
-begin
-  Result := False;
-
-  if not SelectionAvailable then
-    Exit;
-  LSelectedText := SelectedText;
-
-  LTextCaretPosition := NextWordPosition;
-  while LSelectedText <> GetWordAtTextPosition(LTextCaretPosition) do
-  begin
-    LPreviousTextCaretPosition := LTextCaretPosition;
-    LTextCaretPosition := NextWordPosition(LTextCaretPosition);
-    if (LTextCaretPosition.Line = LPreviousTextCaretPosition.Line) and (LTextCaretPosition.Char = LPreviousTextCaretPosition.Char) then
-      Exit;
-  end;
-
-  TextCaretPosition := LTextCaretPosition;
-  SelectionBeginPosition := LTextCaretPosition;
-  SelectionEndPosition := GetTextPosition(LTextCaretPosition.Char + Length(LSelectedText), LTextCaretPosition.Line);
-
-  Result := True;
-end; }
-
 procedure TBCBaseEditor.MoveCharLeft;
 var
   LUndoBeginPosition, LUndoEndPosition: TBCEditorTextPosition;
@@ -5543,7 +5522,7 @@ var
       LSkipRegionItem := LOpenTokenSkipFoldRangeList.Last;
       LKeyWordPtr := PChar(LSkipRegionItem.CloseToken);
       LBookmarkTextPtr := LTextPtr;
-      { check if the close keyword found }
+      { Check if the close keyword found }
       while (LTextPtr^ <> BCEDITOR_NONE_CHAR) and (LKeyWordPtr^ <> BCEDITOR_NONE_CHAR) and
         ((LTextPtr^ = LKeyWordPtr^) or
          (LSkipRegionItem.SkipEmptyChars and (LTextPtr^ < BCEDITOR_EXCLAMATION_MARK) )) do
@@ -5552,13 +5531,13 @@ var
           Inc(LKeyWordPtr);
         Inc(LTextPtr);
       end;
-      if LKeyWordPtr^ = BCEDITOR_NONE_CHAR then { if found, pop skip region from the stack }
+      if LKeyWordPtr^ = BCEDITOR_NONE_CHAR then { If found, pop skip region from the stack }
       begin
         LOpenTokenSkipFoldRangeList.Delete(LOpenTokenSkipFoldRangeList.Count - 1);
         Result := True;
       end
       else
-        LTextPtr := LBookmarkTextPtr; { skip region close not found, return pointer back }
+        LTextPtr := LBookmarkTextPtr; { Skip region close not found, return pointer back }
     end;
   end;
 
@@ -5581,7 +5560,7 @@ var
           begin
             LKeyWordPtr := PChar(LSkipRegionItem.OpenToken);
             LBookmarkTextPtr := LTextPtr;
-            { check, if the open keyword found }
+            { Check, if the open keyword found }
             while (LTextPtr^ <> BCEDITOR_NONE_CHAR) and (LKeyWordPtr^ <> BCEDITOR_NONE_CHAR) and
               ((LTextPtr^ = LKeyWordPtr^) or
                (LSkipRegionItem.SkipEmptyChars and (LTextPtr^ < BCEDITOR_EXCLAMATION_MARK) )) do
@@ -5591,18 +5570,18 @@ var
                 Inc(LKeyWordPtr);
               Inc(LTextPtr);
             end;
-            if LKeyWordPtr^ = BCEDITOR_NONE_CHAR then { if found, skip single line comment or push skip region into stack }
+            if LKeyWordPtr^ = BCEDITOR_NONE_CHAR then { If found, skip single line comment or push skip region into stack }
             begin
               if LSkipRegionItem.RegionType = ritSingleLineComment then
-                { single line comment skip until next line }
+                { Single line comment skip until next line }
                 Exit(True)
               else
                 LOpenTokenSkipFoldRangeList.Add(LSkipRegionItem);
-              Dec(LTextPtr); { the end of the while loop will increase }
+              Dec(LTextPtr); { The end of the while loop will increase }
               Break;
             end
             else
-              LTextPtr := LBookmarkTextPtr; { skip region open not found, return pointer back }
+              LTextPtr := LBookmarkTextPtr; { Skip region open not found, return pointer back }
           end;
         end;
       end;
@@ -5646,15 +5625,15 @@ var
             Exit;
           LKeyWordPtr := PChar(LCodeFoldingRange.RegionItem.CloseToken);
           LBookmarkTextPtr := LTextPtr;
-          { check if the close keyword found }
+          { Check if the close keyword found }
           while (LTextPtr^ <> BCEDITOR_NONE_CHAR) and (LKeyWordPtr^ <> BCEDITOR_NONE_CHAR) and (UpCase(LTextPtr^) = LKeyWordPtr^) do
           begin
             Inc(LTextPtr);
             Inc(LKeyWordPtr);
           end;
-          if LKeyWordPtr^ = BCEDITOR_NONE_CHAR then { if found, pop skip region from the stack }
+          if LKeyWordPtr^ = BCEDITOR_NONE_CHAR then { If found, pop skip region from the stack }
           begin
-            if (LCodeFoldingRange.RegionItem.CloseTokenLength = 1) or IsWholeWord(LBookmarkTextPtr - 1, LTextPtr) then { not interested in partial hits }
+            if (LCodeFoldingRange.RegionItem.CloseTokenLength = 1) or IsWholeWord(LBookmarkTextPtr - 1, LTextPtr) then { Not interested in partial hits }
             begin
               LOpenTokenFoldRangeList.Remove(LCodeFoldingRange);
               Dec(LFoldCount);
@@ -5689,19 +5668,19 @@ var
                   end;
                 end;
               { Check if the close token is one of the open tokens }
-              LBookmarkTextPtr2 := LBookmarkTextPtr; { save Bookmark }
-              LBookmarkTextPtr := LTextPtr; { set the Bookmark into current position }
-              LTextPtr := LBookmarkTextPtr2; { go back to saved Bookmark }
+              LBookmarkTextPtr2 := LBookmarkTextPtr; { Save Bookmark }
+              LBookmarkTextPtr := LTextPtr; { Set the Bookmark into current position }
+              LTextPtr := LBookmarkTextPtr2; { Go back to saved Bookmark }
               j := LCurrentCodeFoldingRegion.Count - 1;
               for i := 0 to j do
               begin
                 LRegionItem := LCurrentCodeFoldingRegion[i];
-                if LRegionItem.OpenIsClose then { optimizing... }
+                if LRegionItem.OpenIsClose then { Optimizing... }
                 begin
-                  if UpCase(LTextPtr^) = PChar(LRegionItem.OpenToken)^ then { if first character match }
+                  if UpCase(LTextPtr^) = PChar(LRegionItem.OpenToken)^ then { If first character match }
                   begin
                     LKeyWordPtr := PChar(LRegionItem.OpenToken);
-                    { check if open keyword found }
+                    { Check if open keyword found }
                     while (LTextPtr^ <> BCEDITOR_NONE_CHAR) and (LKeyWordPtr^ <> BCEDITOR_NONE_CHAR) and (UpCase(LTextPtr^) = LKeyWordPtr^) do
                     begin
                       Inc(LTextPtr);
@@ -5710,7 +5689,7 @@ var
 
                     if LKeyWordPtr^ = BCEDITOR_NONE_CHAR then
                     begin
-                      if (LRegionItem.OpenTokenLength = 1) or IsWholeWord(LBookmarkTextPtr2 - 1, LTextPtr) then { not interested in partial hits }
+                      if (LRegionItem.OpenTokenLength = 1) or IsWholeWord(LBookmarkTextPtr2 - 1, LTextPtr) then { Not interested in partial hits }
                       begin
                         if LOpenTokenFoldRangeList.Count > 0 then
                           LFoldRanges := TBCEditorCodeFoldingRange(LOpenTokenFoldRangeList.Last).SubCodeFoldingRanges
@@ -5719,28 +5698,28 @@ var
 
                         LCodeFoldingRange := LFoldRanges.Add(FAllCodeFoldingRanges, LLine, GetLineIndentLevel(LLine - 1), LFoldCount,
                           LRegionItem, LLine);
-                        { open keyword found }
+                        { Open keyword found }
                         LOpenTokenFoldRangeList.Add(LCodeFoldingRange);
                         Inc(LFoldCount);
                         Break;
                       end
                       else
-                        LTextPtr := LBookmarkTextPtr2; { skip region close not found, return pointer back }
+                        LTextPtr := LBookmarkTextPtr2; { Skip region close not found, return pointer back }
                     end
                     else
-                      LTextPtr := LBookmarkTextPtr2; { skip region close not found, return pointer back }
+                      LTextPtr := LBookmarkTextPtr2; { Skip region close not found, return pointer back }
                   end;
-                  LTextPtr := LBookmarkTextPtr; { go back where we were }
+                  LTextPtr := LBookmarkTextPtr; { Go back where we were }
                 end;
               end;
-              LTextPtr := LBookmarkTextPtr; { go back where we were }
+              LTextPtr := LBookmarkTextPtr; { Go back where we were }
               Result := True;
             end
             else
-              LTextPtr := LBookmarkTextPtr; { region close not found, return pointer back }
+              LTextPtr := LBookmarkTextPtr; { Region close not found, return pointer back }
           end
           else
-            LTextPtr := LBookmarkTextPtr; { region close not found, return pointer back }
+            LTextPtr := LBookmarkTextPtr; { Region close not found, return pointer back }
 
           Inc(LIndexDecrease);
         until Assigned(LCodeFoldingRange) and ( (LCodeFoldingRange.RegionItem.BreakIfNotFoundBeforeNextRegion = '') or (LOpenTokenFoldRangeList.Count - LIndexDecrease < 0) );
@@ -5771,7 +5750,7 @@ var
         LRegionItem := LCurrentCodeFoldingRegion[i];
         if (LRegionItem.OpenTokenBeginningOfLine and LBeginningOfLine) or (not LRegionItem.OpenTokenBeginningOfLine) then
         begin
-          { check if extra token found }
+          { Check if extra token found }
           if Assigned(LCodeFoldingRange) then
           begin
             if LCodeFoldingRange.RegionItem.BreakIfNotFoundBeforeNextRegion <> '' then
@@ -5779,7 +5758,7 @@ var
               begin
                 LKeyWordPtr := PChar(LCodeFoldingRange.RegionItem.BreakIfNotFoundBeforeNextRegion);
                 LBookmarkTextPtr := LTextPtr;
-                { check if open keyword found }
+                { Check if open keyword found }
                 while (LTextPtr^ <> BCEDITOR_NONE_CHAR) and (LKeyWordPtr^ <> BCEDITOR_NONE_CHAR) and
                   ((UpCase(LTextPtr^) = LKeyWordPtr^) or (LTextPtr^ = BCEDITOR_SPACE_CHAR) or (LTextPtr^ = BCEDITOR_TAB_CHAR)) do
                 begin
@@ -5794,15 +5773,15 @@ var
                   Continue;
                 end
                 else
-                  LTextPtr := LBookmarkTextPtr; { region not found, return pointer back }
+                  LTextPtr := LBookmarkTextPtr; { Region not found, return pointer back }
               end;
           end;
           { First word after newline }
-          if UpCase(LTextPtr^) = PChar(LRegionItem.OpenToken)^ then { if first character match }
+          if UpCase(LTextPtr^) = PChar(LRegionItem.OpenToken)^ then { If first character match }
           begin
             LKeyWordPtr := PChar(LRegionItem.OpenToken);
             LBookmarkTextPtr := LTextPtr;
-            { check if open keyword found }
+            { Check if open keyword found }
             while (LTextPtr^ <> BCEDITOR_NONE_CHAR) and (LKeyWordPtr^ <> BCEDITOR_NONE_CHAR) and (UpCase(LTextPtr^) = LKeyWordPtr^) do
             begin
               Inc(LTextPtr);
@@ -5826,9 +5805,9 @@ var
             if LKeyWordPtr^ = BCEDITOR_NONE_CHAR then
             begin
               if ((LRegionItem.OpenTokenLength = 1) or IsWholeWord(LBookmarkTextPtr - 1, LTextPtr)) and
-                not EscapeChar(LBookmarkTextPtr - 1) then { not interested in partial hits }
+                not EscapeChar(LBookmarkTextPtr - 1) then { Not interested in partial hits }
               begin
-                { check if special rule found }
+                { Check if special rule found }
                 LSkipIfFoundAfterOpenToken := False;
                 if LRegionItem.SkipIfFoundAfterOpenTokenArrayCount > 0 then
                 begin
@@ -5838,7 +5817,7 @@ var
                     begin
                       LKeyWordPtr := PChar(LRegionItem.SkipIfFoundAfterOpenTokenArray[k]);
                       LBookmarkTextPtr2 := LTextPtr;
-                      if UpCase(LTextPtr^) = LKeyWordPtr^ then { if first character match }
+                      if UpCase(LTextPtr^) = LKeyWordPtr^ then { If first character match }
                       begin
                         while (LTextPtr^ <> BCEDITOR_NONE_CHAR) and (LKeyWordPtr^ <> BCEDITOR_NONE_CHAR) and (UpCase(LTextPtr^) = LKeyWordPtr^) do
                         begin
@@ -5851,7 +5830,7 @@ var
                           Break; { for }
                         end
                         else
-                          LTextPtr := LBookmarkTextPtr2; { region not found, return pointer back }
+                          LTextPtr := LBookmarkTextPtr2; { Region not found, return pointer back }
                       end;
                     end;
                     if LSkipIfFoundAfterOpenToken then
@@ -5861,7 +5840,7 @@ var
                 end;
                 if LSkipIfFoundAfterOpenToken then
                 begin
-                  LTextPtr := LBookmarkTextPtr; { skip found, return pointer back }
+                  LTextPtr := LBookmarkTextPtr; { Skip found, return pointer back }
                   Continue;
                 end;
 
@@ -5878,17 +5857,17 @@ var
 
                 LCodeFoldingRange := LFoldRanges.Add(FAllCodeFoldingRanges, LLine, GetLineIndentLevel(LLine - 1), LFoldCount,
                   LRegionItem, LLine);
-                { open keyword found }
+                { Open keyword found }
                 LOpenTokenFoldRangeList.Add(LCodeFoldingRange);
                 Inc(LFoldCount);
-                Dec(LTextPtr); { the end of the while loop will increase }
+                Dec(LTextPtr); { The end of the while loop will increase }
                 Break;
               end
               else
-                LTextPtr := LBookmarkTextPtr; { region not found, return pointer back }
+                LTextPtr := LBookmarkTextPtr; { Region not found, return pointer back }
             end
             else
-              LTextPtr := LBookmarkTextPtr; { region not found, return pointer back }
+              LTextPtr := LBookmarkTextPtr; { Region not found, return pointer back }
           end;
         end;
       end;
@@ -5908,17 +5887,17 @@ var
     begin
       LCodeFoldingRegion := Highlighter.CodeFoldingRegions[i];
 
-      if UpCase(LTextPtr^) = PChar(LCodeFoldingRegion.OpenToken)^ then { if first character match }
+      if UpCase(LTextPtr^) = PChar(LCodeFoldingRegion.OpenToken)^ then { If first character match }
       begin
         LKeyWordPtr := PChar(LCodeFoldingRegion.OpenToken);
         LBookmarkTextPtr := LTextPtr;
-        { check if open keyword found }
+        { Check if open keyword found }
         while (LTextPtr^ <> BCEDITOR_NONE_CHAR) and (LKeyWordPtr^ <> BCEDITOR_NONE_CHAR) and (UpCase(LTextPtr^) = LKeyWordPtr^) do
         begin
           Inc(LTextPtr);
           Inc(LKeyWordPtr);
         end;
-        LTextPtr := LBookmarkTextPtr; { return pointer always back }
+        LTextPtr := LBookmarkTextPtr; { Return pointer always back }
         if LKeyWordPtr^ = BCEDITOR_NONE_CHAR then
         begin
           LCodeFoldingRangeIndexList.Add(Pointer(i));
@@ -5942,17 +5921,17 @@ var
     begin
       LCodeFoldingRegion := Highlighter.CodeFoldingRegions[i];
 
-      if UpCase(LTextPtr^) = PChar(LCodeFoldingRegion.CloseToken)^ then { if first character match }
+      if UpCase(LTextPtr^) = PChar(LCodeFoldingRegion.CloseToken)^ then { If first character match }
       begin
         LKeyWordPtr := PChar(LCodeFoldingRegion.CloseToken);
         LBookmarkTextPtr := LTextPtr;
-        { check if close keyword found }
+        { Check if close keyword found }
         while (LTextPtr^ <> BCEDITOR_NONE_CHAR) and (LKeyWordPtr^ <> BCEDITOR_NONE_CHAR) and (UpCase(LTextPtr^) = LKeyWordPtr^) do
         begin
           Inc(LTextPtr);
           Inc(LKeyWordPtr);
         end;
-        LTextPtr := LBookmarkTextPtr; { return pointer always back }
+        LTextPtr := LBookmarkTextPtr; { Return pointer always back }
         if LKeyWordPtr^ = BCEDITOR_NONE_CHAR then
         begin
           if LCodeFoldingRangeIndexList.Count > 0 then
@@ -6030,7 +6009,7 @@ begin
           if SkipRegionsClose then
             Continue; { while TextPtr^ <> BCEDITOR_NONE_CHAR do }
           if SkipRegionsOpen then
-            Break; { line comment breaks }
+            Break; { Line comment breaks }
           SkipEmptySpace;
 
           if LOpenTokenSkipFoldRangeList.Count = 0 then
@@ -6043,7 +6022,7 @@ begin
           if LTextPtr^ <> BCEDITOR_NONE_CHAR then
             Inc(LTextPtr);
 
-          LBeginningOfLine := False; { not in the beginning of the line anymore }
+          LBeginningOfLine := False; { Not in the beginning of the line anymore }
         end;
       end;
       LPreviousLine := LLine;
@@ -6169,7 +6148,7 @@ begin
       AssignSearchEngine;
     scSearch:
       begin
-        FindAll; { for search map and search count }
+        FindAll; { For search map and search count }
         if Assigned(FSearchEngine) and FSearch.Enabled then
         begin
           if soBackwards in FSearch.Options then
@@ -6244,7 +6223,7 @@ begin
     Exit;
   try
     Clipboard.Clear;
-    { set ANSI text only on Win9X, WinNT automatically creates ANSI from Unicode }
+    { Set ANSI text only on Win9X, WinNT automatically creates ANSI from Unicode }
     if Win32Platform <> VER_PLATFORM_WIN32_NT then
     begin
       LGlobalMem := GlobalAlloc(GMEM_MOVEABLE or GMEM_DDESHARE, LLength + 1);
@@ -8006,7 +7985,7 @@ begin
   LSelectedRow := GetSelectedRow(Y);
   LTextCaretPosition := DisplayToTextPosition(GetDisplayPosition(1, LSelectedRow));
   TextCaretPosition := LTextCaretPosition;
-  { Clear selection }
+
   if ssShift in AShift then
     SelectionEndPosition := LTextCaretPosition
   else
@@ -8759,16 +8738,6 @@ begin
     Exit;
   end;
 
-  {if AButton = mbLeft then
-  begin
-    MouseCapture := True;
-
-    Exclude(FStateFlags, sfWaitForDragging);
-    if LSelectionAvailable and (eoDragDropEditing in FOptions) and (X > LLeftMarginWidth) and
-      (FSelection.Mode = smNormal) and IsTextPositionInSelection(LTextCaretPosition) then
-      Include(FStateFlags, sfWaitForDragging);
-  end;  }
-
   if not (sfWaitForDragging in FStateFlags) then
     if not (sfDblClicked in FStateFlags) then
     begin
@@ -8996,7 +8965,7 @@ begin
       LDisplayPosition.Column := DisplayCaretX;
     if FScrollDeltaY <> 0 then
       LDisplayPosition.Row := DisplayCaretY;
-    if not (sfCodeFoldingInfoClicked in FStateFlags) then { no selection when info clicked }
+    if not (sfCodeFoldingInfoClicked in FStateFlags) then { No selection when info clicked }
     begin
       LTextCaretPosition := DisplayToTextPosition(LDisplayPosition);
       TextCaretPosition := LTextCaretPosition;
@@ -9269,8 +9238,8 @@ begin
   LOldBrushColor := Canvas.Brush.Color;
   LOldPenColor := Canvas.Pen.Color;
 
-  Canvas.Brush.Color := FCodeFolding.Colors.Background; { fill code folding rect }
-  Winapi.Windows.ExtTextOut(Canvas.Handle, 0, 0, ETO_OPAQUE, AClipRect, '', 0, nil);
+  Canvas.Brush.Color := FCodeFolding.Colors.Background;
+  FillRect(AClipRect);
   Canvas.Pen.Style := psSolid;
   Canvas.Brush.Color := FCodeFolding.Colors.FoldingLine;
 
@@ -9289,8 +9258,8 @@ begin
       Assigned(FMultiCarets) and IsMultiEditCaretFound(LLine))
       and (FCodeFolding.Colors.ActiveLineBackground <> clNone) then
     begin
-      Canvas.Brush.Color := FCodeFolding.Colors.ActiveLineBackground; { active line background }
-      Winapi.Windows.ExtTextOut(Canvas.Handle, 0, 0, ETO_OPAQUE, AClipRect, '', 0, nil);
+      Canvas.Brush.Color := FCodeFolding.Colors.ActiveLineBackground;
+      FillRect(AClipRect);
     end;
     if Assigned(LFoldRange) and (LLine >= LFoldRange.FromLine) and (LLine <= LFoldRange.ToLine) then
     begin
@@ -9352,14 +9321,14 @@ begin
       Canvas.Ellipse(AClipRect);
     end;
 
-    { minus }
+    { - }
     LTemp := AClipRect.Top + ((AClipRect.Bottom - AClipRect.Top) div 2);
     Canvas.MoveTo(AClipRect.Left + 2, LTemp);
     Canvas.LineTo(AClipRect.Right - 2, LTemp);
 
     if LFoldRange.Collapsed then
     begin
-      { plus }
+      { + }
       LTemp := (AClipRect.Right - AClipRect.Left) div 2;
       Canvas.MoveTo(AClipRect.Left + LTemp, AClipRect.Top + 2);
       Canvas.LineTo(AClipRect.Left + LTemp, AClipRect.Bottom - 2);
@@ -9414,7 +9383,7 @@ begin
         LBrush.Free;
       end;
       Canvas.Pen.Color := FCodeFolding.Colors.FoldingLine;
-      { paint [...] }
+      { [...] }
       Y := LCollapseMarkRect.Top + (LCollapseMarkRect.Bottom - LCollapseMarkRect.Top) div 2;
       X := LCollapseMarkRect.Left + FPaintHelper.CharWidth - 1;
       for i := 1 to 3 do
@@ -9638,7 +9607,7 @@ var
           FPaintHelper.SetBackgroundColor(FLeftMargin.Colors.ActiveLineBackground);
           Canvas.Brush.Color := FLeftMargin.Colors.ActiveLineBackground;
           if Assigned(FMultiCarets) then
-            Winapi.Windows.ExtTextOut(Canvas.Handle, 0, 0, ETO_OPAQUE, LLineRect, '', 0, nil); { fill line rect when multi-caret }
+            FillRect(LLineRect);
         end;
 
         LPreviousLine := LLine;
@@ -9676,7 +9645,7 @@ var
           Length(LLineNumber), nil);
       end;
       FPaintHelper.SetBackgroundColor(FLeftMargin.Colors.Background);
-      { erase the remaining area }
+      { Erase the remaining area }
       if AClipRect.Bottom > LLineRect.Bottom then
       begin
         LLineRect.Top := LLineRect.Bottom;
@@ -9702,7 +9671,7 @@ var
       if FLeftMargin.Colors.BookmarkPanelBackground <> clNone then
       begin
         Canvas.Brush.Color := FLeftMargin.Colors.BookmarkPanelBackground;
-        Winapi.Windows.ExtTextOut(Canvas.Handle, 0, 0, ETO_OPAQUE, LPanelRect, '', 0, nil); { fill bookmark panel rect }
+        FillRect(LPanelRect);
       end;
       if FLeftMargin.Colors.ActiveLineBackground <> clNone then
       begin
@@ -9716,7 +9685,7 @@ var
             LPanelActiveLineRect := System.Types.Rect(AClipRect.Left, (i - TopLine) * LLineHeight, AClipRect.Left + FLeftMargin.Bookmarks.Panel.Width,
               (i - TopLine + 1) * LLineHeight);
             Canvas.Brush.Color := FLeftMargin.Colors.ActiveLineBackground;
-            Winapi.Windows.ExtTextOut(Canvas.Handle, 0, 0, ETO_OPAQUE, LPanelActiveLineRect, '', 0, nil); { fill bookmark panel active line rect}
+            FillRect(LPanelActiveLineRect);
           end;
         end;
       end;
@@ -9854,7 +9823,7 @@ var
             Canvas.Brush.Color := FLeftMargin.Colors.LineStateNormal
           else
             Canvas.Brush.Color := FLeftMargin.Colors.LineStateModified;
-          Winapi.Windows.ExtTextOut(Canvas.Handle, 0, 0, ETO_OPAQUE, LLineStateRect, '', 0, nil); { fill line state rect }
+          FillRect(LLineStateRect);
         end;
       end;
       Canvas.Brush.Color := LOldColor;
@@ -9894,7 +9863,7 @@ var
 begin
   FPaintHelper.SetBackgroundColor(FLeftMargin.Colors.Background);
   Canvas.Brush.Color := FLeftMargin.Colors.Background;
-  Winapi.Windows.ExtTextOut(Canvas.Handle, 0, 0, ETO_OPAQUE, AClipRect, '', 0, nil); { fill left margin rect }
+  FillRect(AClipRect);
   LLineHeight := GetLineHeight;
   PaintLineNumbers;
   PaintBookmarkPanel;
@@ -10045,14 +10014,14 @@ begin
   else
   {$ENDIF}
     Canvas.Brush.Color := FBackgroundColor;
-  Winapi.Windows.ExtTextOut(Canvas.Handle, 0, 0, ETO_OPAQUE, AClipRect, '', 0, nil); { fill search map rect }
+  FillRect(AClipRect);
   { Lines in window }
   LHeight := ClientRect.Height / Max(Lines.Count, 1);
   AClipRect.Top := Round((TopLine - 1) * LHeight);
   AClipRect.Bottom := Max(Round((TopLine - 1 + VisibleLines) * LHeight), AClipRect.Top + 1);
   Canvas.Brush.Color := FBackgroundColor;
-  Winapi.Windows.ExtTextOut(Canvas.Handle, 0, 0, ETO_OPAQUE, AClipRect, '', 0, nil); { fill lines in window rect }
-  { draw lines }
+  FillRect(AClipRect);
+  { Draw lines }
   if FSearch.Map.Colors.Foreground <> clNone then
     Canvas.Pen.Color := FSearch.Map.Colors.Foreground
   else
@@ -10072,7 +10041,7 @@ begin
     Canvas.MoveTo(AClipRect.Left, j + 1);
     Canvas.LineTo(AClipRect.Right, j + 1);
   end;
-  { draw active line }
+  { Draw active line }
   if moShowActiveLine in FSearch.Map.Options then
   begin
     if FSearch.Map.Colors.ActiveLine <> clNone then
@@ -10371,7 +10340,7 @@ var
       Inc(Result, (AIndex - 1) * FPaintHelper.CharWidth)
     else
     if AIndex - 1 > LCurrentLineLength then
-      Inc(Result, (AIndex - LCurrentLineLength {- 1}) * FPaintHelper.CharWidth + LPaintedWidth);
+      Inc(Result, (AIndex - LCurrentLineLength) * FPaintHelper.CharWidth + LPaintedWidth);
   end;
 
   procedure PaintToken(AToken: string; ATokenLength, ACharsBefore, AFirst, ALast: Integer);
@@ -10569,7 +10538,7 @@ var
         else
           Canvas.Pen.Color := LTokenHelper.Foreground;
 
-        Winapi.Windows.ExtTextOut(Canvas.Handle, 0, 0, ETO_OPAQUE, LTextRect, '', 0, nil); { fill rect }
+        FillRect(LTextRect);
 
         if (FSpecialChars.Selection.Visible and
           (Canvas.Brush.Color = FSelection.Colors.Background) or (Canvas.Brush.Color <> FSelection.Colors.Background)) then
@@ -10680,13 +10649,13 @@ var
           LTokenRect.Right := GetTextWidth(LLineSelectionStart, AMinimap);
           PaintToken(LTokenHelper.Text, LLineSelectionStart - LTokenHelper.CharsBefore - 1, LTokenHelper.CharsBefore, LFirstColumn, LLineSelectionStart);
         end;
-        { selected part of the token }
+        { Selected part of the token }
         SetDrawingColors(True);
         LSelectionStart := Max(LLineSelectionStart, LFirstColumn);
         LSelectionEnd := Min(LLineSelectionEnd, LLastColumn);
         LTokenRect.Right := GetTextWidth(LSelectionEnd, AMinimap);
         PaintToken(LTokenHelper.Text, LSelectionEnd - LSelectionStart, LTokenHelper.CharsBefore, LSelectionStart, LSelectionEnd);
-        { second unselected part of the token }
+        { Second unselected part of the token }
         if LSecondUnselectedPartOfToken then
         begin
           SetDrawingColors(False);
@@ -10729,14 +10698,14 @@ var
         begin
           SetDrawingColors(False);
           LTokenRect.Right := X1;
-          Winapi.Windows.ExtTextOut(Canvas.Handle, 0, 0, ETO_OPAQUE, LTokenRect, '', 0, nil); { fill end of line rect }
+          FillRect(LTokenRect);
           LTokenRect.Left := X1;
         end;
         if LTokenRect.Left < X2 then
         begin
           SetDrawingColors(True);
           LTokenRect.Right := X2;
-          Winapi.Windows.ExtTextOut(Canvas.Handle, 0, 0, ETO_OPAQUE, LTokenRect, '', 0, nil); { fill end of line rect }
+          FillRect(LTokenRect);
           LTokenRect.Right := X2;
           LTokenRect.Left := X2;
         end;
@@ -10744,14 +10713,14 @@ var
         begin
           SetDrawingColors(False);
           LTokenRect.Right := LLineRect.Right;
-          Winapi.Windows.ExtTextOut(Canvas.Handle, 0, 0, ETO_OPAQUE, LTokenRect, '', 0, nil); { fill end of line rect }
+          FillRect(LTokenRect);
         end;
       end
       else
       begin
         SetDrawingColors(LIsLineSelected);
         LTokenRect.Right := LLineRect.Right;
-        Winapi.Windows.ExtTextOut(Canvas.Handle, 0, 0, ETO_OPAQUE, LTokenRect, '', 0, nil); { fill end of line rect }
+        FillRect(LTokenRect);
       end;
     end;
   end;
@@ -11136,13 +11105,6 @@ var
           end;
         end;
 
-        {if FWordWrap.Enabled then
-          if (LWrappedRowCount > 0) and (LLineSelectionStart > 0) then
-          begin
-            Inc(LLineSelectionStart, LWrappedColumns);
-            Inc(LLineSelectionEnd, LWrappedColumns);
-          end;  }
-
         LIsLineSelected := not LIsSelectionInsideLine and (LLineSelectionStart > 0);
         LTokenRect := LLineRect;
         LLineEndRect := LLineRect;
@@ -11243,7 +11205,7 @@ begin
 
   LBookmarkOnCurrentLine := False;
 
-  { fill below the last line }
+  { Fill below the last line }
   LTokenRect := AClipRect;
   if AMinimap then
     LTokenRect.Top := Min(FMinimap.VisibleLines, FLineNumbersCount) * FMinimap.CharHeight
@@ -11254,7 +11216,7 @@ begin
   begin
     LBackgroundColor := FBackgroundColor;
     SetDrawingColors(False);
-    Winapi.Windows.ExtTextOut(Canvas.Handle, 0, 0, ETO_OPAQUE, LTokenRect, '', 0, nil);
+    FillRect(LTokenRect);
   end;
 end;
 
@@ -11686,7 +11648,7 @@ var
       end;
       LRightSide := Copy(FLines[LTextCaretPosition.Line], LTextCaretPosition.Char, FLines.StringLength(LTextCaretPosition.Line) - (LTextCaretPosition.Char - 1));
 
-      { insert the first line of Value into current line }
+      { Insert the first line of Value into current line }
       LPStart := PChar(AValue);
       LPText := GetEndOfLine(LPStart);
       if LPText^ <> BCEDITOR_NONE_CHAR then
@@ -11701,7 +11663,7 @@ var
         FLines[LTextCaretPosition.Line] := LLine;
       end;
 
-      { insert left lines of Value }
+      { Insert left lines of Value }
       i := LTextCaretPosition.Line + 1;
       while LPText^ <> BCEDITOR_NONE_CHAR do
       begin
@@ -11778,7 +11740,7 @@ var
 
             FLines.Add('');
 
-            { Reflect our changes in undo list }
+            { Reflect changes in undo list }
             if AAddToUndoList then
             begin
               with LLineBreakPosition do
@@ -12550,7 +12512,7 @@ begin
   try
     for Line := 0 to FLines.Count - 1 do
     begin
-      { add document words }
+      { Add document words }
       LTextPtr := PChar(FLines[Line]);
       LWord := '';
       while LTextPtr^ <> BCEDITOR_NONE_CHAR do
@@ -12560,19 +12522,19 @@ begin
         begin
           LKeyWordPtr := PChar(TBCEditorSkipRegionItem(LOpenTokenSkipFoldRangeList.Last).CloseToken);
           LBookmarkTextPtr := LTextPtr;
-          { check if the close keyword found }
+          { Check if the close keyword found }
           while (LTextPtr^ <> BCEDITOR_NONE_CHAR) and (LKeyWordPtr^ <> BCEDITOR_NONE_CHAR) and (LTextPtr^ = LKeyWordPtr^) do
           begin
             Inc(LTextPtr);
             Inc(LKeyWordPtr);
           end;
-          if LKeyWordPtr^ = BCEDITOR_NONE_CHAR then { if found, pop skip region from the list }
+          if LKeyWordPtr^ = BCEDITOR_NONE_CHAR then { If found, pop skip region from the list }
           begin
             LOpenTokenSkipFoldRangeList.Delete(LOpenTokenSkipFoldRangeList.Count - 1);
             Continue; { while TextPtr^ <> BCEDITOR_NONE_CHAR do }
           end
           else
-            LTextPtr := LBookmarkTextPtr; { skip region close not found, return pointer back }
+            LTextPtr := LBookmarkTextPtr; { Skip region close not found, return pointer back }
         end;
 
         { Skip regions - Open }
@@ -12581,31 +12543,31 @@ begin
           for i := 0 to FHighlighter.CompletionProposalSkipRegions.Count - 1 do
           begin
             LSkipRegionItem := FHighlighter.CompletionProposalSkipRegions[i];
-            if LTextPtr^ = PChar(LSkipRegionItem.OpenToken)^ then { if the first character is a match }
+            if LTextPtr^ = PChar(LSkipRegionItem.OpenToken)^ then { If the first character is a match }
             begin
               LKeyWordPtr := PChar(LSkipRegionItem.OpenToken);
               LBookmarkTextPtr := LTextPtr;
-              { check if the open keyword found }
+              { Check if the open keyword found }
               while (LTextPtr^ <> BCEDITOR_NONE_CHAR) and (LKeyWordPtr^ <> BCEDITOR_NONE_CHAR) and (LTextPtr^ = LKeyWordPtr^) do
               begin
                 Inc(LTextPtr);
                 Inc(LKeyWordPtr);
               end;
-              if LKeyWordPtr^ = BCEDITOR_NONE_CHAR then { if found, skip single line comment or push skip region into stack }
+              if LKeyWordPtr^ = BCEDITOR_NONE_CHAR then { If found, skip single line comment or push skip region into stack }
               begin
                 if LSkipRegionItem.RegionType = ritSingleLineComment then
                 begin
-                  { single line comment skip until next line }
+                  { Single line comment skip until next line }
                   while LTextPtr^ <> BCEDITOR_NONE_CHAR do
                     Inc(LTextPtr);
                 end
                 else
                   LOpenTokenSkipFoldRangeList.Add(LSkipRegionItem);
-                Dec(LTextPtr); { the end of the while loop will increase }
+                Dec(LTextPtr); { The end of the while loop will increase }
                 Break; { for i := 0 to BCEditor.Highlighter.CompletionProposalSkipRegions... }
               end
               else
-                LTextPtr := LBookmarkTextPtr; { skip region open not found, return pointer back }
+                LTextPtr := LBookmarkTextPtr; { Skip region open not found, return pointer back }
             end;
           end;
         end;
@@ -12618,7 +12580,7 @@ begin
           else
           begin
             if (LWord <> '') and (Length(LWord) > 1) then
-              if Pos(LWord + BCEDITOR_CARRIAGE_RETURN + BCEDITOR_LINEFEED, LWordList) = 0 then { no duplicates }
+              if Pos(LWord + BCEDITOR_CARRIAGE_RETURN + BCEDITOR_LINEFEED, LWordList) = 0 then { No duplicates }
                 LWordList := LWordList + LWord + BCEDITOR_CARRIAGE_RETURN + BCEDITOR_LINEFEED;
             LWord := ''
           end;
@@ -12627,10 +12589,10 @@ begin
           Inc(LTextPtr);
       end;
       if (LWord <> '') and (Length(LWord) > 1) then
-        if Pos(LWord + BCEDITOR_CARRIAGE_RETURN + BCEDITOR_LINEFEED, LWordList) = 0 then { no duplicates }
+        if Pos(LWord + BCEDITOR_CARRIAGE_RETURN + BCEDITOR_LINEFEED, LWordList) = 0 then { No duplicates }
           LWordList := LWordList + LWord + BCEDITOR_CARRIAGE_RETURN + BCEDITOR_LINEFEED;
     end;
-    { add highlighter keywords }
+    { Add highlighter keywords }
     FHighlighter.AddKeywords(LKeywordStringList);
     for i := 0 to LKeywordStringList.Count - 1 do
     begin
@@ -12639,7 +12601,7 @@ begin
       begin
         LChar := LWord[1];
         if LChar.IsLower or LChar.IsUpper or (LChar = BCEDITOR_UNDERSCORE) then
-          if Pos(LWord + BCEDITOR_CARRIAGE_RETURN + BCEDITOR_LINEFEED, LWordList) = 0 then { no duplicates }
+          if Pos(LWord + BCEDITOR_CARRIAGE_RETURN + BCEDITOR_LINEFEED, LWordList) = 0 then { No duplicates }
             LWordList := LWordList + LWord + BCEDITOR_CARRIAGE_RETURN + BCEDITOR_LINEFEED;
       end;
     end;
@@ -13116,12 +13078,12 @@ var
   end;
 
 begin
-  { first the program event handler gets a chance to process the command }
+  { First the program event handler gets a chance to process the command }
   DoOnProcessCommand(ACommand, AChar, AData);
 
   if ACommand <> ecNone then
   begin
-    { notify hooked command handlers before the command is executed inside of the class }
+    { Notify hooked command handlers before the command is executed inside of the class }
     NotifyHookedCommandHandlers(False, ACommand, AChar, AData);
 
     FRescanCodeFolding := (ACommand = ecCut) or (ACommand = ecPaste) or (ACommand = ecDeleteLine) or
@@ -13204,7 +13166,7 @@ begin
     if ACommand < ecUserFirst then
       ExecuteCommand(ACommand, AChar, AData);
 
-    { notify hooked command handlers after the command was executed inside of the class }
+    { Notify hooked command handlers after the command was executed inside of the class }
     NotifyHookedCommandHandlers(True, ACommand, AChar, AData);
   end;
   DoOnCommandProcessed(ACommand, AChar, AData);
@@ -14194,7 +14156,7 @@ begin
     end;
     LTextPosition := TextCaretPosition;
     for i := 0 to 8 do
-      if not GetBookmark(i, LTextPosition) then { variables used because X and Y are var parameters }
+      if not GetBookmark(i, LTextPosition) then { Variables used because X and Y are var parameters }
       begin
         SetBookmark(i, TextCaretPosition);
         Exit;
@@ -14380,7 +14342,7 @@ begin
   if (AMessage.Msg = WM_SYSCHAR) and (AMessage.wParam = VK_BACK) and (AMessage.LParam and ALT_KEY_DOWN <> 0) then
     AMessage.Msg := 0;
 
-  { handle direct WndProc calls that could happen through VCL-methods like Perform }
+  { Handle direct WndProc calls that could happen through VCL-methods like Perform }
   if HandleAllocated and IsWindowUnicode(Handle) then
   begin
     if not FWindowProducedMessage then
