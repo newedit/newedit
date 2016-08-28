@@ -11168,6 +11168,15 @@ var
           end;
         end;
 
+        if FWordWrap.Enabled then
+          if LWrappedRowCount > 0 then
+            if LLineSelectionStart > 0 then
+              for i := 0 to LWrappedRowCount - 1 do
+              begin
+                Inc(LLineSelectionStart, FWordWrapLineLengths[LDisplayLine + i]);
+                Inc(LLineSelectionEnd, FWordWrapLineLengths[LDisplayLine + i]);
+              end;
+
         LIsLineSelected := not LIsSelectionInsideLine and (LLineSelectionStart > 0);
         LTokenRect := LLineRect;
         LLineEndRect := LLineRect;
