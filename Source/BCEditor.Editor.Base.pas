@@ -10252,8 +10252,8 @@ var
   LIsLineSelected, LIsCurrentLine, LIsSyncEditBlock: Boolean;
   LLineRect, LTokenRect: TRect;
   LLineSelectionStart, LLineSelectionEnd: Integer;
-  LSelectionEndPosition: TBCEditorDisplayPosition;
-  LSelectionBeginPosition: TBCEditorDisplayPosition;
+  LSelectionEndPosition: TBCEditorTextPosition;
+  LSelectionBeginPosition: TBCEditorTextPosition;
   LTokenHelper: TBCEditorTokenHelper;
   LCustomLineColors: Boolean;
   LCustomForegroundColor: TColor;
@@ -10312,23 +10312,6 @@ var
           Result := LHighlighterAttribute.Background;
       end;
     end;
-  end;
-
-  procedure ComputeSelectionInfo;
-  begin
-    LAnySelection := SelectionAvailable;
-    if LAnySelection then
-      if (FSelectionEndPosition.Line < FSelectionBeginPosition.Line) or
-        ((FSelectionEndPosition.Line = FSelectionBeginPosition.Line) and (FSelectionEndPosition.Char < FSelectionBeginPosition.Char)) then
-      begin
-        LSelectionBeginPosition := TextToDisplayPosition(FSelectionEndPosition);
-        LSelectionEndPosition := TextToDisplayPosition(FSelectionBeginPosition);
-      end
-      else
-      begin
-        LSelectionBeginPosition := TextToDisplayPosition(FSelectionBeginPosition);
-        LSelectionEndPosition := TextToDisplayPosition(FSelectionEndPosition);
-      end;
   end;
 
   procedure SetDrawingColors(ASelected: Boolean);
@@ -10758,7 +10741,7 @@ var
         if LTokenRect.Left < X2 then
         begin
           SetDrawingColors(not (soToEndOfLine in FSelection.Options) and not (soToEndOfLastLine in FSelection.Options) or
-            (soToEndOfLastLine in FSelection.Options) and (LDisplayLine <> LSelectionEndPosition.Row) );
+            (soToEndOfLastLine in FSelection.Options) and (LCurrentLine - 1 <> LSelectionEndPosition.Line) );
           LTokenRect.Right := X2;
           Winapi.Windows.ExtTextOut(Canvas.Handle, 0, 0, ETO_OPAQUE, LTokenRect, '', 0, nil); { fill end of line rect }
           if (soFromEndOfLine in FSelection.Options) and (soToEndOfLine in FSelection.Options) then
@@ -11112,6 +11095,10 @@ var
 
       LWrappedRowCount := 0;
 
+      LAnySelection := SelectionAvailable;
+      LSelectionBeginPosition := SelectionBeginPosition;
+      LSelectionEndPosition := SelectionEndPosition;
+
       while LCurrentRow = LCurrentLine do
       begin
         LPaintedWidth := 0;
@@ -11132,50 +11119,48 @@ var
         LLineSelectionStart := 0;
         LLineSelectionEnd := 0;
 
-        if LAnySelection and (LDisplayLine >= LSelectionBeginPosition.Row) and (LDisplayLine <= LSelectionEndPosition.Row) then
+        if LAnySelection and (LCurrentLine - 1 >= LSelectionBeginPosition.Line) and (LCurrentLine - 1 <= LSelectionEndPosition.Line) then
         begin
           LLineSelectionStart := 1;
           LLineSelectionEnd := LLastColumn + 1;
           if (FSelection.ActiveMode = smColumn) or
-            ((FSelection.ActiveMode = smNormal) and (LDisplayLine = LSelectionBeginPosition.Row)) then
+            ((FSelection.ActiveMode = smNormal) and (LCurrentLine - 1 = LSelectionBeginPosition.Line)) then
           begin
-            if LSelectionBeginPosition.Column > LLastColumn then
+            if LSelectionBeginPosition.Char > LLastColumn then
             begin
               LLineSelectionStart := 0;
               LLineSelectionEnd := 0;
             end
             else
-            if LSelectionBeginPosition.Column > 1 then
+            if LSelectionBeginPosition.Char > 1 then
             begin
-              LLineSelectionStart := LSelectionBeginPosition.Column;
+              LLineSelectionStart := LSelectionBeginPosition.Char;
               LIsSelectionInsideLine := True;
             end;
           end;
           if (FSelection.ActiveMode = smColumn) or
-            ((FSelection.ActiveMode = smNormal) and (LDisplayLine = LSelectionEndPosition.Row)) then
+            ((FSelection.ActiveMode = smNormal) and (LCurrentLine - 1 = LSelectionEndPosition.Line)) then
           begin
-            if LSelectionEndPosition.Column < 1 then
+            if LSelectionEndPosition.Char < 1 then
             begin
               LLineSelectionStart := 0;
               LLineSelectionEnd := 0;
             end
             else
-            if LSelectionEndPosition.Column < LLastColumn then
+            if LSelectionEndPosition.Char < LLastColumn then
             begin
-              LLineSelectionEnd := LSelectionEndPosition.Column;
+              LLineSelectionEnd := LSelectionEndPosition.Char;
               LIsSelectionInsideLine := True;
             end;
           end;
         end;
 
-        if FWordWrap.Enabled then
-          if LWrappedRowCount > 0 then
-            if LLineSelectionStart > 0 then
-              for i := 0 to LWrappedRowCount - 1 do
-              begin
-                Inc(LLineSelectionStart, FWordWrapLineLengths[LDisplayLine + i]);
-                Inc(LLineSelectionEnd, FWordWrapLineLengths[LDisplayLine + i]);
-              end;
+        {if FWordWrap.Enabled then
+          if (LWrappedRowCount > 0) and (LLineSelectionStart > 0) then
+          begin
+            Inc(LLineSelectionStart, LWrappedColumns);
+            Inc(LLineSelectionEnd, LWrappedColumns);
+          end;  }
 
         LIsLineSelected := not LIsSelectionInsideLine and (LLineSelectionStart > 0);
         LTokenRect := LLineRect;
@@ -11273,10 +11258,7 @@ begin
   end;
 
   if ALastLine >= AFirstLine then
-  begin
-    ComputeSelectionInfo;
     PaintLines;
-  end;
 
   LBookmarkOnCurrentLine := False;
 
