@@ -10828,7 +10828,7 @@ var
         AForeground := FSpecialChars.Color;
     end;
 
-    LAppendAnsiChars := (LTokenHelper.Length > 0) and (Word(LTokenHelper.Text[LTokenHelper.Length]) < 256) and (Word(LPToken^) < 256);
+    LAppendAnsiChars := (LTokenHelper.Length > 0) and (Ord(LTokenHelper.Text[LTokenHelper.Length]) < 256) and (Ord(LPToken^) < 256);
 
     if LTokenHelper.Length > 0 then
     begin
