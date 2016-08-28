@@ -10371,7 +10371,7 @@ var
       Inc(Result, (AIndex - 1) * FPaintHelper.CharWidth)
     else
     if AIndex - 1 > LCurrentLineLength then
-      Inc(Result, (AIndex - LCurrentLineLength - 1) * FPaintHelper.CharWidth + LPaintedWidth);
+      Inc(Result, (AIndex - LCurrentLineLength {- 1}) * FPaintHelper.CharWidth + LPaintedWidth);
   end;
 
   procedure PaintToken(AToken: string; ATokenLength, ACharsBefore, AFirst, ALast: Integer);
@@ -10727,29 +10727,16 @@ var
           X2 := GetTextWidth(LLineSelectionEnd, AMinimap);
         if LTokenRect.Left < X1 then
         begin
-          SetDrawingColors(soFromEndOfLine in FSelection.Options);
-          if (soFromEndOfLine in FSelection.Options) and (soToEndOfLine in FSelection.Options) then
-            LTokenRect.Right := LTokenRect.Left + FPaintHelper.CharWidth
-          else
-            LTokenRect.Right := X1;
+          SetDrawingColors(False);
+          LTokenRect.Right := X1;
           Winapi.Windows.ExtTextOut(Canvas.Handle, 0, 0, ETO_OPAQUE, LTokenRect, '', 0, nil); { fill end of line rect }
-          if (soFromEndOfLine in FSelection.Options) and (soToEndOfLine in FSelection.Options) then
-            LTokenRect.Left := LTokenRect.Right - FPaintHelper.CharWidth
-          else
-            LTokenRect.Left := X1;
+          LTokenRect.Left := X1;
         end;
         if LTokenRect.Left < X2 then
         begin
-          SetDrawingColors(not (soToEndOfLine in FSelection.Options) and not (soToEndOfLastLine in FSelection.Options) or
-            (soToEndOfLastLine in FSelection.Options) and (LCurrentLine - 1 <> LSelectionEndPosition.Line) );
+          SetDrawingColors(True);
           LTokenRect.Right := X2;
           Winapi.Windows.ExtTextOut(Canvas.Handle, 0, 0, ETO_OPAQUE, LTokenRect, '', 0, nil); { fill end of line rect }
-          if (soFromEndOfLine in FSelection.Options) and (soToEndOfLine in FSelection.Options) then
-          begin
-            SetDrawingColors(True);
-            LTokenRect.Right := LTokenRect.Left + FPaintHelper.CharWidth;
-            Winapi.Windows.ExtTextOut(Canvas.Handle, 0, 0, ETO_OPAQUE, LTokenRect, '', 0, nil); { fill end of line rect }
-          end;
           LTokenRect.Right := X2;
           LTokenRect.Left := X2;
         end;
@@ -10762,15 +10749,9 @@ var
       end
       else
       begin
-        SetDrawingColors(not (soToEndOfLine in FSelection.Options) and LIsLineSelected);
+        SetDrawingColors(LIsLineSelected);
         LTokenRect.Right := LLineRect.Right;
         Winapi.Windows.ExtTextOut(Canvas.Handle, 0, 0, ETO_OPAQUE, LTokenRect, '', 0, nil); { fill end of line rect }
-        if (soFromEndOfLine in FSelection.Options) and (soToEndOfLine in FSelection.Options) and LIsLineSelected then
-        begin
-          SetDrawingColors(True);
-          LTokenRect.Right := LTokenRect.Left + FPaintHelper.CharWidth;
-          Winapi.Windows.ExtTextOut(Canvas.Handle, 0, 0, ETO_OPAQUE, LTokenRect, '', 0, nil); { fill end of line rect }
-        end;
       end;
     end;
   end;

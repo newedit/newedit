@@ -121,10 +121,6 @@ procedure TBCEditorSelection.SetOptions(AValue: TBCEditorSelectionOptions);
 begin
   if FOptions <> AValue then
   begin
-    if soToEndOfLastLine in AValue then
-      AValue := AValue - [soToEndOfLine];
-    if soToEndOfLine in AValue then
-      AValue := AValue - [soToEndOfLastLine];
     FOptions := AValue;
     DoChange;
   end;

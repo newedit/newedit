@@ -92,11 +92,8 @@ type
   TBCEditorSelectionOption = (
     soALTSetsColumnMode,
     soExpandRealNumbers,
-    soFromEndOfLine,
     soHighlightSimilarTerms,
     soTermsCaseSensitive,
-    soToEndOfLastLine,
-    soToEndOfLine,
     soTripleClickRowSelect
   );
   TBCEditorSelectionOptions = set of TBCEditorSelectionOption;
