@@ -9316,7 +9316,7 @@ begin
   if LFoldRange.Collapsable then
   begin
     LHeight := AClipRect.Right - AClipRect.Left;
-    AClipRect.Top := AClipRect.Top + ((GetLineHeight - LHeight) div 2);
+    AClipRect.Top := AClipRect.Top + ((GetLineHeight - LHeight) div 2) + 1;
     AClipRect.Bottom := AClipRect.Top + LHeight - 1;
     AClipRect.Right := AClipRect.Right - 1;
 
