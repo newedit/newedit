@@ -2007,10 +2007,13 @@ begin
   else
     Result := FSelectionBeginPosition;
 
-  LLineLength := Length(FLines[Result.Line]);
+  if FSelection.Mode = smNormal then
+  begin
+    LLineLength := Length(FLines[Result.Line]);
 
-  if Result.Char > LLineLength then
-    Result.Char := LLineLength + 1;
+    if Result.Char > LLineLength then
+      Result.Char := LLineLength + 1;
+  end;
 end;
 
 function TBCBaseEditor.GetSelectionEndPosition: TBCEditorTextPosition;
@@ -2023,10 +2026,13 @@ begin
   else
     Result := FSelectionEndPosition;
 
-  LLineLength := Length(FLines[Result.Line]);
+  if FSelection.Mode = smNormal then
+  begin
+    LLineLength := Length(FLines[Result.Line]);
 
-  if Result.Char > LLineLength then
-    Result.Char := LLineLength + 1;
+    if Result.Char > LLineLength then
+      Result.Char := LLineLength + 1;
+  end;
 end;
 
 function TBCBaseEditor.GetSelectedRow(const Y: Integer): Integer;
@@ -9254,8 +9260,7 @@ begin
     AClipRect.Top := (i - FTopLine) * GetLineHeight;
     AClipRect.Bottom := AClipRect.Top + GetLineHeight;
 
-    if (not Assigned(FMultiCarets) and (GetTextCaretY + 1 = LLine) or
-      Assigned(FMultiCarets) and IsMultiEditCaretFound(LLine))
+    if (not Assigned(FMultiCarets) and (GetTextCaretY + 1 = LLine) or Assigned(FMultiCarets) and IsMultiEditCaretFound(LLine))
       and (FCodeFolding.Colors.ActiveLineBackground <> clNone) then
     begin
       Canvas.Brush.Color := FCodeFolding.Colors.ActiveLineBackground;
@@ -10340,7 +10345,7 @@ var
       Inc(Result, (AIndex - 1) * FPaintHelper.CharWidth)
     else
     if AIndex - 1 > LCurrentLineLength then
-      Inc(Result, (AIndex - LCurrentLineLength) * FPaintHelper.CharWidth + LPaintedWidth);
+      Inc(Result, (AIndex - LCurrentLineLength - 1) * FPaintHelper.CharWidth + LPaintedWidth);
   end;
 
   procedure PaintToken(AToken: string; ATokenLength, ACharsBefore, AFirst, ALast: Integer);
@@ -10761,11 +10766,11 @@ var
         AForeground := FSpecialChars.Color;
     end;
 
-    LAppendAnsiChars := (LTokenHelper.Length > 0) and (Ord(LTokenHelper.Text[LTokenHelper.Length]) < 256) and (Ord(LPToken^) < 256);
+    LAppendAnsiChars := (LTokenHelper.Length > 0) and (Ord(LTokenHelper.Text[1]) < 256) and (Ord(LPToken^) < 256);
 
     if LTokenHelper.Length > 0 then
     begin
-      LCanAppend := (LTokenHelper.Length < 128) and
+      LCanAppend := (LTokenHelper.Length < BCEDITOR_TOKEN_MAX_LENGTH) and
         ( (LTokenHelper.FontStyle = AFontStyle) or
           ((LEmptySpace <> esNone) and not (fsUnderline in AFontStyle) and not (fsUnderline in LTokenHelper.FontStyle)) ) and
         (LTokenHelper.MatchingPairUnderline = AMatchingPairUnderline) and
@@ -10811,7 +10816,6 @@ var
 
   procedure PaintLines;
   var
-    i: Integer;
     LLastColumn: Integer;
     LFromLineText, LToLineText: string;
     LCurrentRow: Integer;
@@ -10944,6 +10948,22 @@ var
           False, False);
     end;
 
+    procedure SetSelectionVariables;
+    begin
+      LWordAtSelection := GetWordAtSelection(LSelectedText);
+      LAnySelection := SelectionAvailable;
+
+      if LAnySelection then
+      begin
+        LSelectionBeginPosition := SelectionBeginPosition;
+        LSelectionEndPosition := SelectionEndPosition;
+
+        if FSelection.Mode = smColumn then
+          if LSelectionBeginPosition.Char > LSelectionEndPosition.Char then
+            SwapInt(LSelectionBeginPosition.Char, LSelectionEndPosition.Char);
+      end;
+    end;
+
   begin
     LLineRect := AClipRect;
     if AMinimap then
@@ -10953,11 +10973,11 @@ var
 
     if Assigned(FHighlighter) then
     begin
-      LTokenHelper.MaxLength := 128;
+      LTokenHelper.MaxLength := BCEDITOR_TOKEN_MAX_LENGTH;
       SetLength(LTokenHelper.Text, LTokenHelper.MaxLength);
     end;
 
-    LWordAtSelection := GetWordAtSelection(LSelectedText);
+    SetSelectionVariables;
 
     LDisplayLine := AFirstLine;
     LBookmarkOnCurrentLine := False;
@@ -11044,10 +11064,6 @@ var
         LLastColumn := GetVisibleChars(LCurrentLine, LCurrentLineText);
 
       LWrappedRowCount := 0;
-
-      LAnySelection := SelectionAvailable;
-      LSelectionBeginPosition := SelectionBeginPosition;
-      LSelectionEndPosition := SelectionEndPosition;
 
       while LCurrentRow = LCurrentLine do
       begin
