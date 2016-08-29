@@ -5760,7 +5760,7 @@ var
           if Assigned(LCodeFoldingRange) then
           begin
             if LCodeFoldingRange.RegionItem.BreakIfNotFoundBeforeNextRegion <> '' then
-              if LTextPtr^ = PChar(LCodeFoldingRange.RegionItem.BreakIfNotFoundBeforeNextRegion)^ then { if first character match }
+              if LTextPtr^ = PChar(LCodeFoldingRange.RegionItem.BreakIfNotFoundBeforeNextRegion)^ then { If first character match }
               begin
                 LKeyWordPtr := PChar(LCodeFoldingRange.RegionItem.BreakIfNotFoundBeforeNextRegion);
                 LBookmarkTextPtr := LTextPtr;
@@ -6021,7 +6021,10 @@ begin
           if LOpenTokenSkipFoldRangeList.Count = 0 then
           begin
             if RegionItemsClose then
+            begin
+              Inc(LTextPtr);
               Continue; { while TextPtr^ <> BCEDITOR_NONE_CHAR do }
+            end;
             RegionItemsOpen;
           end;
 
