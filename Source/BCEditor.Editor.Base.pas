@@ -11157,12 +11157,17 @@ var
           end;
 
           if FWordWrap.Enabled then
+          begin
             if LTokenPosition + LTokenLength > LLastColumn then
             begin
               Inc(LWrappedRowCount);
               Inc(LLastColumn, FWordWrapLineLengths[LDisplayLine + LWrappedRowCount]);
               Break;
-            end;
+            end
+          end
+          else
+          if LTokenPosition > LLastColumn then
+            Break;
 
           PrepareToken;
 
