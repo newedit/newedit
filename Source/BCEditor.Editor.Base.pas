@@ -11217,6 +11217,8 @@ begin
       else
         Inc(LCurrentSearchIndex);
     end;
+    if LCurrentSearchIndex = FSearch.Lines.Count then
+      LCurrentSearchIndex := -1;
   end;
 
   if ALastLine >= AFirstLine then
