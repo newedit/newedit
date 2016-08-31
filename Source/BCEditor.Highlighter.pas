@@ -267,7 +267,7 @@ begin
     begin
       FCurrentToken := FCurrentRange.DefaultToken;
 
-      if Ord(FCurrentLine[FRunPosition]) < 256 then
+      if Ord(FCurrentLine[FRunPosition - 1]) < 256 then
       while not CharInSet(FCurrentLine[FRunPosition], FCurrentRange.Delimiters) and (Ord(FCurrentLine[FRunPosition]) < 256) do
         Inc(FRunPosition)
       else
