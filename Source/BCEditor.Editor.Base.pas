@@ -1635,7 +1635,7 @@ var
     else
       FHighlighter.SetCurrentRange(FLines.Ranges[LDisplayPosition.Row - 2]);
     { Get line with tabs converted to spaces like PaintTextLines does. }
-    LCurrentLineText := FLines.ExpandedStrings[LDisplayPosition.Row - 1];
+    LCurrentLineText := FLines[LDisplayPosition.Row - 1];
     FHighlighter.SetCurrentLine(LCurrentLineText);
   end;
 
