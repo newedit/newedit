@@ -2114,7 +2114,7 @@ var
       LHighlighterAttribute := FHighlighter.GetTokenAttribute;
       if Assigned(LHighlighterAttribute) then
         FPaintHelper.SetStyle(LHighlighterAttribute.FontStyles);
-      LTokenWidth := FPaintHelper.GetTokenWidth(LToken, Length(LToken));
+      LTokenWidth := FPaintHelper.GetTokenWidth(LToken, Length(LToken), FTabs.Width);
       Inc(LWidth, LTokenWidth);
       if LWidth > LMaxWidth then
       begin
@@ -2241,12 +2241,12 @@ begin
 
     if LLength + LTokenLength >= ADisplayPosition.Column then
     begin
-      Inc(Result.X, FPaintHelper.GetTokenWidth(LToken, ADisplayPosition.Column - LLength - 1));
+      Inc(Result.X, FPaintHelper.GetTokenWidth(LToken, ADisplayPosition.Column - LLength - 1, FTabs.Width));
       Inc(LLength, LTokenLength);
       Break;
     end;
 
-    Inc(Result.X, FPaintHelper.GetTokenWidth(LToken, Length(LToken)));
+    Inc(Result.X, FPaintHelper.GetTokenWidth(LToken, Length(LToken), FTabs.Width));
     Inc(LLength, LTokenLength);
 
     FHighlighter.Next;
@@ -2740,7 +2740,7 @@ begin
     Exit;
 
   if ALineText = '' then
-    LLineText := FLines.GetExpandedString(Result.Row - 1, BCEDITOR_TAB_CHAR)
+    LLineText := FLines.ExpandedStrings[Result.Row - 1]
   else
     LLineText := ALineText;
 
@@ -2771,7 +2771,7 @@ begin
       LPreviousFontStyles := LFontStyles;
     end;
 
-    LTextWidth := LTextWidth + FPaintHelper.GetTokenWidth(LToken, Length(LToken));
+    LTextWidth := LTextWidth + FPaintHelper.GetTokenWidth(LToken, Length(LToken), FTabs.Width);
     if (LXInEditor > 0) and (LTextWidth > LXInEditor) then
     begin
       Inc(Result.Column, FHighlighter.GetTokenPosition + FHighlighter.GetTokenLength);
@@ -2799,7 +2799,7 @@ begin
           LLastChar := LPToken^ + LLastChar;
           Delete(LToken, LToken.Length - LLastChar.Length + 1, LToken.Length);
         end;
-        Dec(LTextWidth, FPaintHelper.GetTokenWidth(LLastChar, LLastChar.Length));
+        Dec(LTextWidth, FPaintHelper.GetTokenWidth(LLastChar, LLastChar.Length, FTabs.Width));
         Dec(Result.Column, LLastChar.Length);
       end;
 
@@ -4998,8 +4998,11 @@ begin
   ClearCodeFolding;
   if Visible then
     CreateLineNumbersCache(True);
-  ScanCodeFoldingRanges;
-  CodeFoldingResetCaches;
+  if FCodeFolding.Visible then
+  begin
+    ScanCodeFoldingRanges;
+    CodeFoldingResetCaches;
+  end;
 end;
 
 procedure TBCBaseEditor.InsertLine;
@@ -10338,7 +10341,7 @@ var
     if (LCurrentLineLength <> 0) and (AIndex > 0) and (AIndex <= LCurrentLineLength + 1) then
     begin
       LText := Copy(LCurrentLineText, LPaintedColumn, AIndex - LPaintedColumn);
-      LWidth := FPaintHelper.GetTokenWidth(LText, AIndex - LPaintedColumn);
+      LWidth := FPaintHelper.GetTokenWidth(LText, AIndex - LPaintedColumn, FTabs.Width);
       Inc(Result, LPaintedWidth + LWidth);
       LPaintedColumn := AIndex;
       Inc(LPaintedWidth, LWidth);
@@ -10449,7 +10452,7 @@ var
           Result := False;
         end;
       end;
-      
+
     begin
       if soHighlightResults in FSearch.Options then
         if LCurrentSearchIndex <> -1 then
@@ -10488,15 +10491,15 @@ var
             if LCharCount > 0 then
             begin
               LToken := Copy(LText, 1, LCharCount);
-              Inc(LSearchRect.Left, FPaintHelper.GetTokenWidth(LToken, LCharCount));
+              Inc(LSearchRect.Left, FPaintHelper.GetTokenWidth(LToken, LCharCount, FTabs.Width));
               LToken := Copy(LText, LCharCount + 1, Length(LText));
             end;
 
-            LCharCount := ACharsBefore + Length(LText) + 1 - LTextPosition.Char - LSearchTextLength; 
+            LCharCount := ACharsBefore + Length(LText) + 1 - LTextPosition.Char - LSearchTextLength;
             if LCharCount > 0 then
             begin
               LToken := LToken.Remove(Length(LToken) - LCharCount);
-              LSearchRect.Right := LSearchRect.Left + FPaintHelper.GetTokenWidth(LToken, Length(LToken));
+              LSearchRect.Right := LSearchRect.Left + FPaintHelper.GetTokenWidth(LToken, Length(LToken), FTabs.Width);
             end;
 
             Winapi.Windows.ExtTextOut(Canvas.Handle, LSearchRect.Left, LSearchRect.Top, ETO_OPAQUE or ETO_CLIPPED, @LSearchRect,
@@ -10521,13 +10524,22 @@ var
     begin
       Dec(AFirst, ACharsBefore);
 
-      if LTokenHelper.EmptySpace <> esNone then
-        LText := StringOfChar(BCEDITOR_SPACE_CHAR, ATokenLength)
+      if LTokenHelper.EmptySpace = esTab then
+      begin
+        ATokenLength := ATokenLength * FTabs.Width;
+        LText := StringOfChar(BCEDITOR_SPACE_CHAR, ATokenLength);
+      end
       else
-        LText := Copy(AToken, AFirst, ATokenLength);
+      if LTokenHelper.EmptySpace = esNone then
+        LText := Copy(AToken, AFirst, ATokenLength)
+      else
+        LText := AToken;
 
       LPChar := PChar(LText);
       LTextRect := LTokenRect;
+
+      //if LTokenHelper.EmptySpace = esTab then
+      //  Inc(LTextRect.Right, (ATokenLength - 1) * FPaintHelper.CharWidth);
 
       if AMinimap then
         if FMinimap.Align = maLeft then
@@ -10992,7 +11004,7 @@ var
       if AMinimap and (moShowBookmarks in FMinimap.Options) then
         LBookmarkOnCurrentLine := IsBookmarkOnCurrentLine;
 
-      LCurrentLineText := FLines.GetExpandedString(LCurrentLine - 1, BCEDITOR_TAB_CHAR);
+      LCurrentLineText := FLines[LCurrentLine - 1];
       LPaintedColumn := 1;
       FItalicOffset := 0;
 

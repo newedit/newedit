@@ -5,8 +5,7 @@ interface
 uses
   Winapi.Windows, System.Math, System.Classes, Vcl.Graphics, System.UITypes, BCEditor.Consts, BCEditor.Types;
 
-function ConvertTabs(const ALine: string; ATabWidth: Integer; var AHasTabs: Boolean; const ATabChar: Char;
-  const AColumns: Boolean): string;
+function ConvertTabs(const ALine: string; ATabWidth: Integer; var AHasTabs: Boolean; const AColumns: Boolean): string;
 function IsCombiningDiacriticalMark(const AChar: Char): Boolean;
 function DeleteWhitespace(const AText: string): string;
 function MessageDialog(const AMessage: string; ADlgType: TMsgDlgType; AButtons: TMsgDlgButtons): Integer;
@@ -22,8 +21,7 @@ implementation
 uses
   Vcl.Forms, Vcl.Dialogs, System.SysUtils, System.Character;
 
-function ConvertTabs(const ALine: string; ATabWidth: Integer; var AHasTabs: Boolean; const ATabChar: Char;
-  const AColumns: Boolean): string;
+function ConvertTabs(const ALine: string; ATabWidth: Integer; var AHasTabs: Boolean; const AColumns: Boolean): string;
 var
   LPosition: Integer;
   LCount: Integer;
@@ -46,7 +44,7 @@ begin
     else
       LCount := ATabWidth;
 
-    Insert(StringOfChar(ATabChar, LCount), Result, LPosition);
+    Insert(StringOfChar(BCEDITOR_SPACE_CHAR, LCount), Result, LPosition);
     Inc(LPosition, LCount);
   end;
 end;

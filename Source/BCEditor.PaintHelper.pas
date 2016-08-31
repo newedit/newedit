@@ -111,7 +111,7 @@ type
     constructor Create(ACalcExtentBaseStyle: TFontStyles; ABaseFont: TFont);
     destructor Destroy; override;
 
-    function GetTokenWidth(const AToken: string; const ALength: Integer): Integer;
+    function GetTokenWidth(const AToken: string; const ALength: Integer; const ATabWidth: Integer): Integer;
     procedure BeginDrawing(AHandle: HDC);
     procedure EndDrawing;
     procedure SetBackgroundColor(AValue: TColor);
@@ -607,7 +607,7 @@ begin
   end;
 end;
 
-function TBCEditorPaintHelper.GetTokenWidth(const AToken: string; const ALength: Integer): Integer;
+function TBCEditorPaintHelper.GetTokenWidth(const AToken: string; const ALength: Integer; const ATabWidth: Integer): Integer;
 var
   LSize: TSize;
   LPToken: PChar;
@@ -615,13 +615,17 @@ begin
   Result := 0;
   if (AToken = '') or (ALength = 0) then
     Exit;
+  LPToken := PChar(AToken);
+  if LPToken^ = BCEDITOR_SPACE_CHAR then
+    Exit(FFontStock.GetCharWidth * ALength)
+  else
+  if LPToken^ = BCEDITOR_TAB_CHAR then
+    Exit(FFontStock.GetCharWidth * ALength * ATabWidth)
+  else
   if FFixedSizeFont and (Word(AToken[1]) < 256) then
     Exit(FFontStock.GetCharWidth * ALength)
   else
   begin
-    LPToken := PChar(AToken);
-    if (LPToken^ = BCEDITOR_SPACE_CHAR) or (LPToken^ = BCEDITOR_TAB_CHAR) then
-      Exit(FFontStock.GetCharWidth * ALength);
     GetTextExtentPoint32(FStockBitmap.Canvas.Handle, AToken, ALength, LSize);
     Inc(Result, LSize.cx);
   end;

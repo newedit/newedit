@@ -195,7 +195,7 @@ begin
       Clear;
       for i := 0 to AValue.Count - 1 do
       begin
-        LLine := ConvertTabs(AValue[i], FTabWidth, LHasTabs, BCEDITOR_SPACE_CHAR, FColumns);
+        LLine := ConvertTabs(AValue[i], FTabWidth, LHasTabs, FColumns);
         j := Pos(BCEDITOR_TAB_CHAR, LLine);
         while j > 0 do
         begin
