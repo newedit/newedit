@@ -857,6 +857,7 @@ begin
   { LeftMargin mast be initialized strongly after FPaintHelper initialization }
   FLeftMargin := TBCEditorLeftMargin.Create(Self);
   FLeftMargin.OnChange := LeftMarginChanged;
+  FLeftMarginWidth := FLeftMargin.Width;
   { Right edge }
   FRightMargin := TBCEditorRightMargin.Create;
   FRightMargin.OnChange := RightMarginChanged;
@@ -10360,7 +10361,7 @@ var
     LPChar: PChar;
     LOldPenColor: TColor;
     LTextRect: TRect;
-    LX, LY: Integer;
+    LX, LY, LBottom: Integer;
     LToken: string;
     LCharCount: Integer;
     LSearchTextLength: Integer;
@@ -10538,9 +10539,6 @@ var
       LPChar := PChar(LText);
       LTextRect := LTokenRect;
 
-      //if LTokenHelper.EmptySpace = esTab then
-      //  Inc(LTextRect.Right, (ATokenLength - 1) * FPaintHelper.CharWidth);
-
       if AMinimap then
         if FMinimap.Align = maLeft then
           LTextRect.Right := Min(LTextRect.Right, FMinimap.Width);
@@ -10581,15 +10579,16 @@ var
         if LTokenHelper.IsItalic and (LPChar^ <> BCEDITOR_SPACE_CHAR) then
         begin
           FItalicOffset := 0;
+          LBottom := Min(LTokenRect.Bottom, Canvas.ClipRect.Bottom);
           for LX := LTokenRect.Right + 1 to LTextRect.Right - 1 do
           begin
-            for LY := LTokenRect.Top to LTokenRect.Bottom - 1 do
+            for LY := LTokenRect.Top to LBottom - 1 do
             if GetPixel(Canvas.Handle, LX, LY) <> LRGBColor then
             begin
               Inc(FItalicOffset);
               Break;
             end;
-            if LY = LTokenRect.Bottom then
+            if LY = LBottom then
               Break;
           end;
           if ALast = LCurrentLineLength + 1 then
@@ -10819,7 +10818,8 @@ var
         LTokenHelper.MaxLength := LTokenHelper.Length + 32;
         SetLength(LTokenHelper.Text, LTokenHelper.MaxLength);
       end;
-      Insert(AToken, LTokenHelper.Text, 1);
+      //Insert(AToken, LTokenHelper.Text, 1);
+      LTokenHelper.Text := AToken;
       LTokenHelper.CharsBefore := ACharsBefore;
       LTokenHelper.Foreground := AForeground;
       LTokenHelper.Background := ABackground;
