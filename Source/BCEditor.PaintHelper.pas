@@ -82,6 +82,7 @@ type
     destructor Destroy; override;
 
     procedure ReleaseFontHandles; virtual;
+    property CharWidth: Integer read GetCharWidth;
     property BaseFont: TFont read GetBaseFont;
     property Style: TFontStyles read FCurrentStyle write SetStyle;
     property FontHandle: HFont read FCurrentFont;
@@ -111,7 +112,6 @@ type
     constructor Create(ACalcExtentBaseStyle: TFontStyles; ABaseFont: TFont);
     destructor Destroy; override;
 
-    function GetTokenWidth(const AToken: string; const ALength: Integer; const ATabWidth: Integer): Integer;
     procedure BeginDrawing(AHandle: HDC);
     procedure EndDrawing;
     procedure SetBackgroundColor(AValue: TColor);
@@ -125,6 +125,7 @@ type
     property Color: TColor read FColor;
     property FixedSizeFont: Boolean read FFixedSizeFont;
     property FontStock: TBCEditorFontStock read FFontStock;
+    property StockBitmap: Vcl.Graphics.TBitmap read FStockBitmap;
   end;
 
   EBCEditorPaintHelperException = class(Exception);
@@ -604,30 +605,6 @@ begin
     FBackgroundColor := AValue;
     if FHandle <> 0 then
       Winapi.Windows.SetBkColor(FHandle, ColorToRGB(AValue));
-  end;
-end;
-
-function TBCEditorPaintHelper.GetTokenWidth(const AToken: string; const ALength: Integer; const ATabWidth: Integer): Integer;
-var
-  LSize: TSize;
-  LPToken: PChar;
-begin
-  Result := 0;
-  if (AToken = '') or (ALength = 0) then
-    Exit;
-  LPToken := PChar(AToken);
-  if LPToken^ = BCEDITOR_SPACE_CHAR then
-    Exit(FFontStock.GetCharWidth * ALength)
-  else
-  if LPToken^ = BCEDITOR_TAB_CHAR then
-    Exit(FFontStock.GetCharWidth * ALength * ATabWidth)
-  else
-  if FFixedSizeFont and (Word(AToken[1]) < 256) then
-    Exit(FFontStock.GetCharWidth * ALength)
-  else
-  begin
-    GetTextExtentPoint32(FStockBitmap.Canvas.Handle, AToken, ALength, LSize);
-    Inc(Result, LSize.cx);
   end;
 end;
 
