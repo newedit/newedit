@@ -10611,7 +10611,7 @@ var
     end;
 
   begin
-    LLast := LTokenHelper.CharsBefore + LTokenHelper.Text.Length;
+    LLast := LTokenHelper.CharsBefore + LTokenHelper.Text.Length + 1;
 
     if not AMinimap and (LTokenRect.Right > FLeftMarginWidth) or AMinimap and
       ((LTokenRect.Left < ClientRect.Width) or (LTokenRect.Left < FMinimap.Width)) then
@@ -10633,7 +10633,7 @@ var
         if FMinimap.Align = maLeft then
           LTextRect.Right := Min(LTextRect.Right, FMinimap.Width);
 
-      if LTokenHelper.IsItalic and (LPChar^ <> BCEDITOR_SPACE_CHAR) then
+      if LTokenHelper.IsItalic and (LPChar^ <> BCEDITOR_SPACE_CHAR) and (ATokenLength = AToken.Length) then
         Inc(LTextRect.Right, FPaintHelper.CharWidth);
       if (FItalicOffset <> 0) and (LPChar^ = BCEDITOR_SPACE_CHAR) then
         Inc(LTextRect.Left, FItalicOffset + 1);
@@ -10666,7 +10666,7 @@ var
         if not AMinimap or AMinimap and (moShowSearchResults in FMinimap.Options) then
           PaintSearchResults;
 
-        if LTokenHelper.IsItalic and (LPChar^ <> BCEDITOR_SPACE_CHAR) then
+        if LTokenHelper.IsItalic and (LPChar^ <> BCEDITOR_SPACE_CHAR) and (ATokenLength = AToken.Length) then
         begin
           FItalicOffset := 0;
 
