@@ -254,6 +254,7 @@ type
     Background: TColor;
     CharsBefore: Integer;
     EmptySpace: TBCEditorEmptySpace;
+    ExpandedCharsBefore: Integer;
     FontStyle: TFontStyles;
     Foreground: TColor;
     IsItalic: Boolean;

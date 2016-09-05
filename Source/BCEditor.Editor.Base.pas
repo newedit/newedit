@@ -10374,6 +10374,7 @@ var
   LCurrentSearchIndex: Integer;
   LTextPosition: TBCEditorTextPosition;
   LWrappedRowCount: Integer;
+  LExpandedCharsBefore: Integer;
 
   function IsBookmarkOnCurrentLine: Boolean;
   var
@@ -10487,7 +10488,7 @@ var
       LRect := LTokenRect;
       LRect.Right := LTextRect.Left;
       if toColumns in FTabs.Options then
-        Inc(LRect.Right, LTabWidth - FPaintHelper.CharWidth * (LTokenHelper.CharsBefore mod FTabs.Width))
+        Inc(LRect.Right, LTabWidth - FPaintHelper.CharWidth * (LTokenHelper.ExpandedCharsBefore mod FTabs.Width))
       else
         Inc(LRect.Right, LTabWidth);
 
@@ -10763,27 +10764,27 @@ var
       begin
         SetDrawingColors(False);
         LTokenLength := LLineSelectionStart - LFirstColumn;
-        LTokenRect.Right := LTokenRect.Left + GetTokenWidth(LText, LTokenLength, LTokenHelper.CharsBefore);
+        LTokenRect.Right := LTokenRect.Left + GetTokenWidth(LText, LTokenLength, LTokenHelper.ExpandedCharsBefore);
         PaintToken(LText, LTokenLength);
         Delete(LText, 1, LTokenLength);
       end;
       { Selected part of the token }
       LTokenLength := Min(LLineSelectionEnd, LLastColumn) - LFirstColumn - LTokenLength;
       SetDrawingColors(True);
-      LTokenRect.Right := LTokenRect.Left + GetTokenWidth(LText, LTokenLength, LTokenHelper.CharsBefore);
+      LTokenRect.Right := LTokenRect.Left + GetTokenWidth(LText, LTokenLength, LTokenHelper.ExpandedCharsBefore);
       PaintToken(LText, LTokenLength);
       if LSecondUnselectedPartOfToken then
       begin
         Delete(LText, 1, LTokenLength);
         SetDrawingColors(False);
-        LTokenRect.Right := LTokenRect.Left + GetTokenWidth(LText, LText.Length, LTokenHelper.CharsBefore);
+        LTokenRect.Right := LTokenRect.Left + GetTokenWidth(LText, LText.Length, LTokenHelper.ExpandedCharsBefore);
         PaintToken(LText, LText.Length);
       end;
     end
     else
     begin
       SetDrawingColors(LSelected);
-      LTokenRect.Right := LTokenRect.Left + GetTokenWidth(LText, LText.Length, LTokenHelper.CharsBefore);
+      LTokenRect.Right := LTokenRect.Left + GetTokenWidth(LText, LText.Length, LTokenHelper.ExpandedCharsBefore);
       PaintToken(LText, LText.Length);
     end;
 
@@ -10813,7 +10814,7 @@ var
     LCanAppend: Boolean;
     LEmptySpace: TBCEditorEmptySpace;
     LPToken: PChar;
-    LAppendAnsiChars: Boolean;
+    LAppendAnsiChars, LAppendTabs: Boolean;
   begin
     if (ABackground = clNone) or ((FActiveLine.Color <> clNone) and LIsCurrentLine and not ACustomBackgroundColor) then
       ABackground := GetBackgroundColor;
@@ -10845,14 +10846,15 @@ var
     end;
 
     LAppendAnsiChars := (LTokenHelper.Length > 0) and (Ord(LTokenHelper.Text[1]) < 256) and (Ord(LPToken^) < 256);
+    LAppendTabs := not (toColumns in FTabs.Options) or (toColumns in FTabs.Options) and (LEmptySpace <> esTab);
 
     if LTokenHelper.Length > 0 then
     begin
       LCanAppend := (LTokenHelper.Length < BCEDITOR_TOKEN_MAX_LENGTH) and
         ((LTokenHelper.FontStyle = AFontStyle) or ((LEmptySpace <> esNone) and not(fsUnderline in AFontStyle) and
-        not(fsUnderline in LTokenHelper.FontStyle))) and (LTokenHelper.MatchingPairUnderline = AMatchingPairUnderline)
+        not (fsUnderline in LTokenHelper.FontStyle))) and (LTokenHelper.MatchingPairUnderline = AMatchingPairUnderline)
         and ((LTokenHelper.Background = ABackground) and (LTokenHelper.Foreground = AForeground)) and
-        (LEmptySpace = LTokenHelper.EmptySpace) and LAppendAnsiChars;
+        (LEmptySpace = LTokenHelper.EmptySpace) and LAppendAnsiChars and LAppendTabs;
 
       if not LCanAppend then
       begin
@@ -10881,14 +10883,26 @@ var
         LTokenHelper.MaxLength := LTokenHelper.Length + 32;
         SetLength(LTokenHelper.Text, LTokenHelper.MaxLength);
       end;
+
       LTokenHelper.Text := AToken;
       LTokenHelper.CharsBefore := ACharsBefore;
+      LTokenHelper.ExpandedCharsBefore := LExpandedCharsBefore;
       LTokenHelper.Foreground := AForeground;
       LTokenHelper.Background := ABackground;
       LTokenHelper.FontStyle := AFontStyle;
       LTokenHelper.IsItalic := not AMinimap and (fsItalic in AFontStyle);
       LTokenHelper.MatchingPairUnderline := AMatchingPairUnderline;
     end;
+
+    if LPToken^ = BCEDITOR_TAB_CHAR then
+    begin
+      if toColumns in FTabs.Options then
+        Inc(LExpandedCharsBefore, FTabs.Width - LExpandedCharsBefore mod FTabs.Width)
+      else
+        Inc(LExpandedCharsBefore, FTabs.Width);
+    end
+    else
+      Inc(LExpandedCharsBefore, ATokenLength);
   end;
 
   procedure PaintLines;
@@ -11134,6 +11148,7 @@ var
 
       LTokenPosition := 0;
       LTokenLength := 0;
+      LExpandedCharsBefore := 0;
       LCurrentRow := LCurrentLine;
 
       LTextCaretY := GetTextCaretY + 1;
