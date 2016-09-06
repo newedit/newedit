@@ -11048,13 +11048,59 @@ var
 
       if LAnySelection then
       begin
-        LSelectionBeginPosition := SelectionBeginPosition;
-        LSelectionEndPosition := SelectionEndPosition;
+        LSelectionBeginPosition := GetSelectionBeginPosition;
+        LSelectionEndPosition := GetSelectionEndPosition;
 
         if FSelection.Mode = smColumn then
           if LSelectionBeginPosition.Char > LSelectionEndPosition.Char then
             SwapInt(LSelectionBeginPosition.Char, LSelectionEndPosition.Char);
       end;
+    end;
+
+    procedure SetLineSelectionVariables;
+    begin
+      LIsSelectionInsideLine := False;
+      LLineSelectionStart := 0;
+      LLineSelectionEnd := 0;
+
+      if LAnySelection and (LCurrentLine - 1 >= LSelectionBeginPosition.Line) and
+        (LCurrentLine - 1 <= LSelectionEndPosition.Line) then
+      begin
+        LLineSelectionStart := 1;
+        LLineSelectionEnd := LLastColumn + 1;
+        if (FSelection.ActiveMode = smColumn) or
+          ((FSelection.ActiveMode = smNormal) and (LCurrentLine - 1 = LSelectionBeginPosition.Line)) then
+        begin
+          if LSelectionBeginPosition.Char > LLastColumn then
+          begin
+            LLineSelectionStart := 0;
+            LLineSelectionEnd := 0;
+          end
+          else
+          if LSelectionBeginPosition.Char > LTokenPosition then
+          begin
+            LLineSelectionStart := LSelectionBeginPosition.Char;
+            LIsSelectionInsideLine := True;
+          end;
+        end;
+        if (FSelection.ActiveMode = smColumn) or
+          ((FSelection.ActiveMode = smNormal) and (LCurrentLine - 1 = LSelectionEndPosition.Line)) then
+        begin
+          if LSelectionEndPosition.Char < 1 then
+          begin
+            LLineSelectionStart := 0;
+            LLineSelectionEnd := 0;
+          end
+          else
+          if LSelectionEndPosition.Char < LLastColumn then
+          begin
+            LLineSelectionEnd := LSelectionEndPosition.Char;
+            LIsSelectionInsideLine := True;
+          end;
+        end;
+      end;
+
+      LIsLineSelected := not LIsSelectionInsideLine and (LLineSelectionStart > 0);
     end;
 
   begin
@@ -11086,6 +11132,26 @@ var
       LPaintedColumn := 1;
       FItalicOffset := 0;
 
+      LIsCurrentLine := False;
+
+      LCurrentLineLength := Length(LCurrentLineText);
+
+      LTokenPosition := 0;
+      LTokenLength := 0;
+      LExpandedCharsBefore := 0;
+      LCurrentRow := LCurrentLine;
+
+      LTextCaretY := GetTextCaretY + 1;
+
+      if FWordWrap.Enabled then
+        LLastColumn := FWordWrapLineLengths[LDisplayLine]
+      else
+        LLastColumn := GetVisibleChars(LCurrentLine, LCurrentLineText);
+
+      LWrappedRowCount := 0;
+
+      SetLineSelectionVariables;
+
       LFoldRange := nil;
       if FCodeFolding.Visible then
       begin
@@ -11093,8 +11159,8 @@ var
         if Assigned(LFoldRange) and LFoldRange.Collapsed then
         begin
           LOpenTokenEndLen := 0;
-          LFromLineText := FLines.ExpandedStrings[LFoldRange.FromLine - 1];
-          LToLineText := FLines.ExpandedStrings[LFoldRange.ToLine - 1];
+          LFromLineText := FLines[LFoldRange.FromLine - 1];
+          LToLineText := FLines[LFoldRange.ToLine - 1];
 
           LOpenTokenEndPos := Pos(LFoldRange.RegionItem.OpenTokenEnd, AnsiUpperCase(LFromLineText));
 
@@ -11129,7 +11195,11 @@ var
 
           if LFoldRange.RegionItem.CloseToken <> '' then
             if Pos(LFoldRange.RegionItem.CloseToken, AnsiUpperCase(LToLineText)) <> 0 then
+            begin
               LCurrentLineText := LCurrentLineText + '..' + TrimLeft(LToLineText);
+              if LIsSelectionInsideLine then
+                LLineSelectionEnd := LCurrentLineText.Length;
+            end;
 
           if LCurrentLine - 1 = FCurrentMatchingPairMatch.OpenTokenPos.Line then
           begin
@@ -11142,24 +11212,6 @@ var
           end;
         end;
       end;
-
-      LIsCurrentLine := False;
-
-      LCurrentLineLength := Length(LCurrentLineText);
-
-      LTokenPosition := 0;
-      LTokenLength := 0;
-      LExpandedCharsBefore := 0;
-      LCurrentRow := LCurrentLine;
-
-      LTextCaretY := GetTextCaretY + 1;
-
-      if FWordWrap.Enabled then
-        LLastColumn := FWordWrapLineLengths[LDisplayLine]
-      else
-        LLastColumn := GetVisibleChars(LCurrentLine, LCurrentLineText);
-
-      LWrappedRowCount := 0;
 
       while LCurrentRow = LCurrentLine do
       begin
@@ -11177,48 +11229,6 @@ var
         if Assigned(FOnCustomLineColors) then
           FOnCustomLineColors(Self, LCurrentLine, LCustomLineColors, LCustomForegroundColor, LCustomBackgroundColor);
 
-        LIsSelectionInsideLine := False;
-        LLineSelectionStart := 0;
-        LLineSelectionEnd := 0;
-
-        if LAnySelection and (LCurrentLine - 1 >= LSelectionBeginPosition.Line) and
-          (LCurrentLine - 1 <= LSelectionEndPosition.Line) then
-        begin
-          LLineSelectionStart := 1;
-          LLineSelectionEnd := LLastColumn + 1;
-          if (FSelection.ActiveMode = smColumn) or
-            ((FSelection.ActiveMode = smNormal) and (LCurrentLine - 1 = LSelectionBeginPosition.Line)) then
-          begin
-            if LSelectionBeginPosition.Char > LLastColumn then
-            begin
-              LLineSelectionStart := 0;
-              LLineSelectionEnd := 0;
-            end
-            else
-            if LSelectionBeginPosition.Char > LTokenPosition then
-            begin
-              LLineSelectionStart := LSelectionBeginPosition.Char;
-              LIsSelectionInsideLine := True;
-            end;
-          end;
-          if (FSelection.ActiveMode = smColumn) or
-            ((FSelection.ActiveMode = smNormal) and (LCurrentLine - 1 = LSelectionEndPosition.Line)) then
-          begin
-            if LSelectionEndPosition.Char < 1 then
-            begin
-              LLineSelectionStart := 0;
-              LLineSelectionEnd := 0;
-            end
-            else
-            if LSelectionEndPosition.Char < LLastColumn then
-            begin
-              LLineSelectionEnd := LSelectionEndPosition.Char;
-              LIsSelectionInsideLine := True;
-            end;
-          end;
-        end;
-
-        LIsLineSelected := not LIsSelectionInsideLine and (LLineSelectionStart > 0);
         LTokenRect := LLineRect;
         LLineEndRect := LLineRect;
         LLineEndRect.Left := -100;
