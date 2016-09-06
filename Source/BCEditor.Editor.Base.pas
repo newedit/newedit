@@ -10201,7 +10201,7 @@ var
 begin
   if FSpecialChars.Visible then
   begin
-    if ALineEndRect.Left > ClientRect.Right then
+    if (ALineEndRect.Left < 0) or (ALineEndRect.Left > ClientRect.Right) then
       Exit;
 
     if FSpecialChars.Selection.Visible and ALineEndInsideSelection or not ALineEndInsideSelection then
@@ -10458,7 +10458,7 @@ var
     LCharCount: Integer;
     LSearchTextLength: Integer;
     LTokenLength: Integer;
-    LLast: Integer; // TODO: Rename
+    LLastColumn: Integer;
 
     procedure PaintSpecialCharSpace;
     var
@@ -10613,7 +10613,7 @@ var
     end;
 
   begin
-    LLast := LTokenHelper.CharsBefore + LTokenHelper.Text.Length + 1;
+    LLastColumn := LTokenHelper.CharsBefore + LTokenHelper.Text.Length + 1;
 
     if not AMinimap and (LTokenRect.Right > FLeftMarginWidth) or AMinimap and
       ((LTokenRect.Left < ClientRect.Width) or (LTokenRect.Left < FMinimap.Width)) then
@@ -10684,10 +10684,10 @@ var
             if LY = LBottom then
               Break;
           end;
-          if LLast = LCurrentLineLength + 1 then
+          if LLastColumn = LCurrentLineLength + 1 then
             Inc(LTokenRect.Right, FItalicOffset + 1);
           if FWordWrap.Enabled then
-            if LLast = FWordWrapLineLengths[LDisplayLine + LWrappedRowCount - 1] + 1 then
+            if LLastColumn = FWordWrapLineLengths[LDisplayLine + LWrappedRowCount - 1] + 1 then
             begin
               Inc(LTokenRect.Right, FItalicOffset + 1);
               FItalicOffset := 0;
@@ -10707,7 +10707,7 @@ var
 
     LTokenRect.Left := LTokenRect.Right;
 
-    if FSpecialChars.Visible and (LLast >= LCurrentLineLength) then
+    if FSpecialChars.Visible and (LLastColumn >= LCurrentLineLength) then
       LLineEndRect := LTokenRect;
   end;
 
@@ -11221,6 +11221,7 @@ var
         LIsLineSelected := not LIsSelectionInsideLine and (LLineSelectionStart > 0);
         LTokenRect := LLineRect;
         LLineEndRect := LLineRect;
+        LLineEndRect.Left := -100;
 
         if LWrappedRowCount = 0 then
         begin
@@ -11272,8 +11273,7 @@ var
 
         if not AMinimap then
         begin
-          PaintCodeFoldingCollapseMark(LFoldRange, LCurrentLineText, LTokenPosition, LTokenLength, LCurrentLine,
-            LLineRect);
+          PaintCodeFoldingCollapseMark(LFoldRange, LCurrentLineText, LTokenPosition, LTokenLength, LCurrentLine, LLineRect);
           PaintSpecialCharsEndOfLine(LCurrentLine, LLineEndRect, (LCurrentLineLength + 1 >= LLineSelectionStart) and
             (LCurrentLineLength + 1 < LLineSelectionEnd));
           PaintCodeFoldingCollapsedLine(LFoldRange, LLineRect);
