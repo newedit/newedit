@@ -9498,7 +9498,7 @@ begin
   begin
     LDisplayPosition.Row := ALine;
     LDisplayPosition.Column := ATokenPosition + ATokenLength + 2;
-    if FSpecialChars.Visible then
+    if FSpecialChars.Visible and (ALine <> FLines.Count) and (ALine <> FLineNumbersCount) then
       Inc(LDisplayPosition.Column);
     LCollapseMarkRect.Left := DisplayPositionToPixels(LDisplayPosition, ACurrentLineText).X - FHorizontalScrollPosition;
     LCollapseMarkRect.Right := LCollapseMarkRect.Left + FPaintHelper.CharWidth * 4 - 2;
@@ -10220,7 +10220,7 @@ begin
 
       Canvas.Pen.Color := LPenColor;
 
-      if FSpecialChars.EndOfLine.Visible and (ALine <> FLines.Count) then
+      if FSpecialChars.EndOfLine.Visible and (ALine <> FLines.Count) and (ALine <> FLineNumbersCount) then
       with Canvas do
       begin
         Pen.Color := LPenColor;
