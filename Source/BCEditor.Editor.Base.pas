@@ -10220,7 +10220,7 @@ begin
 
       Canvas.Pen.Color := LPenColor;
 
-      if FSpecialChars.EndOfLine.Visible and (ALine <> FLineNumbersCount) then
+      if FSpecialChars.EndOfLine.Visible and (ALine <> FLines.Count) then
       with Canvas do
       begin
         Pen.Color := LPenColor;
