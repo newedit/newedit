@@ -2047,7 +2047,7 @@ end;
 
 function TBCBaseEditor.GetSelectedRow(const Y: Integer): Integer;
 begin
-  Result := Max(1, TopLine + Y div GetLineHeight);
+  Result := Max(1, Min(TopLine + Y div GetLineHeight, FLines.Count));
 end;
 
 function TBCBaseEditor.GetText: string;
