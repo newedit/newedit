@@ -7,10 +7,10 @@ uses
   BCEditor.Types, BCEditor.Editor.CompletionProposal.Columns, BCEditor.Editor.PopupWindow,
   BCEditor.Editor.CompletionProposal;
 
-{$IFDEF USE_VCL_STYLES}
+{$if defined(USE_VCL_STYLES)}
 const
   CM_UPDATE_VCLSTYLE_SCROLLBARS= CM_BASE + 2050;
-{$ENDIF}
+{$endif}
 
 type
   TBCEditorValidateEvent = procedure(ASender: TObject; Shift: TShiftState; EndToken: Char) of object;
@@ -69,7 +69,8 @@ implementation
 
 uses
   Winapi.Windows, System.SysUtils, System.UITypes, BCEditor.Editor.Base, BCEditor.Editor.KeyCommands,
-  BCEditor.Editor.Utils, BCEditor.Consts, System.Math, Vcl.Dialogs{$IFDEF USE_VCL_STYLES}, Vcl.Themes{$ENDIF};
+  BCEditor.Editor.Utils, BCEditor.Consts, System.Math, Vcl.Dialogs
+  {$if defined(USE_VCL_STYLES) or not defined(USE_VCL_STYLES) and not defined(USE_ALPHASKINS)}, Vcl.Themes{$endif};
 
 { TBCEditorCompletionProposalPopupWindow }
 
@@ -689,9 +690,9 @@ begin
   if Visible then
     SendMessage(Handle, WM_SETREDRAW, -1, 0);
 
-{$IFDEF USE_VCL_STYLES}
+{$if defined(USE_VCL_STYLES)}
   Perform(CM_UPDATE_VCLSTYLE_SCROLLBARS, 0, 0);
-{$ENDIF}
+{$endif}
 end;
 
 procedure TBCEditorCompletionProposalPopupWindow.WMVScroll(var AMessage: TWMScroll);

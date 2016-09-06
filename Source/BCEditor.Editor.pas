@@ -108,9 +108,9 @@ type
     property Search;
     property Selection;
     property ShowHint;
-    {$IFDEF USE_ALPHASKINS}
+    {$if defined(USE_ALPHASKINS)}
     property SkinData;
-    {$ENDIF}
+    {$endif}
     property SpecialChars;
     property SyncEdit;
     property TabOrder;

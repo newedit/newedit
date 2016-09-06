@@ -15,7 +15,7 @@ uses
   BCEditor.Editor.CodeFolding.Hint.Form, BCEditor.Highlighter, BCEditor.Highlighter.Attributes,
   BCEditor.KeyboardHandler, BCEditor.Lines, BCEditor.Search, BCEditor.Search.RegularExpressions,
   BCEditor.Search.WildCard, BCEditor.PaintHelper, BCEditor.Editor.SyncEdit, BCEditor.Utils
-  {$IFDEF USE_ALPHASKINS}, sCommonData, acSBUtils{$ENDIF};
+  {$if defined(USE_ALPHASKINS)}, sCommonData, acSBUtils{$endif};
 
 const
   BCEDITOR_DEFAULT_OPTIONS = [eoAutoIndent, eoDragDropEditing];
@@ -43,9 +43,9 @@ type
     FCodeFoldingRangeToLine: array of TBCEditorCodeFoldingRange;
     FCodeFoldingTreeLine: array of Boolean;
     FCommandDrop: Boolean;
-{$IFDEF USE_ALPHASKINS}
+{$if defined(USE_ALPHASKINS)}
     FCommonData: TsScrollWndData;
-{$ENDIF}
+{$endif}
     FCompletionProposal: TBCEditorCompletionProposal;
     FCompletionProposalPopupWindow: TBCEditorCompletionProposalPopupWindow;
     FCompletionProposalTimer: TTimer;
@@ -169,9 +169,9 @@ type
     FScrollDeltaY: Integer;
     FScrollPageWidth: Integer;
     FScrollTimer: TTimer;
-{$IFDEF USE_ALPHASKINS}
+{$if defined(USE_ALPHASKINS)}
     FScrollWnd: TacScrollWnd;
-{$ENDIF}
+{$endif}
     FSearch: TBCEditorSearch;
     FSearchEngine: TBCEditorSearchCustom;
     FSelectedCaseCycle: TBCEditorCase;
@@ -410,9 +410,9 @@ type
     procedure WMIMEComposition(var AMessage: TMessage); message WM_IME_COMPOSITION;
     procedure WMIMENotify(var AMessage: TMessage); message WM_IME_NOTIFY;
     procedure WMKillFocus(var AMessage: TWMKillFocus); message WM_KILLFOCUS;
-{$IFDEF USE_VCL_STYLES}
+{$if defined(USE_VCL_STYLES) or not defined(USE_VCL_STYLES) and not defined(USE_ALPHASKINS)}
     procedure WMNCPaint(var AMessage: TMessage); message WM_NCPAINT;
-{$ENDIF}
+{$endif}
     procedure WMPaint(var Message: TWMPaint); message WM_PAINT;
     procedure WMPaste(var AMessage: TMessage); message WM_PASTE;
     procedure WMSetCursor(var AMessage: TWMSetCursor); message WM_SETCURSOR;
@@ -554,9 +554,9 @@ type
     procedure AddMouseDownHandler(AHandler: TMouseEvent);
     procedure AddMouseUpHandler(AHandler: TMouseEvent);
     procedure AddMultipleCarets(const ADisplayPosition: TBCEditorDisplayPosition);
-{$IFDEF USE_ALPHASKINS}
+{$if defined(USE_ALPHASKINS)}
     procedure AfterConstruction; override;
-{$ENDIF}
+{$endif}
     procedure Assign(ASource: TPersistent); override;
     procedure BeginUndoBlock;
     procedure BeginUpdate;
@@ -706,9 +706,9 @@ type
     property SelectionBeginPosition: TBCEditorTextPosition read GetSelectionBeginPosition write SetSelectionBeginPosition;
     property SelectionEndPosition: TBCEditorTextPosition read GetSelectionEndPosition write SetSelectionEndPosition;
     property SelectedText: string read GetSelectedText write SetSelectedText;
-{$IFDEF USE_ALPHASKINS}
+{$if defined(USE_ALPHASKINS)}
     property SkinData: TsScrollWndData read FCommonData write FCommonData;
-{$ENDIF}
+{$endif}
     property SpecialChars: TBCEditorSpecialChars read FSpecialChars write SetSpecialChars;
     property SyncEdit: TBCEditorSyncEdit read FSyncEdit write SetSyncEdit;
     property Tabs: TBCEditorTabs read FTabs write SetTabs;
@@ -736,8 +736,9 @@ uses
   Winapi.ShellAPI, Winapi.Imm, System.Math, System.Types, Vcl.Clipbrd, System.Character, Vcl.Menus,
   BCEditor.Editor.LeftMargin.Border, BCEditor.Editor.LeftMargin.LineNumbers, BCEditor.Editor.Scroll.Hint,
   BCEditor.Editor.Search.Map, BCEditor.Editor.Undo.Item, BCEditor.Editor.Utils, BCEditor.Encoding, BCEditor.Language,
-  BCEditor.Highlighter.Rules, BCEditor.Export.HTML{$IFDEF USE_VCL_STYLES}, Vcl.Themes, BCEditor.StyleHooks{$ENDIF}
-  {$IFDEF USE_ALPHASKINS}, Winapi.CommCtrl, sVCLUtils, sMessages, sConst, sSkinProps{$ENDIF};
+  BCEditor.Highlighter.Rules, BCEditor.Export.HTML
+  {$if defined(USE_VCL_STYLES) or not defined(USE_VCL_STYLES) and not defined(USE_ALPHASKINS)}, Vcl.Themes, BCEditor.StyleHooks{$endif}
+  {$if defined(USE_ALPHASKINS)}, Winapi.CommCtrl, sVCLUtils, sMessages, sConst, sSkinProps{$endif};
 
 type
   TBCEditorAccessWinControl = class(TWinControl);
@@ -774,12 +775,12 @@ var
 begin
   inherited Create(AOwner);
 
-{$IFDEF USE_ALPHASKINS}
+{$if defined(USE_ALPHASKINS)}
   FCommonData := TsScrollWndData.Create(Self, True);
   FCommonData.COC := COC_TsMemo;
   if FCommonData.SkinSection = '' then
     FCommonData.SkinSection := s_Edit;
-{$ENDIF}
+{$endif}
   Height := 150;
   Width := 200;
   Cursor := crIBeam;
@@ -945,7 +946,7 @@ end;
 
 destructor TBCBaseEditor.Destroy;
 begin
-{$IFDEF USE_ALPHASKINS}
+{$if defined(USE_ALPHASKINS)}
   if Assigned(FScrollWnd) then
   begin
     FScrollWnd.Free;
@@ -956,7 +957,7 @@ begin
     FCommonData.Free;
     FCommonData := nil;
   end;
-{$ENDIF}
+{$endif}
   ClearCodeFolding;
   FCodeFolding.Free;
   FDirectories.Free;
@@ -7044,9 +7045,9 @@ begin
     end
     else
       ShowScrollBar(Handle, SB_BOTH, False);
-{$IFDEF USE_VCL_STYLES}
+{$if defined(USE_VCL_STYLES)}
     Perform(CM_UPDATE_VCLSTYLE_SCROLLBARS, 0, 0);
-{$ENDIF}
+{$endif}
   end;
 end;
 
@@ -7283,7 +7284,7 @@ begin
     Invalidate;
 end;
 
-{$IFDEF USE_VCL_STYLES}
+{$if defined(USE_VCL_STYLES) or not defined(USE_VCL_STYLES) and not defined(USE_ALPHASKINS)}
 
 procedure TBCBaseEditor.WMNCPaint(var AMessage: TMessage);
 var
@@ -7314,7 +7315,7 @@ begin
   if StyleServices.Enabled then
     StyleServices.PaintBorder(Self, False);
 end;
-{$ENDIF}
+{$endif}
 
 procedure TBCBaseEditor.WMPaint(var Message: TWMPaint);
 var
@@ -8631,7 +8632,7 @@ begin
   Invalidate;
 end;
 
-{$IFDEF USE_ALPHASKINS}
+{$if defined(USE_ALPHASKINS)}
 
 procedure TBCBaseEditor.AfterConstruction;
 begin
@@ -8639,7 +8640,7 @@ begin
 
   UpdateData(FCommonData);
 end;
-{$ENDIF}
+{$endif}
 
 procedure TBCBaseEditor.Assign(ASource: TPersistent);
 begin
@@ -8674,9 +8675,9 @@ procedure TBCBaseEditor.Loaded;
 begin
   inherited Loaded;
 
-{$IFDEF USE_ALPHASKINS}
+{$if defined(USE_ALPHASKINS)}
   FCommonData.Loaded;
-{$ENDIF}
+{$endif}
   LeftMarginChanged(Self);
   MinimapChanged(Self);
 
@@ -10124,9 +10125,9 @@ procedure TBCBaseEditor.PaintSearchMap(AClipRect: TRect);
 var
   i, j: Integer;
   LHeight: Double;
-{$IFDEF USE_VCL_STYLES}
+{$if defined(USE_VCL_STYLES)}
   LStyles: TCustomStyleServices;
-{$ENDIF}
+{$endif}
 begin
   if not Assigned(FSearch.Lines) then
     Exit;
@@ -10135,18 +10136,18 @@ begin
   if (FSearchEngine.ResultCount = 0) and not(soHighlightSimilarTerms in FSelection.Options) then
     Exit;
 
-{$IFDEF USE_VCL_STYLES}
+{$if defined(USE_VCL_STYLES)}
   LStyles := StyleServices;
-{$ENDIF}
+{$endif}
   { Background }
   if FSearch.Map.Colors.Background <> clNone then
     Canvas.Brush.Color := FSearch.Map.Colors.Background
   else
-{$IFDEF USE_VCL_STYLES}
+{$if defined(USE_VCL_STYLES)}
   if LStyles.Enabled then
     Canvas.Brush.Color := LStyles.GetStyleColor(scPanel)
   else
-{$ENDIF}
+{$endif}
       Canvas.Brush.Color := FBackgroundColor;
   FillRect(AClipRect);
   { Lines in window }
@@ -10159,11 +10160,11 @@ begin
   if FSearch.Map.Colors.Foreground <> clNone then
     Canvas.Pen.Color := FSearch.Map.Colors.Foreground
   else
-{$IFDEF USE_VCL_STYLES}
+{$if defined(USE_VCL_STYLES)}
   if LStyles.Enabled then
     Canvas.Pen.Color := LStyles.GetSystemColor(clHighlight)
   else
-{$ENDIF}
+{$endif}
     Canvas.Pen.Color := clHighlight;
   Canvas.Pen.Width := 1;
   Canvas.Pen.Style := psSolid;
@@ -14490,7 +14491,7 @@ begin
     else
       FWindowProducedMessage := False;
   end;
-{$IFDEF USE_ALPHASKINS}
+{$if defined(USE_ALPHASKINS)}
   if AMessage.Msg = SM_ALPHACMD then
     case AMessage.WParamHi of
       AC_CTRLHANDLED:
@@ -14561,19 +14562,19 @@ begin
   end;
 {$ELSE}
   inherited;
-{$ENDIF}
+{$endif}
 end;
 
 initialization
 
-{$IFDEF USE_VCL_STYLES}
+{$if defined(USE_VCL_STYLES)}
   TCustomStyleEngine.RegisterStyleHook(TBCBaseEditor, TBCEditorStyleHook);
-{$ENDIF}
+{$endif}
 
 finalization
 
-{$IFDEF USE_VCL_STYLES}
+{$if defined(USE_VCL_STYLES)}
   TCustomStyleEngine.UnregisterStyleHook(TBCBaseEditor, TBCEditorStyleHook);
-{$ENDIF}
+{$endif}
 
 end.
