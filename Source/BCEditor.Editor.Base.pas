@@ -1991,7 +1991,7 @@ function TBCBaseEditor.GetSelectedText: string;
   end;
 
 begin
-  if not SelectionAvailable then
+  if not GetSelectionAvailable then
     Result := ''
   else
     Result := DoGetSelectedText;
@@ -2052,8 +2052,7 @@ begin
   Result := FLines.Text;
 end;
 
-function TBCBaseEditor.GetTextBetween(ATextBeginPosition: TBCEditorTextPosition;
-  ATextEndPosition: TBCEditorTextPosition): string;
+function TBCBaseEditor.GetTextBetween(ATextBeginPosition: TBCEditorTextPosition; ATextEndPosition: TBCEditorTextPosition): string;
 var
   LSelectionMode: TBCEditorSelectionMode;
 begin
@@ -2757,7 +2756,7 @@ begin
     begin
       if Result.Line >= FLines.Count - 1 then
       begin
-        if not SelectionAvailable then
+        if not GetSelectionAvailable then
         begin
           Result.Line := 0;
           Result.Char := 1;
@@ -2942,7 +2941,7 @@ begin
         Result := PreviousWordPosition(Result, True);
       end
       else
-      if not SelectionAvailable then
+      if not GetSelectionAvailable then
         Result.Line := FLines.Count - 1
     end
     else
@@ -3052,7 +3051,7 @@ begin
   LIsBackward := soBackwards in FSearch.Options;
   LIsFromCursor := not AChanged or AChanged and not(soEntireScope in FSearch.Options);
   LSelectedOnly := soSelectedOnly in FSearch.Options;
-  if not SelectionAvailable then
+  if not GetSelectionAvailable then
     LSelectedOnly := False;
   if LSelectedOnly then
   begin
@@ -3075,7 +3074,7 @@ begin
     if LIsBackward then
       LEndTextPosition := TextCaretPosition
     else
-    if AChanged and SelectionAvailable then
+    if AChanged and GetSelectionAvailable then
       LStartTextPosition := SelectionBeginPosition
     else
       LStartTextPosition := TextCaretPosition;
@@ -3431,7 +3430,7 @@ var
 begin
   LTextCaretPosition := TextCaretPosition;
 
-  if SelectionAvailable then
+  if GetSelectionAvailable then
     SetSelectedTextEmpty
   else
   begin
@@ -3513,7 +3512,7 @@ var
   LHelper: string;
 begin
   LTextCaretPosition := TextCaretPosition;
-  if SelectionAvailable then
+  if GetSelectionAvailable then
     SetSelectionBeginPosition(LTextCaretPosition);
   LHelper := FLines[LTextCaretPosition.Line];
   if LTextCaretPosition.Line = FLines.Count - 1 then
@@ -3580,7 +3579,7 @@ begin
   LTextCaretPosition := TextCaretPosition;
   FUndoList.BeginBlock;
   FUndoList.AddChange(crCaret, LTextCaretPosition, LTextCaretPosition, LTextCaretPosition, '', smNormal);
-  if SelectionAvailable then
+  if GetSelectionAvailable then
   begin
     if FSyncEdit.Active then
     begin
@@ -3785,7 +3784,7 @@ begin
     LSelectionBeginPosition := SelectionBeginPosition;
     LSelectionEndPosition := SelectionEndPosition;
 
-    if SelectionAvailable then
+    if GetSelectionAvailable then
     begin
       LBeginLine := LSelectionBeginPosition.Line;
       LEndLine := LSelectionEndPosition.Line;
@@ -3900,7 +3899,7 @@ var
   LVisibleChars: Integer;
 begin
   LTextCaretPosition := TextCaretPosition;
-  if SelectionAvailable then
+  if GetSelectionAvailable then
   begin
     if FSyncEdit.Active then
       FSyncEdit.MoveEndPositionChar(-FSelectionEndPosition.Char + FSelectionBeginPosition.Char + 1);
@@ -3998,7 +3997,7 @@ end;
 
 procedure TBCBaseEditor.DoCutToClipboard;
 begin
-  if not ReadOnly and SelectionAvailable then
+  if not ReadOnly and GetSelectionAvailable then
   begin
     BeginUndoBlock;
     DoCopyToClipboard(SelectedText);
@@ -4082,7 +4081,7 @@ var
   LWasSelectionAvailable: Boolean;
 begin
   Assert((ACommand >= ecUpperCase) and (ACommand <= ecAlternatingCaseBlock));
-  if SelectionAvailable then
+  if GetSelectionAvailable then
   begin
     LWasSelectionAvailable := True;
     LOldBlockBeginPosition := SelectionBeginPosition;
@@ -4189,7 +4188,7 @@ begin
   LLength := Length(PChar(AData));
 
   SetString(S, PChar(AData), LLength);
-  if SelectionAvailable then
+  if GetSelectionAvailable then
   begin
     BeginUndoBlock;
     try
@@ -4247,7 +4246,7 @@ begin
 
   FUndoList.BeginBlock;
   try
-    if SelectionAvailable then
+    if GetSelectionAvailable then
     begin
       SetSelectedTextEmpty;
       LTextCaretPosition := TextCaretPosition;
@@ -4382,7 +4381,7 @@ begin
     LSelectionBeginPosition := SelectionBeginPosition;
     LSelectionEndPosition := SelectionEndPosition;
 
-    if SelectionAvailable then
+    if GetSelectionAvailable then
     begin
       LLine := LSelectionBeginPosition.Line;
       LEndLine := LSelectionEndPosition.Line;
@@ -4437,7 +4436,7 @@ begin
       FUndoList.AddChange(crInsert, LTextCaretPosition, GetTextPosition(1, LLine),
         GetTextPosition(Length(LComment) + 1, LLine), '', smNormal);
 
-      if not SelectionAvailable then
+      if not GetSelectionAvailable then
       begin
         Inc(LTextCaretPosition.Line);
         TextCaretPosition := LTextCaretPosition;
@@ -4448,7 +4447,7 @@ begin
 
     FSelectionBeginPosition := LSelectionBeginPosition;
     FSelectionEndPosition := LSelectionEndPosition;
-    if SelectionAvailable then
+    if GetSelectionAvailable then
       TextCaretPosition := LTextCaretPosition;
     RescanCodeFoldingRanges;
     ScanMatchingPair;
@@ -4507,7 +4506,7 @@ begin
 
   LLength := FLines.StringLength(LTextCaretPosition.Line);
 
-  if SelectionAvailable then
+  if GetSelectionAvailable then
     FUndoList.AddChange(crDelete, LTextCaretPosition, SelectionBeginPosition, SelectionEndPosition, GetSelectedText,
       FSelection.ActiveMode)
   else
@@ -4533,7 +4532,7 @@ begin
 
   LClipBoardText := GetClipboardText;
 
-  if SelectionAvailable then
+  if GetSelectionAvailable then
   begin
     LStartPositionOfBlock := SelectionBeginPosition;
     LEndPositionOfBlock := SelectionEndPosition;
@@ -4623,7 +4622,7 @@ var
   LTextCaretPosition: TBCEditorTextPosition;
   LChangeScroll: Boolean;
 begin
-  if (toSelectedBlockIndent in FTabs.Options) and SelectionAvailable then
+  if (toSelectedBlockIndent in FTabs.Options) and GetSelectionAvailable then
   begin
     DoBlockUnindent;
     Exit;
@@ -4744,7 +4743,7 @@ var
   LCharCount, LLengthAfterLine, LPreviousLine, LPreviousLineCharCount: Integer;
   LChangeScroll: Boolean;
 begin
-  if SelectionAvailable and (FSelectionBeginPosition.Line <> FSelectionEndPosition.Line) and
+  if GetSelectionAvailable and (FSelectionBeginPosition.Line <> FSelectionEndPosition.Line) and
     (toSelectedBlockIndent in FTabs.Options) then
   begin
     DoBlockIndent;
@@ -4754,7 +4753,7 @@ begin
   FUndoList.BeginBlock(1);
   try
     LTextCaretPosition := TextCaretPosition;
-    if SelectionAvailable then
+    if GetSelectionAvailable then
     begin
       FUndoList.AddChange(crDelete, LTextCaretPosition, SelectionBeginPosition, SelectionEndPosition, GetSelectedText,
         FSelection.ActiveMode);
@@ -5194,7 +5193,7 @@ begin
 
   if not ASelectionCommand then
   begin
-    if SelectionAvailable then
+    if GetSelectionAvailable then
       LReason := crSelection
     else
       LReason := crCaret;
@@ -5205,7 +5204,7 @@ begin
   IncPaintLock;
   if ASelectionCommand then
   begin
-    if not SelectionAvailable then
+    if not GetSelectionAvailable then
       SetSelectionBeginPosition(ABeforeTextPosition);
     SetSelectionEndPosition(AAfterTextPosition);
   end
@@ -5226,7 +5225,7 @@ var
   LPLine: PChar;
 begin
   LTextCaretPosition := TextCaretPosition;
-  if not SelectionAvailable then
+  if not GetSelectionAvailable then
   begin
     FSelectionBeginPosition := LTextCaretPosition;
     FSelectionEndPosition := LTextCaretPosition;
@@ -5329,7 +5328,7 @@ begin
     DoTrimTrailingSpaces(LDestinationLineChar.Line);
   end;
 
-  if not SelectionAvailable then
+  if not GetSelectionAvailable then
     FSelectionBeginPosition := TextCaretPosition;
 
   MoveCaretAndSelection(FSelectionBeginPosition, LDestinationLineChar, ASelectionCommand);
@@ -5450,7 +5449,7 @@ var
   LPreviousTextCaretPosition, LTextCaretPosition: TBCEditorTextPosition;
   LLength: Integer;
 begin
-  if not SelectionAvailable then
+  if not GetSelectionAvailable then
     Exit;
   LSelectedText := SelectedText;
   LLength := Length(LSelectedText);
@@ -6550,7 +6549,7 @@ begin
     LBlockStartPosition := FSelectionBeginPosition;
     LBlockEndPosition := FSelectionEndPosition;
 
-    if SelectionAvailable then
+    if GetSelectionAvailable then
       FUndoList.AddChange(crDelete, LTextCaretPosition, LBlockStartPosition, LBlockEndPosition, GetSelectedText,
         FSelection.ActiveMode)
     else
@@ -6580,8 +6579,11 @@ procedure TBCBaseEditor.SetSelectionBeginPosition(AValue: TBCEditorTextPosition)
 begin
   FSelection.ActiveMode := Selection.Mode;
 
-  AValue.Char := Max(AValue.Char, 1);
   AValue.Line := MinMax(AValue.Line, 0, FLines.Count - 1);
+  if FSelection.Mode = smNormal then
+    AValue.Char := MinMax(AValue.Char, 1, FLines.StringLength(AValue.Line) + 1)
+  else
+    AValue.Char := Max(AValue.Char, 1);
 
   FSelectionBeginPosition := AValue;
   FSelectionEndPosition := AValue;
@@ -6593,8 +6595,11 @@ begin
   FSelection.ActiveMode := Selection.Mode;
   if FSelection.Visible then
   begin
-    AValue.Char := Max(AValue.Char, 1);
     AValue.Line := MinMax(AValue.Line, 0, FLines.Count - 1);
+    if FSelection.Mode = smNormal then
+      AValue.Char := MinMax(AValue.Char, 1, FLines.StringLength(AValue.Line) + 1)
+    else
+      AValue.Char := Max(AValue.Char, 1);
 
     if (AValue.Char <> FSelectionEndPosition.Char) or (AValue.Line <> FSelectionEndPosition.Line) then
     begin
@@ -6804,7 +6809,7 @@ begin
   if FSyncEdit.Active then
   begin
     FWordWrap.Enabled := False;
-    LSelectionAvailable := SelectionAvailable;
+    LSelectionAvailable := GetSelectionAvailable;
     LIsWordSelected := IsWordSelected;
     if LSelectionAvailable and LIsWordSelected then
     begin
@@ -7277,7 +7282,7 @@ begin
     Exit;
   HideCaret;
   Winapi.Windows.DestroyCaret;
-  if not Selection.Visible and SelectionAvailable then
+  if not Selection.Visible and GetSelectionAvailable then
     Invalidate;
 end;
 
@@ -7371,7 +7376,7 @@ begin
   CommandProcessor(ecGotFocus, BCEDITOR_NONE_CHAR, nil);
 
   ResetCaret;
-  if not Selection.Visible and SelectionAvailable then
+  if not Selection.Visible and GetSelectionAvailable then
     Invalidate;
 end;
 
@@ -7538,7 +7543,7 @@ end;
 
 function TBCBaseEditor.GetSelectionLength: Integer;
 begin
-  if SelectionAvailable then
+  if GetSelectionAvailable then
     Result := RowColumnToCharIndex(SelectionEndPosition) - RowColumnToCharIndex(SelectionBeginPosition)
   else
     Result := 0;
@@ -7729,7 +7734,7 @@ begin
   LOldCaretPosition := TextCaretPosition;
 
   LStringToInsert := '';
-  if SelectionAvailable then
+  if GetSelectionAvailable then
     try
       LBlockBeginPosition := SelectionBeginPosition;
       LBlockEndPosition := SelectionEndPosition;
@@ -7818,7 +7823,7 @@ begin
   LOldSelectionMode := FSelection.ActiveMode;
   LLength := 0;
   LLastIndent := 0;
-  if SelectionAvailable then
+  if GetSelectionAvailable then
   begin
     LBlockBeginPosition := SelectionBeginPosition;
     LBlockEndPosition := SelectionEndPosition;
@@ -8692,7 +8697,7 @@ var
   LMinimapLeft, LMinimapRight: Integer;
   LSelectedRow: Integer;
 begin
-  LSelectionAvailable := SelectionAvailable;
+  LSelectionAvailable := GetSelectionAvailable;
   LSelectedRow := GetSelectedRow(Y);
 
   if AButton = mbLeft then
@@ -9283,7 +9288,7 @@ begin
 
       FPaintHelper.SetBaseFont(FMinimap.Font);
 
-      LSelectionAvailable := SelectionAvailable;
+      LSelectionAvailable := GetSelectionAvailable;
 
       if not FMinimap.Dragging and (LDrawRect.Height = FMinimapBufferBitmap.Height) and (FLastTopLine = FTopLine) and
         (FLastLineNumberCount = FLineNumbersCount) and
@@ -9917,7 +9922,7 @@ var
   var
     LDisplayPosition: TBCEditorDisplayPosition;
   begin
-    if FSyncEdit.Enabled and not FSyncEdit.Active and FSyncEdit.Activator.Visible and SelectionAvailable then
+    if FSyncEdit.Enabled and not FSyncEdit.Active and FSyncEdit.Activator.Visible and GetSelectionAvailable then
     begin
       LDisplayPosition := TextToDisplayPosition(SelectionEndPosition);
       FSyncEdit.Activator.Draw(Canvas, AClipRect.Left + FActiveLine.Indicator.Left,
@@ -11038,7 +11043,7 @@ var
     procedure SetSelectionVariables;
     begin
       LWordAtSelection := GetWordAtSelection(LSelectedText);
-      LAnySelection := SelectionAvailable;
+      LAnySelection := GetSelectionAvailable;
 
       if LAnySelection then
       begin
@@ -11910,7 +11915,7 @@ var
     if Length(AValue) = 0 then
       Exit;
 
-    if SelectionAvailable then
+    if GetSelectionAvailable then
       LTextCaretPosition := LBeginTextPosition
     else
       LTextCaretPosition := ATextCaretPosition;
@@ -13104,7 +13109,7 @@ end;
 
 procedure TBCBaseEditor.ClearSelection;
 begin
-  if SelectionAvailable then
+  if GetSelectionAvailable then
     SelectedText := '';
 end;
 
@@ -13218,7 +13223,7 @@ begin
     NotifyHookedCommandHandlers(False, ACommand, AChar, AData);
 
     FRescanCodeFolding := (ACommand = ecCut) or (ACommand = ecPaste) or (ACommand = ecDeleteLine) or
-      SelectionAvailable and ((ACommand = ecLineBreak) or (ACommand = ecBackspace) or (ACommand = ecChar)) or
+      GetSelectionAvailable and ((ACommand = ecLineBreak) or (ACommand = ecBackspace) or (ACommand = ecChar)) or
       ((ACommand = ecChar) or (ACommand = ecBackspace) or (ACommand = ecTab) or (ACommand = ecDeleteChar) or
       (ACommand = ecLineBreak)) and IsKeywordAtCaretPosition or (ACommand = ecBackspace) and IsCommentAtCaretPosition or
       ((ACommand = ecChar) and CharInSet(AChar, FHighlighter.SkipOpenKeyChars + FHighlighter.SkipCloseKeyChars));
@@ -13228,7 +13233,7 @@ begin
       case ACommand of
         ecBackspace, ecDeleteChar, ecDeleteWord, ecDeleteLastWord, ecDeleteLine, ecClear, ecLineBreak, ecChar, ecString,
           ecImeStr, ecCut, ecPaste, ecBlockIndent, ecBlockUnindent, ecTab:
-          if SelectionAvailable then
+          if GetSelectionAvailable then
           begin
             LOldSelectionBeginPosition := GetSelectionBeginPosition;
             LOldSelectionEndPosition := GetSelectionEndPosition;
@@ -13320,7 +13325,7 @@ var
   end;
 
 begin
-  if SelectionAvailable then
+  if GetSelectionAvailable then
   begin
     LChangeTrim := (FSelection.ActiveMode = smColumn) and (eoTrimTrailingSpaces in Options);
     try
@@ -13366,7 +13371,7 @@ begin
   if ReadOnly then
     Exit;
 
-  if SelectionAvailable then
+  if GetSelectionAvailable then
   begin
     LStrings := TStringList.Create;
     try
@@ -13638,7 +13643,7 @@ begin
         if not ReadOnly then
           DoRedo;
       ecCut:
-        if not ReadOnly and SelectionAvailable then
+        if not ReadOnly and GetSelectionAvailable then
           DoCutToClipboard;
       ecCopy:
         CopyToClipboard;
@@ -13726,7 +13731,7 @@ begin
 
     GotoLineAndCenter(LTextPosition.Line);
 
-    if SelectionAvailable then
+    if GetSelectionAvailable then
       Invalidate;
     FSelectionBeginPosition := TextCaretPosition;
     FSelectionEndPosition := FSelectionBeginPosition;
@@ -13752,7 +13757,7 @@ begin
   LTextCaretPosition := GetTextPosition(1, ATextLine);
   TopLine := Max(LTextCaretPosition.Line - FVisibleLines div 2, 1);
   SetTextCaretPosition(LTextCaretPosition);
-  if SelectionAvailable then
+  if GetSelectionAvailable then
     Invalidate;
   FSelectionBeginPosition := LTextCaretPosition;
   FSelectionEndPosition := FSelectionBeginPosition;
@@ -14221,7 +14226,7 @@ var
 begin
   LStringList := TStringList.Create;
   try
-    if SelectionAvailable then
+    if GetSelectionAvailable then
       LStringList.Text := SelectedText
     else
       LStringList.Text := Text;
@@ -14245,7 +14250,7 @@ begin
     S := TrimRight(S);
     LStringList.Text := S;
 
-    if SelectionAvailable then
+    if GetSelectionAvailable then
     begin
       LOldSelectionBeginPosition := GetSelectionBeginPosition;
       LOldSelectionEndPosition := GetSelectionEndPosition;
