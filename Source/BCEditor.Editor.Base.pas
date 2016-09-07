@@ -9220,7 +9220,7 @@ begin
     PaintRightMargin(LDrawRect);
 
     if FCodeFolding.Visible and (cfoShowIndentGuides in CodeFolding.Options) then
-      PaintGuides(FTopLine, FTopLine + FVisibleLines, False);
+      PaintGuides(FTopLine, Min(FTopLine + FVisibleLines, FLineNumbersCount), False);
 
     if FSyncEdit.Enabled and FSyncEdit.Active then
       PaintSyncItems;
