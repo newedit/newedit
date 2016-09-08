@@ -6203,7 +6203,7 @@ var
   LLine: Integer;
   LCursorPoint: TPoint;
   LDisplayPosition: TBCEditorDisplayPosition;
-  LTextPosition: TBCEditorTextPosition;
+  LTextPosition, LTextCaretPosition: TBCEditorTextPosition;
 begin
   IncPaintLock;
   try
@@ -6212,10 +6212,7 @@ begin
     LDisplayPosition := PixelsToDisplayPosition(LCursorPoint.X, LCursorPoint.Y);
     LDisplayPosition.Row := MinMax(LDisplayPosition.Row, 1, FLineNumbersCount);
     if FScrollDeltaX <> 0 then
-    begin
       SetHorizontalScrollPosition(FHorizontalScrollPosition + FScrollDeltaX);
-      LDisplayPosition.Column := FHorizontalScrollPosition div FPaintHelper.CharWidth;
-    end;
     if FScrollDeltaY <> 0 then
     begin
       if GetKeyState(VK_SHIFT) < 0 then
@@ -6227,14 +6224,16 @@ begin
         Inc(LLine, VisibleLines - 1);
       LDisplayPosition.Row := MinMax(LLine, 1, FLineNumbersCount);
     end;
+
     if not FMouseMoveScrolling then
     begin
       LTextPosition := DisplayToTextPosition(LDisplayPosition);
-      if (DisplayCaretX <> LTextPosition.Char) or (GetTextCaretY <> LTextPosition.Line) then
+      LTextCaretPosition := TextCaretPosition;
+      if (LTextCaretPosition.Char <> LTextPosition.Char) or (LTextCaretPosition.Line <> LTextPosition.Line) then
       begin
         TextCaretPosition := LTextPosition;
         if MouseCapture then
-          SetSelectionEndPosition(TextCaretPosition);
+          SetSelectionEndPosition(LTextPosition);
       end;
     end;
   finally
@@ -6425,6 +6424,7 @@ begin
 
   if FHorizontalScrollPosition <> AValue then
   begin
+  //  {$IFDEF DEBUG}OutputDebugString(PChar(Format('FHorizontalScrollPosition = %d', [FHorizontalScrollPosition])));{$ENDIF}
     FHorizontalScrollPosition := AValue;
     UpdateScrollBars;
     Invalidate;
