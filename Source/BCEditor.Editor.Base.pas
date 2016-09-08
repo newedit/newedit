@@ -10867,23 +10867,12 @@ var
 
     if LCanAppend then
     begin
-      if LTokenHelper.Length + ATokenLength > LTokenHelper.MaxLength then
-      begin
-        LTokenHelper.MaxLength := LTokenHelper.Length + ATokenLength + 32;
-        SetLength(LTokenHelper.Text, LTokenHelper.MaxLength);
-      end;
       Insert(AToken, LTokenHelper.Text, LTokenHelper.Length + 1);
       Inc(LTokenHelper.Length, ATokenLength);
     end
     else
     begin
       LTokenHelper.Length := ATokenLength;
-      if LTokenHelper.Length > LTokenHelper.MaxLength then
-      begin
-        LTokenHelper.MaxLength := LTokenHelper.Length + 32;
-        SetLength(LTokenHelper.Text, LTokenHelper.MaxLength);
-      end;
-
       LTokenHelper.Text := AToken;
       LTokenHelper.CharsBefore := ACharsBefore;
       LTokenHelper.ExpandedCharsBefore := LExpandedCharsBefore;
@@ -11108,12 +11097,6 @@ var
       LLineRect.Bottom := (AFirstLine - FMinimap.TopLine + 1) * FMinimap.CharHeight
     else
       LLineRect.Bottom := GetLineHeight;
-
-    if Assigned(FHighlighter) then
-    begin
-      LTokenHelper.MaxLength := BCEDITOR_TOKEN_MAX_LENGTH;
-      SetLength(LTokenHelper.Text, LTokenHelper.MaxLength);
-    end;
 
     SetSelectionVariables;
 

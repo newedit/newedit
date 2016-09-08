@@ -260,7 +260,6 @@ type
     IsItalic: Boolean;
     Length: Integer;
     MatchingPairUnderline: Boolean;
-    MaxLength: Integer;
     Text: string;
   end;
 
