@@ -10801,9 +10801,39 @@ var
       if LCustomLineColors and (LCustomBackgroundColor <> clNone) then
         LBackgroundColor := LCustomBackgroundColor;
 
-      SetDrawingColors(LIsLineSelected or LSelected and (LLineSelectionEnd > LLastColumn));
-      LTokenRect.Right := LLineRect.Right;
-      FillRect(LTokenRect);
+      if FSelection.Mode = smNormal then
+      begin
+        SetDrawingColors(LIsLineSelected or LSelected and (LLineSelectionEnd > LLastColumn));
+        LTokenRect.Right := LLineRect.Right;
+        FillRect(LTokenRect);
+      end
+      else
+      begin
+        if LLineSelectionStart > LLastColumn then
+        begin
+          SetDrawingColors(False);
+          LTokenRect.Right := Min(LTokenRect.Left + (LLineSelectionStart - LLastColumn) * FPaintHelper.CharWidth, LLineRect.Right);
+          FillRect(LTokenRect);
+        end;
+        if (LTokenRect.Right < LLineRect.Right) and (LLineSelectionEnd > LLastColumn) then
+        begin
+          SetDrawingColors(True);
+          LTokenRect.Left := LTokenRect.Right;
+          if LLineSelectionStart > LLastColumn then
+            LTokenLength := LLineSelectionEnd - LLineSelectionStart
+          else
+            LTokenLength := LLineSelectionEnd - LLastColumn;
+          LTokenRect.Right := Min(LTokenRect.Left + LTokenLength * FPaintHelper.CharWidth, LLineRect.Right);
+          FillRect(LTokenRect);
+        end;
+        if LTokenRect.Right < LLineRect.Right then
+        begin
+          SetDrawingColors(False);
+          LTokenRect.Left := LTokenRect.Right;
+          LTokenRect.Right := LLineRect.Right;
+          FillRect(LTokenRect);
+        end
+      end;
     end;
   end;
 
