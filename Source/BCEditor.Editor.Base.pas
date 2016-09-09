@@ -1896,7 +1896,7 @@ function TBCBaseEditor.GetSelectedText: string;
     LPOld := PResult;
     CopyAndForward(AValue, Index, Count, PResult);
     LLength := Count - (PResult - LPOld);
-    if not(eoTrimTrailingSpaces in Options) and (PResult - LPOld > 0) then
+    if not (eoTrimTrailingSpaces in Options) and (PResult - LPOld > 0) then
     begin
       for i := 0 to LLength - 1 do
         PResult[i] := BCEDITOR_SPACE_CHAR;
@@ -3049,7 +3049,7 @@ begin
     Exit;
 
   LIsBackward := soBackwards in FSearch.Options;
-  LIsFromCursor := not AChanged or AChanged and not(soEntireScope in FSearch.Options);
+  LIsFromCursor := not AChanged or AChanged and not (soEntireScope in FSearch.Options);
   LSelectedOnly := soSelectedOnly in FSearch.Options;
   if not GetSelectionAvailable then
     LSelectedOnly := False;
@@ -3144,7 +3144,7 @@ end;
 
 procedure TBCBaseEditor.ActiveLineChanged(ASender: TObject);
 begin
-  if not(csLoading in ComponentState) then
+  if not (csLoading in ComponentState) then
   begin
     if ASender is TBCEditorActiveLine then
       Invalidate;
@@ -4209,7 +4209,7 @@ begin
     LLength := Length(LLineText);
     if LLength < LTextCaretPosition.Char then
       LLineText := LLineText + StringOfChar(BCEDITOR_SPACE_CHAR, LTextCaretPosition.Char - LLength - 1);
-    LChangeScroll := not(soPastEndOfLine in FScroll.Options);
+    LChangeScroll := not (soPastEndOfLine in FScroll.Options);
     try
       if LChangeScroll then
         FScroll.Options := FScroll.Options + [soPastEndOfLine];
@@ -4655,7 +4655,7 @@ begin
     Delete(LTextLine, LNewX, LTabWidth);
     FLines[LTextCaretPosition.Line] := LTextLine;
 
-    LChangeScroll := not(soPastEndOfLine in FScroll.Options);
+    LChangeScroll := not (soPastEndOfLine in FScroll.Options);
     try
       FScroll.Options := FScroll.Options + [soPastEndOfLine];
       SetTextCaretX(LNewX);
@@ -4804,7 +4804,7 @@ begin
       FLines[LTextCaretPosition.Line] := LTextLine;
     end;
 
-    LChangeScroll := not(soPastEndOfLine in FScroll.Options);
+    LChangeScroll := not (soPastEndOfLine in FScroll.Options);
     try
       FScroll.Options := FScroll.Options + [soPastEndOfLine];
       if not InsertMode then
@@ -5188,7 +5188,7 @@ procedure TBCBaseEditor.MoveCaretAndSelection(const ABeforeTextPosition, AAfterT
 var
   LReason: TBCEditorChangeReason;
 begin
-  if not(uoGroupUndo in FUndo.Options) and UndoList.CanUndo then
+  if not (uoGroupUndo in FUndo.Options) and UndoList.CanUndo then
     FUndoList.AddGroupBreak;
 
   if not ASelectionCommand then
@@ -5234,7 +5234,7 @@ begin
   LDestinationPosition := LTextCaretPosition;
 
   LCurrentLineLength := FLines.StringLength(LTextCaretPosition.Line);
-  LChangeY := not(soPastEndOfLine in FScroll.Options);
+  LChangeY := not (soPastEndOfLine in FScroll.Options);
 
   if LChangeY and (X = -1) and (LTextCaretPosition.Char = 1) and (LTextCaretPosition.Line > 1) then
     with LDestinationPosition do
@@ -5513,7 +5513,7 @@ begin
     if FWordWrap.Style = wwsRightMargin then
       FResetLineNumbersCache := True;
 
-  if not(csLoading in ComponentState) then
+  if not (csLoading in ComponentState) then
     Invalidate;
 end;
 
@@ -6394,7 +6394,7 @@ begin
   if FInsertMode <> AValue then
   begin
     FInsertMode := AValue;
-    if not(csDesigning in ComponentState) then
+    if not (csDesigning in ComponentState) then
       ResetCaret;
   end;
 end;
@@ -6507,7 +6507,7 @@ begin
   begin
     FOptions := AValue;
 
-    if (eoDropFiles in FOptions) <> (eoDropFiles in AValue) and not(csDesigning in ComponentState) and HandleAllocated
+    if (eoDropFiles in FOptions) <> (eoDropFiles in AValue) and not (csDesigning in ComponentState) and HandleAllocated
     then
       DragAcceptFiles(Handle, eoDropFiles in FOptions);
 
@@ -6662,7 +6662,7 @@ begin
   if LDisplayLineCount = 0 then
     LDisplayLineCount := 1;
 
-  if (soPastEndOfFileMarker in FScroll.Options) and (not(sfInSelection in FStateFlags) or (sfInSelection in FStateFlags)
+  if (soPastEndOfFileMarker in FScroll.Options) and (not (sfInSelection in FStateFlags) or (sfInSelection in FStateFlags)
     and (AValue = FTopLine)) then
     AValue := Min(AValue, LDisplayLineCount)
   else
@@ -6890,7 +6890,7 @@ begin
 
   UpdateModifiedStatus;
 
-  if not FUndoList.InsideRedo and Assigned(LUndoItem) and not(LUndoItem.ChangeReason in [crCaret, crGroupBreak]) then
+  if not FUndoList.InsideRedo and Assigned(LUndoItem) and not (LUndoItem.ChangeReason in [crCaret, crGroupBreak]) then
     FRedoList.Clear;
 end;
 
@@ -7330,7 +7330,7 @@ begin
 
   if Message.DC <> 0 then
   begin
-    if not(csCustomPaint in ControlState) and (ControlCount = 0) then
+    if not (csCustomPaint in ControlState) and (ControlCount = 0) then
       inherited
     else
       PaintHandler(Message);
@@ -7365,7 +7365,7 @@ end;
 
 procedure TBCBaseEditor.WMSetCursor(var AMessage: TWMSetCursor);
 begin
-  if (AMessage.HitTest = HTCLIENT) and (AMessage.CursorWnd = Handle) and not(csDesigning in ComponentState) then
+  if (AMessage.HitTest = HTCLIENT) and (AMessage.CursorWnd = Handle) and not (csDesigning in ComponentState) then
     UpdateMouseCursor
   else
     inherited;
@@ -7493,7 +7493,7 @@ begin
   LOldTextCaretPosition := TextCaretPosition;
   CreateLineNumbersCache(True);
   TextCaretPosition := LOldTextCaretPosition;
-  if not(csLoading in ComponentState) then
+  if not (csLoading in ComponentState) then
     Invalidate;
 end;
 
@@ -7666,7 +7666,7 @@ procedure TBCBaseEditor.CreateWnd;
 begin
   inherited;
 
-  if (eoDropFiles in FOptions) and not(csDesigning in ComponentState) then
+  if (eoDropFiles in FOptions) and not (csDesigning in ComponentState) then
     DragAcceptFiles(Handle, True);
 
   UpdateScrollBars;
@@ -7714,7 +7714,7 @@ end;
 
 procedure TBCBaseEditor.DestroyWnd;
 begin
-  if (eoDropFiles in FOptions) and not(csDesigning in ComponentState) then
+  if (eoDropFiles in FOptions) and not (csDesigning in ComponentState) then
     DragAcceptFiles(Handle, False);
 
   inherited;
@@ -8427,11 +8427,11 @@ begin
   if FCompletionProposal.Enabled and not Assigned(FCompletionProposalPopupWindow) then
   begin
     ShortCutToKey(FCompletionProposal.ShortCut, LShortCutKey, LShortCutShift);
-    if (AShift = LShortCutShift) and (AKey = LShortCutKey) or (AKey <> LShortCutKey) and not(ssAlt in AShift) and
-      not(ssCtrl in AShift) and (cpoAutoInvoke in FCompletionProposal.Options) and Chr(AKey).IsLetter then
+    if (AShift = LShortCutShift) and (AKey = LShortCutKey) or (AKey <> LShortCutKey) and not (ssAlt in AShift) and
+      not (ssCtrl in AShift) and (cpoAutoInvoke in FCompletionProposal.Options) and Chr(AKey).IsLetter then
     begin
       DoExecuteCompletionProposal;
-      if not(cpoAutoInvoke in FCompletionProposal.Options) then
+      if not (cpoAutoInvoke in FCompletionProposal.Options) then
       begin
         AKey := 0;
         Include(FStateFlags, sfIgnoreNextChar);
@@ -8443,7 +8443,7 @@ end;
 
 procedure TBCBaseEditor.KeyPressW(var AKey: Char);
 begin
-  if not(sfIgnoreNextChar in FStateFlags) then
+  if not (sfIgnoreNextChar in FStateFlags) then
   begin
     FKeyboardHandler.ExecuteKeyPress(Self, AKey);
     CommandProcessor(ecChar, AKey, nil);
@@ -8866,8 +8866,8 @@ begin
     Exit;
   end;
 
-  if not(sfWaitForDragging in FStateFlags) then
-    if not(sfDblClicked in FStateFlags) then
+  if not (sfWaitForDragging in FStateFlags) then
+    if not (sfDblClicked in FStateFlags) then
     begin
       if ssShift in AShift then
         SetSelectionEndPosition(TextCaretPosition)
@@ -8882,7 +8882,7 @@ begin
             FAltEnabled := True;
           end
           else
-          if not(ssAlt in AShift) and FAltEnabled then
+          if not (ssAlt in AShift) and FAltEnabled then
           begin
             FSelection.Mode := FSaveSelectionMode;
             FAltEnabled := False;
@@ -8988,7 +8988,7 @@ begin
 
   inherited MouseMove(AShift, X, Y);
 
-  if FMouseOverURI and not(ssCtrl in AShift) then
+  if FMouseOverURI and not (ssCtrl in AShift) then
     FMouseOverURI := False;
 
   if (rmoMouseMove in FRightMargin.Options) and FRightMargin.Visible then
@@ -9097,7 +9097,7 @@ begin
       LDisplayPosition.Column := DisplayCaretX;
     if FScrollDeltaY <> 0 then
       LDisplayPosition.Row := DisplayCaretY;
-    if not(sfCodeFoldingInfoClicked in FStateFlags) then { No selection when info clicked }
+    if not (sfCodeFoldingInfoClicked in FStateFlags) then { No selection when info clicked }
     begin
       LTextCaretPosition := DisplayToTextPosition(LDisplayPosition);
       TextCaretPosition := LTextCaretPosition;
@@ -9167,7 +9167,7 @@ begin
   begin
     TextCaretPosition := PixelsToTextPosition(X, Y);
 
-    if not(ssShift in AShift) then
+    if not (ssShift in AShift) then
       SetSelectionBeginPosition(TextCaretPosition);
     SetSelectionEndPosition(TextCaretPosition);
 
@@ -10132,7 +10132,7 @@ begin
     Exit;
   if not Assigned(FSearchEngine) then
     Exit;
-  if (FSearchEngine.ResultCount = 0) and not(soHighlightSimilarTerms in FSelection.Options) then
+  if (FSearchEngine.ResultCount = 0) and not (soHighlightSimilarTerms in FSelection.Options) then
     Exit;
 
 {$if defined(USE_VCL_STYLES)}
@@ -10746,7 +10746,7 @@ var
 
     FPaintHelper.SetStyle(LTokenHelper.FontStyle);
 
-    if AMinimap and not(ioUseBlending in FMinimap.Indicator.Options) then
+    if AMinimap and not (ioUseBlending in FMinimap.Indicator.Options) then
       if (LDisplayLine >= TopLine) and (LDisplayLine < TopLine + VisibleLines) then
         if LBackgroundColor <> FSearch.Highlighter.Colors.Background then
           LBackgroundColor := FMinimap.Colors.VisibleLines;
@@ -10792,7 +10792,7 @@ var
     begin
       LBackgroundColor := GetBackgroundColor;
 
-      if AMinimap and not(ioUseBlending in FMinimap.Indicator.Options) then
+      if AMinimap and not (ioUseBlending in FMinimap.Indicator.Options) then
         if (LDisplayLine >= TopLine) and (LDisplayLine < TopLine + VisibleLines) then
           LBackgroundColor := FMinimap.Colors.VisibleLines;
 
@@ -10881,7 +10881,7 @@ var
     if LTokenHelper.Length > 0 then
     begin
       LCanAppend := (LTokenHelper.Length < BCEDITOR_TOKEN_MAX_LENGTH) and
-        ((LTokenHelper.FontStyle = AFontStyle) or ((LEmptySpace <> esNone) and not(fsUnderline in AFontStyle) and
+        ((LTokenHelper.FontStyle = AFontStyle) or ((LEmptySpace <> esNone) and not (fsUnderline in AFontStyle) and
         not (fsUnderline in LTokenHelper.FontStyle))) and (LTokenHelper.MatchingPairUnderline = AMatchingPairUnderline)
         and ((LTokenHelper.Background = ABackground) and (LTokenHelper.Foreground = AForeground)) and
         (LEmptySpace = LTokenHelper.EmptySpace) and LAppendAnsiChars and LAppendTabs;
@@ -11367,7 +11367,7 @@ var
   LChangeScrollPastEndOfLine: Boolean;
   LBeginX: Integer;
 begin
-  LChangeScrollPastEndOfLine := not(soPastEndOfLine in FScroll.Options);
+  LChangeScrollPastEndOfLine := not (soPastEndOfLine in FScroll.Options);
   LUndoItem := FRedoList.PopItem;
   if Assigned(LUndoItem) then
     try
@@ -11590,7 +11590,7 @@ begin
   if FAlwaysShowCaret <> AValue then
   begin
     FAlwaysShowCaret := AValue;
-    if not(csDestroying in ComponentState) and not Focused then
+    if not (csDestroying in ComponentState) and not Focused then
     begin
       if AValue then
         ResetCaret
@@ -11614,7 +11614,7 @@ begin
   if AValue.Column < 1 then
     AValue.Column := 1
   else
-  if not(soPastEndOfLine in FScroll.Options) then
+  if not (soPastEndOfLine in FScroll.Options) then
     AValue.Column := Length(Lines[GetDisplayTextLineNumber(AValue.Row) - 1]) + 1;
 
   IncPaintLock;
@@ -11977,7 +11977,7 @@ end;
 
 procedure TBCBaseEditor.ShowCaret;
 begin
-  if FCaret.Visible and not FCaret.NonBlinking.Enabled and not(sfCaretVisible in FStateFlags) then
+  if FCaret.Visible and not FCaret.NonBlinking.Enabled and not (sfCaretVisible in FStateFlags) then
     if Winapi.Windows.ShowCaret(Handle) then
       Include(FStateFlags, sfCaretVisible);
 end;
@@ -11990,7 +11990,7 @@ var
   LChangeScrollPastEndOfLine: Boolean;
   LBeginX: Integer;
 begin
-  LChangeScrollPastEndOfLine := not(soPastEndOfLine in FScroll.Options);
+  LChangeScrollPastEndOfLine := not (soPastEndOfLine in FScroll.Options);
   LUndoItem := FUndoList.PopItem;
   if Assigned(LUndoItem) then
     try
@@ -12307,7 +12307,7 @@ begin
   FSearch.Options := FSearch.Options - [soBackwards];
   if SearchText(FSearch.SearchText, AChanged) = 0 then
   begin
-    if (soBeepIfStringNotFound in FSearch.Options) and not(soWrapAround in FSearch.Options) then
+    if (soBeepIfStringNotFound in FSearch.Options) and not (soWrapAround in FSearch.Options) then
       Beep;
     SelectionBeginPosition := SelectionEndPosition;
     TextCaretPosition := SelectionBeginPosition;
@@ -12436,7 +12436,7 @@ var
   function InValidSearchRange(First, Last: Integer): Boolean;
   begin
     Result := True;
-    if (FSelection.ActiveMode = smNormal) or not(soSelectedOnly in FSearch.Options) then
+    if (FSelection.ActiveMode = smNormal) or not (soSelectedOnly in FSearch.Options) then
     begin
       if ((LCurrentTextPosition.Line = LStartTextPosition.Line) and (First < LStartTextPosition.Char)) or
         ((LCurrentTextPosition.Line = LEndTextPosition.Line) and (Last > LEndTextPosition.Char)) then
@@ -12462,7 +12462,7 @@ begin
   LIsPrompt := roPrompt in FReplace.Options;
   LIsReplaceAll := roReplaceAll in FReplace.Options;
   LIsDeleteLine := eraDeleteLine = FReplace.Action;
-  LIsFromCursor := not(roEntireScope in FReplace.Options);
+  LIsFromCursor := not (roEntireScope in FReplace.Options);
 
   FSearchEngine.Pattern := ASearchText;
   case FReplace.Engine of
@@ -13068,8 +13068,9 @@ procedure TBCBaseEditor.Clear;
 begin
   FLines.Clear;
   SetHorizontalScrollPosition(0);
-  UpdateScrollBars;
+  CreateLineNumbersCache(True);
   Invalidate;
+  UpdateScrollBars;
 end;
 
 procedure TBCBaseEditor.ClearBookmark(ABookmark: Integer);
@@ -13455,7 +13456,7 @@ begin
             end;
           end;
 
-          LChangeScrollPastEndOfLine := not(soPastEndOfLine in FScroll.Options);
+          LChangeScrollPastEndOfLine := not (soPastEndOfLine in FScroll.Options);
           try
             if LChangeScrollPastEndOfLine then
               FScroll.Options := FScroll.Options + [soPastEndOfLine];
@@ -13853,7 +13854,7 @@ procedure TBCBaseEditor.LeftMarginChanged(ASender: TObject);
 var
   LWidth: Integer;
 begin
-  if not(csLoading in ComponentState) and Assigned(FHighlighter) and not FHighlighter.Loading then
+  if not (csLoading in ComponentState) and Assigned(FHighlighter) and not FHighlighter.Loading then
   begin
     if FLeftMargin.LineNumbers.Visible and FLeftMargin.Autosize then
       FLeftMargin.AutosizeDigitCount(Lines.Count);
@@ -14143,7 +14144,7 @@ begin
     FEncoding := AEncoding;
   FLines.SaveToStream(AStream, FEncoding);
   SetModified(False);
-  if not(uoUndoAfterSave in FUndo.Options) then
+  if not (uoUndoAfterSave in FUndo.Options) then
     UndoList.Clear;
 end;
 
@@ -14432,7 +14433,7 @@ var
   LCaretStyle: TBCEditorCaretStyle;
   LVisibleChars: Integer;
 begin
-  if (PaintLock <> 0) or not(Focused or FAlwaysShowCaret) then
+  if (PaintLock <> 0) or not (Focused or FAlwaysShowCaret) then
     Include(FStateFlags, sfCaretChanged)
   else
   begin
@@ -14529,7 +14530,7 @@ begin
         end;
 
       AC_REMOVESKIN:
-        if (ACUInt(AMessage.LParam) = ACUInt(SkinData.SkinManager)) and not(csDestroying in ComponentState) then
+        if (ACUInt(AMessage.LParam) = ACUInt(SkinData.SkinManager)) and not (csDestroying in ComponentState) then
         begin
           if FScrollWnd <> nil then
             FreeAndNil(FScrollWnd);
