@@ -6,6 +6,10 @@ uses
   System.Classes, System.SysUtils, Vcl.Graphics, BCEditor.Types, BCEditor.Editor.CodeFolding.Colors,
   BCEditor.Editor.CodeFolding.Hint;
 
+const
+  BCEDITOR_CODE_FOLDING_DEFAULT_OPTIONS = [cfoShowCollapsedCodeHint, cfoHighlightIndentGuides, cfoHighlightMatchingPair,
+    cfoShowIndentGuides, cfoShowTreeLine, cfoUncollapseByHintClick];
+
 type
   TBCEditorCodeFolding = class(TPersistent)
   strict private
@@ -38,7 +42,7 @@ type
     property Hint: TBCEditorCodeFoldingHint read FHint write SetHint;
     property MarkStyle: TBCEditorCodeFoldingMarkStyle read FMarkStyle write SetMarkStyle default msSquare;
     property OnChange: TBCEditorCodeFoldingChangeEvent read FOnChange write SetOnChange;
-    property Options: TBCEditorCodeFoldingOptions read FOptions write SetOptions default [cfoShowCollapsedCodeHint, cfoHighlightIndentGuides, cfoHighlightMatchingPair, cfoShowIndentGuides, cfoUncollapseByHintClick];
+    property Options: TBCEditorCodeFoldingOptions read FOptions write SetOptions default BCEDITOR_CODE_FOLDING_DEFAULT_OPTIONS;
     property Padding: Integer read FPadding write SetPadding default 2;
     property Width: Integer read FWidth write SetWidth default 14;
     property Visible: Boolean read FVisible write SetVisible default False;
@@ -56,7 +60,7 @@ begin
   inherited;
 
   FVisible := False;
-  FOptions := [cfoShowCollapsedCodeHint, cfoHighlightIndentGuides, cfoHighlightMatchingPair, cfoShowIndentGuides, cfoUncollapseByHintClick];
+  FOptions := BCEDITOR_CODE_FOLDING_DEFAULT_OPTIONS;
   FMarkStyle := msSquare;
   FColors := TBCEditorCodeFoldingColors.Create;
   FHint := TBCEditorCodeFoldingHint.Create;

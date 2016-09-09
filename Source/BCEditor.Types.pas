@@ -322,7 +322,7 @@ type
 
   TBCEditorWordWrapStyle = (wwsPageWidth, wwsRightMargin);
 
-  TBCEditorCodeFoldingMarkStyle = (msSquare, msCircle);
+  TBCEditorCodeFoldingMarkStyle = (msCircle, msSquare, msTriangle);
   TBCEditorCodeFoldingChanges = (fcEnabled, fcRefresh, fcRescan);
 
   TBCEditorCodeFoldingChangeEvent = procedure(Event: TBCEditorCodeFoldingChanges) of object;
@@ -335,6 +335,7 @@ type
     cfoShowCollapsedCodeHint,
     cfoShowCollapsedLine,
     cfoShowIndentGuides,
+    cfoShowTreeLine,
     cfoUncollapseByHintClick
   );
   TBCEditorCodeFoldingOptions = set of TBCEditorCodeFoldingOption;

@@ -9411,6 +9411,7 @@ procedure TBCBaseEditor.PaintCodeFoldingLine(AClipRect: TRect; ALine: Integer);
 var
   X, Y, LHeight, LTemp: Integer;
   LFoldRange: TBCEditorCodeFoldingRange;
+  LPoints: array [0..2] of TPoint;
 begin
   if CodeFolding.Padding > 0 then
     InflateRect(AClipRect, -CodeFolding.Padding, 0);
@@ -9419,20 +9420,23 @@ begin
 
   if not Assigned(LFoldRange) then
   begin
-    if CodeFoldingTreeLineForLine(ALine) then
+    if cfoShowTreeLine in FCodeFolding.Options then
     begin
-      X := AClipRect.Left + ((AClipRect.Right - AClipRect.Left) div 2) - 1;
-      Canvas.MoveTo(X, AClipRect.Top);
-      Canvas.LineTo(X, AClipRect.Bottom);
+      if CodeFoldingTreeLineForLine(ALine) then
+      begin
+        X := AClipRect.Left + ((AClipRect.Right - AClipRect.Left) div 2) - 1;
+        Canvas.MoveTo(X, AClipRect.Top);
+        Canvas.LineTo(X, AClipRect.Bottom);
+      end;
+      if CodeFoldingTreeEndForLine(ALine) then
+      begin
+        X := AClipRect.Left + ((AClipRect.Right - AClipRect.Left) div 2) - 1;
+        Canvas.MoveTo(X, AClipRect.Top);
+        Y := AClipRect.Top + ((AClipRect.Bottom - AClipRect.Top) - 4);
+        Canvas.LineTo(X, Y);
+        Canvas.LineTo(AClipRect.Right - 1, Y);
+      end
     end;
-    if CodeFoldingTreeEndForLine(ALine) then
-    begin
-      X := AClipRect.Left + ((AClipRect.Right - AClipRect.Left) div 2) - 1;
-      Canvas.MoveTo(X, AClipRect.Top);
-      Y := AClipRect.Top + ((AClipRect.Bottom - AClipRect.Top) - 4);
-      Canvas.LineTo(X, Y);
-      Canvas.LineTo(AClipRect.Right - 1, Y);
-    end
   end
   else
   if LFoldRange.Collapsable then
@@ -9442,26 +9446,46 @@ begin
     AClipRect.Bottom := AClipRect.Top + LHeight - 1;
     AClipRect.Right := AClipRect.Right - 1;
 
-    if CodeFolding.MarkStyle = msSquare then
-      Canvas.FrameRect(AClipRect)
+    if CodeFolding.MarkStyle = msTriangle then
+    begin
+      if LFoldRange.Collapsed then
+      begin
+        LPoints[0] := Point(AClipRect.Left, AClipRect.Top);
+        LPoints[1] := Point(AClipRect.Left, AClipRect.Bottom - 1);
+        LPoints[2] := Point(AClipRect.Right - (FCodeFolding.Width + 1) mod 2, AClipRect.Top + AClipRect.Height div 2);
+        Canvas.Polygon(LPoints);
+      end
+      else
+      begin
+        LPoints[0] := Point(AClipRect.Left, AClipRect.Top + 1);
+        LPoints[1] := Point(AClipRect.Right - (FCodeFolding.Width + 1) mod 2, AClipRect.Top + 1);
+        LPoints[2] := Point(AClipRect.Left + AClipRect.Width div 2, AClipRect.Bottom - 1);
+        Canvas.Polygon(LPoints);
+      end;
+    end
     else
+    begin
+      if CodeFolding.MarkStyle = msSquare then
+        Canvas.FrameRect(AClipRect)
+      else
       if CodeFolding.MarkStyle = msCircle then
       begin
         Canvas.Brush.Color := FCodeFolding.Colors.Background;
         Canvas.Ellipse(AClipRect);
       end;
 
-    { - }
-    LTemp := AClipRect.Top + ((AClipRect.Bottom - AClipRect.Top) div 2);
-    Canvas.MoveTo(AClipRect.Left + 2, LTemp);
-    Canvas.LineTo(AClipRect.Right - 2, LTemp);
+      { - }
+      LTemp := AClipRect.Top + ((AClipRect.Bottom - AClipRect.Top) div 2);
+      Canvas.MoveTo(AClipRect.Left + 2, LTemp);
+      Canvas.LineTo(AClipRect.Right - 2, LTemp);
 
-    if LFoldRange.Collapsed then
-    begin
-      { + }
-      LTemp := (AClipRect.Right - AClipRect.Left) div 2;
-      Canvas.MoveTo(AClipRect.Left + LTemp, AClipRect.Top + 2);
-      Canvas.LineTo(AClipRect.Left + LTemp, AClipRect.Bottom - 2);
+      if LFoldRange.Collapsed then
+      begin
+        { + }
+        LTemp := (AClipRect.Right - AClipRect.Left) div 2;
+        Canvas.MoveTo(AClipRect.Left + LTemp, AClipRect.Top + 2);
+        Canvas.LineTo(AClipRect.Left + LTemp, AClipRect.Bottom - 2);
+      end;
     end;
   end;
 end;
