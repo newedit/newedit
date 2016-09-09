@@ -6965,7 +6965,6 @@ var
       LScrollInfo.nTrackPos := 0;
       if LVerticalMaxScroll <= BCEDITOR_MAX_SCROLL_RANGE then
       begin
-
         LScrollInfo.nMax := Max(1, LVerticalMaxScroll);
         LScrollInfo.nPage := VisibleLines;
         LScrollInfo.nPos := TopLine;
@@ -6994,7 +6993,7 @@ var
   begin
     if (FScroll.Bars in [ssBoth, ssHorizontal]) and not FWordWrap.Enabled then
     begin
-      LHorizontalScrollMax := GetHorizontalScrollMax;
+      LHorizontalScrollMax := GetHorizontalScrollMax - 1;
 
       LScrollInfo.nMin := 0;
       LScrollInfo.nTrackPos := 0;
@@ -11604,6 +11603,9 @@ begin
 end;
 
 procedure TBCBaseEditor.SetDisplayCaretPosition(AValue: TBCEditorDisplayPosition);
+var
+  LLength: Integer;
+  LTextPosition: TBCEditorTextPosition;
 begin
   if AValue.Row < 1 then
     AValue.Row := 1
@@ -11615,7 +11617,15 @@ begin
     AValue.Column := 1
   else
   if not (soPastEndOfLine in FScroll.Options) then
-    AValue.Column := Length(Lines[GetDisplayTextLineNumber(AValue.Row) - 1]) + 1;
+  begin
+    LLength := Lines[GetDisplayTextLineNumber(AValue.Row) - 1].Length;
+    LTextPosition := DisplayToTextPosition(AValue);
+    if LTextPosition.Char > LLength then
+    begin
+      LTextPosition.Char := LLength + 1;
+      AValue.Column := TextToDisplayPosition(LTextPosition).Column;
+    end;
+  end;
 
   IncPaintLock;
   try
