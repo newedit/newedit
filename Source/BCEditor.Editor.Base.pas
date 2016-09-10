@@ -1639,7 +1639,6 @@ var
       FHighlighter.ResetCurrentRange
     else
       FHighlighter.SetCurrentRange(FLines.Ranges[LDisplayPosition.Row - 2]);
-    { Get line with tabs converted to spaces like PaintTextLines does. }
     LCurrentLineText := FLines[LDisplayPosition.Row - 1];
     FHighlighter.SetCurrentLine(LCurrentLineText);
   end;
@@ -1735,7 +1734,7 @@ begin
         Inc(LDisplayPosition.Row);
         if LDisplayPosition.Row > FLines.Count then
           Break;
-        SetCurrentLine(FLines.ExpandedStrings[LDisplayPosition.Row - 1]);
+        SetCurrentLine(FLines[LDisplayPosition.Row - 1]);
       end;
     end
     else
@@ -2113,7 +2112,7 @@ var
       FHighlighter.ResetCurrentRange
     else
       FHighlighter.SetCurrentRange(FLines.Ranges[j - 2]);
-    FHighlighter.SetCurrentLine(FLines.ExpandedStrings[j - 1]);
+    FHighlighter.SetCurrentLine(FLines[j - 1]);
     LWidth := 0;
     LLength := 0;
     LCharsBefore := 0;
@@ -4241,6 +4240,20 @@ var
   LLength: Integer;
   LSpaceCount1: Integer;
   LSpaceBuffer: string;
+
+  function GetSpaceBuffer(const ASpaceCount: Integer): string;
+  begin
+    Result := '';
+    if eoAutoIndent in FOptions then
+      if toTabsToSpaces in FTabs.Options then
+        Result := StringOfChar(BCEDITOR_SPACE_CHAR, ASpaceCount)
+      else
+      begin
+        Result := StringOfChar(BCEDITOR_TAB_CHAR, ASpaceCount div FTabs.Width);
+        Result := LSpaceBuffer + StringOfChar(BCEDITOR_SPACE_CHAR, ASpaceCount mod FTabs.Width);
+      end;
+  end;
+
 begin
   LTextCaretPosition := TextCaretPosition;
 
@@ -4265,15 +4278,7 @@ begin
         begin
           { A line break after the first char and before the end of the line. }
           LSpaceCount1 := LeftSpaceCount(LLineText, True);
-          LSpaceBuffer := '';
-          if eoAutoIndent in FOptions then
-            if toTabsToSpaces in FTabs.Options then
-              LSpaceBuffer := StringOfChar(BCEDITOR_SPACE_CHAR, LSpaceCount1)
-            else
-            begin
-              LSpaceBuffer := StringOfChar(BCEDITOR_TAB_CHAR, LSpaceCount1 div FTabs.Width);
-              LSpaceBuffer := LSpaceBuffer + StringOfChar(BCEDITOR_SPACE_CHAR, LSpaceCount1 mod FTabs.Width);
-            end;
+          LSpaceBuffer := GetSpaceBuffer(LSpaceCount1);
 
           FLines[LTextCaretPosition.Line] := Copy(LLineText, 1, LTextCaretPosition.Char - 1);
 
@@ -4322,7 +4327,9 @@ begin
         if eoAutoIndent in FOptions then
           LSpaceCount1 := LeftSpaceCount(LLineText, True);
 
-        FLines.Insert(LTextCaretPosition.Line + 1, '');
+        LSpaceBuffer := GetSpaceBuffer(LSpaceCount1);
+
+        FLines.Insert(LTextCaretPosition.Line + 1, LSpaceBuffer);
 
         if LTextCaretPosition.Char > LLength + 1 then
           LTextCaretPosition.Char := LLength + 1;
@@ -8090,8 +8097,7 @@ begin
     FOnCommandProcessed(Self, ACommand, AChar, AData);
 
   if FCodeFolding.Visible then
-    if ((ACommand = ecChar) or (ACommand = ecLineBreak)) and IsPreviousFoldTokenEndPreviousLine(LTextCaretPosition.Line)
-    then
+    if ((ACommand = ecChar) or (ACommand = ecLineBreak)) and IsPreviousFoldTokenEndPreviousLine(LTextCaretPosition.Line) then
       RescanCodeFoldingRanges;
 end;
 
