@@ -1047,9 +1047,10 @@ var
   {$ENDIF USE_NAME_STRING_LITERAL}
 
 {$IFDEF MSWINDOWS}
+{ TODO: This does not work in Windows 2000
 function TzSpecificLocalTimeToSystemTime(lpTimeZoneInformation: PTimeZoneInformation;
   var lpLocalTime, lpUniversalTime: TSystemTime): BOOL; stdcall;
-  external kernel32 name 'TzSpecificLocalTimeToSystemTime';
+  external kernel32 name 'TzSpecificLocalTimeToSystemTime';    }
 {$ENDIF MSWINDOWS}
 
 {$IFDEF USE_NAME_STRING_LITERAL}
@@ -1244,14 +1245,15 @@ end;
 function DateTimeToISO8601(Value: TDateTime): string;
 {$IFDEF MSWINDOWS}
 var
-  LocalTime, UtcTime: TSystemTime;
-  Offset: TDateTime;
-  Hour, Min, Sec, MSec: Word;
+  LocalTime{, UtcTime}: TSystemTime;
+//  Offset: TDateTime;
+//  Hour, Min, Sec, MSec: Word;
 begin
   DateTimeToSystemTime(Value, LocalTime);
   Result := Format('%.4d-%.2d-%.2dT%.2d:%.2d:%.2d.%d',
     [LocalTime.wYear, LocalTime.wMonth, LocalTime.wDay,
      LocalTime.wHour, LocalTime.wMinute, LocalTime.wSecond, LocalTime.wMilliseconds]);
+  {TODO: This does not work in Windows 2000
   if TzSpecificLocalTimeToSystemTime(nil, LocalTime, UtcTime) then
   begin
     Offset := Value - SystemTimeToDateTime(UtcTime);
@@ -1262,7 +1264,7 @@ begin
       Result := Format('%s+%.2d:%.2d', [Result, Hour, Min])
     else
       Result := Result + 'Z';
-  end;
+  end;}
 end;
 {$ELSE}
 var
@@ -1291,8 +1293,9 @@ begin
   if UseUtcTime then
   begin
     DateTimeToSystemTime(Value, LocalTime);
+    {TODO: This does not work in Windows 2000
     if not TzSpecificLocalTimeToSystemTime(nil, LocalTime, UtcTime) then
-      UtcTime := LocalTime;
+      UtcTime := LocalTime;}
     Result := Format('%.4d-%.2d-%.2dT%.2d:%.2d:%.2d.%dZ',
       [UtcTime.wYear, UtcTime.wMonth, UtcTime.wDay,
        UtcTime.wHour, UtcTime.wMinute, UtcTime.wSecond, UtcTime.wMilliseconds]);
