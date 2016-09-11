@@ -14196,7 +14196,12 @@ begin
   LLastTextPosition.Char := 1;
   LLastTextPosition.Line := FLines.Count - 1;
   if LLastTextPosition.Line >= 0 then
-    Inc(LLastTextPosition.Char, Length(Lines[LLastTextPosition.Line]))
+  begin
+    if FSelection.Mode = smNormal then
+      Inc(LLastTextPosition.Char, Lines[LLastTextPosition.Line].Length)
+    else
+      Inc(LLastTextPosition.Char, FLines.GetLengthOfLongestLine);
+  end
   else
     LLastTextPosition.Line := 0;
   SetCaretAndSelection(LOldCaretPosition, GetTextPosition(1, 0), LLastTextPosition);
