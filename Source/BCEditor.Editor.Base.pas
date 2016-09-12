@@ -10595,7 +10595,6 @@ var
             if LTokenHelper.Text.Length - LText.Length + LTokenHelper.CharsBefore + ATokenLength < LTextPosition.Char then
               Break;
 
-
             if LAnySelection then
               if IsTextPositionInSelection(LTextPosition) then
               begin
@@ -10617,14 +10616,19 @@ var
               LToken := Copy(LText, 1, LCharCount);
               Inc(LSearchRect.Left, GetTokenWidth(LToken, LCharCount, LPaintedColumn));
               LToken := Copy(LText, LCharCount + 1, LText.Length);
-            end;
-
-            LToken := Copy(LToken, 1, LSearchTextLength);
+            end
+            else
+              LCharCount := LTokenHelper.Text.Length - LText.Length;
+            LToken := Copy(LToken, 1, Min(LSearchTextLength, LTextPosition.Char + LSearchTextLength -
+              LTokenHelper.CharsBefore - LCharCount - 1));
             LSearchRect.Right := LSearchRect.Left + GetTokenWidth(LToken, LToken.Length, LPaintedColumn);
 
             Winapi.Windows.ExtTextOut(Canvas.Handle, LSearchRect.Left, LSearchRect.Top, ETO_OPAQUE or ETO_CLIPPED,
               @LSearchRect, PChar(LToken), LToken.Length, nil);
 
+            if LTextPosition.Char + LSearchTextLength > LTokenHelper.CharsBefore + LText.Length + 1 then
+              Break
+            else
             if LTextPosition.Char + LSearchTextLength - 1 <= LCurrentLineLength then
             begin
               if not NextItem then
