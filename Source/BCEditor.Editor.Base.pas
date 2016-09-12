@@ -10588,28 +10588,30 @@ var
           FPaintHelper.SetBackgroundColor(FSearch.Highlighter.Colors.Background);
 
           LTextPosition := PBCEditorTextPosition(FSearch.Lines.Items[LCurrentSearchIndex])^;
-          LSearchTextLength := Length(FSearch.SearchText);
+          LSearchTextLength := FSearch.SearchText.Length;
 
           while LCurrentLine - 1 = LTextPosition.Line do
           begin
-            if LTokenHelper.CharsBefore + LTokenLength < LTextPosition.Char then
+            if LTokenHelper.Text.Length - LText.Length + LTokenHelper.CharsBefore + ATokenLength < LTextPosition.Char then
               Break;
 
-            if (FSelectionBeginPosition.Line = LTextPosition.Line) and
-              (FSelectionBeginPosition.Char >= LTextPosition.Char) and
-              (FSelectionBeginPosition.Char <= LTextPosition.Char + LSearchTextLength) or
-              (FSelectionEndPosition.Line = LTextPosition.Line) and (FSelectionEndPosition.Char >= LTextPosition.Char)
-              and (FSelectionEndPosition.Char <= LTextPosition.Char + LSearchTextLength) then
-            begin
-              if not NextItem then
-                Break;
-              Continue;
-            end;
+
+            if LAnySelection then
+              if IsTextPositionInSelection(LTextPosition) then
+              begin
+                if not NextItem then
+                  Break;
+                Continue;
+              end;
 
             LToken := LText;
             LSearchRect := LTextRect;
 
             LCharCount := LTextPosition.Char - LTokenHelper.CharsBefore - 1;
+
+            if LAnySelection then
+              Dec(LCharCount, LTokenHelper.Text.Length - LText.Length);
+
             if LCharCount > 0 then
             begin
               LToken := Copy(LText, 1, LCharCount);
@@ -10617,12 +10619,8 @@ var
               LToken := Copy(LText, LCharCount + 1, LText.Length);
             end;
 
-            LCharCount := LTokenHelper.CharsBefore + LText.Length + 1 - LTextPosition.Char - LSearchTextLength;
-            if LCharCount > 0 then
-            begin
-              LToken := LToken.Remove(LToken.Length - LCharCount);
-              LSearchRect.Right := LSearchRect.Left + GetTokenWidth(LToken, LToken.Length, LPaintedColumn);
-            end;
+            LToken := Copy(LToken, 1, LSearchTextLength);
+            LSearchRect.Right := LSearchRect.Left + GetTokenWidth(LToken, LToken.Length, LPaintedColumn);
 
             Winapi.Windows.ExtTextOut(Canvas.Handle, LSearchRect.Left, LSearchRect.Top, ETO_OPAQUE or ETO_CLIPPED,
               @LSearchRect, PChar(LToken), LToken.Length, nil);
