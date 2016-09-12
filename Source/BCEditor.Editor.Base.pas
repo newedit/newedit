@@ -4250,7 +4250,7 @@ var
       else
       begin
         Result := StringOfChar(BCEDITOR_TAB_CHAR, ASpaceCount div FTabs.Width);
-        Result := LSpaceBuffer + StringOfChar(BCEDITOR_SPACE_CHAR, ASpaceCount mod FTabs.Width);
+        Result := Result + StringOfChar(BCEDITOR_SPACE_CHAR, ASpaceCount mod FTabs.Width);
       end;
   end;
 
