@@ -10626,7 +10626,7 @@ var
             Winapi.Windows.ExtTextOut(Canvas.Handle, LSearchRect.Left, LSearchRect.Top, ETO_OPAQUE or ETO_CLIPPED,
               @LSearchRect, PChar(LToken), LToken.Length, nil);
 
-            if LTextPosition.Char + LSearchTextLength > LTokenHelper.CharsBefore + LText.Length + 1 then
+            if LSearchTextLength > LText.Length then
               Break
             else
             if LTextPosition.Char + LSearchTextLength - 1 <= LCurrentLineLength then
