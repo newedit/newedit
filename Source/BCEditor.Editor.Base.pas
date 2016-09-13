@@ -208,7 +208,6 @@ type
     function GetCanUndo: Boolean;
     function GetCharAtCursor: Char;
     function GetCharWidth: Integer;
-    function GetClipboardText: string;
     function GetCommentAtTextPosition(const ATextPosition: TBCEditorTextPosition): string;
     function GetDisplayCaretPosition: TBCEditorDisplayPosition;
     function GetDisplayLineNumber(const ADisplayLineNumber: Integer): Integer;
@@ -251,7 +250,6 @@ type
     function LeftSpaceCount(const ALine: string; AWantTabs: Boolean = False): Integer;
     function NextWordPosition: TBCEditorTextPosition; overload;
     function NextWordPosition(const ATextPosition: TBCEditorTextPosition): TBCEditorTextPosition; overload;
-    function OpenClipboard: Boolean;
     function PixelsToTextPosition(X, Y: Integer): TBCEditorTextPosition;
     function PreviousWordPosition: TBCEditorTextPosition; overload;
     function PreviousWordPosition(const ATextPosition: TBCEditorTextPosition; APreviousLine: Boolean = False): TBCEditorTextPosition; overload;
@@ -350,7 +348,6 @@ type
     procedure SetBorderStyle(AValue: TBorderStyle);
     procedure SetDisplayCaretX(AValue: Integer);
     procedure SetDisplayCaretY(AValue: Integer);
-    procedure SetClipboardText(const AText: string);
     procedure SetCodeFolding(AValue: TBCEditorCodeFolding);
     procedure SetDefaultKeyCommands;
     procedure SetForegroundColor(const AValue: TColor);
@@ -1285,70 +1282,6 @@ end;
 function TBCBaseEditor.GetCharWidth: Integer;
 begin
   Result := FPaintHelper.CharWidth;
-end;
-
-function TBCBaseEditor.GetClipboardText: string;
-var
-  LGlobalMem: HGlobal;
-  LLocaleID: LCID;
-  LBytePointer: PByte;
-
-  function AnsiStringToString(const AValue: AnsiString; ACodePage: Word): string;
-  var
-    LInputLength, LOutputLength: Integer;
-  begin
-    LInputLength := Length(AValue);
-    LOutputLength := MultiByteToWideChar(ACodePage, 0, PAnsiChar(AValue), LInputLength, nil, 0);
-    SetLength(Result, LOutputLength);
-    MultiByteToWideChar(ACodePage, 0, PAnsiChar(AValue), LInputLength, PChar(Result), LOutputLength);
-  end;
-
-  function CodePageFromLocale(ALanguage: LCID): Integer;
-  var
-    LBuffer: array [0 .. 6] of Char;
-  begin
-    GetLocaleInfo(ALanguage, LOCALE_IDEFAULTANSICODEPAGE, LBuffer, 6);
-    Result := StrToIntDef(LBuffer, GetACP);
-  end;
-
-begin
-  Result := '';
-  if not OpenClipboard then
-    Exit;
-  try
-    if Clipboard.HasFormat(CF_UNICODETEXT) then
-    begin
-      LGlobalMem := Clipboard.GetAsHandle(CF_UNICODETEXT);
-      if LGlobalMem <> 0 then
-        try
-          Result := PChar(GlobalLock(LGlobalMem));
-        finally
-          GlobalUnlock(LGlobalMem);
-        end;
-    end
-    else
-    begin
-      LLocaleID := 0;
-      LGlobalMem := Clipboard.GetAsHandle(CF_LOCALE);
-      if LGlobalMem <> 0 then
-        try
-          LLocaleID := PInteger(GlobalLock(LGlobalMem))^;
-        finally
-          GlobalUnlock(LGlobalMem);
-        end;
-
-      LGlobalMem := Clipboard.GetAsHandle(CF_TEXT);
-      if LGlobalMem <> 0 then
-        try
-          LBytePointer := GlobalLock(LGlobalMem);
-          Result := AnsiStringToString(PAnsiChar(LBytePointer), CodePageFromLocale(LLocaleID));
-        finally
-          GlobalUnlock(LGlobalMem);
-        end;
-    end;
-  finally
-    Clipboard.Close;
-  end;
 end;
 
 function TBCBaseEditor.GetDisplayLineNumber(const ADisplayLineNumber: Integer): Integer;
@@ -2889,29 +2822,6 @@ begin
     if FWordWrapLineLengths[LDisplayPosition.Row] <> 0 then
       LDisplayPosition.Column := MinMax(LDisplayPosition.Column, 1, FWordWrapLineLengths[LDisplayPosition.Row] + 1);
   Result := DisplayToTextPosition(LDisplayPosition);
-end;
-
-function TBCBaseEditor.OpenClipboard: Boolean;
-var
-  LRetryCount: Integer;
-  LDelayStepMs: Integer;
-begin
-  LDelayStepMs := BCEDITOR_CLIPBOARD_DELAY_STEP_MS;
-  Result := False;
-  for LRetryCount := 1 to BCEDITOR_CLIPBOARD_MAX_RETRIES do
-  try
-    Clipboard.Open;
-    Exit(True);
-  except
-    on Exception do
-    if LRetryCount = BCEDITOR_CLIPBOARD_MAX_RETRIES then
-      raise
-    else
-    begin
-      Sleep(LDelayStepMs);
-      Inc(LDelayStepMs, BCEDITOR_CLIPBOARD_DELAY_STEP_MS);
-    end;
-  end;
 end;
 
 function TBCBaseEditor.PreviousWordPosition: TBCEditorTextPosition;
@@ -6319,59 +6229,6 @@ begin
   LDisplayPosition.Column := DisplayCaretX;
   LDisplayPosition.Row := AValue;
   SetDisplayCaretPosition(LDisplayPosition);
-end;
-
-procedure TBCBaseEditor.SetClipboardText(const AText: string);
-var
-  LGlobalMem: HGlobal;
-  LPGlobalLock: PByte;
-  LLength: Integer;
-begin
-  if AText = '' then
-    Exit;
-  LLength := Length(AText);
-
-  if not OpenClipboard then
-    Exit;
-  try
-    Clipboard.Clear;
-    { Set ANSI text only on Win9X, WinNT automatically creates ANSI from Unicode }
-    if Win32Platform <> VER_PLATFORM_WIN32_NT then
-    begin
-      LGlobalMem := GlobalAlloc(GMEM_MOVEABLE or GMEM_DDESHARE, LLength + 1);
-      if LGlobalMem <> 0 then
-      begin
-        LPGlobalLock := GlobalLock(LGlobalMem);
-        try
-          if Assigned(LPGlobalLock) then
-          begin
-            Move(PAnsiChar(AnsiString(AText))^, LPGlobalLock^, LLength + 1);
-            Clipboard.SetAsHandle(CF_TEXT, LGlobalMem);
-          end;
-        finally
-          GlobalUnlock(LGlobalMem);
-        end;
-      end;
-    end;
-    { Set unicode text, this also works on Win9X, even if the clipboard-viewer
-      can't show it, Word 2000+ can paste it including the unicode only characters }
-    LGlobalMem := GlobalAlloc(GMEM_MOVEABLE or GMEM_DDESHARE, (LLength + 1) * SizeOf(Char));
-    if LGlobalMem <> 0 then
-    begin
-      LPGlobalLock := GlobalLock(LGlobalMem);
-      try
-        if Assigned(LPGlobalLock) then
-        begin
-          Move(PChar(AText)^, LPGlobalLock^, (LLength + 1) * SizeOf(Char));
-          Clipboard.SetAsHandle(CF_UNICODETEXT, LGlobalMem);
-        end;
-      finally
-        GlobalUnlock(LGlobalMem);
-      end;
-    end;
-  finally
-    Clipboard.Close;
-  end;
 end;
 
 procedure TBCBaseEditor.SetCodeFolding(AValue: TBCEditorCodeFolding);
@@ -13959,7 +13816,15 @@ begin
   begin
     SetLength(LBuffer, AStream.Size);
     AStream.ReadBuffer(Pointer(LBuffer)^, Length(LBuffer));
-    TEncoding.GetBufferEncoding(LBuffer, FEncoding);
+    if (TEncoding.GetBufferEncoding(LBuffer, FEncoding) = 0) and (Length(LBuffer) > $4000) then
+      if IsUTF8Buffer(LBuffer, LWithBOM) then
+      begin
+        if LWithBOM then
+          FEncoding := TEncoding.UTF8
+        else
+          FEncoding := BCEditor.Encoding.TEncoding.UTF8WithoutBOM;
+      end;
+    SetLength(LBuffer, 0);
   end;
   AStream.Position := 0;
   FLines.LoadFromStream(AStream, FEncoding);
