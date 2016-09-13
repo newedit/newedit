@@ -4858,6 +4858,7 @@ var
   LLine: string;
   LTextPtr, LTextBeginPtr, LKeyWordPtr, LBookmarkTextPtr: PChar;
   LPTextPosition: PBCEditorTextPosition;
+  LTextPosition: TBCEditorTextPosition;
 
   function AreCharsSame(APChar1, APChar2: PChar): Boolean;
   begin
@@ -4875,10 +4876,12 @@ var
 begin
   if (soSelectedOnly in FSearch.Options) and SelectionAvailable then
   begin
-    LFirstLine := FSelectionBeginPosition.Line;
-    LFirstChar := FSelectionBeginPosition.Char;
-    LLastLine := FSelectionEndPosition.Line;
-    LLastChar := FSelectionEndPosition.Char;
+    LTextPosition := SelectionBeginPosition;
+    LFirstLine := LTextPosition.Line;
+    LFirstChar := LTextPosition.Char;
+    LTextPosition := SelectionEndPosition;
+    LLastLine := LTextPosition.Line;
+    LLastChar := LTextPosition.Char;
   end
   else
   begin
