@@ -3029,7 +3029,7 @@ var
     begin
       if ((LCurrentTextPosition.Line = LStartTextPosition.Line) and (not AChanged and (AFirst < LStartTextPosition.Char)
         or AChanged and (AFirst < LStartTextPosition.Char))) or
-        ((LCurrentTextPosition.Line = LEndTextPosition.Line) and (not AChanged and (ALast >= LEndTextPosition.Char) or
+        ((LCurrentTextPosition.Line = LEndTextPosition.Line) and (not AChanged and (ALast > LEndTextPosition.Char) or
         AChanged and (ALast > LEndTextPosition.Char))) then
         Result := False;
     end
@@ -3065,7 +3065,7 @@ begin
     LStartTextPosition.Char := 1;
     LStartTextPosition.Line := 0;
     LEndTextPosition.Line := FLines.Count - 1;
-    LEndTextPosition.Char := FLines.StringLength(LEndTextPosition.Line);
+    LEndTextPosition.Char := FLines.StringLength(LEndTextPosition.Line) + 1;
   end;
 
   if LIsFromCursor then
