@@ -128,19 +128,23 @@ inherited MainForm: TMainForm
       LeftMargin.Width = 55
       Lines.Strings = (
         '')
+      LineSpacing = 0
       MatchingPair.Enabled = True
       Minimap.Font.Charset = DEFAULT_CHARSET
       Minimap.Font.Color = clWindowText
       Minimap.Font.Height = -4
       Minimap.Font.Name = 'Courier New'
       Minimap.Font.Style = []
+      Minimap.Options = [moShowBookmarks]
       Minimap.Width = 140
       OnCaretChanged = EditorCaretChanged
       ParentCtl3D = False
       RightMargin.Position = 80
       RightMargin.Visible = True
+      Scroll.Shadow.Visible = True
       Search.Enabled = False
       SpecialChars.EndOfLine.Visible = True
+      SpecialChars.Selection.Visible = True
       SpecialChars.Style = scsDot
       SyncEdit.ShortCut = 24650
       TabOrder = 0
@@ -176,8 +180,7 @@ inherited MainForm: TMainForm
         FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
         FF00}
       WordWrap.Indicator.MaskColor = clFuchsia
-      WordWrap.Position = 20
-      WordWrap.Style = wwsSpecified
+      WordWrap.Style = wwsPageWidth
     end
     object PanelSearch: TBCPanel
       AlignWithMargins = True
@@ -190,6 +193,7 @@ inherited MainForm: TMainForm
       Align = alBottom
       BevelOuter = bvNone
       TabOrder = 1
+      Visible = False
       SkinData.SkinSection = 'CHECKBOX'
       object BCSplitter1: TBCSplitter
         Left = 200
@@ -367,20 +371,12 @@ inherited MainForm: TMainForm
         end
       end
     end
-    object Button1: TButton
-      Left = 556
-      Top = 240
-      Width = 75
-      Height = 25
-      Caption = 'Button1'
-      TabOrder = 2
-      OnClick = Button1Click
-    end
   end
   inherited SkinManager: TBCSkinManager
     Effects.AllowGlowing = False
     IsDefault = True
     MenuSupport.UseExtraLine = False
+    SkinInfo = 'N/A'
     ThirdParty.ThirdEdits = ' '#13#10'TBCEditorPrintPreview'#13#10
     ThirdParty.ThirdVirtualTrees = 'TVirtualDrawTree'#13#10
     Left = 166
@@ -433,7 +429,7 @@ inherited MainForm: TMainForm
         ShowHint = False
         Style = bsMenu
         Width = 101
-        OnClick = TitleBarItems2Click
+        OnClick = TitleBarItems4Click
       end
       item
         Align = tbaRight
@@ -463,7 +459,7 @@ inherited MainForm: TMainForm
         ShowHint = False
         Style = bsMenu
         Width = 68
-        OnClick = TitleBarItems4Click
+        OnClick = TitleBarItems6Click
       end
       item
         Align = tbaRight
@@ -482,8 +478,8 @@ inherited MainForm: TMainForm
     Top = 22
   end
   inherited SkinProvider: TsSkinProvider
-    Left = 250
-    Top = 30
+    Left = 248
+    Top = 26
   end
   inherited ApplicationEvents: TApplicationEvents
     OnMessage = ApplicationEventsMessage
@@ -492,8 +488,8 @@ inherited MainForm: TMainForm
   end
   inherited ActionList: TActionList
     Images = ImagesDataModule.ImageListSmall
-    Left = 178
-    Top = 92
+    Left = 164
+    Top = 88
     object ActionSearch: TAction
       Caption = 'ActionSearch'
       ShortCut = 16454
@@ -667,8 +663,8 @@ inherited MainForm: TMainForm
         Strings.Strings = (
           '.xml')
       end>
-    Left = 324
-    Top = 108
+    Left = 344
+    Top = 114
   end
   object OpenDialog: TsOpenDialog
     Left = 342

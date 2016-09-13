@@ -6,14 +6,14 @@ uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics, Vcl.Controls,
   BCCommon.Form.Base, Vcl.Forms, Vcl.Dialogs, Vcl.ExtCtrls, Vcl.ComCtrls, BCEditor.Editor, BCEditor.Highlighter,
   BCEditor.Editor.Base, Vcl.Buttons, Vcl.AppEvnts, System.Actions, Vcl.ActnList, BCEditor.Print, BCCommon.Images,
-  BCComponent.SkinManager, BCControl.Panel, BCControl.StatusBar, BCComponent.TitleBar,
-  Vcl.Menus, ToolCtrlsEh, DBGridEhToolCtrls, EhLibVCL, DBAxisGridsEh, ObjectInspectorEh, BCControl.Splitter, GridsEh,
-  sPanel, BCComponent.MultiStringHolder, sSkinManager, sStatusBar, sSplitter, acTitleBar, sSkinProvider, sDialogs,
-  Vcl.StdCtrls, System.Diagnostics, BCCommon.Dialog.Popup.Highlighter, BCCommon.Dialog.Popup.Highlighter.Color,
-  sSpeedButton, BCControl.SpeedButton, sComboBox, BCControl.ComboBox, sLabel;
+  BCComponent.SkinManager, BCControl.Panel, BCControl.StatusBar, BCComponent.TitleBar, Vcl.Menus, ObjectInspectorEh,
+  BCControl.Splitter, sPanel, BCComponent.MultiStringHolder, sSkinManager, sStatusBar, sSplitter, acTitleBar,
+  sSkinProvider, sDialogs, Vcl.StdCtrls, System.Diagnostics, BCCommon.Dialog.Popup.Highlighter,
+  BCCommon.Dialog.Popup.Highlighter.Color, sSpeedButton, BCControl.SpeedButton, sComboBox, BCControl.ComboBox, sLabel,
+  EhLibVCL, GridsEh, BCEditor.MacroRecorder;
 
 const
-  BCEDITORDEMO_CAPTION = 'TBCEditor Control Demo v1.6.0';
+  BCEDITORDEMO_CAPTION = 'TBCEditor Control Demo v1.7.0 beta';
   TITLE_BAR_CAPTION = 1;
   TITLE_BAR_HIGHLIGHTER = 2;
   TITLE_BAR_COLORS = 4;
@@ -53,7 +53,6 @@ type
     ActionOptions: TAction;
     ActionClose: TAction;
     LabelSearchResultCount: TsLabel;
-    Button1: TButton;
     procedure ActionFileOpenExecute(Sender: TObject);
     procedure ActionPreviewExecute(Sender: TObject);
     procedure ActionSearchExecute(Sender: TObject);
@@ -64,8 +63,6 @@ type
     procedure ActionSkinsExecute(Sender: TObject);
     procedure SelectedHighlighterClick(AHighlighterName: string);
     procedure SelectedHighlighterColorClick(AHighlighterColorName: string);
-    procedure TitleBarItems2Click(Sender: TObject);
-    procedure TitleBarItems4Click(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure ActionFindNextExecute(Sender: TObject);
     procedure ActionFindPreviousExecute(Sender: TObject);
@@ -73,7 +70,8 @@ type
     procedure ActionCloseExecute(Sender: TObject);
     procedure ComboBoxSearchTextChange(Sender: TObject);
     procedure ComboBoxSearchTextKeyPress(Sender: TObject; var Key: Char);
-    procedure Button1Click(Sender: TObject);
+    procedure TitleBarItems6Click(Sender: TObject);
+    procedure TitleBarItems4Click(Sender: TObject);
   private
     FStopWatch: TStopWatch;
     FPopupHighlighterDialog: TPopupHighlighterDialog;
@@ -82,11 +80,13 @@ type
     FHighlighterColorStrings: TStringList;
     function GetTitleBarItemLeftBottom(AIndex: Integer): TPoint;
     procedure ClearText;
-    procedure InitializeEditorPrint(EditorPrint: TBCEditorPrint);
+    procedure DoSearchTextChange;
+    procedure InitializeEditorPrint(AEditorPrint: TBCEditorPrint);
     procedure LockFormPaint;
     procedure PrintPreview;
     procedure SetMatchesFound;
     procedure UnlockFormPaint;
+    procedure WMEnterSizeMove(var AMessage: TMessage); message WM_ENTERSIZEMOVE;
   end;
 
 var
@@ -111,7 +111,6 @@ var
   InfoText: string;
   KeyState: TKeyboardState;
 begin
-  PanelSearch.Visible := Editor.Search.Enabled;
   if PanelSearch.Visible then
     Editor.Margins.Bottom := 0
   else
@@ -131,21 +130,18 @@ begin
       StatusBar.Panels[1].Text := 'Overwrite';
 end;
 
-procedure TMainForm.Button1Click(Sender: TObject);
+procedure TMainForm.DoSearchTextChange;
 begin
-  inherited;
-  Editor.Lines.add('test'#13#10'test');
+   if Assigned(Editor) then
+    Editor.Search.SearchText := ComboBoxSearchText.Text;
+  SetMatchesFound;
 end;
 
 procedure TMainForm.ComboBoxSearchTextChange(Sender: TObject);
 begin
   inherited;
   if soSearchOnTyping in Editor.Search.Options then
-  begin
-    if Assigned(Editor) then
-      Editor.Search.SearchText := ComboBoxSearchText.Text;
-    SetMatchesFound;
-  end;
+    DoSearchTextChange;
 end;
 
 procedure TMainForm.ComboBoxSearchTextKeyPress(Sender: TObject; var Key: Char);
@@ -159,6 +155,8 @@ begin
     if ComboBoxSearchText.Items.IndexOf(ComboBoxSearchText.Text) = -1 then
       ComboBoxSearchText.Items.Add(ComboBoxSearchText.Text);
     Key := #0;
+
+    DoSearchTextChange;
   end;
 end;
 
@@ -174,6 +172,70 @@ begin
     s := Format('%d match%s found', [Editor.SearchResultCount, s]);
 
   LabelSearchResultCount.Caption := s;
+end;
+
+procedure TMainForm.TitleBarItems4Click(Sender: TObject);
+var
+  LPoint: TPoint;
+begin
+  inherited;
+  if Assigned(FPopupHighlighterDialog) then
+    Exit;
+
+  FPopupHighlighterDialog := TPopupHighlighterDialog.Create(Self);
+  try
+    FPopupHighlighterDialog.PopupParent := Self;
+    FPopupHighlighterDialog.OnSelectHighlighter := SelectedHighlighterClick;
+
+    LPoint := GetTitleBarItemLeftBottom(TITLE_BAR_HIGHLIGHTER);
+
+    FPopupHighlighterDialog.Left := LPoint.X;
+    FPopupHighlighterDialog.Top := LPoint.Y;
+
+    LockFormPaint;
+
+    FPopupHighlighterDialog.Execute(FHighlighterStrings, TitleBar.Items[TITLE_BAR_HIGHLIGHTER].Caption);
+
+    UnlockFormPaint;
+
+    while Assigned(FPopupHighlighterDialog) and FPopupHighlighterDialog.Visible do
+      Application.HandleMessage;
+  finally
+    FPopupHighlighterDialog.Free;
+    FPopupHighlighterDialog := nil;
+  end;
+end;
+
+procedure TMainForm.TitleBarItems6Click(Sender: TObject);
+var
+  LPoint: TPoint;
+begin
+  inherited;
+  if Assigned(FPopupHighlighterColorDialog) then
+    Exit;
+
+  FPopupHighlighterColorDialog := TPopupHighlighterColorDialog.Create(Self);
+  try
+    FPopupHighlighterColorDialog.PopupParent := Self;
+    FPopupHighlighterColorDialog.OnSelectHighlighterColor := SelectedHighlighterColorClick;
+
+    LPoint := GetTitleBarItemLeftBottom(TITLE_BAR_COLORS);
+
+    FPopupHighlighterColorDialog.Left := LPoint.X;
+    FPopupHighlighterColorDialog.Top := LPoint.Y;
+
+    LockFormPaint;
+
+    FPopupHighlighterColorDialog.Execute(FHighlighterColorStrings, TitleBar.Items[TITLE_BAR_COLORS].Caption);
+
+    UnlockFormPaint;
+
+    while Assigned(FPopupHighlighterColorDialog) and FPopupHighlighterColorDialog.Visible do
+      Application.HandleMessage;
+  finally
+    FPopupHighlighterColorDialog.Free;
+    FPopupHighlighterColorDialog := nil;
+  end;
 end;
 
 procedure TMainForm.ClearText;
@@ -194,7 +256,7 @@ begin
     StatusBar.Panels[0].Text := InfoText;
 end;
 
-procedure TMainForm.InitializeEditorPrint(EditorPrint: TBCEditorPrint);
+procedure TMainForm.InitializeEditorPrint(AEditorPrint: TBCEditorPrint);
 var
   Alignment: TAlignment;
 
@@ -202,7 +264,7 @@ var
   begin
     case Option of
       0, 1:
-        with EditorPrint.Footer do
+        with AEditorPrint.Footer do
         begin
           case Option of
             0:
@@ -213,7 +275,7 @@ var
           Add(Value, nil, Alignment, 1);
         end;
       2, 3:
-        with EditorPrint.Header do
+        with AEditorPrint.Header do
         begin
           case Option of
             2:
@@ -227,37 +289,43 @@ var
   end;
 
 begin
-  EditorPrint.Header.Clear;
-  EditorPrint.Footer.Clear;
+  AEditorPrint.Header.Clear;
+  AEditorPrint.Footer.Clear;
 
   SetHeaderFooter(0, Format('Printed by', [Application.Title]));
   SetHeaderFooter(1, 'Page: $PAGENUM$ of $PAGECOUNT$');
   SetHeaderFooter(2, Editor.DocumentName);
   SetHeaderFooter(3, '$DATE$ $TIME$');
 
-  EditorPrint.Header.FrameTypes := [ftLine];
-  EditorPrint.Footer.FrameTypes := [ftLine];
-  EditorPrint.LineNumbersInMargin := True;
-  EditorPrint.LineNumbers := True;
-  EditorPrint.Wrap := False;
-  EditorPrint.Colors := True;
+  AEditorPrint.Header.FrameTypes := [ftLine];
+  AEditorPrint.Footer.FrameTypes := [ftLine];
+  AEditorPrint.LineNumbersInMargin := True;
+  AEditorPrint.LineNumbers := True;
+  AEditorPrint.Wrap := False;
+  AEditorPrint.Colors := True;
 
-  EditorPrint.Editor := Editor;
-  EditorPrint.Title := Editor.DocumentName;
+  AEditorPrint.Editor := Editor;
+  AEditorPrint.Title := Editor.DocumentName;
 end;
 
 procedure TMainForm.ActionFindNextExecute(Sender: TObject);
 begin
   inherited;
   if Assigned(Editor) then
+  begin
+    DoSearchTextChange;
     Editor.FindNext;
+  end;
 end;
 
 procedure TMainForm.ActionFindPreviousExecute(Sender: TObject);
 begin
   inherited;
   if Assigned(Editor) then
+  begin
+    DoSearchTextChange;
     Editor.FindPrevious;
+  end;
 end;
 
 procedure TMainForm.ActionOptionsExecute(Sender: TObject);
@@ -284,8 +352,7 @@ end;
 procedure TMainForm.ActionCloseExecute(Sender: TObject);
 begin
   inherited;
-  if Assigned(Editor) then
-    Editor.Search.Enabled := False;
+  PanelSearch.Visible := False;
 end;
 
 procedure TMainForm.ActionFileOpenExecute(Sender: TObject);
@@ -355,71 +422,10 @@ begin
   end;
 end;
 
-procedure TMainForm.TitleBarItems2Click(Sender: TObject);
-var
-  LPoint: TPoint;
-begin
-  inherited;
-
-  if Assigned(FPopupHighlighterDialog) then
-    FPopupHighlighterDialog := nil
-  else
-  begin
-    FPopupHighlighterDialog := TPopupHighlighterDialog.Create(Self);
-    FPopupHighlighterDialog.PopupParent := Self;
-    FPopupHighlighterDialog.OnSelectHighlighter := SelectedHighlighterClick;
-
-    LPoint := GetTitleBarItemLeftBottom(TITLE_BAR_HIGHLIGHTER);
-
-    FPopupHighlighterDialog.Left := LPoint.X;
-    FPopupHighlighterDialog.Top := LPoint.Y;
-
-    LockFormPaint;
-
-    FPopupHighlighterDialog.Execute(FHighlighterStrings, TitleBar.Items[TITLE_BAR_HIGHLIGHTER].Caption);
-
-    UnlockFormPaint;
-
-    while Assigned(FPopupHighlighterDialog) and FPopupHighlighterDialog.Visible do
-      Application.HandleMessage;
-    FPopupHighlighterDialog := nil;
-  end;
-end;
-
-procedure TMainForm.TitleBarItems4Click(Sender: TObject);
-var
-  LPoint: TPoint;
-begin
-  inherited;
-  if Assigned(FPopupHighlighterColorDialog) then
-    FPopupHighlighterColorDialog := nil
-  else
-  begin
-    FPopupHighlighterColorDialog := TPopupHighlighterColorDialog.Create(Self);
-    FPopupHighlighterColorDialog.PopupParent := Self;
-    FPopupHighlighterColorDialog.OnSelectHighlighterColor := SelectedHighlighterColorClick;
-
-    LPoint := GetTitleBarItemLeftBottom(TITLE_BAR_COLORS);
-
-    FPopupHighlighterColorDialog.Left := LPoint.X;
-    FPopupHighlighterColorDialog.Top := LPoint.Y;
-
-    LockFormPaint;
-
-    FPopupHighlighterColorDialog.Execute(FHighlighterColorStrings, TitleBar.Items[TITLE_BAR_COLORS].Caption);
-
-    UnlockFormPaint;
-
-    while Assigned(FPopupHighlighterColorDialog) and FPopupHighlighterColorDialog.Visible do
-      Application.HandleMessage;
-    FPopupHighlighterColorDialog := nil;
-  end;
-end;
-
 procedure TMainForm.ActionSearchExecute(Sender: TObject);
 begin
   Editor.Search.Enabled := True;
-  Application.ProcessMessages; { search frame visible }
+  PanelSearch.Visible := True;
   ComboBoxSearchText.Text := Editor.Search.SearchText;
   ComboBoxSearchText.SetFocus;
 end;
@@ -432,18 +438,11 @@ begin
     CodeFolding.Visible := Highlighter.CodeFoldingRangeCount > 0;
   end;
   TitleBar.Items[TITLE_BAR_HIGHLIGHTER].Caption := Editor.Highlighter.Name;
-
   Editor.Lines.Text := Editor.Highlighter.Info.General.Sample;
   Editor.CaretZero;
   StatusBar.Panels[3].Text := '';
   Caption := BCEDITORDEMO_CAPTION;
   ClearText;
-
-  if Assigned(FPopupHighlighterDialog) then
-  begin
-    FPopupHighlighterDialog.Visible := False;
-    FPopupHighlighterDialog := nil;
-  end;
 end;
 
 procedure TMainForm.SelectedHighlighterColorClick(AHighlighterColorName: string);
@@ -454,11 +453,6 @@ begin
     Invalidate;
   end;
   TitleBar.Items[TITLE_BAR_COLORS].Caption := Editor.Highlighter.Colors.Name;
-  if Assigned(FPopupHighlighterColorDialog) then
-  begin
-    FPopupHighlighterColorDialog.Visible := False;
-    FPopupHighlighterColorDialog := nil;
-  end;
 end;
 
 procedure TMainForm.LockFormPaint;
@@ -471,6 +465,21 @@ procedure TMainForm.UnlockFormPaint;
 begin
   SkinProvider.SkinData.EndUpdate;
   SkinProvider.Form.Perform(WM_SETREDRAW, 1, 0);
+end;
+
+procedure TMainForm.WMEnterSizeMove(var AMessage: TMessage);
+begin
+  if Assigned(FPopupHighlighterDialog) then
+  begin
+    FPopupHighlighterDialog.Free;
+    FPopupHighlighterDialog := nil;
+  end;
+  if Assigned(FPopupHighlighterColorDialog) then
+  begin
+    FPopupHighlighterColorDialog.Free;
+    FPopupHighlighterColorDialog := nil;
+  end;
+  inherited;
 end;
 
 end.
