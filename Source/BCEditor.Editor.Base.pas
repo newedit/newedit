@@ -4854,9 +4854,9 @@ end;
 
 procedure TBCBaseEditor.FindWords(const AWord: string; AList: TList; ACaseSensitive: Boolean; AWholeWordsOnly: Boolean);
 var
-  i: Integer;
+  i, LFirstLine, LFirstChar, LLastLine, LLastChar: Integer;
   LLine: string;
-  LTextPtr, LKeyWordPtr, LBookmarkTextPtr: PChar;
+  LTextPtr, LTextBeginPtr, LKeyWordPtr, LBookmarkTextPtr: PChar;
   LPTextPosition: PBCEditorTextPosition;
 
   function AreCharsSame(APChar1, APChar2: PChar): Boolean;
@@ -4873,10 +4873,27 @@ var
   end;
 
 begin
-  for i := 0 to FLines.Count - 1 do
+  if (soSelectedOnly in FSearch.Options) and SelectionAvailable then
+  begin
+    LFirstLine := FSelectionBeginPosition.Line;
+    LFirstChar := FSelectionBeginPosition.Char;
+    LLastLine := FSelectionEndPosition.Line;
+    LLastChar := FSelectionEndPosition.Char;
+  end
+  else
+  begin
+    LFirstLine := 0;
+    LFirstChar := 0;
+    LLastLine := FLines.Count - 1;
+    LLastChar := 0;
+  end;
+  for i := LFirstLine to LLastLine do
   begin
     LLine := FLines[i];
     LTextPtr := PChar(LLine);
+    LTextBeginPtr := LTextPtr;
+    if (i = LFirstLine) and (LFirstChar > 0) then
+      Inc(LTextPtr, LFirstChar);
     while LTextPtr^ <> BCEDITOR_NONE_CHAR do
     begin
       if AreCharsSame(LTextPtr, PChar(AWord)) then { If the first character is a match }
@@ -4902,7 +4919,12 @@ begin
         else
           LTextPtr := LBookmarkTextPtr; { Not found, return pointer back }
       end;
+
       Inc(LTextPtr);
+
+      if (i = LLastLine) and (LLastChar > 0) then
+        if LTextBeginPtr - LTextPtr > LLastChar then
+          Break;
     end;
   end;
 end;
@@ -10419,6 +10441,7 @@ var
     var
       LSearchRect: TRect;
       LOldColor, LOldBackgroundColor: TColor;
+      LIsTextPositionInSelection: Boolean;
 
       function NextItem: Boolean;
       begin
@@ -10453,12 +10476,16 @@ var
               Break;
 
             if LAnySelection then
-              if IsTextPositionInSelection(LTextPosition) then
+            begin
+              LIsTextPositionInSelection := IsTextPositionInSelection(LTextPosition);
+              if LIsTextPositionInSelection and not (soSelectedOnly in FSearch.Options) or
+                not LIsTextPositionInSelection and (soSelectedOnly in FSearch.Options) then
               begin
                 if not NextItem then
                   Break;
                 Continue;
               end;
+            end;
 
             LToken := LText;
             LSearchRect := LTextRect;
