@@ -2959,9 +2959,8 @@ begin
 
   LIsBackward := soBackwards in FSearch.Options;
   LIsFromCursor := not AChanged or AChanged and not (soEntireScope in FSearch.Options);
-  LSelectedOnly := soSelectedOnly in FSearch.Options;
-  if not GetSelectionAvailable then
-    LSelectedOnly := False;
+  LSelectedOnly := (soSelectedOnly in FSearch.Options) and GetSelectionAvailable;
+
   if LSelectedOnly then
   begin
     LStartTextPosition := SelectionBeginPosition;
@@ -4874,11 +4873,11 @@ var
   end;
 
 begin
-  if (soSelectedOnly in FSearch.Options) and SelectionAvailable then
+  if (soSelectedOnly in FSearch.Options) and GetSelectionAvailable then
   begin
     LTextPosition := SelectionBeginPosition;
     LFirstLine := LTextPosition.Line;
-    LFirstChar := LTextPosition.Char;
+    LFirstChar := LTextPosition.Char - 1;
     LTextPosition := SelectionEndPosition;
     LLastLine := LTextPosition.Line;
     LLastChar := LTextPosition.Char;
@@ -12240,7 +12239,8 @@ begin
   begin
     if (soBeepIfStringNotFound in FSearch.Options) and not (soWrapAround in FSearch.Options) then
       Beep;
-    SelectionBeginPosition := SelectionEndPosition;
+    if not SelectionAvailable then
+      SelectionBeginPosition := SelectionEndPosition;
     TextCaretPosition := SelectionBeginPosition;
     if GetSearchResultCount = 0 then
     begin
