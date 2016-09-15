@@ -99,6 +99,7 @@ type
     procedure LoadFromStream(AStream: TStream; AEncoding: TEncoding = nil); override;
     procedure SaveToStream(AStream: TStream; AEncoding: TEncoding = nil); override;
     procedure TrimTrailingSpaces(AIndex: Integer);
+    procedure LoadFromBuffer(var ABuffer: TBytes; AEncoding: TEncoding = nil);
     property Attributes[AIndex: Integer]: PBCEditorLineAttribute read GetAttributes write PutAttributes;
     property Columns: Boolean read FColumns write SetColumns;
     property Count: Integer read FCount;
@@ -536,6 +537,30 @@ begin
   end;
 end;
 
+procedure TBCEditorLines.LoadFromBuffer(var ABuffer: TBytes; AEncoding: TEncoding = nil);
+var
+  LSize: Integer;
+  LStrBuffer: string;
+begin
+  FStreaming := True;
+
+  BeginUpdate;
+  try
+    LSize := TEncoding.GetBufferEncoding(ABuffer, AEncoding);
+    LStrBuffer := AEncoding.GetString(ABuffer, LSize, Length(ABuffer) - LSize);
+    SetLength(ABuffer, 0);
+    SetTextStr(LStrBuffer);
+    SetLength(LStrBuffer, 0);
+  finally
+    EndUpdate;
+  end;
+
+  if Assigned(OnInserted) then
+    OnInserted(Self, 0, FCount);
+
+  FStreaming := False;
+end;
+
 procedure TBCEditorLines.LoadFromStream(AStream: TStream; AEncoding: TEncoding = nil);
 var
   LSize: Integer;
@@ -553,6 +578,7 @@ begin
       AStream.Read(LBuffer[0], LSize);
       LSize := TEncoding.GetBufferEncoding(LBuffer, AEncoding);
       LStrBuffer := AEncoding.GetString(LBuffer, LSize, Length(LBuffer) - LSize);
+      SetLength(LBuffer, 0);
     end
     else
     begin
@@ -560,6 +586,7 @@ begin
       AStream.ReadBuffer(LStrBuffer[1], LSize);
     end;
     SetTextStr(LStrBuffer);
+    SetLength(LStrBuffer, 0);
   finally
     EndUpdate;
   end;
@@ -684,8 +711,8 @@ begin
     while LPValue <= LPLastChar do
     begin
       LPStartValue := LPValue;
-      while (LPValue^ <> BCEDITOR_CARRIAGE_RETURN) and (LPValue^ <> BCEDITOR_LINEFEED) and (LPValue^ <> WideChar($2028))
-        and (LPValue <= LPLastChar) do
+      while (LPValue <= LPLastChar)
+        and (LPValue^ <> BCEDITOR_CARRIAGE_RETURN) and (LPValue^ <> BCEDITOR_LINEFEED) and (LPValue^ <> WideChar($2028)) do
         Inc(LPValue);
       if LPValue <> LPStartValue then
       begin

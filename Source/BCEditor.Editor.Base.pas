@@ -13830,11 +13830,14 @@ begin
   ClearCodeFolding;
   ClearBookmarks;
 
+  { Read file into buffer }
+  SetLength(LBuffer, AStream.Size);
+  AStream.ReadBuffer(Pointer(LBuffer)^, Length(LBuffer));
   if Assigned(AEncoding) then
     FEncoding := AEncoding
   else
   { Identify encoding }
-  if IsUTF8(AStream, LWithBOM) then
+  if IsUTF8Buffer(LBuffer, LWithBOM) then
   begin
     if LWithBOM then
       FEncoding := TEncoding.UTF8
@@ -13842,22 +13845,9 @@ begin
       FEncoding := BCEditor.Encoding.TEncoding.UTF8WithoutBOM;
   end
   else
-  { Read file into buffer }
-  begin
-    SetLength(LBuffer, AStream.Size);
-    AStream.ReadBuffer(Pointer(LBuffer)^, Length(LBuffer));
-    if (TEncoding.GetBufferEncoding(LBuffer, FEncoding) = 0) and (Length(LBuffer) > $4000) then
-      if IsUTF8Buffer(LBuffer, LWithBOM) then
-      begin
-        if LWithBOM then
-          FEncoding := TEncoding.UTF8
-        else
-          FEncoding := BCEditor.Encoding.TEncoding.UTF8WithoutBOM;
-      end;
-    SetLength(LBuffer, 0);
-  end;
-  AStream.Position := 0;
-  FLines.LoadFromStream(AStream, FEncoding);
+    TEncoding.GetBufferEncoding(LBuffer, FEncoding);
+
+  FLines.LoadFromBuffer(LBuffer, FEncoding);
   CreateLineNumbersCache(True);
 
   if FCodeFolding.Visible then
