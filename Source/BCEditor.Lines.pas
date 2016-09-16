@@ -395,7 +395,7 @@ begin
     LLength := LLineBreakLength;
     if i = FCount - 1 then
       LLength := 0;
-    Inc(Result, Get(i).Length + LLength)
+    Inc(Result, FList^[i].Value.Length + LLength)
   end;
 end;
 
@@ -412,7 +412,7 @@ begin
     LLength := Length(LLineBreak);
     if i = FCount - 1 then
       LLength := 0;
-    Inc(LSize, Length(Get(i)) + LLength)
+    Inc(LSize, FList^[i].Value.Length + LLength)
   end;
   SetString(Result, nil, LSize);
   LPValue := Pointer(Result);
