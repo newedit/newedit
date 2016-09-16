@@ -401,15 +401,16 @@ end;
 
 function TBCEditorLines.GetTextStr: string;
 var
-  i, LLength, LSize: Integer;
+  i: Integer;
+  LLineBreakLength, LLength, LSize: Integer;
   LPValue: PChar;
   LValue, LLineBreak: string;
 begin
   LSize := 0;
-  LLineBreak := SLineBreak;
+  LLineBreakLength := Length(SLineBreak);
   for i := 0 to FCount - 1 do
   begin
-    LLength := Length(LLineBreak);
+    LLength := LLineBreakLength;
     if i = FCount - 1 then
       LLength := 0;
     Inc(LSize, FList^[i].Value.Length + LLength)
@@ -427,7 +428,7 @@ begin
     end;
     if i = FCount - 1 then
       Exit;
-    LLength := Length(LLineBreak);
+    LLength := LLineBreakLength;
     if LLength <> 0 then
     begin
       System.Move(Pointer(LLineBreak)^, LPValue^, LLength * SizeOf(Char));
