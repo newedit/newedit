@@ -1981,7 +1981,10 @@ end;
 
 function TBCBaseEditor.GetText: string;
 begin
-  Result := FLines.Text;
+  if (csDestroying in ComponentState) then
+    Result := ''
+  else
+    Result := FLines.Text;
 end;
 
 function TBCBaseEditor.GetTextBetween(ATextBeginPosition: TBCEditorTextPosition; ATextEndPosition: TBCEditorTextPosition): string;
@@ -7052,10 +7055,10 @@ end;
 
 procedure TBCBaseEditor.WMGetTextLength(var AMessage: TWMGetTextLength);
 begin
-  if csDocking in ControlState then
+  if (csDocking in ControlState) or (csDestroying in ComponentState) then
     AMessage.Result := 0
   else
-    AMessage.Result := Length(Text);
+    AMessage.Result := Lines.GetTextLength;
 end;
 
 procedure TBCBaseEditor.WMHScroll(var AMessage: TWMScroll);

@@ -100,6 +100,7 @@ type
     procedure SaveToStream(AStream: TStream; AEncoding: TEncoding = nil); override;
     procedure TrimTrailingSpaces(AIndex: Integer);
     procedure LoadFromBuffer(var ABuffer: TBytes; AEncoding: TEncoding = nil);
+    function GetTextLength: Integer;
     property Attributes[AIndex: Integer]: PBCEditorLineAttribute read GetAttributes write PutAttributes;
     property Columns: Boolean read FColumns write SetColumns;
     property Count: Integer read FCount;
@@ -382,25 +383,40 @@ begin
     Result := nil;
 end;
 
+function TBCEditorLines.GetTextLength: Integer;
+var
+  i: Integer;
+  LLineBreakLength, LLength: Integer;
+begin
+  Result := 0;
+  LLineBreakLength := Length(SLineBreak);
+  for i := 0 to FCount - 1 do
+  begin
+    LLength := LLineBreakLength;
+    if i = FCount - 1 then
+      LLength := 0;
+    Inc(Result, Get(i).Length + LLength)
+  end;
+end;
+
 function TBCEditorLines.GetTextStr: string;
 var
-  i, LLength, LSize, LCount: Integer;
+  i, LLength, LSize: Integer;
   LPValue: PChar;
   LValue, LLineBreak: string;
 begin
-  LCount := GetCount;
   LSize := 0;
   LLineBreak := SLineBreak;
-  for i := 0 to LCount - 1 do
+  for i := 0 to FCount - 1 do
   begin
     LLength := Length(LLineBreak);
-    if i = LCount - 1 then
+    if i = FCount - 1 then
       LLength := 0;
     Inc(LSize, Length(Get(i)) + LLength)
   end;
   SetString(Result, nil, LSize);
   LPValue := Pointer(Result);
-  for i := 0 to LCount - 1 do
+  for i := 0 to FCount - 1 do
   begin
     LValue := Get(i);
     LLength := Length(LValue);
@@ -409,7 +425,7 @@ begin
       System.Move(Pointer(LValue)^, LPValue^, LLength * SizeOf(Char));
       Inc(LPValue, LLength);
     end;
-    if i = LCount - 1 then
+    if i = FCount - 1 then
       Exit;
     LLength := Length(LLineBreak);
     if LLength <> 0 then
