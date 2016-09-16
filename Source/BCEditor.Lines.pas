@@ -420,7 +420,7 @@ begin
   for i := 0 to FCount - 1 do
   begin
     LValue := Get(i);
-    LLength := Length(LValue);
+    LLength := LValue.Length;
     if LLength <> 0 then
     begin
       System.Move(Pointer(LValue)^, LPValue^, LLength * SizeOf(Char));
@@ -728,8 +728,8 @@ begin
     while LPValue <= LPLastChar do
     begin
       LPStartValue := LPValue;
-      while (LPValue <= LPLastChar)
-        and (LPValue^ <> BCEDITOR_CARRIAGE_RETURN) and (LPValue^ <> BCEDITOR_LINEFEED) and (LPValue^ <> WideChar($2028)) do
+      while (LPValue <= LPLastChar) and (LPValue^ <> BCEDITOR_CARRIAGE_RETURN) and (LPValue^ <> BCEDITOR_LINEFEED) and
+        (LPValue^ <> BCEDITOR_LINE_SEPARATOR) do
         Inc(LPValue);
       if LPValue <> LPStartValue then
       begin
@@ -742,7 +742,7 @@ begin
         Inc(LPValue);
       if LPValue^ = BCEDITOR_LINEFEED then
         Inc(LPValue);
-      if LPValue^ = WideChar($2028) then
+      if LPValue^ = BCEDITOR_LINE_SEPARATOR then
         Inc(LPValue);
     end;
   end;
