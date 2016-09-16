@@ -503,8 +503,8 @@ inherited MainForm: TMainForm
   end
   inherited SkinManager: TBCSkinManager
     Effects.AllowGlowing = False
+    IsDefault = False
     MenuSupport.UseExtraLine = False
-    SkinInfo = 'N/A'
     ThirdParty.ThirdEdits = ' '#13#10'TBCEditorPrintPreview'#13#10
     ThirdParty.ThirdVirtualTrees = 'TVirtualDrawTree'#13#10
     Left = 166

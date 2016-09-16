@@ -70,7 +70,7 @@ type
     procedure FormShow(Sender: TObject);
     procedure EditorCaretChanged(Sender: TObject; X, Y: Integer);
     procedure ActionSkinsExecute(Sender: TObject);
-    procedure SelectedEncodingClick(AId: Integer);
+    procedure SelectedEncodingClick(const AIndex: Integer);
     procedure SelectedHighlighterClick(AHighlighterName: string);
     procedure SelectedHighlighterColorClick(AHighlighterColorName: string);
     procedure FormDestroy(Sender: TObject);
@@ -444,7 +444,7 @@ begin
     FPopupSearchEngineDialog := TBCPopupSearchEngineDialog.Create(Self);
     FPopupSearchEngineDialog.PopupParent := Self;
   end;
-  ShowPopupForm(FPopupSearchEngineDialog, acMousePos);
+  FPopupSearchEngineDialog.Execute(Editor.Search.Engine);
 end;
 
 procedure TMainForm.ActionSearchExecute(Sender: TObject);
@@ -455,9 +455,9 @@ begin
   ComboBoxSearchText.SetFocus;
 end;
 
-procedure TMainForm.SelectedEncodingClick(AId: Integer);
+procedure TMainForm.SelectedEncodingClick(const AIndex: Integer);
 begin
-  SetEncoding(Editor, AId);
+  SetEncoding(Editor, AIndex);
   TitleBar.Items[TITLE_BAR_ENCODING].Caption := EncodingToText(Editor.Encoding);
 end;
 
