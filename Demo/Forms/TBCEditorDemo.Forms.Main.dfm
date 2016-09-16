@@ -444,7 +444,7 @@ inherited MainForm: TMainForm
         Flat = True
         SkinData.SkinSection = 'TOOLBUTTON'
         Images = ImagesDataModule.ImageListSmall
-        ImageIndex = 34
+        ImageIndex = 141
       end
       object ComboBoxSearchText: TBCComboBox
         Left = 27
@@ -503,7 +503,6 @@ inherited MainForm: TMainForm
   end
   inherited SkinManager: TBCSkinManager
     Effects.AllowGlowing = False
-    IsDefault = True
     MenuSupport.UseExtraLine = False
     SkinInfo = 'N/A'
     ThirdParty.ThirdEdits = ' '#13#10'TBCEditorPrintPreview'#13#10
@@ -545,7 +544,7 @@ inherited MainForm: TMainForm
       end
       item
         Align = tbaRight
-        Caption = 'Object Pascal'
+        Caption = 'ANSI'
         DropdownMenu = PopupMenuDummy
         FontData.Font.Charset = DEFAULT_CHARSET
         FontData.Font.Color = clWindowText
@@ -554,6 +553,36 @@ inherited MainForm: TMainForm
         FontData.Font.Style = []
         Height = 22
         Index = 2
+        Name = 'TitleBarItemEncoding'
+        ShowHint = False
+        Style = bsMenu
+        Width = 56
+        OnClick = TitleBarItems2Click
+      end
+      item
+        Align = tbaRight
+        FontData.Font.Charset = DEFAULT_CHARSET
+        FontData.Font.Color = clWindowText
+        FontData.Font.Height = -11
+        FontData.Font.Name = 'Tahoma'
+        FontData.Font.Style = []
+        Index = 3
+        Name = 'TitleBarItemSpacing1'
+        ShowHint = False
+        Style = bsSpacing
+        Width = 6
+      end
+      item
+        Align = tbaRight
+        Caption = 'Object Pascal'
+        DropdownMenu = PopupMenuDummy
+        FontData.Font.Charset = DEFAULT_CHARSET
+        FontData.Font.Color = clWindowText
+        FontData.Font.Height = -11
+        FontData.Font.Name = 'Tahoma'
+        FontData.Font.Style = []
+        Height = 22
+        Index = 4
         Name = 'TitleBarItemHighlighter'
         ShowHint = False
         Style = bsMenu
@@ -567,7 +596,7 @@ inherited MainForm: TMainForm
         FontData.Font.Height = -11
         FontData.Font.Name = 'Tahoma'
         FontData.Font.Style = []
-        Index = 3
+        Index = 5
         Name = 'TitleBarItemSpacing2'
         ShowHint = False
         Style = bsSpacing
@@ -583,7 +612,7 @@ inherited MainForm: TMainForm
         FontData.Font.Name = 'Tahoma'
         FontData.Font.Style = []
         Height = 22
-        Index = 4
+        Index = 6
         Name = 'TitleBarItemColors'
         ShowHint = False
         Style = bsMenu
@@ -597,7 +626,7 @@ inherited MainForm: TMainForm
         FontData.Font.Height = -11
         FontData.Font.Name = 'Tahoma'
         FontData.Font.Style = []
-        Index = 5
+        Index = 7
         Name = 'TitleBarItemSpacing3'
         ShowHint = False
         Style = bsSpacing
@@ -663,7 +692,7 @@ inherited MainForm: TMainForm
     end
     object ActionSearchEngine: TAction
       Hint = 'Select search engine'
-      ImageIndex = 34
+      ImageIndex = 141
       OnExecute = ActionSearchEngineExecute
     end
     object ActionCaseSensitive: TAction
