@@ -380,6 +380,7 @@ begin
     LFileName := OpenDialog.Files[0];
     TitleBar.Items[TITLE_BAR_CAPTION].Caption := Format('%s - %s', [BCEDITORDEMO_CAPTION, LFileName]);
     Editor.LoadFromFile(LFileName);
+    TitleBar.Items[TITLE_BAR_ENCODING].Caption := EncodingToText(Editor.Encoding);
     FStopWatch.Stop;
     StatusBar.Panels[3].Text := 'Load: ' + FormatDateTime('s.zzz "s"', FStopWatch.ElapsedMilliseconds / MSecsPerDay);
   end;
