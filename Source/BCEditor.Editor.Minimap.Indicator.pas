@@ -24,8 +24,6 @@ type
 
 implementation
 
-{ TBCEditorSearchHighlighter }
-
 constructor TBCEditorMinimapIndicator.Create;
 begin
   inherited;

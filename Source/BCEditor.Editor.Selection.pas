@@ -36,8 +36,6 @@ type
 
 implementation
 
-{ TBCEditorSelection }
-
 constructor TBCEditorSelection.Create;
 begin
   inherited;

@@ -60,8 +60,6 @@ implementation
 uses
   System.Math;
 
-{ TBCEditorMinimap }
-
 constructor TBCEditorMinimap.Create;
 begin
   inherited;

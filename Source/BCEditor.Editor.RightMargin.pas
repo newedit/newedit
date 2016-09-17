@@ -38,8 +38,6 @@ type
 
 implementation
 
-{ TBCEditorRightMargin }
-
 constructor TBCEditorRightMargin.Create;
 begin
   inherited;

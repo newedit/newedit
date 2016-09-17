@@ -3,8 +3,8 @@ unit BCEditor.Editor.Search;
 interface
 
 uses
-  System.Classes, Vcl.Controls, BCEditor.Editor.Search.Map, BCEditor.Types,
-  BCEditor.Editor.Search.Highlighter;
+  System.Classes, Vcl.Controls, BCEditor.Editor.Search.Map, BCEditor.Types, BCEditor.Editor.Search.Highlighter,
+  BCEditor.Editor.Search.InSelection;
 
 const
   BCEDITOR_SEARCH_OPTIONS = [soHighlightResults, soSearchOnTyping, soBeepIfStringNotFound, soShowSearchMatchNotFound];
@@ -15,6 +15,7 @@ type
     FEnabled: Boolean;
     FEngine: TBCEditorSearchEngine;
     FHighlighter: TBCEditorSearchHighlighter;
+    FInSelection: TBCEditorSearchInSelection;
     FLines: TList;
     FMap: TBCEditorSearchMap;
     FOnChange: TBCEditorSearchChangeEvent;
@@ -25,6 +26,7 @@ type
     procedure SetEnabled(const AValue: Boolean);
     procedure SetEngine(const AValue: TBCEditorSearchEngine);
     procedure SetHighlighter(const AValue: TBCEditorSearchHighlighter);
+    procedure SetInSelection(const AValue: TBCEditorSearchInSelection);
     procedure SetMap(const AValue: TBCEditorSearchMap);
     procedure SetOnChange(const AValue: TBCEditorSearchChangeEvent);
     procedure SetSearchText(const AValue: string);
@@ -38,6 +40,7 @@ type
     property Enabled: Boolean read FEnabled write SetEnabled default True;
     property Engine: TBCEditorSearchEngine read FEngine write SetEngine default seNormal;
     property Highlighter: TBCEditorSearchHighlighter read FHighlighter write SetHighlighter;
+    property InSelection: TBCEditorSearchInSelection read FInSelection write SetInSelection;
     property Lines: TList read FLines write FLines;
     property Map: TBCEditorSearchMap read FMap write SetMap;
     property OnChange: TBCEditorSearchChangeEvent read FOnChange write SetOnChange;
@@ -46,8 +49,6 @@ type
   end;
 
 implementation
-
-{ TBCEditorSearchPanel }
 
 constructor TBCEditorSearch.Create;
 begin
@@ -58,6 +59,7 @@ begin
   FMap := TBCEditorSearchMap.Create;
   FLines := TList.Create;
   FHighlighter := TBCEditorSearchHighlighter.Create;
+  FInSelection := TBCEditorSearchInSelection.Create;
   FOptions := BCEDITOR_SEARCH_OPTIONS;
   FEnabled := True;
 end;
@@ -66,6 +68,7 @@ destructor TBCEditorSearch.Destroy;
 begin
   FMap.Free;
   FHighlighter.Free;
+  FInSelection.Free;
   ClearLines;
   FLines.Free;
   inherited;
@@ -82,6 +85,7 @@ begin
     Self.FOptions := FOptions;
     Self.FMap.Assign(FMap);
     Self.FHighlighter.Assign(FHighlighter);
+    Self.FInSelection.Assign(FInSelection);
     Self.DoChange;
   end
   else
@@ -131,6 +135,11 @@ end;
 procedure TBCEditorSearch.SetHighlighter(const AValue: TBCEditorSearchHighlighter);
 begin
   FHighlighter.Assign(AValue);
+end;
+
+procedure TBCEditorSearch.SetInSelection(const AValue: TBCEditorSearchInSelection);
+begin
+  FInSelection.Assign(AValue);
 end;
 
 procedure TBCEditorSearch.SetMap(const AValue: TBCEditorSearchMap);

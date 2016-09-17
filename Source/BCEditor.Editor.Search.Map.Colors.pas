@@ -27,8 +27,6 @@ type
 
 implementation
 
-{ TBCEditorSelectedColor }
-
 constructor TBCEditorSearchMapColors.Create;
 begin
   inherited;

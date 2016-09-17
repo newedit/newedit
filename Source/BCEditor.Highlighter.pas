@@ -100,8 +100,6 @@ implementation
 uses
   BCEditor.Highlighter.Import.JSON, System.Types, BCEditor.Editor.Base, System.IOUtils;
 
-{ TBCEditorHighlighter }
-
 procedure TBCEditorHighlighter.AddKeyChar(AKeyCharType: TBCEditorKeyCharType; AChar: Char);
 begin
   case AKeyCharType of

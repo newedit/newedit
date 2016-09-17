@@ -22,8 +22,6 @@ type
 
 implementation
 
-{ TBCEditorReplace }
-
 constructor TBCEditorReplace.Create;
 begin
   inherited;

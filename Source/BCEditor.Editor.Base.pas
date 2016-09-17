@@ -2933,12 +2933,11 @@ var
   LIsBackward, LIsFromCursor: Boolean;
   LIsEndUndoBlock: Boolean;
   LResultOffset: Integer;
-  LSelectedOnly: Boolean;
 
   function InValidSearchRange(AFirst, ALast: Integer): Boolean;
   begin
     Result := True;
-    if (FSelection.ActiveMode = smNormal) or not LSelectedOnly then
+    if (FSelection.ActiveMode = smNormal) or not FSearch.InSelection.Active then
     begin
       if ((LCurrentTextPosition.Line = LStartTextPosition.Line) and (not AChanged and (AFirst < LStartTextPosition.Char)
         or AChanged and (AFirst < LStartTextPosition.Char))) or
@@ -2962,9 +2961,8 @@ begin
 
   LIsBackward := soBackwards in FSearch.Options;
   LIsFromCursor := not AChanged or AChanged and not (soEntireScope in FSearch.Options);
-  LSelectedOnly := (soSelectedOnly in FSearch.Options) and GetSelectionAvailable;
 
-  if LSelectedOnly then
+  if FSearch.InSelection.Active then
   begin
     LStartTextPosition := SelectionBeginPosition;
     LEndTextPosition := SelectionEndPosition;
@@ -3029,12 +3027,12 @@ begin
         Inc(Result);
         LCurrentTextPosition.Char := LFound;
 
-        if not LSelectedOnly then
+        if not FSearch.InSelection.Active then
           SelectionBeginPosition := LCurrentTextPosition;
 
         Inc(LCurrentTextPosition.Char, LSearchLength);
 
-        if not LSelectedOnly then
+        if not FSearch.InSelection.Active then
           SelectionEndPosition := LCurrentTextPosition;
 
         if TopLine + VisibleLines <= LCurrentTextPosition.Line then
@@ -4860,7 +4858,6 @@ var
   LLine: string;
   LTextPtr, LTextBeginPtr, LKeyWordPtr, LBookmarkTextPtr: PChar;
   LPTextPosition: PBCEditorTextPosition;
-  LTextPosition: TBCEditorTextPosition;
 
   function AreCharsSame(APChar1, APChar2: PChar): Boolean;
   begin
@@ -4876,14 +4873,12 @@ var
   end;
 
 begin
-  if (soSelectedOnly in FSearch.Options) and GetSelectionAvailable then
+  if FSearch.InSelection.Active then
   begin
-    LTextPosition := SelectionBeginPosition;
-    LFirstLine := LTextPosition.Line;
-    LFirstChar := LTextPosition.Char - 1;
-    LTextPosition := SelectionEndPosition;
-    LLastLine := LTextPosition.Line;
-    LLastChar := LTextPosition.Char;
+    LFirstLine := FSearch.InSelection.SelectionBeginPosition.Line;
+    LFirstChar := FSearch.InSelection.SelectionBeginPosition.Char - 1;
+    LLastLine := FSearch.InSelection.SelectionEndPosition.Line;
+    LLastChar := FSearch.InSelection.SelectionEndPosition.Char;
   end
   else
   begin
@@ -10483,8 +10478,8 @@ var
             if LAnySelection then
             begin
               LIsTextPositionInSelection := IsTextPositionInSelection(LTextPosition);
-              if LIsTextPositionInSelection and not (soSelectedOnly in FSearch.Options) or
-                not LIsTextPositionInSelection and (soSelectedOnly in FSearch.Options) then
+              if LIsTextPositionInSelection and not FSearch.InSelection.Active or
+                not LIsTextPositionInSelection and FSearch.InSelection.Active then
               begin
                 if not NextItem then
                   Break;
@@ -12370,7 +12365,7 @@ var
   function InValidSearchRange(First, Last: Integer): Boolean;
   begin
     Result := True;
-    if (FSelection.ActiveMode = smNormal) or not (soSelectedOnly in FSearch.Options) then
+    if (FSelection.ActiveMode = smNormal) or not (roSelectedOnly in FReplace.Options) then
     begin
       if ((LCurrentTextPosition.Line = LStartTextPosition.Line) and (First < LStartTextPosition.Char)) or
         ((LCurrentTextPosition.Line = LEndTextPosition.Line) and (Last > LEndTextPosition.Char)) then

@@ -58,8 +58,6 @@ uses
   System.SysUtils, System.UITypes, BCEditor.Editor.Base, BCEditor.Editor.KeyCommands, BCEditor.Utils,
   BCEditor.Consts{$if defined(USE_ALPHASKINS)}, sSkinProvider, sMessages{$endif};
 
-{ TBCEditorCodeFoldingHintForm }
-
 constructor TBCEditorCodeFoldingHintForm.Create(AOwner: TComponent); //FI:W525 FixInsight ignore
 {$if defined(USE_ALPHASKINS)}
 var

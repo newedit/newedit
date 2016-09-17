@@ -40,8 +40,6 @@ type
 
 implementation
 
-{ TBCEditorSpecialChars }
-
 constructor TBCEditorSpecialChars.Create;
 begin
   inherited;

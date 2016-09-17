@@ -25,8 +25,6 @@ type
 
 implementation
 
-{ TBCEditorCaretOffsets }
-
 constructor TBCEditorCaretOffsets.Create;
 begin
   inherited;

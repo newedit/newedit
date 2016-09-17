@@ -32,8 +32,6 @@ type
 
 implementation
 
-{ TBCEditorBookMarkOptions }
-
 constructor TBCEditorLeftMarginBookMarks.Create(AOwner: TComponent);
 begin
   inherited Create;

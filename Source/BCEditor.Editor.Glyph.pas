@@ -43,8 +43,6 @@ implementation
 uses
   Winapi.Windows, System.SysUtils;
 
-{ TBCEditorGlyph }
-
 constructor TBCEditorGlyph.Create(AModule: THandle; const AName: string; AMaskColor: TColor);
 begin
   inherited Create;

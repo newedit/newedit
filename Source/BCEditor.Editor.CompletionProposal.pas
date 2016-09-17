@@ -46,8 +46,6 @@ implementation
 uses
   Vcl.Menus;
 
-{ TBCEditorCompletionProposal }
-
 constructor TBCEditorCompletionProposal.Create(AOwner: TPersistent);
 begin
   inherited Create;

@@ -34,8 +34,6 @@ implementation
 uses
   BCEditor.Utils;
 
-{ TBCEditorTabs }
-
 constructor TBCEditorTabs.Create;
 begin
   inherited;

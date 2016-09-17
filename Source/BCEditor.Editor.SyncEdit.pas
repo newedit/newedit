@@ -59,8 +59,6 @@ implementation
 uses
   Vcl.Menus, Vcl.Graphics, BCEditor.Consts;
 
-{ TBCEditorSyncEdit }
-
 constructor TBCEditorSyncEdit.Create;
 begin
   inherited Create;

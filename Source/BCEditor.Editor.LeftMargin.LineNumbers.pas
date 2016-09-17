@@ -36,8 +36,6 @@ implementation
 uses
   BCEditor.Utils;
 
-{ TBCEditorLeftMarginLineNumbers }
-
 constructor TBCEditorLeftMarginLineNumbers.Create;
 begin
   inherited;

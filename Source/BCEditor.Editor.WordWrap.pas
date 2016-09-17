@@ -36,8 +36,6 @@ type
 
 implementation
 
-{ TBCEditorWordWrap }
-
 constructor TBCEditorWordWrap.Create;
 begin
   inherited;

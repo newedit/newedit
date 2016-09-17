@@ -66,8 +66,6 @@ implementation
 uses
   BCEditor.Editor.Base, System.Types;
 
-{ TBCEditorBookmark }
-
 constructor TBCEditorBookmark.Create(AOwner: TCustomControl);
 begin
   inherited Create;

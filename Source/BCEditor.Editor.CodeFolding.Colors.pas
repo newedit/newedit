@@ -40,8 +40,6 @@ type
 
 implementation
 
-{ TBCEditorCodeFoldingColors }
-
 constructor TBCEditorCodeFoldingColors.Create;
 begin
   inherited;

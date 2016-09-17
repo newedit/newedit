@@ -38,8 +38,6 @@ type
 var
   GInternalResources: TList;
 
-{ TBCEditorInternalImage }
-
 constructor TBCEditorInternalImage.Create(AModule: THandle; const AName: string; const ACount: Integer);
 begin
   inherited Create;

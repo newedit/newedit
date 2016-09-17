@@ -40,8 +40,6 @@ type
 
 implementation
 
-{ TBCEditorCaret }
-
 constructor TBCEditorCaret.Create;
 begin
   inherited;

@@ -61,8 +61,6 @@ implementation
 uses
   System.SysUtils, System.Math, BCEditor.Types;
 
-{ TBCEditorLeftMargin }
-
 constructor TBCEditorLeftMargin.Create(AOwner: TComponent);
 begin
   inherited Create;

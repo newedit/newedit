@@ -24,8 +24,6 @@ type
 
 implementation
 
-{ TBCEditorMatchingPair }
-
 constructor TBCEditorMatchingPair.Create;
 begin
   inherited;

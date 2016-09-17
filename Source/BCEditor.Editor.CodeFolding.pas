@@ -53,8 +53,6 @@ implementation
 uses
   System.Math;
 
-{ TBCEditorCodeFolding }
-
 constructor TBCEditorCodeFolding.Create;
 begin
   inherited;

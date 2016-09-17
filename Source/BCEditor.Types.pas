@@ -112,7 +112,6 @@ type
     soEntireScope,
     soHighlightResults,
     soSearchOnTyping,
-    soSelectedOnly,
     soShowStringNotFound,
     soShowSearchMatchNotFound,
     soWholeWordsOnly,

@@ -40,8 +40,6 @@ type
 
 implementation
 
-{ TBCEditorLeftMarginColors }
-
 constructor TBCEditorLeftMarginColors.Create;
 begin
   inherited;
