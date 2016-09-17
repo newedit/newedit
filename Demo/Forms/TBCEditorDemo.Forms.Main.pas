@@ -8,7 +8,7 @@ uses
   BCEditor.Editor.Base, Vcl.Buttons, Vcl.AppEvnts, System.Actions, Vcl.ActnList, BCEditor.Print, BCCommon.Images,
   BCComponent.SkinManager, BCControl.Panel, BCControl.StatusBar, BCComponent.TitleBar, Vcl.Menus, ObjectInspectorEh,
   BCControl.Splitter, sPanel, BCComponent.MultiStringHolder, sSkinManager, sStatusBar, sSplitter, acTitleBar,
-  sSkinProvider, sDialogs, Vcl.StdCtrls, System.Diagnostics, BCCommon.Dialog.Popup.Highlighter,
+  sSkinProvider, sDialogs, Vcl.StdCtrls, System.Diagnostics, BCCommon.Dialog.Popup.Highlighter, BCEditor.Types,
   BCCommon.Dialog.Popup.Encoding, BCCommon.Dialog.Popup.Highlighter.Color, sSpeedButton, BCControl.SpeedButton,
   sComboBox, BCControl.ComboBox, sLabel, EhLibVCL, GridsEh, BCEditor.MacroRecorder, BCCommon.Dialog.Popup.SearchEngine;
 
@@ -73,6 +73,7 @@ type
     procedure SelectedEncodingClick(const AIndex: Integer);
     procedure SelectedHighlighterClick(AHighlighterName: string);
     procedure SelectedHighlighterColorClick(AHighlighterColorName: string);
+    procedure SelectedSearchEngineClick(ASearchEngine: TBCEditorSearchEngine);
     procedure FormDestroy(Sender: TObject);
     procedure ActionFindNextExecute(Sender: TObject);
     procedure ActionFindPreviousExecute(Sender: TObject);
@@ -110,7 +111,7 @@ implementation
 {$R *.dfm}
 
 uses
-  BCCommon.Form.Print.Preview, BCEditor.Print.Types, BCCommon.Dialog.SkinSelect, BCCommon.FileUtils, BCEditor.Types,
+  BCCommon.Form.Print.Preview, BCEditor.Print.Types, BCCommon.Dialog.SkinSelect, BCCommon.FileUtils,
   BCCommon.Dialog.Options.Search, BCCommon.Encoding, acPopupController, sVclUtils;
 
 procedure TMainForm.ActionSkinsExecute(Sender: TObject);
@@ -443,8 +444,16 @@ begin
   begin
     FPopupSearchEngineDialog := TBCPopupSearchEngineDialog.Create(Self);
     FPopupSearchEngineDialog.PopupParent := Self;
+    FPopupSearchEngineDialog.OnSelectSearchEngine := SelectedSearchEngineClick;
   end;
+  LockFormPaint;
   FPopupSearchEngineDialog.Execute(Editor.Search.Engine);
+  UnlockFormPaint;
+end;
+
+procedure TMainForm.SelectedSearchEngineClick(ASearchEngine: TBCEditorSearchEngine);
+begin
+  Editor.Search.Engine := ASearchEngine;
 end;
 
 procedure TMainForm.ActionSearchExecute(Sender: TObject);

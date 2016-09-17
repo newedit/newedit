@@ -143,6 +143,8 @@ inherited MainForm: TMainForm
       RightMargin.Visible = True
       Scroll.Shadow.Visible = True
       Search.Enabled = False
+      Search.InSelection.Active = False
+      Search.InSelection.Background = clBlack
       SpecialChars.EndOfLine.Visible = True
       SpecialChars.Selection.Visible = True
       SpecialChars.Style = scsDot
@@ -360,7 +362,6 @@ inherited MainForm: TMainForm
           FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFA2A2A2FFA5A5A5EFA2A2
           A2FFA0A0A0FF9F9F9FFF9F9F9FFF9F9F9FFF9F9F9FFF9F9F9FFF9F9F9FFF9F9F
           9FFF9F9F9FFF9F9F9FFF9F9F9FFFA0A0A0FFA2A2A2FFA5A5A5EF}
-        OnClick = ActionOptionsExecute
         ButtonStyle = tbsCheck
         SkinData.SkinSection = 'TOOLBUTTON'
         Images = ImagesDataModule.ImageListSmall
@@ -408,7 +409,6 @@ inherited MainForm: TMainForm
           FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFAFAFADFFB3B3B1EFB0B0
           ADFFAEAEACFFAEAEABFFAEAEABFFAEAEABFFAEAEABFFAEAEABFFAEAEABFFAEAE
           ABFFAEAEABFFAEAEABFFAEAEABFFAEAEACFFB0B0ADFFB3B3B1EF}
-        OnClick = ActionOptionsExecute
         ButtonStyle = tbsCheck
         SkinData.SkinSection = 'TOOLBUTTON'
         Images = ImagesDataModule.ImageListSmall
