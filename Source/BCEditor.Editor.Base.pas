@@ -2058,7 +2058,7 @@ var
       LHighlighterAttribute := FHighlighter.GetTokenAttribute;
       if Assigned(LHighlighterAttribute) then
         FPaintHelper.SetStyle(LHighlighterAttribute.FontStyles);
-      LTokenWidth := GetTokenWidth(LToken, LToken.Length, LCharsBefore);
+      LTokenWidth := GetTokenWidth(LToken, Length(LToken), LCharsBefore);
       Inc(LWidth, LTokenWidth);
       if LWidth > LMaxWidth then
       begin
@@ -2193,7 +2193,7 @@ begin
       Break;
     end;
 
-    Inc(Result.X, GetTokenWidth(LToken, LToken.Length, LCharsBefore));
+    Inc(Result.X, GetTokenWidth(LToken, Length(LToken), LCharsBefore));
     Inc(LLength, LTokenLength);
 
     Inc(LCharsBefore, GetTokenCharCount(LToken, LCharsBefore));
@@ -2276,7 +2276,7 @@ begin
       Result := FTabs.Width;
   end
   else
-    Result := AToken.Length;
+    Result := Length(AToken);
 end;
 
 function TBCBaseEditor.GetTokenWidth(const AToken: string; const ALength: Integer; const ACharsBefore: Integer): Integer;
@@ -2772,7 +2772,7 @@ begin
       LPreviousFontStyles := LFontStyles;
     end;
 
-    LTextWidth := LTextWidth + GetTokenWidth(LToken, LToken.Length, LCharsBefore);
+    LTextWidth := LTextWidth + GetTokenWidth(LToken, Length(LToken), LCharsBefore);
     if (LXInEditor > 0) and (LTextWidth > LXInEditor) then
     begin
       Inc(Result.Column, FHighlighter.GetTokenPosition + FHighlighter.GetTokenLength);
@@ -2781,7 +2781,7 @@ begin
       begin
         LLastChar := '';
         LPToken := PChar(LToken);
-        Inc(LPToken, LToken.Length - 1);
+        Inc(LPToken, Length(LToken) - 1);
         while (LPToken^ <> BCEDITOR_NONE_CHAR) and
           ((LPToken^.GetUnicodeCategory in [TUnicodeCategory.ucCombiningMark, TUnicodeCategory.ucNonSpacingMark]) or
           ((LPToken - 1)^ <> BCEDITOR_NONE_CHAR) and
@@ -2793,16 +2793,16 @@ begin
         end;
         if LLastChar = '' then
         begin
-          LLastChar := LToken[LToken.Length];
-          LToken := LToken.Remove(LToken.Length - 1);
+          LLastChar := LToken[Length(LToken)];
+          LToken := LToken.Remove(Length(LToken) - 1);
         end
         else
         begin
           LLastChar := LPToken^ + LLastChar;
-          Delete(LToken, LToken.Length - LLastChar.Length + 1, LToken.Length);
+          Delete(LToken, Length(LToken) - Length(LLastChar) + 1, Length(LToken));
         end;
-        Dec(LTextWidth, GetTokenWidth(LLastChar, LLastChar.Length, LCharsBefore));
-        Dec(Result.Column, LLastChar.Length);
+        Dec(LTextWidth, GetTokenWidth(LLastChar, Length(LLastChar), LCharsBefore));
+        Dec(Result.Column, Length(LLastChar));
       end;
 
       Exit;
@@ -4826,7 +4826,7 @@ begin
     LTempBitmap.Canvas.Font.Height := Font.Height;
     LTempBitmap.Canvas.Font.Size := Font.Size;
 
-    if ADisplayCaretPosition.Column <= FLines[ADisplayCaretPosition.Row - 1].Length then
+    if ADisplayCaretPosition.Column <= Length(FLines[ADisplayCaretPosition.Row - 1]) then
       LTempBitmap.Canvas.TextOut(X, 0, FLines[ADisplayCaretPosition.Row - 1][ADisplayCaretPosition.Column]);
 
     Canvas.CopyRect(Rect(LPoint.X + FCaret.Offsets.X, LPoint.Y + FCaret.Offsets.Y,
@@ -10473,11 +10473,11 @@ var
           FPaintHelper.SetBackgroundColor(FSearch.Highlighter.Colors.Background);
 
           LTextPosition := PBCEditorTextPosition(FSearch.Lines.Items[LCurrentSearchIndex])^;
-          LSearchTextLength := FSearch.SearchText.Length;
+          LSearchTextLength := Length(FSearch.SearchText);
 
           while LCurrentLine - 1 = LTextPosition.Line do
           begin
-            if LTokenHelper.Text.Length - LText.Length + LTokenHelper.CharsBefore + ATokenLength < LTextPosition.Char then
+            if Length(LTokenHelper.Text) - Length(LText) + LTokenHelper.CharsBefore + ATokenLength < LTextPosition.Char then
               Break;
 
             if LAnySelection then
@@ -10498,26 +10498,26 @@ var
             LCharCount := LTextPosition.Char - LTokenHelper.CharsBefore - 1;
 
             if LAnySelection then
-              Dec(LCharCount, LTokenHelper.Text.Length - LText.Length);
+              Dec(LCharCount, Length(LTokenHelper.Text) - Length(LText));
 
             if LCharCount > 0 then
             begin
               LToken := Copy(LText, 1, LCharCount);
               Inc(LSearchRect.Left, GetTokenWidth(LToken, LCharCount, LPaintedColumn));
-              LToken := Copy(LText, LCharCount + 1, LText.Length);
+              LToken := Copy(LText, LCharCount + 1, Length(LText));
             end
             else
-              LCharCount := LTokenHelper.Text.Length - LText.Length;
+              LCharCount := Length(LTokenHelper.Text) - Length(LText);
             LToken := Copy(LToken, 1, Min(LSearchTextLength, LTextPosition.Char + LSearchTextLength -
               LTokenHelper.CharsBefore - LCharCount - 1));
-            LSearchRect.Right := LSearchRect.Left + GetTokenWidth(LToken, LToken.Length, LPaintedColumn);
+            LSearchRect.Right := LSearchRect.Left + GetTokenWidth(LToken, Length(LToken), LPaintedColumn);
 
             Winapi.Windows.ExtTextOut(Canvas.Handle, LSearchRect.Left, LSearchRect.Top, ETO_OPAQUE or ETO_CLIPPED,
-              @LSearchRect, PChar(LToken), LToken.Length, nil);
+              @LSearchRect, PChar(LToken), Length(LToken), nil);
 
             LCharCount := Max(LTextPosition.Char - LTokenHelper.CharsBefore - 1, 0);
 
-            if LTextPosition.Char + LSearchTextLength > LTokenHelper.CharsBefore + LToken.Length + LCharCount + 1 then
+            if LTextPosition.Char + LSearchTextLength > LTokenHelper.CharsBefore + Length(LToken) + LCharCount + 1 then
               Break
             else
             if LTextPosition.Char + LSearchTextLength - 1 <= LCurrentLineLength then
@@ -10534,7 +10534,7 @@ var
     end;
 
   begin
-    LLastColumn := LTokenHelper.CharsBefore + LTokenHelper.Text.Length + 1;
+    LLastColumn := LTokenHelper.CharsBefore + Length(LTokenHelper.Text) + 1;
 
     if not AMinimap and (LTokenRect.Right > FLeftMarginWidth) or AMinimap and
       ((LTokenRect.Left < ClientRect.Width) or (LTokenRect.Left < FMinimap.Width)) then
@@ -10556,7 +10556,7 @@ var
         if FMinimap.Align = maLeft then
           LTextRect.Right := Min(LTextRect.Right, FMinimap.Width);
 
-      if LTokenHelper.IsItalic and (LPChar^ <> BCEDITOR_SPACE_CHAR) and (ATokenLength = AToken.Length) then
+      if LTokenHelper.IsItalic and (LPChar^ <> BCEDITOR_SPACE_CHAR) and (ATokenLength = Length(AToken)) then
         Inc(LTextRect.Right, FPaintHelper.CharWidth);
       if (FItalicOffset <> 0) and (LPChar^ = BCEDITOR_SPACE_CHAR) then
         Inc(LTextRect.Left, FItalicOffset + 1);
@@ -10589,7 +10589,7 @@ var
         if not AMinimap or AMinimap and (moShowSearchResults in FMinimap.Options) then
           PaintSearchResults;
 
-        if LTokenHelper.IsItalic and (LPChar^ <> BCEDITOR_SPACE_CHAR) and (ATokenLength = AToken.Length) then
+        if LTokenHelper.IsItalic and (LPChar^ <> BCEDITOR_SPACE_CHAR) and (ATokenLength = Length(AToken)) then
         begin
           FItalicOffset := 0;
 
@@ -10699,15 +10699,15 @@ var
       begin
         Delete(LText, 1, LTokenLength);
         SetDrawingColors(False);
-        LTokenRect.Right := LTokenRect.Left + GetTokenWidth(LText, LText.Length, LTokenHelper.ExpandedCharsBefore);
-        PaintToken(LText, LText.Length);
+        LTokenRect.Right := LTokenRect.Left + GetTokenWidth(LText, Length(LText), LTokenHelper.ExpandedCharsBefore);
+        PaintToken(LText, Length(LText));
       end;
     end
     else
     begin
       SetDrawingColors(LSelected);
-      LTokenRect.Right := LTokenRect.Left + GetTokenWidth(LText, LText.Length, LTokenHelper.ExpandedCharsBefore);
-      PaintToken(LText, LText.Length);
+      LTokenRect.Right := LTokenRect.Left + GetTokenWidth(LText, Length(LText), LTokenHelper.ExpandedCharsBefore);
+      PaintToken(LText, Length(LText));
     end;
 
     if AFillToEndOfLine and (LTokenRect.Left < LLineRect.Right) then
@@ -11132,7 +11132,7 @@ var
             begin
               LCurrentLineText := LCurrentLineText + '..' + TrimLeft(LToLineText);
               if LIsSelectionInsideLine then
-                LLineSelectionEnd := LCurrentLineText.Length;
+                LLineSelectionEnd := Length(LCurrentLineText);
             end;
 
           if LCurrentLine - 1 = FCurrentMatchingPairMatch.OpenTokenPos.Line then
@@ -11541,7 +11541,7 @@ begin
   else
   if not (soPastEndOfLine in FScroll.Options) then
   begin
-    LLength := Lines[GetDisplayTextLineNumber(AValue.Row) - 1].Length;
+    LLength := Length(Lines[GetDisplayTextLineNumber(AValue.Row) - 1]);
     LTextPosition := DisplayToTextPosition(AValue);
     if LTextPosition.Char > LLength then
     begin
@@ -14090,7 +14090,7 @@ begin
   if LLastTextPosition.Line >= 0 then
   begin
     if FSelection.Mode = smNormal then
-      Inc(LLastTextPosition.Char, Lines[LLastTextPosition.Line].Length)
+      Inc(LLastTextPosition.Char, Length(Lines[LLastTextPosition.Line]))
     else
       Inc(LLastTextPosition.Char, FLines.GetLengthOfLongestLine);
   end

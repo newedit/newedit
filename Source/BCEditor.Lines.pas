@@ -395,7 +395,7 @@ begin
     LLength := LLineBreakLength;
     if i = FCount - 1 then
       LLength := 0;
-    Inc(Result, FList^[i].Value.Length + LLength)
+    Inc(Result, Length(FList^[i].Value) + LLength)
   end;
 end;
 
@@ -413,14 +413,14 @@ begin
     LLength := LLineBreakLength;
     if i = FCount - 1 then
       LLength := 0;
-    Inc(LSize, FList^[i].Value.Length + LLength)
+    Inc(LSize, Length(FList^[i].Value) + LLength)
   end;
   SetString(Result, nil, LSize);
   LPValue := Pointer(Result);
   for i := 0 to FCount - 1 do
   begin
     LValue := Get(i);
-    LLength := LValue.Length;
+    LLength := Length(LValue);
     if LLength <> 0 then
     begin
       System.Move(Pointer(LValue)^, LPValue^, LLength * SizeOf(Char));

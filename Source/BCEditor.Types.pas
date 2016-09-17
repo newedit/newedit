@@ -144,7 +144,7 @@ type
   TBCEditorSearchEngine = (
     seNormal,
     seRegularExpression,
-    seWildCard
+    seWildcard
   );
 
   TBCEditorSearchMapOption = (
