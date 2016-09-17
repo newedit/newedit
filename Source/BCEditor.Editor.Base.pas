@@ -6205,6 +6205,16 @@ begin
             FindNext(True);
         end;
       end;
+    scInSelectionActive:
+      begin
+        if FSearch.InSelection.Active then
+        begin
+          FSearch.InSelection.SelectionBeginPosition := SelectionBeginPosition;
+          FSearch.InSelection.SelectionEndPosition := SelectionEndPosition;
+          FSelectionBeginPosition := TextCaretPosition;
+          FSelectionEndPosition := FSelectionBeginPosition;
+        end;
+      end;
   end;
   FLeftMarginWidth := GetLeftMarginWidth;
   Invalidate;
@@ -10267,7 +10277,7 @@ var
   LDisplayLine, LCurrentLine: Integer;
   LForegroundColor, LBackgroundColor: TColor;
   LIsSelectionInsideLine: Boolean;
-  LIsLineSelected, LIsCurrentLine, LIsSyncEditBlock: Boolean;
+  LIsLineSelected, LIsCurrentLine, LIsSyncEditBlock, LIsSearchInSelectionBlock: Boolean;
   LLineRect, LTokenRect: TRect;
   LLineSelectionStart, LLineSelectionEnd: Integer;
   LSelectionEndPosition: TBCEditorTextPosition;
@@ -10316,6 +10326,9 @@ var
     else
     if LIsSyncEditBlock then
       Result := FSyncEdit.Colors.Background
+    else
+    if LIsSearchInSelectionBlock then
+      Result := FSearch.InSelection.Background
     else
     if AMinimap and (FMinimap.Colors.Background <> clNone) then
       Result := FMinimap.Colors.Background
@@ -10479,11 +10492,21 @@ var
             if Length(LTokenHelper.Text) - Length(LText) + LTokenHelper.CharsBefore + ATokenLength < LTextPosition.Char then
               Break;
 
-            if LAnySelection then
+            {if LAnySelection then
             begin
               LIsTextPositionInSelection := IsTextPositionInSelection(LTextPosition);
               if LIsTextPositionInSelection and not FSearch.InSelection.Active or
                 not LIsTextPositionInSelection and FSearch.InSelection.Active then
+              begin
+                if not NextItem then
+                  Break;
+                Continue;
+              end;
+            end;  }
+            if FSearch.InSelection.Active then
+            begin
+              LIsTextPositionInSelection := FSearch.InSelection.IsTextPositionInBlock(LTextPosition);
+              if not LIsTextPositionInSelection then
               begin
                 if not NextItem then
                   Break;
@@ -10938,6 +10961,9 @@ var
         if FSyncEdit.BlockSelected and LIsSyncEditBlock then
           LBackgroundColor := FSyncEdit.Colors.Background;
 
+        if FSearch.InSelection.Active and LIsSearchInSelectionBlock then
+          LBackgroundColor := FSearch.InSelection.Background;
+
         if not FSyncEdit.Active and LAnySelection and (soHighlightSimilarTerms in FSelection.Options) then
         begin
           LKeyword := '';
@@ -11192,6 +11218,14 @@ var
             LTextPosition := GetTextPosition(LTokenPosition + 1, LCurrentLine - 1);
             if FSyncEdit.IsTextPositionInBlock(LTextPosition) then
               LIsSyncEditBlock := True;
+          end;
+
+          LIsSearchInSelectionBlock := False;
+          if FSearch.InSelection.Active then
+          begin
+            LTextPosition := GetTextPosition(LTokenPosition + 1, LCurrentLine - 1);
+            if FSearch.InSelection.IsTextPositionInBlock(LTextPosition) then
+              LIsSearchInSelectionBlock := True;
           end;
 
           if FWordWrap.Enabled then

@@ -112,6 +112,7 @@ begin
   FOnChange := AValue;
   FMap.OnChange := FOnChange;
   FHighlighter.OnChange := FOnChange;
+  FInSelection.OnChange := FOnChange;
 end;
 
 procedure TBCEditorSearch.SetEngine(const AValue: TBCEditorSearchEngine);

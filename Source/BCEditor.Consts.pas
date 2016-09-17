@@ -50,6 +50,7 @@ const
   { Default colors }
   clSelectionColor = $00A56D53;
   clSearchHighlighter = $0078AAFF;
+  clSearchInSelectionBackground = $00FCFDCD;
   clActiveLineBackground = $00E6FAFF;
   clLeftMarginBackground = $00FFFFFF;
   clLeftMarginFontForeground = $00CC9999;

@@ -101,7 +101,8 @@ type
   TBCEditorSearchChanges = (
     scRefresh,
     scSearch,
-    scEngineUpdate
+    scEngineUpdate,
+    scInSelectionActive
   );
   TBCEditorSearchChangeEvent = procedure(Event: TBCEditorSearchChanges) of object;
 
