@@ -611,6 +611,7 @@ type
     procedure SetFocus; override;
     procedure SetLineColor(ALine: Integer; AForegroundColor, ABackgroundColor: TColor);
     procedure SetLineColorToDefault(ALine: Integer);
+    procedure SetOption(const AOption: TBCEditorOption; const AEnabled: Boolean);
     procedure Sort(ASortOrder: TBCEditorSortOrder = soToggle);
     procedure ToggleBookmark(AIndex: Integer = -1);
     procedure ToggleSelectedCase(ACase: TBCEditorCase = cNone);
@@ -3543,7 +3544,7 @@ begin
           LSpaceCount2 := 0;
 
         SetTextCaretX(LTextCaretPosition.Char - (LSpaceCount1 - LSpaceCount2));
-        FStateFlags := FStateFlags + [sfCaretChanged];
+        Include(FStateFlags, sfCaretChanged);
       end;
     end
     else
@@ -3646,7 +3647,7 @@ begin
           SetTextCaretX(LCharPosition + 1);
         end;
         FLines[LTextCaretPosition.Line] := LLineText;
-        FStateFlags := FStateFlags + [sfCaretChanged];
+        Include(FStateFlags, sfCaretChanged);
       end
       else
       begin
@@ -4089,7 +4090,7 @@ var
   LLength: Integer;
   LHelper: string;
   LLineText: string;
-  LChangeScroll: Boolean;
+  LChangeScrollPastEndOfLine: Boolean;
   LTextCaretPosition: TBCEditorTextPosition;
   LBlockStartPosition: TBCEditorTextPosition;
 begin
@@ -4118,10 +4119,11 @@ begin
     LLength := Length(LLineText);
     if LLength < LTextCaretPosition.Char then
       LLineText := LLineText + StringOfChar(BCEDITOR_SPACE_CHAR, LTextCaretPosition.Char - LLength - 1);
-    LChangeScroll := not (soPastEndOfLine in FScroll.Options);
+    LChangeScrollPastEndOfLine := not (soPastEndOfLine in FScroll.Options);
     try
-      if LChangeScroll then
-        FScroll.Options := FScroll.Options + [soPastEndOfLine];
+      if LChangeScrollPastEndOfLine then
+        FScroll.SetOption(soPastEndOfLine, True);
+
       LBlockStartPosition := LTextCaretPosition;
 
       if not FInsertMode then
@@ -4137,8 +4139,8 @@ begin
         LHelper := '';
       FUndoList.AddChange(crInsert, LTextCaretPosition, LBlockStartPosition, TextCaretPosition, LHelper, smNormal);
     finally
-      if LChangeScroll then
-        FScroll.Options := FScroll.Options - [soPastEndOfLine];
+      if LChangeScrollPastEndOfLine then
+        FScroll.SetOption(soPastEndOfLine, False);
     end;
   end;
 end;
@@ -4537,7 +4539,7 @@ var
   LNewX, LTabWidth: Integer;
   LTextLine, LOldSelectedText: string;
   LTextCaretPosition: TBCEditorTextPosition;
-  LChangeScroll: Boolean;
+  LChangeScrollPastEndOfLine: Boolean;
 begin
   if (toSelectedBlockIndent in FTabs.Options) and GetSelectionAvailable then
   begin
@@ -4572,13 +4574,14 @@ begin
     Delete(LTextLine, LNewX, LTabWidth);
     FLines[LTextCaretPosition.Line] := LTextLine;
 
-    LChangeScroll := not (soPastEndOfLine in FScroll.Options);
+    LChangeScrollPastEndOfLine := not (soPastEndOfLine in FScroll.Options);
     try
-      FScroll.Options := FScroll.Options + [soPastEndOfLine];
+      if LChangeScrollPastEndOfLine then
+        FScroll.SetOption(soPastEndOfLine, True);
       SetTextCaretX(LNewX);
     finally
-      if LChangeScroll then
-        FScroll.Options := FScroll.Options - [soPastEndOfLine];
+      if LChangeScrollPastEndOfLine then
+        FScroll.SetOption(soPastEndOfLine, False);
     end;
 
     FUndoList.AddChange(crDelete, LTextCaretPosition, TextCaretPosition, LTextCaretPosition, LOldSelectedText,
@@ -4658,7 +4661,7 @@ var
   LDisplayCaretPosition: TBCEditorDisplayPosition;
   LTabText, LTextLine: string;
   LCharCount, LLengthAfterLine, LPreviousLine, LPreviousLineCharCount: Integer;
-  LChangeScroll: Boolean;
+  LChangeScrollPastEndOfLine: Boolean;
 begin
   if GetSelectionAvailable and (FSelectionBeginPosition.Line <> FSelectionEndPosition.Line) and
     (toSelectedBlockIndent in FTabs.Options) then
@@ -4721,16 +4724,17 @@ begin
       FLines[LTextCaretPosition.Line] := LTextLine;
     end;
 
-    LChangeScroll := not (soPastEndOfLine in FScroll.Options);
+    LChangeScrollPastEndOfLine := not (soPastEndOfLine in FScroll.Options);
     try
-      FScroll.Options := FScroll.Options + [soPastEndOfLine];
+      if LChangeScrollPastEndOfLine then
+        FScroll.SetOption(soPastEndOfLine, True);
       if not InsertMode then
         LTabText := StringReplace(LTabText, BCEDITOR_TAB_CHAR, StringOfChar(BCEDITOR_SPACE_CHAR, FTabs.Width),
           [rfReplaceAll]);
       SetTextCaretX(LTextCaretPosition.Char + Length(LTabText));
     finally
-      if LChangeScroll then
-        FScroll.Options := FScroll.Options - [soPastEndOfLine];
+      if LChangeScrollPastEndOfLine then
+        FScroll.SetOption(soPastEndOfLine, False);
     end;
     EnsureCursorPositionVisible;
 
@@ -11290,7 +11294,10 @@ begin
     try
       FSelection.ActiveMode := LUndoItem.ChangeSelectionMode;
       IncPaintLock;
-      FScroll.Options := FScroll.Options + [soPastEndOfLine];
+
+      if LChangeScrollPastEndOfLine then
+        FScroll.SetOption(soPastEndOfLine, True);
+
       FUndoList.InsideRedo := True;
       case LUndoItem.ChangeReason of
         crCaret:
@@ -11394,7 +11401,7 @@ begin
     finally
       FUndoList.InsideRedo := False;
       if LChangeScrollPastEndOfLine then
-        FScroll.Options := FScroll.Options - [soPastEndOfLine];
+        FScroll.SetOption(soPastEndOfLine, False);
       LUndoItem.Free;
       DecPaintLock;
     end;
@@ -11924,7 +11931,9 @@ begin
     try
       FSelection.ActiveMode := LUndoItem.ChangeSelectionMode;
       IncPaintLock;
-      FScroll.Options := FScroll.Options + [soPastEndOfLine];
+
+      if LChangeScrollPastEndOfLine then
+        FScroll.SetOption(soPastEndOfLine, True);
 
       case LUndoItem.ChangeReason of
         crCaret:
@@ -12017,7 +12026,7 @@ begin
       end;
     finally
       if LChangeScrollPastEndOfLine then
-        FScroll.Options := FScroll.Options - [soPastEndOfLine];
+        FScroll.SetOption(soPastEndOfLine, False);
       LUndoItem.Free;
       DecPaintLock;
     end;
@@ -12212,7 +12221,7 @@ begin
     PreviousSelectedWordPosition;
     Exit;
   end;
-  FSearch.Options := FSearch.Options + [soBackwards];
+  FSearch.SetOption(soBackwards, True);
   if SearchText(FSearch.SearchText) = 0 then
   begin
     if soBeepIfStringNotFound in FSearch.Options then
@@ -13388,14 +13397,14 @@ begin
           LChangeScrollPastEndOfLine := not (soPastEndOfLine in FScroll.Options);
           try
             if LChangeScrollPastEndOfLine then
-              FScroll.Options := FScroll.Options + [soPastEndOfLine];
+              FScroll.SetOption(soPastEndOfLine, True);
             TextCaretPosition := LNewCaretPosition;
             SelectionBeginPosition := LNewCaretPosition;
 
             SelectedText := LDragDropText;
           finally
             if LChangeScrollPastEndOfLine then
-              FScroll.Options := FScroll.Options - [soPastEndOfLine];
+              FScroll.SetOption(soPastEndOfLine, False);
           end;
 
           CommandProcessor(ecSelectionGotoXY, BCEDITOR_NONE_CHAR, @LNewCaretPosition);
@@ -14161,6 +14170,14 @@ procedure TBCBaseEditor.SetLineColorToDefault(ALine: Integer);
 begin
   if (ALine >= 0) and (ALine < FLines.Count) then
     Invalidate;
+end;
+
+procedure TBCBaseEditor.SetOption(const AOption: TBCEditorOption; const AEnabled: Boolean);
+begin
+  if AEnabled then
+    Include(FOptions, AOption)
+  else
+    Exclude(FOptions, AOption);
 end;
 
 procedure TBCBaseEditor.Sort(ASortOrder: TBCEditorSortOrder = soToggle);

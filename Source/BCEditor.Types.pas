@@ -343,8 +343,8 @@ type
 
   TBCEditorScrollHintFormat = (shfTopLineOnly, shfTopToBottom);
 
-  TBCEditorIndicatorOption = (ioInvertBlending, ioShowBorder, ioUseBlending);
-  TBCEditorIndicatorOptions = set of TBCEditorIndicatorOption;
+  TBCEditorMinimapIndicatorOption = (ioInvertBlending, ioShowBorder, ioUseBlending);
+  TBCEditorMinimapIndicatorOptions = set of TBCEditorMinimapIndicatorOption;
 
   TBCEditorQuadColor = packed record
   case Boolean of

@@ -35,6 +35,7 @@ type
     destructor Destroy; override;
     procedure Assign(ASource: TPersistent); override;
     procedure ClearLines;
+    procedure SetOption(const AOption: TBCEditorSearchOption; const AEnabled: Boolean);
     property Visible: Boolean read FVisible write FVisible;
   published
     property Enabled: Boolean read FEnabled write SetEnabled default True;
@@ -96,6 +97,14 @@ procedure TBCEditorSearch.DoChange;
 begin
   if Assigned(FOnChange) then
     FOnChange(scRefresh);
+end;
+
+procedure TBCEditorSearch.SetOption(const AOption: TBCEditorSearchOption; const AEnabled: Boolean);
+begin
+  if AEnabled then
+    Include(FOptions, AOption)
+  else
+    Exclude(FOptions, AOption);
 end;
 
 procedure TBCEditorSearch.SetOnChange(const AValue: TBCEditorSearchChangeEvent);

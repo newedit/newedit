@@ -36,6 +36,7 @@ type
     destructor Destroy; override;
     function GetWidth: Integer;
     procedure Assign(ASource: TPersistent); override;
+    procedure SetOption(const AOption: TBCEditorCodeFoldingOption; const AEnabled: Boolean);
     property MouseOverHint: Boolean read FMouseOverHint write FMouseOverHint;
   published
     property Colors: TBCEditorCodeFoldingColors read FColors write SetColors;
@@ -136,6 +137,14 @@ begin
     FOnChange(fcRescan)
   else
     DoChange;
+end;
+
+procedure TBCEditorCodeFolding.SetOption(const AOption: TBCEditorCodeFoldingOption; const AEnabled: Boolean);
+begin
+  if AEnabled then
+    Include(FOptions, AOption)
+  else
+    Exclude(FOptions, AOption);
 end;
 
 procedure TBCEditorCodeFolding.SetColors(const AValue: TBCEditorCodeFoldingColors);

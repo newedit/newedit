@@ -37,6 +37,7 @@ type
 
     function GetWidth: Integer;
     procedure Assign(ASource: TPersistent); override;
+    procedure SetOption(const AOption: TBCEditorMinimapOption; const AEnabled: Boolean);
     property CharHeight: Integer read FCharHeight write FCharHeight;
     property Clicked: Boolean read FClicked write FClicked;
     property Dragging: Boolean read FDragging write FDragging;
@@ -128,6 +129,14 @@ procedure TBCEditorMinimap.DoChange;
 begin
   if Assigned(FOnChange) then
     FOnChange(Self);
+end;
+
+procedure TBCEditorMinimap.SetOption(const AOption: TBCEditorMinimapOption; const AEnabled: Boolean);
+begin
+  if AEnabled then
+    Include(FOptions, AOption)
+  else
+    Exclude(FOptions, AOption);
 end;
 
 procedure TBCEditorMinimap.SetAlign(const AValue: TBCEditorMinimapAlign);
