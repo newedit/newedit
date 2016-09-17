@@ -55,10 +55,10 @@ type
     ActionOptions: TAction;
     ActionClose: TAction;
     LabelSearchResultCount: TsLabel;
-    BCSpeedButton2: TBCSpeedButton;
-    BCSpeedButton3: TBCSpeedButton;
+    SpeedButtonCaseSensitive: TBCSpeedButton;
+    SpeedButtonInSelection: TBCSpeedButton;
     BCSpeedButton1: TBCSpeedButton;
-    BCSpeedButton4: TBCSpeedButton;
+    SpeedButtonSearchEngine: TBCSpeedButton;
     ActionSearchEngine: TAction;
     ActionCaseSensitive: TAction;
     ActionInSelection: TAction;
@@ -85,6 +85,8 @@ type
     procedure TitleBarItems4Click(Sender: TObject);
     procedure ActionSearchEngineExecute(Sender: TObject);
     procedure TitleBarItems2Click(Sender: TObject);
+    procedure ActionCaseSensitiveExecute(Sender: TObject);
+    procedure ActionInSelectionExecute(Sender: TObject);
   private
     FStopWatch: TStopWatch;
     FPopupEncodingDialog: TPopupEncodingDialog;
@@ -342,6 +344,14 @@ begin
   end;
 end;
 
+procedure TMainForm.ActionInSelectionExecute(Sender: TObject);
+begin
+  inherited;
+
+  ActionInSelection.Checked := not ActionInSelection.Checked;
+  Editor.Search.InSelection.Active := ActionInSelection.Checked;
+end;
+
 procedure TMainForm.ActionOptionsExecute(Sender: TObject);
 begin
   inherited;
@@ -361,6 +371,14 @@ begin
     InitializeEditorPrint(PrintPreview.EditorPrint);
     ShowModal;
   end;
+end;
+
+procedure TMainForm.ActionCaseSensitiveExecute(Sender: TObject);
+begin
+  inherited;
+
+  ActionCaseSensitive.Checked := not ActionCaseSensitive.Checked;
+  Editor.Search.SetOption(soCaseSensitive, ActionCaseSensitive.Checked);
 end;
 
 procedure TMainForm.ActionCloseExecute(Sender: TObject);
