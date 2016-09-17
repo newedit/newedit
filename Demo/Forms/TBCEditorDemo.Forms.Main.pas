@@ -471,10 +471,16 @@ begin
 end;
 
 procedure TMainForm.ActionSearchExecute(Sender: TObject);
+var
+  LSearchText: string;
 begin
   Editor.Search.Enabled := True;
   PanelSearch.Visible := True;
-  ComboBoxSearchText.Text := Editor.Search.SearchText;
+  if Editor.SelectionAvailable and (Editor.SelectionBeginPosition.Line = Editor.SelectionEndPosition.Line) then
+    LSearchText := Editor.SelectedText
+  else
+    LSearchText := Editor.Search.SearchText;
+  ComboBoxSearchText.Text := LSearchText;
   ComboBoxSearchText.SetFocus;
 end;
 
