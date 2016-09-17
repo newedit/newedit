@@ -38,7 +38,6 @@ type
     procedure EditorKeyPress(ASender: TObject; var AKey: Char);
     procedure HandleDblClick(ASender: TObject);
     procedure HandleOnValidate(ASender: TObject; AShift: TShiftState; AEndToken: Char);
-    procedure MoveLine(ALineCount: Integer);
     procedure MoveSelectedLine(ALineCount: Integer);
     procedure RemoveKeyHandlers;
     procedure SetCurrentString(const AValue: string);
@@ -198,9 +197,9 @@ begin
           end;
       end;
     VK_PRIOR:
-      MoveLine(-FCompletionProposal.VisibleLines);
+      MoveSelectedLine(-FCompletionProposal.VisibleLines);
     VK_NEXT:
-      MoveLine(FCompletionProposal.VisibleLines);
+      MoveSelectedLine(FCompletionProposal.VisibleLines);
     VK_END:
       TopLine := Length(FItemIndexArray) - 1;
     VK_HOME:
@@ -334,24 +333,6 @@ begin
     end;
   end;
   Canvas.Draw(0, 0, FBitmapBuffer);
-end;
-
-procedure TBCEditorCompletionProposalPopupWindow.MoveLine(ALineCount: Integer);
-begin
-  if ALineCount > 0 then
-  begin
-    if TopLine < Length(FItemIndexArray) - ALineCount then
-      TopLine := TopLine + ALineCount
-    else
-      TopLine := Length(FItemIndexArray) - 1;
-  end
-  else
-  begin
-    if TopLine + ALineCount > 0 then
-      TopLine := TopLine + ALineCount
-    else
-      TopLine := 0;
-  end;
 end;
 
 procedure TBCEditorCompletionProposalPopupWindow.MoveSelectedLine(ALineCount: Integer);
