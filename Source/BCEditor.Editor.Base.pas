@@ -2927,7 +2927,7 @@ end;
 
 function TBCBaseEditor.SearchText(const ASearchText: string): Integer;
 var
-  LStartTextPosition, LEndTextPosition: TBCEditorTextPosition;
+  LTextCaretPosition, LStartTextPosition, LEndTextPosition: TBCEditorTextPosition;
   LCurrentTextPosition: TBCEditorTextPosition;
   LSearchLength, LSearchIndex, LFound: Integer;
   LFindAllCount: Integer;
@@ -2938,10 +2938,10 @@ var
   function InValidSearchRange(AFirst, ALast: Integer): Boolean;
   begin
     Result := True;
-    if (FSelection.ActiveMode = smNormal) or not FSearch.InSelection.Active then
+    if FSelection.ActiveMode = smNormal then
     begin
-      if (LCurrentTextPosition.Line = LStartTextPosition.Line) and (AFirst <= LStartTextPosition.Char) or
-        (LCurrentTextPosition.Line = LEndTextPosition.Line) and (ALast >= LEndTextPosition.Char) then
+      if (LCurrentTextPosition.Line = LStartTextPosition.Line) and (AFirst < LStartTextPosition.Char) or
+        (LCurrentTextPosition.Line = LEndTextPosition.Line) and (ALast > LEndTextPosition.Char) then
         Result := False;
     end
     else
@@ -2960,6 +2960,7 @@ begin
 
   LIsBackward := soBackwards in FSearch.Options;
   LIsFromCursor := not (soEntireScope in FSearch.Options);
+  LTextCaretPosition := TextCaretPosition;
 
   if FSearch.InSelection.Active then
   begin
@@ -2980,12 +2981,18 @@ begin
   if LIsFromCursor then
   begin
     if LIsBackward then
-      LEndTextPosition := TextCaretPosition
+    begin
+      LEndTextPosition := LTextCaretPosition;
+      Dec(LEndTextPosition.Char);
+    end
     else
     if FSearch.InSelection.Active then
-      LStartTextPosition := FSearch.InSelection.SelectionBeginPosition
+    begin
+      if FSearch.InSelection.IsTextPositionInBlock(LTextCaretPosition) then
+        LStartTextPosition := LTextCaretPosition
+    end
     else
-      LStartTextPosition := TextCaretPosition;
+      LStartTextPosition := LTextCaretPosition;
   end;
 
   if LIsBackward then
@@ -6197,12 +6204,7 @@ begin
         FindAll; { For search map and search count }
         CaretZero;
         if Assigned(FSearchEngine) and FSearch.Enabled then
-        begin
-          if soBackwards in FSearch.Options then
-            FindPrevious
-          else
-            FindNext;
-        end;
+          FindNext;
       end;
     scInSelectionActive:
       begin
@@ -9844,11 +9846,12 @@ var
     LDisplayPosition: TBCEditorDisplayPosition;
   begin
     if FSyncEdit.Enabled and not FSyncEdit.Active and FSyncEdit.Activator.Visible and GetSelectionAvailable then
-    begin
-      LDisplayPosition := TextToDisplayPosition(SelectionEndPosition);
-      FSyncEdit.Activator.Draw(Canvas, AClipRect.Left + FActiveLine.Indicator.Left,
-        (LDisplayPosition.Row - TopLine) * LLineHeight, LLineHeight);
-    end;
+      if SelectionBeginPosition.Line <> SelectionEndPosition.Line then
+      begin
+        LDisplayPosition := TextToDisplayPosition(SelectionEndPosition);
+        FSyncEdit.Activator.Draw(Canvas, AClipRect.Left + FActiveLine.Indicator.Left,
+          (LDisplayPosition.Row - TopLine) * LLineHeight, LLineHeight);
+      end;
   end;
 
   procedure PaintLineState;
@@ -10492,11 +10495,16 @@ var
               Break;
 
             if FSearch.InSelection.Active then
-              LIsTextPositionInSelection := FSearch.InSelection.IsTextPositionInBlock(LTextPosition)
+            begin
+              LIsTextPositionInSelection := FSearch.InSelection.IsTextPositionInBlock(LTextPosition);
+              if LIsTextPositionInSelection then
+                LIsTextPositionInSelection := not IsTextPositionInSelection(LTextPosition);
+            end
             else
               LIsTextPositionInSelection := IsTextPositionInSelection(LTextPosition);
 
-            if LIsTextPositionInSelection then
+            if not FSearch.InSelection.Active and LIsTextPositionInSelection or
+              FSearch.InSelection.Active and not LIsTextPositionInSelection then
             begin
               if not NextItem then
                 Break;

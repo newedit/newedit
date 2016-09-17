@@ -138,7 +138,7 @@ begin
   begin
     FEnabled := AValue;
     if Assigned(FOnChange) then
-      FOnChange(scSearch);
+      FOnChange(scEnabled);
   end;
 end;
 
