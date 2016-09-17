@@ -2,8 +2,8 @@
    "Colors": {
       "Info": {
          "General": {
-            "Version": "1.6.0",
-            "Date": "21.05.2016"
+            "Version": "1.7.0",
+            "Date": "17.09.2016"
          },
          "Author": {
             "Name": "Lasse Rautiainen",
@@ -46,6 +46,7 @@
             "RightMovingEdge": "clSilver",
             "SearchHighlighterBackground": "clBlack",
             "SearchHighlighterForeground": "clWhite",
+            "SearchInSelectionBackground": "$00FCFDCD",
             "SearchMapActiveLine": "clHighlight",
             "SearchMapBackground": "$00F4F4F4",
             "SearchMapForeground": "clBlack",
