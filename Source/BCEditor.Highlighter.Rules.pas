@@ -322,18 +322,18 @@ begin
 
   AllowedDelimiters := ACurrentRange.Delimiters;
   for i := 0 to Sets.Count - 1 do
-    AllowedDelimiters := AllowedDelimiters - TBCEditorSet(Sets[i]).CharSet;
+    AllowedDelimiters := AllowedDelimiters - TBCEditorSet(Sets.List[i]).CharSet;
 
   for i := 0 to Sets.Count - 1 do
   begin
     ARun := StartPosition;
     repeat
       Inc(ARun);
-    until not CharInSet(APLine[ARun], TBCEditorSet(Sets[i]).CharSet) or (APLine[ARun] = BCEDITOR_NONE_CHAR);
+    until not CharInSet(APLine[ARun], TBCEditorSet(Sets.List[i]).CharSet) or (APLine[ARun] = BCEDITOR_NONE_CHAR);
 
     if CharInSet(APLine[ARun], AllowedDelimiters) then
     begin
-      AToken := TBCEditorToken.Create(TBCEditorSet(Sets[i]).Attribute);
+      AToken := TBCEditorToken.Create(TBCEditorSet(Sets.List[i]).Attribute);
       AToken.Temporary := True;
       Exit(True);
     end;
@@ -517,7 +517,7 @@ end;
 
 function TBCEditorRange.GetSet(AIndex: Integer): TBCEditorSet;
 begin
-  Result := TBCEditorSet(FSets[AIndex]);
+  Result := TBCEditorSet(FSets.List[AIndex]);
 end;
 
 procedure TBCEditorRange.AddTokenRange(const AOpenToken: string; AOpenTokenBreakType: TBCEditorBreakType; const ACloseToken: string;
@@ -713,11 +713,11 @@ begin
       LAnsiChar := AnsiChar(CaseFunct(Char(i)));
       for j := 0 to FSets.Count - 1 do
       begin
-        if CharInSet(LAnsiChar, TBCEditorSet(FSets[j]).CharSet) then
+        if CharInSet(LAnsiChar, TBCEditorSet(FSets.List[j]).CharSet) then
           if not Assigned(SymbolList[LAnsiChar]) then
-            FSymbolList[LAnsiChar] := TBCEditorParser.Create(TBCEditorSet(FSets[j]))
+            FSymbolList[LAnsiChar] := TBCEditorParser.Create(TBCEditorSet(FSets.List[j]))
           else
-            TBCEditorParser(SymbolList[LAnsiChar]).AddSet(TBCEditorSet(FSets[j]));
+            TBCEditorParser(SymbolList[LAnsiChar]).AddSet(TBCEditorSet(FSets.List[j]));
       end;
     end;
 

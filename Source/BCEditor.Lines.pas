@@ -385,54 +385,43 @@ end;
 
 function TBCEditorLines.GetTextLength: Integer;
 var
-  i: Integer;
-  LLineBreakLength, LLength: Integer;
+  i, LLineBreakLength: Integer;
 begin
   Result := 0;
   LLineBreakLength := Length(SLineBreak);
   for i := 0 to FCount - 1 do
   begin
-    LLength := LLineBreakLength;
     if i = FCount - 1 then
-      LLength := 0;
-    Inc(Result, Length(FList^[i].Value) + LLength)
+      LLineBreakLength := 0;
+    Inc(Result, Length(FList^[i].Value) + LLineBreakLength)
   end;
 end;
 
 function TBCEditorLines.GetTextStr: string;
 var
-  i: Integer;
-  LLineBreakLength, LLength, LSize: Integer;
+  i, LLength, LSize, LLineBreakLength: Integer;
   LPValue: PChar;
-  LValue, LLineBreak: string;
+  LLineBreak: string;
 begin
-  LSize := 0;
-  LLineBreakLength := Length(SLineBreak);
-  for i := 0 to FCount - 1 do
-  begin
-    LLength := LLineBreakLength;
-    if i = FCount - 1 then
-      LLength := 0;
-    Inc(LSize, Length(FList^[i].Value) + LLength)
-  end;
+  LSize := GetTextLength;
+  LLineBreak := SLineBreak;
+  LLineBreakLength := Length(LLineBreak);
   SetString(Result, nil, LSize);
   LPValue := Pointer(Result);
   for i := 0 to FCount - 1 do
   begin
-    LValue := Get(i);
-    LLength := Length(LValue);
+    LLength := Length(FList^[i].Value);
     if LLength <> 0 then
     begin
-      System.Move(Pointer(LValue)^, LPValue^, LLength * SizeOf(Char));
+      System.Move(Pointer(FList^[i].Value)^, LPValue^, LLength * SizeOf(Char));
       Inc(LPValue, LLength);
     end;
     if i = FCount - 1 then
       Exit;
-    LLength := LLineBreakLength;
-    if LLength <> 0 then
+    if LLineBreakLength <> 0 then
     begin
-      System.Move(Pointer(LLineBreak)^, LPValue^, LLength * SizeOf(Char));
-      Inc(LPValue, LLength);
+      System.Move(Pointer(LLineBreak)^, LPValue^, LLineBreakLength * SizeOf(Char));
+      Inc(LPValue, LLineBreakLength);
     end;
   end;
 end;
@@ -572,8 +561,8 @@ begin
     EndUpdate;
   end;
 
-  if Assigned(OnInserted) then
-    OnInserted(Self, 0, FCount);
+  //if Assigned(OnInserted) then
+  //  OnInserted(Self, 0, FCount);  SetTextStr
 
   FStreaming := False;
 end;
@@ -713,13 +702,13 @@ end;
 
 procedure TBCEditorLines.SetTextStr(const AValue: string);
 var
-  LValue: string;
   LLength: Integer;
   LPValue, LPStartValue, LPLastChar: PChar;
 begin
   if Assigned(FOnBeforeSetText) then
     FOnBeforeSetText(Self);
   Clear;
+  FIndexOfLongestLine := -1;
   LPValue := Pointer(AValue);
   if Assigned(LPValue) then
   begin
@@ -731,13 +720,29 @@ begin
       while (LPValue <= LPLastChar) and (LPValue^ <> BCEDITOR_CARRIAGE_RETURN) and (LPValue^ <> BCEDITOR_LINEFEED) and
         (LPValue^ <> BCEDITOR_LINE_SEPARATOR) do
         Inc(LPValue);
-      if LPValue <> LPStartValue then
+
+      if FCount = FCapacity then
+        Grow;
+
+      with FList^[FCount] do
       begin
-        SetString(LValue, LPStartValue, LPValue - LPStartValue);
-        InsertItem(FCount, LValue);
-      end
-      else
-        InsertItem(FCount, '');
+        Pointer(Value) := nil;
+        if LPValue = LPStartValue then
+          Value := ''
+        else
+          SetString(Value, LPStartValue, LPValue - LPStartValue);
+        Range := CNULLRANGE;
+        ExpandedLength := -1;
+        Flags := [sfExpandedLengthUnknown];
+        New(Attribute);
+        with Attribute^ do begin
+          Foreground := clNone;
+          Background := clNone;
+          LineState := lsNone;
+        end;
+      end;
+      Inc(FCount);
+
       if LPValue^ = BCEDITOR_CARRIAGE_RETURN then
         Inc(LPValue);
       if LPValue^ = BCEDITOR_LINEFEED then
