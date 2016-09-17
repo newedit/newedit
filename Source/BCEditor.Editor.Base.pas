@@ -13707,7 +13707,7 @@ begin
         CodeFoldingUncollapse(LCodeFoldingRange);
     end;
   LTextCaretPosition := GetTextPosition(1, ATextLine);
-  TopLine := Max(LTextCaretPosition.Line - FVisibleLines div 2, 1);
+  TopLine := Max(LTextCaretPosition.Line - (ClientHeight div GetLineHeight) div 2, 1);
   SetTextCaretPosition(LTextCaretPosition);
   if GetSelectionAvailable then
     Invalidate;
