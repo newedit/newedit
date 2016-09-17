@@ -113,7 +113,7 @@ implementation
 {$R *.dfm}
 
 uses
-  BCCommon.Form.Print.Preview, BCEditor.Print.Types, BCCommon.Dialog.SkinSelect, BCCommon.FileUtils,
+  BCCommon.Form.Print.Preview, BCEditor.Print.Types, BCCommon.Dialog.SkinSelect, BCCommon.FileUtils, BCCommon.Utils,
   BCCommon.Dialog.Options.Search, BCCommon.Encoding, acPopupController, sVclUtils;
 
 procedure TMainForm.ActionSkinsExecute(Sender: TObject);
@@ -148,7 +148,7 @@ end;
 
 procedure TMainForm.DoSearchTextChange;
 begin
-   if Assigned(Editor) then
+  if Assigned(Editor) then
     Editor.Search.SearchText := ComboBoxSearchText.Text;
   SetMatchesFound;
 end;
@@ -328,20 +328,14 @@ procedure TMainForm.ActionFindNextExecute(Sender: TObject);
 begin
   inherited;
   if Assigned(Editor) then
-  begin
-    DoSearchTextChange;
     Editor.FindNext;
-  end;
 end;
 
 procedure TMainForm.ActionFindPreviousExecute(Sender: TObject);
 begin
   inherited;
   if Assigned(Editor) then
-  begin
-    DoSearchTextChange;
     Editor.FindPrevious;
-  end;
 end;
 
 procedure TMainForm.ActionInSelectionExecute(Sender: TObject);
@@ -432,7 +426,9 @@ end;
 procedure TMainForm.FormShow(Sender: TObject);
 begin
   ObjectInspectorEh.Component := Editor;
-  ObjectInspectorEh.LabelColWidth := 145;
+  ObjectInspectorEh.LabelColWidth := ScaleSize(145);
+  if Editor.CanFocus then
+    Editor.SetFocus;
 end;
 
 function TMainForm.GetTitleBarItemLeftBottom(AIndex: Integer): TPoint;
