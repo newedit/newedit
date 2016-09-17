@@ -176,6 +176,7 @@
         <DCCReference Include="..\Source\BCEditor.Editor.Search.pas"/>
         <DCCReference Include="..\Source\BCEditor.Editor.Search.Highlighter.pas"/>
         <DCCReference Include="..\Source\BCEditor.Editor.Search.Highlighter.Colors.pas"/>
+				<DCCReference Include="..\Source\BCEditor.Editor.Search.InSelection.pas"/>
         <DCCReference Include="..\Source\BCEditor.Editor.Search.Map.pas"/>
         <DCCReference Include="..\Source\BCEditor.Editor.Search.Map.Colors.pas"/>
         <DCCReference Include="..\Source\BCEditor.Editor.Selection.pas"/>

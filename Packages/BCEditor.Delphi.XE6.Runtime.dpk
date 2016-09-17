@@ -88,6 +88,7 @@ contains
   BCEditor.Editor.Search in '..\Source\BCEditor.Editor.Search.pas',
   BCEditor.Editor.Search.Highlighter in '..\Source\BCEditor.Editor.Search.Highlighter.pas',
   BCEditor.Editor.Search.Highlighter.Colors in '..\Source\BCEditor.Editor.Search.Highlighter.Colors.pas',
+	BCEditor.Editor.Search.InSelection in '..\Source\BCEditor.Editor.Search.InSelection.pas',
   BCEditor.Editor.Search.Map in '..\Source\BCEditor.Editor.Search.Map.pas',
   BCEditor.Editor.Search.Map.Colors in '..\Source\BCEditor.Editor.Search.Map.Colors.pas',
   BCEditor.Editor.Selection in '..\Source\BCEditor.Editor.Selection.pas',

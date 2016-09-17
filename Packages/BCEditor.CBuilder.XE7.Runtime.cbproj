@@ -269,6 +269,9 @@
         <DelphiCompile Include="..\Source\BCEditor.Editor.Search.Highlighter.pas">
             <BuildOrder>50</BuildOrder>
         </DelphiCompile>
+				<DelphiCompile Include="..\Source\BCEditor.Editor.Search.InSelection.pas">
+            <BuildOrder>50</BuildOrder>
+        </DelphiCompile>
         <DelphiCompile Include="..\Source\BCEditor.Editor.Search.Map.Colors.pas">
             <BuildOrder>51</BuildOrder>
         </DelphiCompile>
