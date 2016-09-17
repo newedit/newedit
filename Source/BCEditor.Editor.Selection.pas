@@ -25,6 +25,7 @@ type
     constructor Create;
     destructor Destroy; override;
     procedure Assign(ASource: TPersistent); override;
+    procedure SetOption(const AOption: TBCEditorSelectionOption; const AEnabled: Boolean);
     property ActiveMode: TBCEditorSelectionMode read FActiveMode write SetActiveMode stored False;
   published
     property Colors: TBCEditorSelectionColors read FColors write SetColors;
@@ -74,6 +75,14 @@ begin
   end
   else
     inherited Assign(ASource);
+end;
+
+procedure TBCEditorSelection.SetOption(const AOption: TBCEditorSelectionOption; const AEnabled: Boolean);
+begin
+   if AEnabled then
+    Include(FOptions, AOption)
+  else
+    Exclude(FOptions, AOption);
 end;
 
 procedure TBCEditorSelection.DoChange;

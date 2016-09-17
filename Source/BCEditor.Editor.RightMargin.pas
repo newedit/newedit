@@ -25,6 +25,7 @@ type
     constructor Create;
     destructor Destroy; override;
     procedure Assign(ASource: TPersistent); override;
+    procedure SetOption(const AOption: TBCEditorRightMarginOption; const AEnabled: Boolean);
     property Moving: Boolean read FMoving write FMoving;
     property MouseOver: Boolean read FMouseOver write FMouseOver;
   published
@@ -77,6 +78,14 @@ begin
   end
   else
     inherited Assign(ASource);
+end;
+
+procedure TBCEditorRightMargin.SetOption(const AOption: TBCEditorRightMarginOption; const AEnabled: Boolean);
+begin
+  if AEnabled then
+    Include(FOptions, AOption)
+  else
+    Exclude(FOptions, AOption);
 end;
 
 procedure TBCEditorRightMargin.DoChange;
