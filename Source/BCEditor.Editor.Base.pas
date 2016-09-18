@@ -6197,8 +6197,6 @@ begin
     CaretZero;
 
   case AEvent of
-    scEnabled:
-      FindAll;
     scEngineUpdate:
       AssignSearchEngine;
     scSearch:
@@ -6218,6 +6216,7 @@ begin
           FSelectionBeginPosition := TextCaretPosition;
           FSelectionEndPosition := FSelectionBeginPosition;
         end;
+        FindAll;
       end;
   end;
   FLeftMarginWidth := GetLeftMarginWidth;
