@@ -6202,7 +6202,8 @@ begin
     scSearch:
       begin
         FindAll; { For search map and search count }
-        CaretZero;
+        if SelectionAvailable then
+          TextCaretPosition := SelectionBeginPosition;
         if Assigned(FSearchEngine) and FSearch.Enabled then
           FindNext;
       end;
