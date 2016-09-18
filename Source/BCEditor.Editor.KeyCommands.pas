@@ -688,6 +688,7 @@ begin
   Add(ecBlockUnindent, [ssCtrl, ssShift], Ord('U'));
   { Fragment deletion }
   Add(ecDeleteWord, [ssCtrl], Ord('T'));
+  Add(ecDeleteWord, [ssCtrl], VK_DELETE); //SecondaryShortCuts.Strings = ('Ctrl+Del')
   { Line operations }
   Add(ecInsertLine, [ssCtrl], Ord('M'));
   Add(ecMoveLineUp, [ssCtrl, ssAlt], VK_UP);
