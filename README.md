@@ -44,7 +44,7 @@ TBCEditor Control Demo v. 1.7.0 beta.
   * <a href="http://www.bonecode.com/downloads/BCEditorComponentDemo32.zip">32-bit Windows</a>
   * <a href="http://www.bonecode.com/downloads/BCEditorComponentDemo64.zip">64-bit Windows</a>
 
-The latest update: 18.09.2016 01:22, UTC+02:00
+The latest update: 18.09.2016 21:18, UTC+02:00
 
 Demo source build requires 
 
