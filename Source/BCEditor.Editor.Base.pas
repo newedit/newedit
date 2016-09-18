@@ -10808,8 +10808,7 @@ var
     if (LEmptySpace <> esNone) and FSpecialChars.Visible then
     begin
       if scoMiddleColor in FSpecialChars.Options then
-        AForeground := MiddleColor(FHighlighter.MainRules.Attribute.Background,
-          FHighlighter.MainRules.Attribute.Foreground)
+        AForeground := MiddleColor(FHighlighter.MainRules.Attribute.Background, FHighlighter.MainRules.Attribute.Foreground)
       else
       if scoTextColor in FSpecialChars.Options then
         AForeground := FHighlighter.MainRules.Attribute.Foreground
@@ -10962,7 +10961,8 @@ var
         if FSearch.InSelection.Active and LIsSearchInSelectionBlock then
           LBackgroundColor := FSearch.InSelection.Background;
 
-        if not FSyncEdit.Active and LAnySelection and (soHighlightSimilarTerms in FSelection.Options) then
+        if not FSyncEdit.Active and LAnySelection and (soHighlightSimilarTerms in FSelection.Options) and
+          not FSearch.InSelection.Active then
         begin
           LKeyword := '';
 
