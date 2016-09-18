@@ -99,7 +99,6 @@ type
   TBCEditorSelectionOptions = set of TBCEditorSelectionOption;
 
   TBCEditorSearchChanges = (
-    scEnabled,
     scRefresh,
     scSearch,
     scEngineUpdate,

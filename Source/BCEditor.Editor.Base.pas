@@ -6200,11 +6200,12 @@ begin
     scEngineUpdate:
       AssignSearchEngine;
     scSearch:
+      if FSearch.Enabled then
       begin
         FindAll; { For search map and search count }
         if SelectionAvailable then
           TextCaretPosition := SelectionBeginPosition;
-        if Assigned(FSearchEngine) and FSearch.Enabled then
+        if Assigned(FSearchEngine)then
           FindNext;
       end;
     scInSelectionActive:
