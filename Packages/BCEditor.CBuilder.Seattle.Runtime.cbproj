@@ -260,6 +260,9 @@
         <DelphiCompile Include="..\Source\BCEditor.Editor.Scroll.Hint.pas">
             <BuildOrder>45</BuildOrder>
         </DelphiCompile>
+				<DelphiCompile Include="..\Source\BCEditor.Editor.Scroll.Shadow.pas">
+            <BuildOrder>45</BuildOrder>
+        </DelphiCompile>
         <DelphiCompile Include="..\Source\BCEditor.Editor.Scroll.pas">
             <BuildOrder>46</BuildOrder>
         </DelphiCompile>
