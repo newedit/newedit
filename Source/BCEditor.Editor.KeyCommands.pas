@@ -231,7 +231,7 @@ type
   end;
 
 const
-  EditorCommandStrings: array [0 .. 110] of TBCEditorCommandString = (
+  EditorCommandStrings: array [0 .. 111] of TBCEditorCommandString = (
     (Value: ecNone; Name: 'ecNone'),
     (Value: ecLeft; Name: 'ecLeft'),
     (Value: ecRight; Name: 'ecRight'),
@@ -275,6 +275,7 @@ const
     (Value: ecScrollRight; Name: 'ecScrollRight'),
     (Value: ecBackspace; Name: 'ecBackspace'),
     (Value: ecDeleteChar; Name: 'ecDeleteChar'),
+    (Value: ecDeleteWord; Name: 'ecDeleteWord'),
     (Value: ecDeleteWord; Name: 'ecDeleteWord'),
     (Value: ecDeleteLastWord; Name: 'ecDeleteLastWord'),
     (Value: ecDeleteBeginningOfLine; Name: 'ecDeleteBeginningOfLine'),
