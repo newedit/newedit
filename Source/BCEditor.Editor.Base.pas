@@ -6197,6 +6197,8 @@ begin
     CaretZero;
 
   case AEvent of
+    scEnabled:
+      FindAll;
     scEngineUpdate:
       AssignSearchEngine;
     scSearch:
