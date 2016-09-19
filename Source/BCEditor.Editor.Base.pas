@@ -5529,19 +5529,19 @@ var
       Result := (ATextPtr + 1)^ = ASkipRegionItem.SkipIfNextCharIsNot;
   end;
 
-  function IsPreviousCharStringEscape(ATextPtr: PChar): Boolean;
+  {function IsPreviousCharStringEscape(ATextPtr: PChar): Boolean;
   begin
     Result := False;
     if LCurrentCodeFoldingRegion.StringEscapeChar <> BCEDITOR_NONE_CHAR then
       Result := (ATextPtr - 1)^ = LCurrentCodeFoldingRegion.StringEscapeChar;
-  end;
+  end;  }
 
-  function IsNextCharStringEscape(ATextPtr: PChar): Boolean;
+ { function IsNextCharStringEscape(ATextPtr: PChar): Boolean;
   begin
     Result := False;
     if LCurrentCodeFoldingRegion.StringEscapeChar <> BCEDITOR_NONE_CHAR then
       Result := (ATextPtr + 1)^ = LCurrentCodeFoldingRegion.StringEscapeChar;
-  end;
+  end;   }
 
   function SkipRegionsClose: Boolean;
   var
@@ -5607,7 +5607,8 @@ var
               if LSkipRegionItem.RegionType = ritSingleLineString then
               begin
                 LKeyWordPtr := PChar(LSkipRegionItem.CloseToken);
-                while (LTextPtr^ <> BCEDITOR_NONE_CHAR) and (LTextPtr^ <> LKeyWordPtr^) do
+                while (LTextPtr^ <> BCEDITOR_NONE_CHAR) and
+                  ( (LTextPtr^ <> LKeyWordPtr^) or (LTextPtr^ = LKeyWordPtr^) and not OddCountOfStringEscapeChars(LTextPtr) ) do
                   Inc(LTextPtr);
               end
               else
