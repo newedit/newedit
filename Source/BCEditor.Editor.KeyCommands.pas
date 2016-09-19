@@ -121,10 +121,10 @@ const
   ecLowerCaseBlock = 626;
   ecAlternatingCaseBlock = 627;
   { Move }
-  ecMoveLineUp      = 701;
-  ecMoveLineDown    = 702;
-  ecMoveCharLeft    = 703;
-  ecMoveCharRight   = 704;
+  ecMoveLineUp = 701;
+  ecMoveLineDown = 702;
+  ecMoveCharLeft = 703;
+  ecMoveCharRight = 704;
   { Search }
   ecSearchNext = 800;
   ecSearchPrevious = 801;
@@ -133,14 +133,6 @@ const
   ecBlockComment = 901;
 
   ecUserFirst = 1001;
-  { code folding }
-  ecCollapse = ecUserFirst + 100;
-  ecUncollapse = ecUserFirst + 101;
-  ecCollapseLevel = ecUserFirst + 102;
-  ecUncollapseLevel = ecUserFirst + 103;
-  ecCollapseAll = ecUserFirst + 104;
-  ecUncollapseAll = ecUserFirst + 105;
-  ecCollapseCurrent = ecUserFirst + 109;
 
 type
   TBCEditorCommand = type Word;
@@ -231,7 +223,7 @@ type
   end;
 
 const
-  EditorCommandStrings: array [0 .. 110] of TBCEditorCommandString = (
+  EditorCommandStrings: array [0 .. 103] of TBCEditorCommandString = (
     (Value: ecNone; Name: 'ecNone'),
     (Value: ecLeft; Name: 'ecLeft'),
     (Value: ecRight; Name: 'ecRight'),
@@ -332,13 +324,6 @@ const
     (Value: ecUpperCaseBlock; Name: 'ecUpperCaseBlock'),
     (Value: ecLowerCaseBlock; Name: 'ecLowerCaseBlock'),
     (Value: ecAlternatingCaseBlock; Name: 'ecAlternatingCaseBlock'),
-    (Value: ecCollapse; Name: 'ecCollapse'),
-    (Value: ecUncollapse; Name: 'ecUncollapse'),
-    (Value: ecCollapseLevel; Name: 'ecCollapseLevel'),
-    (Value: ecUncollapseLevel; Name: 'ecUncollapseLevel'),
-    (Value: ecCollapseAll; Name: 'ecCollapseAll'),
-    (Value: ecUncollapseAll; Name: 'ecUncollapseAll'),
-    (Value: ecCollapseCurrent; Name: 'ecCollapseCurrent'),
     (Value: ecSearchNext; Name: 'ecSearchNext'),
     (Value: ecSearchPrevious; Name: 'ecSearchPrevious'),
     (Value: ecLineComment; Name: 'ecLineComment'),

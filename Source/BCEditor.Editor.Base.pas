@@ -564,10 +564,6 @@ type
     procedure ClearMatchingPair;
     procedure ClearSelection;
     procedure ClearUndo;
-    procedure CodeFoldingCollapseAll;
-    procedure CodeFoldingCollapseLevel(ALevel: Integer);
-    procedure CodeFoldingUncollapseAll;
-    procedure CodeFoldingUncollapseLevel(ALevel: Integer; ANeedInvalidate: Boolean = True);
     procedure CommandProcessor(ACommand: TBCEditorCommand; AChar: Char; AData: Pointer);
     procedure CopyToClipboard;
     procedure CutToClipboard;
@@ -581,6 +577,7 @@ type
     procedure ExecuteCommand(ACommand: TBCEditorCommand; AChar: Char; AData: Pointer); virtual;
     procedure ExportToHTML(const AFileName: string; const ACharSet: string = ''; AEncoding: System.SysUtils.TEncoding = nil); overload;
     procedure ExportToHTML(AStream: TStream; const ACharSet: string = ''; AEncoding: System.SysUtils.TEncoding = nil); overload;
+    procedure FoldAll(const AFromLineNumber: Integer = -1; const AToLineNumber: Integer = -1);
     procedure GotoBookmark(const ABookmark: Integer);
     procedure GotoLineAndCenter(const ATextLine: Integer);
     procedure HookEditorLines(ALines: TBCEditorLines; AUndo, ARedo: TBCEditorUndoList);
@@ -615,6 +612,7 @@ type
     procedure Sort(ASortOrder: TBCEditorSortOrder = soToggle);
     procedure ToggleBookmark(AIndex: Integer = -1);
     procedure ToggleSelectedCase(ACase: TBCEditorCase = cNone);
+    procedure UnfoldAll(const AFromLineNumber: Integer = -1; const AToLineNumber: Integer = -1);
     procedure UnhookEditorLines;
     procedure UnlockUndo;
     procedure UnregisterCommandHandler(AHookedCommandEvent: TBCEditorHookedCommandEvent);
@@ -2086,7 +2084,7 @@ begin
     for i := 0 to FAllCodeFoldingRanges.AllCount - 1 do
     begin
       LCodeFoldingRange := FAllCodeFoldingRanges[i];
-      if Assigned(LCodeFoldingRange) and LCodeFoldingRange.Collapsed and not LCodeFoldingRange.ParentCollapsed then
+      if Assigned(LCodeFoldingRange) and LCodeFoldingRange.Collapsed {and not LCodeFoldingRange.ParentCollapsed)} then
         for j := LCodeFoldingRange.FromLine + 1 to LCodeFoldingRange.ToLine do
           LCollapsedCodeFolding[j] := True;
     end;
@@ -3210,7 +3208,7 @@ begin
   if AEvent = fcEnabled then
   begin
     if not FCodeFolding.Visible then
-      CodeFoldingUncollapseAll
+      UnfoldAll
     else
       InitCodeFolding;
   end
@@ -13100,74 +13098,67 @@ begin
   FRedoList.Clear;
 end;
 
-procedure TBCBaseEditor.CodeFoldingCollapseAll;
+procedure TBCBaseEditor.FoldAll(const AFromLineNumber: Integer = -1; const AToLineNumber: Integer = -1);
 var
   i: Integer;
-begin
-  FLines.BeginUpdate;
-
-  for i := 9 downto 0 do
-    CodeFoldingCollapseLevel(i);
-
-  FLines.EndUpdate;
-  UpdateScrollBars;
-end;
-
-procedure TBCBaseEditor.CodeFoldingCollapseLevel(ALevel: Integer);
-var
-  i: Integer;
+  LFromLine, LToLine: Integer;
   LCodeFoldingRange: TBCEditorCodeFoldingRange;
 begin
-  FLines.BeginUpdate;
-
-  for i := FAllCodeFoldingRanges.AllCount - 1 downto 0 do
-  begin
-    LCodeFoldingRange := FAllCodeFoldingRanges[i];
-    if (LCodeFoldingRange.FoldRangeLevel = ALevel) and (not LCodeFoldingRange.Collapsed) and
-      (not LCodeFoldingRange.ParentCollapsed) and LCodeFoldingRange.Collapsable then
-      CodeFoldingCollapse(LCodeFoldingRange);
-  end;
-
-  FLines.EndUpdate;
-  Invalidate;
-end;
-
-procedure TBCBaseEditor.CodeFoldingUncollapseAll;
-var
-  i: Integer;
-  LBlockBeginPosition, LBlockEndPosition: TBCEditorTextPosition;
-begin
-  LBlockBeginPosition.Char := FSelectionBeginPosition.Char;
-  LBlockBeginPosition.Line := GetDisplayTextLineNumber(FSelectionBeginPosition.Line);
-  LBlockEndPosition.Char := FSelectionEndPosition.Char;
-  LBlockEndPosition.Line := GetDisplayTextLineNumber(FSelectionEndPosition.Line);
-
-  FLines.BeginUpdate;
-  for i := 0 to 9 do
-    CodeFoldingUncollapseLevel(i, False);
-  FLines.EndUpdate;
-
-  FSelectionBeginPosition := LBlockBeginPosition;
-  FSelectionEndPosition := LBlockEndPosition;
-
-  UpdateScrollBars;
-end;
-
-procedure TBCBaseEditor.CodeFoldingUncollapseLevel(ALevel: Integer; ANeedInvalidate: Boolean);
-var
-  i: Integer;
-  LCodeFoldingRange: TBCEditorCodeFoldingRange;
-begin
+  if AFromLineNumber <> -1 then
+    LFromLine := AFromLineNumber
+  else
+    LFromLine := 1;
+  if AToLineNumber <> -1 then
+    LToLine := AToLineNumber
+  else
+    LToLine := FLines.Count;
+  ClearMatchingPair;
   FResetLineNumbersCache := True;
   for i := FAllCodeFoldingRanges.AllCount - 1 downto 0 do
   begin
     LCodeFoldingRange := FAllCodeFoldingRanges[i];
-    if (LCodeFoldingRange.FoldRangeLevel = ALevel) and LCodeFoldingRange.Collapsed and not LCodeFoldingRange.ParentCollapsed
-    then
-      CodeFoldingUncollapse(LCodeFoldingRange);
+    if (LCodeFoldingRange.FromLine >= LFromLine) and (LCodeFoldingRange.FromLine <= LToLine) then
+      if not LCodeFoldingRange.Collapsed and LCodeFoldingRange.Collapsable then
+      with LCodeFoldingRange do
+      begin
+        Collapsed := True;
+        SetParentCollapsedOfSubCodeFoldingRanges(True, FoldRangeLevel);
+      end;
   end;
-  if ANeedInvalidate then
-    Invalidate;
+  CheckIfAtMatchingKeywords;
+  Refresh;
+  UpdateScrollBars;
+end;
+
+procedure TBCBaseEditor.UnfoldAll(const AFromLineNumber: Integer = -1; const AToLineNumber: Integer = -1);
+var
+  i: Integer;
+  LFromLine, LToLine: Integer;
+  LCodeFoldingRange: TBCEditorCodeFoldingRange;
+begin
+  if AFromLineNumber <> -1 then
+    LFromLine := AFromLineNumber
+  else
+    LFromLine := 0;
+  if AToLineNumber <> -1 then
+    LToLine := AToLineNumber
+  else
+    LToLine := FLines.Count;
+  ClearMatchingPair;
+  FResetLineNumbersCache := True;
+  for i := FAllCodeFoldingRanges.AllCount - 1 downto 0 do
+  begin
+    LCodeFoldingRange := FAllCodeFoldingRanges[i];
+    if (LCodeFoldingRange.FromLine >= LFromLine) and (LCodeFoldingRange.FromLine <= LToLine) then
+      if LCodeFoldingRange.Collapsed and LCodeFoldingRange.Collapsable then
+      with LCodeFoldingRange do
+      begin
+        Collapsed := False;
+        SetParentCollapsedOfSubCodeFoldingRanges(False, FoldRangeLevel);
+      end;
+  end;
+  Refresh;
+  UpdateScrollBars;
 end;
 
 procedure TBCBaseEditor.CommandProcessor(ACommand: TBCEditorCommand; AChar: Char; AData: Pointer);
