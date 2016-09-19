@@ -5608,8 +5608,9 @@ var
               begin
                 LKeyWordPtr := PChar(LSkipRegionItem.CloseToken);
                 while (LTextPtr^ <> BCEDITOR_NONE_CHAR) and
-                  ( (LTextPtr^ <> LKeyWordPtr^) or (LTextPtr^ = LKeyWordPtr^) and not OddCountOfStringEscapeChars(LTextPtr) ) do
+                  ( (LTextPtr^ <> LKeyWordPtr^) or (LTextPtr^ = LKeyWordPtr^) and OddCountOfStringEscapeChars(LTextPtr) ) do
                   Inc(LTextPtr);
+                Inc(LTextPtr);
               end
               else
               if LSkipRegionItem.RegionType = ritSingleLineComment then
@@ -6069,10 +6070,7 @@ begin
           if LOpenTokenSkipFoldRangeList.Count = 0 then
           begin
             if RegionItemsClose then
-            begin
-              Inc(LTextPtr);
               Continue; { while TextPtr^ <> BCEDITOR_NONE_CHAR do }
-            end;
             RegionItemsOpen;
           end;
 
