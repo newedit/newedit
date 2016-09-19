@@ -5594,8 +5594,7 @@ var
             LBookmarkTextPtr := LTextPtr;
             { Check, if the open keyword found }
             while (LTextPtr^ <> BCEDITOR_NONE_CHAR) and (LKeyWordPtr^ <> BCEDITOR_NONE_CHAR) and
-              ((LTextPtr^ = LKeyWordPtr^) or (LSkipRegionItem.SkipEmptyChars and
-              (LTextPtr^ < BCEDITOR_EXCLAMATION_MARK))) do
+              ((LTextPtr^ = LKeyWordPtr^) or (LSkipRegionItem.SkipEmptyChars and (LTextPtr^ < BCEDITOR_EXCLAMATION_MARK))) do
             begin
               if not LSkipRegionItem.SkipEmptyChars or
                 (LSkipRegionItem.SkipEmptyChars and (LTextPtr^ <> BCEDITOR_SPACE_CHAR) and
@@ -5605,7 +5604,14 @@ var
             end;
             if LKeyWordPtr^ = BCEDITOR_NONE_CHAR then { If found, skip single line comment or push skip region into stack }
             begin
-              if (LSkipRegionItem.RegionType = ritSingleLineComment) or (LSkipRegionItem.RegionType = ritSingleLineString) then
+              if LSkipRegionItem.RegionType = ritSingleLineString then
+              begin
+                LKeyWordPtr := PChar(LSkipRegionItem.CloseToken);
+                while (LTextPtr^ <> BCEDITOR_NONE_CHAR) and (LTextPtr^ <> LKeyWordPtr^) do
+                  Inc(LTextPtr);
+              end
+              else
+              if LSkipRegionItem.RegionType = ritSingleLineComment then
                 { Single line comment skip until next line }
                 Exit(True)
               else
