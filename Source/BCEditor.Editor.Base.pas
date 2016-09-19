@@ -5495,7 +5495,7 @@ var
       Inc(LTextPtr);
   end;
 
-  function CountCharsBefore(TextPtr: PChar; Character: Char): Integer;
+  function CountCharsBefore(TextPtr: PChar; const Character: Char): Integer;
   var
     TempPtr: PChar;
   begin
@@ -5605,7 +5605,7 @@ var
             end;
             if LKeyWordPtr^ = BCEDITOR_NONE_CHAR then { If found, skip single line comment or push skip region into stack }
             begin
-              if LSkipRegionItem.RegionType = ritSingleLineComment then
+              if (LSkipRegionItem.RegionType = ritSingleLineComment) or (LSkipRegionItem.RegionType = ritSingleLineString) then
                 { Single line comment skip until next line }
                 Exit(True)
               else
@@ -5776,8 +5776,7 @@ var
   begin
     if LOpenTokenSkipFoldRangeList.Count <> 0 then
       Exit;
-    if (not IsValidChar(LTextPtr - 1) or LIsOneCharFolds) and CharInSet(UpCase(LTextPtr^), FHighlighter.FoldOpenKeyChars)
-    then
+    if (not IsValidChar(LTextPtr - 1) or LIsOneCharFolds) and CharInSet(UpCase(LTextPtr^), FHighlighter.FoldOpenKeyChars) then
     begin
       LCodeFoldingRange := nil;
       if LOpenTokenFoldRangeList.Count > 0 then
@@ -12664,8 +12663,7 @@ begin
                 Inc(LTextPtr);
                 Inc(LKeyWordPtr);
               end;
-              if LKeyWordPtr^ = BCEDITOR_NONE_CHAR
-              then { If found, skip single line comment or push skip region into stack }
+              if LKeyWordPtr^ = BCEDITOR_NONE_CHAR then { If found, skip single line comment or push skip region into stack }
               begin
                 if LSkipRegionItem.RegionType = ritSingleLineComment then
                 begin

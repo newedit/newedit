@@ -104,7 +104,10 @@ begin
   if AString = 'MultiLine' then
     Result := ritMultiLineComment
   else
-    Result := ritString;
+  if AString = 'SingleLineString' then
+    Result := ritSingleLineString
+  else
+    Result := ritMultiLineString
 end;
 
 function StrToRangeType(const AString: string): TBCEditorRangeType;
