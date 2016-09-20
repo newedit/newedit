@@ -5489,10 +5489,11 @@ var
     Result := not IsValidChar(FirstChar) and not IsValidChar(LastChar);
   end;
 
-  procedure SkipEmptySpace;
+  function SkipEmptySpace: Boolean;
   begin
-    while (LTextPtr^ < BCEDITOR_EXCLAMATION_MARK) and (LTextPtr^ <> BCEDITOR_NONE_CHAR) do
+    while (LTextPtr^ <> BCEDITOR_NONE_CHAR) and (LTextPtr^ < BCEDITOR_EXCLAMATION_MARK) do
       Inc(LTextPtr);
+    Result := LTextPtr^ = BCEDITOR_NONE_CHAR;
   end;
 
   function CountCharsBefore(TextPtr: PChar; const Character: Char): Integer;
@@ -5528,20 +5529,6 @@ var
     if ASkipRegionItem.SkipIfNextCharIsNot <> BCEDITOR_NONE_CHAR then
       Result := (ATextPtr + 1)^ = ASkipRegionItem.SkipIfNextCharIsNot;
   end;
-
-  {function IsPreviousCharStringEscape(ATextPtr: PChar): Boolean;
-  begin
-    Result := False;
-    if LCurrentCodeFoldingRegion.StringEscapeChar <> BCEDITOR_NONE_CHAR then
-      Result := (ATextPtr - 1)^ = LCurrentCodeFoldingRegion.StringEscapeChar;
-  end;  }
-
- { function IsNextCharStringEscape(ATextPtr: PChar): Boolean;
-  begin
-    Result := False;
-    if LCurrentCodeFoldingRegion.StringEscapeChar <> BCEDITOR_NONE_CHAR then
-      Result := (ATextPtr + 1)^ = LCurrentCodeFoldingRegion.StringEscapeChar;
-  end;   }
 
   function SkipRegionsClose: Boolean;
   var
@@ -5676,8 +5663,7 @@ var
           end;
           if LKeyWordPtr^ = BCEDITOR_NONE_CHAR then { If found, pop skip region from the stack }
           begin
-            if (LCodeFoldingRange.RegionItem.CloseTokenLength = 1) or IsWholeWord(LBookmarkTextPtr - 1, LTextPtr)
-            then { Not interested in partial hits }
+            if (LCodeFoldingRange.RegionItem.CloseTokenLength = 1) or IsWholeWord(LBookmarkTextPtr - 1, LTextPtr) then { Not interested in partial hits }
             begin
               LOpenTokenFoldRangeList.Remove(LCodeFoldingRange);
               Dec(LFoldCount);
@@ -6055,7 +6041,8 @@ begin
         LBeginningOfLine := True;
         while LTextPtr^ <> BCEDITOR_NONE_CHAR do
         begin
-          SkipEmptySpace;
+          if SkipEmptySpace then
+            Break;
 
           if Highlighter.MultiHighlighter then
             if not MultiHighlighterOpen then
@@ -6065,7 +6052,9 @@ begin
             Continue; { while TextPtr^ <> BCEDITOR_NONE_CHAR do }
           if SkipRegionsOpen then
             Break; { Line comment breaks }
-          SkipEmptySpace;
+
+          if SkipEmptySpace then
+            Break;
 
           if LOpenTokenSkipFoldRangeList.Count = 0 then
           begin
@@ -6077,8 +6066,11 @@ begin
           if LTextPtr^ <> BCEDITOR_NONE_CHAR then
             Inc(LTextPtr);
 
-          LBeginningOfLine := False;
-          { Not in the beginning of the line anymore }
+          { Skip rest of the word }
+          while (LTextPtr^ <> BCEDITOR_NONE_CHAR) and (LTextPtr^.IsLower or LTextPtr^.IsUpper or LTextPtr^.IsNumber) do
+            Inc(LTextPtr);
+
+          LBeginningOfLine := False; { Not in the beginning of the line anymore }
         end;
       end;
       LPreviousLine := LLine;
