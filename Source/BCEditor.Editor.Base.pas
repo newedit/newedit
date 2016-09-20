@@ -5615,7 +5615,7 @@ var
       end;
   end;
 
-  function RegionItemsClose: Boolean;
+  procedure RegionItemsClose;
   var
     i, j, LIndexDecrease: Integer;
     LCodeFoldingRange, LCodeFoldingRangeLast: TBCEditorCodeFoldingRange;
@@ -5637,7 +5637,6 @@ var
     end;
 
   begin
-    Result := False;
     if LOpenTokenSkipFoldRangeList.Count <> 0 then
       Exit;
     if LOpenTokenFoldRangeList.Count > 0 then
@@ -5672,7 +5671,7 @@ var
                 if not LCodeFoldingRange.IsExtraTokenFound then
                 begin
                   LTextPtr := LBookmarkTextPtr;
-                  Exit(True);
+                  Exit;
                 end;
               SetCodeFoldingRangeToLine(LCodeFoldingRange);
               { Check if the code folding ranges have shared close }
@@ -5746,7 +5745,6 @@ var
                 end;
               end;
               LTextPtr := LBookmarkTextPtr; { Go back where we were }
-              Result := True;
             end
             else
               LTextPtr := LBookmarkTextPtr; { Region close not found, return pointer back }
@@ -6058,8 +6056,7 @@ begin
 
           if LOpenTokenSkipFoldRangeList.Count = 0 then
           begin
-            if RegionItemsClose then
-              Continue; { while TextPtr^ <> BCEDITOR_NONE_CHAR do }
+            RegionItemsClose;
             RegionItemsOpen;
           end;
 
