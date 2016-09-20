@@ -10373,7 +10373,7 @@ var
     LPChar: PChar;
     LOldPenColor: TColor;
     LTextRect: TRect;
-    LX, LY, LBottom: Integer;
+    LX, LY, LBottom, LMaxX: Integer;
     LToken: string;
     LCharCount: Integer;
     LSearchTextLength: Integer;
@@ -10571,8 +10571,12 @@ var
 
       if LTokenHelper.IsItalic and (LPChar^ <> BCEDITOR_SPACE_CHAR) and (ATokenLength = Length(AToken)) then
         Inc(LTextRect.Right, FPaintHelper.CharWidth);
-      if (FItalicOffset <> 0) and (LPChar^ = BCEDITOR_SPACE_CHAR) then
+
+      if (FItalicOffset <> 0) and (not LTokenHelper.IsItalic or (LPChar^ = BCEDITOR_SPACE_CHAR)) then
+      begin
         Inc(LTextRect.Left, FItalicOffset + 1);
+        FItalicOffset := 0;
+      end;
 
       if FSpecialChars.Visible and (LTokenHelper.EmptySpace <> esNone) and
         (not AMinimap or AMinimap and (moShowSpecialChars in FMinimap.Options)) then
@@ -10602,22 +10606,21 @@ var
         if not AMinimap or AMinimap and (moShowSearchResults in FMinimap.Options) then
           PaintSearchResults;
 
+        // TODO: This is not necessary, if the font is really fixed. For example FixedSys is not when bolded.
         if LTokenHelper.IsItalic and (LPChar^ <> BCEDITOR_SPACE_CHAR) and (ATokenLength = Length(AToken)) then
         begin
           FItalicOffset := 0;
 
           LBottom := Min(LTokenRect.Bottom, Canvas.ClipRect.Bottom);
-          for LX := LTokenRect.Right + 1 to LTextRect.Right - 1 do
-          begin
-            for LY := LTokenRect.Top to LBottom - 1 do
+
+          LMaxX := 0;
+          for LY := LTokenRect.Top to LBottom - 1 do
+            for LX := LTokenRect.Right + 1 to LTextRect.Right - 1 do
               if GetPixel(Canvas.Handle, LX, LY) <> LRGBColor then
-              begin
-                Inc(FItalicOffset);
-                Break;
-              end;
-            if LY = LBottom then
-              Break;
-          end;
+                if LX > LMaxX then
+                  LMaxX := LX;
+          FItalicOffset := Max(LMaxX - LTokenRect.Right, 0);
+
           if LLastColumn = LCurrentLineLength + 1 then
             Inc(LTokenRect.Right, FItalicOffset + 1);
           if FWordWrap.Enabled then
