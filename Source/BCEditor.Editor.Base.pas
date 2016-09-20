@@ -3812,6 +3812,14 @@ var
   LVisibleChars: Integer;
 begin
   LTextCaretPosition := TextCaretPosition;
+
+  if (rmoAutoLinebreak in FRightMargin.Options) and (DisplayCaretX > FRightMargin.Position) then
+  begin
+    DoLineBreak;
+    LTextCaretPosition.Char := 1;
+    Inc(LTextCaretPosition.Line);
+  end;
+
   if GetSelectionAvailable then
   begin
     if FSyncEdit.Active then
@@ -3899,9 +3907,13 @@ begin
       end;
     end;
 
-    LVisibleChars := GetVisibleChars(LTextCaretPosition.Line + 1);
-    if FWordWrap.Enabled and (LTextCaretPosition.Char > LVisibleChars) then
-      CreateLineNumbersCache(True);
+    if FWordWrap.Enabled then
+    begin
+      LVisibleChars := GetVisibleChars(LTextCaretPosition.Line + 1);
+      if LTextCaretPosition.Char > LVisibleChars then
+        CreateLineNumbersCache(True);
+    end;
+
     TextCaretPosition := LTextCaretPosition;
   end;
   if FSyncEdit.Active then
@@ -10606,7 +10618,6 @@ var
         if not AMinimap or AMinimap and (moShowSearchResults in FMinimap.Options) then
           PaintSearchResults;
 
-        // TODO: This is not necessary, if the font is really fixed. For example FixedSys is not when bolded.
         if LTokenHelper.IsItalic and (LPChar^ <> BCEDITOR_SPACE_CHAR) and (ATokenLength = Length(AToken)) then
         begin
           FItalicOffset := 0;

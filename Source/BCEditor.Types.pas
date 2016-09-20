@@ -166,6 +166,7 @@ type
   TBCEditorLeftMarginBookMarkPanelOptions = set of TBCEditorLeftMarginBookMarkPanelOption;
 
   TBCEditorRightMarginOption = (
+    rmoAutoLinebreak,
     rmoMouseMove,
     rmoShowMovingHint
   );
