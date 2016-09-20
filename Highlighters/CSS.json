@@ -2,8 +2,8 @@
    "Highlighter": {
       "Info": {
          "General": {
-            "Version": "1.6.0",
-            "Date": "21.05.2016",
+            "Version": "1.7.0",
+            "Date": "20.09.2016",
             "Sample": [
                "/* Hello World in CSS */\r\n",
                "body:before {\r\n",
@@ -280,12 +280,12 @@
                {
                   "OpenToken": "'",
                   "CloseToken": "'",
-                  "RegionType": "String"
+                  "RegionType": "MultiLineString"
                },
                {
                   "OpenToken": "\"",
                   "CloseToken": "\"",
-                  "RegionType": "String"
+                  "RegionType": "MultiLineString"
                },
                {
                   "OpenToken": "//",
@@ -327,12 +327,12 @@
          {
             "OpenToken": "'",
             "CloseToken": "'",
-            "RegionType": "String"
+            "RegionType": "MultiLineString"
          },
          {
             "OpenToken": "\"",
             "CloseToken": "\"",
-            "RegionType": "String"
+            "RegionType": "MultiLineString"
          },
          {
             "OpenToken": "//",

@@ -2,8 +2,8 @@
    "Highlighter": {
       "Info": {
          "General": {
-            "Version": "1.6.0",
-            "Date": "21.05.2016",
+            "Version": "1.7.0",
+            "Date": "20.09.2016",
             "Sample": [
                "# Filename: Hello.ps1\r\n",
                "Write-Host\r\n",
@@ -124,7 +124,7 @@
                      "Element": "Attribute"
                   },
                   "Properties": {
-                     "CloseOnTerm": true, 
+                     "CloseOnTerm": true,
                      "CloseOnEndOfLine": true
                   },
                   "TokenRange": {
@@ -197,23 +197,23 @@
                      ",",
                      "=",
                      "+",
-										 "-",
-										 "*",
-										 "/",
-										 "%",
-										 "(",
-										 ")",
-										 "[",
-										 "]",
-										 "{",
-										 "}",
-										 "<",
-										 ">",
-										 ":",
-										 ";",
-										 "@",
-										 "-shl",
-										 "-shr"
+                     "-",
+                     "*",
+                     "/",
+                     "%",
+                     "(",
+                     ")",
+                     "[",
+                     "]",
+                     "{",
+                     "}",
+                     "<",
+                     ">",
+                     ":",
+                     ";",
+                     "@",
+                     "-shl",
+                     "-shr"
                   ],
                   "Attributes": {
                      "Element": "Symbol"
@@ -249,12 +249,12 @@
                {
                   "OpenToken": "'",
                   "CloseToken": "'",
-                  "RegionType": "String"
+                  "RegionType": "SingleLineString"
                },
                {
                   "OpenToken": "\"",
                   "CloseToken": "\"",
-                  "RegionType": "String"
+                  "RegionType": "SingleLineString"
                },
                {
                   "OpenToken": "//",
@@ -296,12 +296,12 @@
          {
             "OpenToken": "'",
             "CloseToken": "'",
-            "RegionType": "String"
+            "RegionType": "SingleLineString"
          },
          {
             "OpenToken": "\"",
             "CloseToken": "\"",
-            "RegionType": "String"
+            "RegionType": "SingleLineString"
          },
          {
             "OpenToken": "//",

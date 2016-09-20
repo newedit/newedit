@@ -2,14 +2,14 @@
    "Highlighter": {
       "Info": {
          "General": {
-            "Version": "1.6.0",
-            "Date": "21.05.2016",
+            "Version": "1.7.0",
+            "Date": "20.09.2016",
             "Sample": [
                "// Hello World in Lisp\r\n",
                "\r\n",
                "(defun Hello ()\r\n",
-							 "  \"Hello World\"\r\n",
-							 ") "
+               "  \"Hello World\"\r\n",
+               ") "
             ]
          },
          "Author": {
@@ -172,7 +172,7 @@
                      "nil",
                      "null",
                      "or",
-                     "when"        
+                     "when"
                   ],
                   "Attributes": {
                      "Element": "ReservedWord"
@@ -267,7 +267,7 @@
          {
             "OpenToken": "\"",
             "CloseToken": "\"",
-            "RegionType": "String"
+            "RegionType": "SingleLineString"
          },
          {
             "OpenToken": ";",
