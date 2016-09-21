@@ -12210,7 +12210,7 @@ begin
       end
       else
       begin
-        Inc(LChar, Result.Char - i);
+        Inc(i, Result.Char - i);
         Break;
       end;
       Inc(i);
