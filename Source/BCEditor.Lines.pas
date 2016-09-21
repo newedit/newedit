@@ -101,6 +101,7 @@ type
     procedure TrimTrailingSpaces(AIndex: Integer);
     procedure LoadFromBuffer(var ABuffer: TBytes; AEncoding: TEncoding = nil);
     function GetTextLength: Integer;
+    procedure LoadFromStrings(var AStrings: TStringList);
     property Attributes[AIndex: Integer]: PBCEditorLineAttribute read GetAttributes write PutAttributes;
     property Columns: Boolean read FColumns write SetColumns;
     property Count: Integer read FCount;
@@ -563,6 +564,55 @@ begin
 
   //if Assigned(OnInserted) then
   //  OnInserted(Self, 0, FCount);  SetTextStr
+
+  FStreaming := False;
+end;
+
+procedure TBCEditorLines.LoadFromStrings(var AStrings: TStringList);
+var
+  i: integer;
+begin
+  FStreaming := True;
+
+  BeginUpdate;
+  try
+    if Assigned(FOnBeforeSetText) then
+      FOnBeforeSetText(Self);
+    Clear;
+    FIndexOfLongestLine := -1;
+    FCount := AStrings.Count;
+    if FCount > 0 then
+    begin
+      SetCapacity(AStrings.Capacity);
+      for i := 0 to FCount-1 do
+      begin
+        with FList^[i] do
+        begin
+          Pointer(Value) := nil;
+          Value := AStrings[i];
+          Range := CNULLRANGE;
+          ExpandedLength := -1;
+          Flags := [sfExpandedLengthUnknown];
+          New(Attribute);
+          with Attribute^ do begin
+            Foreground := clNone;
+            Background := clNone;
+            LineState := lsNone;
+          end;
+        end;
+      end;
+    end;
+    AStrings.Clear;
+
+    if (FUpdateCount = 0) and Assigned(FOnInserted) then
+      FOnInserted(Self, 0, FCount);
+    if Assigned(FOnChange) then
+      FOnChange(Self);
+    if Assigned(FOnAfterSetText) then
+      FOnAfterSetText(Self);
+  finally
+    EndUpdate;
+  end;
 
   FStreaming := False;
 end;

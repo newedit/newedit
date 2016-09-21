@@ -518,18 +518,14 @@ var
 begin
   FLoading := True;
   LEditor := FEditor as TBCBaseEditor;
-  LTopLine := 0;
   if Assigned(LEditor) then
   begin
     LTempLines := TStringList.Create;
     try
       if LEditor.Visible then
         LCaretPosition := LEditor.TextCaretPosition;
-      if Trim(LEditor.Lines.Text) <> '' then
-      begin
-        LTopLine := LEditor.TopLine;
-        LTempLines.Text := LEditor.Lines.Text;
-      end;
+      LTopLine := LEditor.TopLine;
+      LTempLines.AddStrings(LEditor.Lines);
       LEditor.Lines.Clear;
       with TBCEditorHighlighterImportJSON.Create(Self) do
       try
@@ -537,11 +533,8 @@ begin
       finally
         Free;
       end;
-      if Trim(LTempLines.Text) <> '' then
-      begin
-        LEditor.Lines.Text := LTempLines.Text;
-        LEditor.TopLine := LTopLine;
-      end;
+      LEditor.Lines.LoadFromStrings(LTempLines);
+      LEditor.TopLine := LTopLine;
       if LEditor.Visible then
         LEditor.TextCaretPosition := LCaretPosition;
     finally
