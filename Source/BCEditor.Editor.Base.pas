@@ -2084,7 +2084,7 @@ begin
     for i := 0 to FAllCodeFoldingRanges.AllCount - 1 do
     begin
       LCodeFoldingRange := FAllCodeFoldingRanges[i];
-      if Assigned(LCodeFoldingRange) and LCodeFoldingRange.Collapsed {and not LCodeFoldingRange.ParentCollapsed)} then
+      if Assigned(LCodeFoldingRange) and LCodeFoldingRange.Collapsed then
         for j := LCodeFoldingRange.FromLine + 1 to LCodeFoldingRange.ToLine do
           LCollapsedCodeFolding[j] := True;
     end;
@@ -8188,15 +8188,11 @@ begin
         LOldTextCaretPosition := TextCaretPosition;
         LDisplayPosition := PixelsToDisplayPosition(X, Y);
         LColumn := FHorizontalScrollPosition div FPaintHelper.CharWidth;
-        // TODO fix
         LDisplayPosition.Row := MinMax(LDisplayPosition.Row, TopLine, TopLine + VisibleLines - 1);
-        LDisplayPosition.Column := MinMax(LDisplayPosition.Column, LColumn,
-          LColumn + GetVisibleChars(LDisplayPosition.Row) - 1);
-
+        LDisplayPosition.Column := MinMax(LDisplayPosition.Column, LColumn, LColumn + GetVisibleChars(LDisplayPosition.Row) - 1);
         TextCaretPosition := DisplayToTextPosition(LDisplayPosition);
         ComputeScroll(Point(X, Y));
-        if (LOldTextCaretPosition.Line <> TextCaretPosition.Line) or
-          (LOldTextCaretPosition.Char <> TextCaretPosition.Char) then
+        if (LOldTextCaretPosition.Line <> TextCaretPosition.Line) or (LOldTextCaretPosition.Char <> TextCaretPosition.Char) then
           Refresh;
       end;
     end
@@ -12213,7 +12209,10 @@ begin
         Inc(LPLine);
       end
       else
-        Inc(LChar);
+      begin
+        Inc(LChar, Result.Char - i);
+        Exit;
+      end;
       Inc(i);
     end;
     while (LPLine^ <> BCEDITOR_NONE_CHAR) and
