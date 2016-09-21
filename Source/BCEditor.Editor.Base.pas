@@ -12809,7 +12809,10 @@ begin
         Inc(LPLine);
       end
       else
-        Inc(LChar); // TODO: Fix, this is unnecessary loop after none char
+      begin
+        Inc(LChar, ATextPosition.Char - i);
+        Break;
+      end;
       Inc(i);
     end;
 
