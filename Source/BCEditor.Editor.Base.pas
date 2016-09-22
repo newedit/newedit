@@ -776,6 +776,8 @@ begin
 {$endif}
   Height := 150;
   Width := 200;
+  Constraints.MinHeight := 150;
+  Constraints.MinWidth := 200;
   Cursor := crIBeam;
   Color := clWindow;
   DoubleBuffered := False;
@@ -2041,8 +2043,13 @@ var
     LHighlighterAttribute: TBCEditorHighlighterAttribute;
     LLength, LTokenWidth, LWidth, LMaxWidth: Integer;
     LCharsBefore: Integer;
+    LPToken: PChar;
+    LBeginOfTokenWidth, LCharWidth: Integer;
+    LEndOfToken: string;
   begin
     LMaxWidth := WordWrapWidth;
+    if LMaxWidth = 0 then
+      Exit;
     if j = 1 then
       FHighlighter.ResetCurrentRange
     else
@@ -2058,6 +2065,36 @@ var
       if Assigned(LHighlighterAttribute) then
         FPaintHelper.SetStyle(LHighlighterAttribute.FontStyles);
       LTokenWidth := GetTokenWidth(LToken, Length(LToken), LCharsBefore);
+
+      while LTokenWidth > LMaxWidth do
+      begin
+        LPToken := PChar(LToken);
+
+        LBeginOfTokenWidth := 0;
+        while LBeginOfTokenWidth < LMaxWidth do
+        begin
+          // TODO: Combined marks
+          LCharWidth := GetTokenWidth(LPToken^, Length(LPToken^), LCharsBefore);
+          Inc(LBeginOfTokenWidth, LCharWidth);
+          Dec(LTokenWidth);
+          Inc(LCharsBefore);
+          Inc(LPToken);
+        end;
+        LEndOfToken := '';
+        while LPToken^ <> BCEDITOR_NONE_CHAR do
+        begin
+          LEndOfToken := LEndOfToken + LPToken^;
+          Inc(LPToken);
+        end;
+        FWordWrapLineLengths[k] := Length(LToken) - Length(LEndOfToken);
+        LToken := LEndOfToken;
+        AddLineNumberIntoCache;
+        LWidth := LTokenWidth - LBeginOfTokenWidth;
+        LLength := 0;
+
+        LTokenWidth := GetTokenWidth(LToken, Length(LToken), LCharsBefore);
+      end;
+
       Inc(LWidth, LTokenWidth);
       if LWidth > LMaxWidth then
       begin
@@ -2066,14 +2103,13 @@ var
         LWidth := LTokenWidth;
         LLength := 0;
       end;
-      Inc(LLength, FHighlighter.GetTokenLength);
+      Inc(LLength, Length(LToken));
       Inc(LCharsBefore, GetTokenCharCount(LToken, LCharsBefore));
       FHighlighter.Next;
     end;
     Inc(LLength, (LMaxWidth - LWidth) div FPaintHelper.CharWidth);
     FWordWrapLineLengths[k] := LLength;
     AddLineNumberIntoCache;
-    // TODO: Divide long line without break chars
   end;
 
 begin
@@ -10129,7 +10165,8 @@ begin
     if (ALineEndRect.Left < 0) or (ALineEndRect.Left > ClientRect.Right) then
       Exit;
 
-    if FSpecialChars.Selection.Visible and ALineEndInsideSelection or not ALineEndInsideSelection then
+    if FSpecialChars.Selection.Visible and ALineEndInsideSelection or
+      not ALineEndInsideSelection and not (scoShowOnlyInSelection in FSpecialChars.Options) then
     begin
       if FSpecialChars.Selection.Visible and ALineEndInsideSelection then
         LPenColor := FSpecialChars.Selection.Color
@@ -10587,6 +10624,8 @@ var
       end;
 
       if FSpecialChars.Visible and (LTokenHelper.EmptySpace <> esNone) and
+        (not (scoShowOnlyInSelection in FSpecialChars.Options) or
+        (scoShowOnlyInSelection in FSpecialChars.Options) and (Canvas.Brush.Color = FSelection.Colors.Background)) and
         (not AMinimap or AMinimap and (moShowSpecialChars in FMinimap.Options)) then
       begin
         if FSpecialChars.Selection.Visible and (Canvas.Brush.Color = FSelection.Colors.Background) then
@@ -11234,7 +11273,7 @@ var
             if LTokenPosition + LTokenLength > LLastColumn then
             begin
               Inc(LWrappedRowCount);
-              Inc(LLastColumn, FWordWrapLineLengths[LDisplayLine + LWrappedRowCount]);
+              Inc(LLastColumn, FWordWrapLineLengths[LCurrentRow + LWrappedRowCount]);
               Break;
             end
           end
