@@ -294,24 +294,17 @@ begin
 
       ARun := PreviousPosition;
 
-      if not Assigned(FindTokenNode) then
+      if not Assigned(FindTokenNode)
+      or not Assigned(FindTokenNode.Token)
+      or ((FindTokenNode.Token.Attribute.EscapeChar <> BCEDITOR_NONE_CHAR)
+      and (StartPosition > 0) and (APLine[StartPosition - 1] = FindTokenNode.Token.Attribute.EscapeChar)) then
         Continue;
-      if not Assigned(FindTokenNode.Token) then
-        Continue;
-      if FindTokenNode.Token.Attribute.EscapeChar <> BCEDITOR_NONE_CHAR then
-        if (StartPosition > 0) and (APLine[StartPosition - 1] = FindTokenNode.Token.Attribute.EscapeChar) then
-          Continue;
 
       if APLine[ARun] <> BCEDITOR_NONE_CHAR then
         Inc(ARun);
 
-      if FindTokenNode.BreakType = btAny then
-      begin
-        AToken := FindTokenNode.Token;
-        Exit(True);
-      end;
-
-      if CharInSet(APLine[ARun], ACurrentRange.Delimiters) then
+      if (FindTokenNode.BreakType = btAny)
+      or (CharInSet(APLine[ARun], ACurrentRange.Delimiters)) then
       begin
         AToken := FindTokenNode.Token;
         Exit(True);

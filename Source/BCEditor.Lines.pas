@@ -562,9 +562,6 @@ begin
     EndUpdate;
   end;
 
-  //if Assigned(OnInserted) then
-  //  OnInserted(Self, 0, FCount);  SetTextStr
-
   FStreaming := False;
 end;
 

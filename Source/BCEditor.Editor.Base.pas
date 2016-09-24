@@ -2935,12 +2935,15 @@ begin
     FHighlighter.SetCurrentRange(FLines.Ranges[Result - 1]);
 
   repeat
-    FHighlighter.SetCurrentLine(FLines.List^[Result].Value);
-    FHighlighter.NextToEndOfLine;
-    LCurrentRange := FHighlighter.GetCurrentRange;
-    if FLines.Ranges[Result] = LCurrentRange then
-      Exit;
-    FLines.Ranges[Result] := LCurrentRange;
+    with FLines.List^[Result] do
+    begin
+      FHighlighter.SetCurrentLine(Value);
+      FHighlighter.NextToEndOfLine;
+      LCurrentRange := FHighlighter.GetCurrentRange;
+      if Range = LCurrentRange then
+        Exit;
+      Range := LCurrentRange;
+    end;
     Inc(Result);
   until Result = FLines.Count;
   Dec(Result);
