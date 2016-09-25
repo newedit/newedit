@@ -1296,8 +1296,11 @@ var
 begin
   Result := ADisplayLineNumber;
 
-  if Assigned(FLineNumbersCache) and (ADisplayLineNumber > Length(FLineNumbersCache)) then
+  if Assigned(FLineNumbersCache) and (ADisplayLineNumber >= Length(FLineNumbersCache)) then
     CreateLineNumbersCache(True);
+
+  if ADisplayLineNumber >= Length(FLineNumbersCache) then
+    Exit;
 
   if Assigned(FLineNumbersCache) and (FLineNumbersCache[ADisplayLineNumber] = ADisplayLineNumber) then
     Result := ADisplayLineNumber
@@ -2042,11 +2045,11 @@ var
     LLength, LTokenWidth, LWidth, LMaxWidth: Integer;
     LCharsBefore: Integer;
     LPToken: PChar;
-    LBeginOfTokenWidth, LCharWidth: Integer;
+    LEndOfTokenWidth, LCharWidth: Integer;
     LEndOfToken: string;
   begin
     LMaxWidth := WordWrapWidth;
-    if LMaxWidth = 0 then
+    if LMaxWidth < FPaintHelper.CharWidth then
       Exit;
     if j = 1 then
       FHighlighter.ResetCurrentRange
@@ -2067,35 +2070,22 @@ var
       while LTokenWidth >= LMaxWidth do
       begin
         LPToken := PChar(LToken);
-
-        LBeginOfTokenWidth := 0;
-        while LBeginOfTokenWidth < LMaxWidth do
+        LCharsBefore := Length(LToken) - 1;
+        Inc(LPToken, LCharsBefore);
+        LEndOfTokenWidth := 0;
+        while (LPToken^ <> BCEDITOR_NONE_CHAR) and (LTokenWidth >= LMaxWidth) do
         begin
-          // TODO: Combined marks
           LCharWidth := GetTokenWidth(LPToken^, Length(LPToken^), LCharsBefore);
-          if LBeginOfTokenWidth + LCharWidth < LMaxWidth then
-          begin
-            Inc(LBeginOfTokenWidth, LCharWidth);
-            Dec(LTokenWidth, LCharWidth);
-            Inc(LCharsBefore);
-            Inc(LPToken);
-          end
-          else
-            Break;
+          Dec(LTokenWidth, LCharWidth);
+          Dec(LCharsBefore);
+          Inc(LEndOfTokenWidth, LCharWidth);
+          LEndOfToken := LPToken^ + LEndOfToken;
+          Dec(LPToken);
         end;
-        LEndOfToken := '';
-        while LPToken^ <> BCEDITOR_NONE_CHAR do
-        begin
-          LEndOfToken := LEndOfToken + LPToken^;
-          Inc(LPToken);
-        end;
-        FWordWrapLineLengths[k] := Length(LToken) - Length(LEndOfToken);
+        FWordWrapLineLengths[k] := LCharsBefore + 1;
         LToken := LEndOfToken;
         AddLineNumberIntoCache;
-        LWidth := LTokenWidth;
-        LLength := 0;
-
-        LTokenWidth := GetTokenWidth(LToken, Length(LToken), LCharsBefore);
+        LTokenWidth := LEndOfTokenWidth;
       end;
 
       Inc(LWidth, LTokenWidth);
@@ -11281,13 +11271,13 @@ var
             begin
               if LTokenLength > FWordWrapLineLengths[LCurrentRow] then
               begin
-                LTokenText := Copy(LTokenText, LFirstColumn, LFirstColumn + FWordWrapLineLengths[LCurrentRow] - 1);
+                LTokenText := Copy(LTokenText, LFirstColumn, FWordWrapLineLengths[LCurrentRow]);
                 LTokenLength := Length(LTokenText);
                 Inc(LFirstColumn, FWordWrapLineLengths[LCurrentRow]);
                 PrepareToken;
               end;
-              Inc(LWrappedRowCount);
               Inc(LLastColumn, FWordWrapLineLengths[LCurrentRow + LWrappedRowCount]);
+              Inc(LWrappedRowCount);
               Break;
             end;
           end
