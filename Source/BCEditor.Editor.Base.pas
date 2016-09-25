@@ -1013,6 +1013,8 @@ begin
   end;
   if Assigned(FCodeFoldingHintForm) then
     FCodeFoldingHintForm.Release;
+  if Length(FWordWrapLineLengths) > 0 then
+    SetLength(FWordWrapLineLengths, 0);
 
   inherited Destroy;
 end;
@@ -1183,7 +1185,7 @@ begin
   LTemp := FLineNumbersCount - FMinimap.VisibleLines;
   LTemp2 := Max(Y div FMinimap.CharHeight - FMinimapClickOffsetY, 0);
   FMinimap.TopLine := Max(1, Trunc((LTemp / Max(FMinimap.VisibleLines - VisibleLines, 1)) * LTemp2));
-  if (FMinimap.TopLine > LTemp) and (LTemp > 0) then
+  if (LTemp > 0) and (FMinimap.TopLine > LTemp) then
     FMinimap.TopLine := LTemp;
   LTopLine := Max(1, FMinimap.TopLine + LTemp2);
   if TopLine <> LTopLine then
@@ -1341,8 +1343,7 @@ function TBCBaseEditor.GetEndOfLine(const ALine: PChar): PChar;
 begin
   Result := ALine;
   if Assigned(Result) then
-    while (Result^ <> BCEDITOR_NONE_CHAR) and (Result^ <> BCEDITOR_LINEFEED) and
-      (Result^ <> BCEDITOR_CARRIAGE_RETURN) do
+    while (Result^ <> BCEDITOR_NONE_CHAR) and (Result^ <> BCEDITOR_LINEFEED) and (Result^ <> BCEDITOR_CARRIAGE_RETURN) do
       Inc(Result);
 end;
 
@@ -1769,8 +1770,7 @@ end;
 
 function TBCBaseEditor.GetScrollPageWidth: Integer;
 begin
-  Result := Max(ClientWidth - FLeftMargin.GetWidth - FCodeFolding.GetWidth - 2 - FMinimap.GetWidth -
-    FSearch.Map.GetWidth, 0);
+  Result := Max(ClientWidth - FLeftMargin.GetWidth - FCodeFolding.GetWidth - 2 - FMinimap.GetWidth - FSearch.Map.GetWidth, 0);
 end;
 
 function TBCBaseEditor.GetSelectionAvailable: Boolean;
@@ -1940,8 +1940,7 @@ var
   LLineLength: Integer;
 begin
   if (FSelectionEndPosition.Line < FSelectionBeginPosition.Line) or
-    ((FSelectionEndPosition.Line = FSelectionBeginPosition.Line) and
-    (FSelectionEndPosition.Char < FSelectionBeginPosition.Char)) then
+    ((FSelectionEndPosition.Line = FSelectionBeginPosition.Line) and (FSelectionEndPosition.Char < FSelectionBeginPosition.Char)) then
     Result := FSelectionEndPosition
   else
     Result := FSelectionBeginPosition;
@@ -1960,8 +1959,7 @@ var
   LLineLength: Integer;
 begin
   if (FSelectionEndPosition.Line < FSelectionBeginPosition.Line) or
-    ((FSelectionEndPosition.Line = FSelectionBeginPosition.Line) and
-    (FSelectionEndPosition.Char < FSelectionBeginPosition.Char)) then
+    ((FSelectionEndPosition.Line = FSelectionBeginPosition.Line) and (FSelectionEndPosition.Char < FSelectionBeginPosition.Char)) then
     Result := FSelectionBeginPosition
   else
     Result := FSelectionEndPosition;
@@ -2066,7 +2064,7 @@ var
         FPaintHelper.SetStyle(LHighlighterAttribute.FontStyles);
       LTokenWidth := GetTokenWidth(LToken, Length(LToken), LCharsBefore);
 
-      while LTokenWidth > LMaxWidth do
+      while LTokenWidth >= LMaxWidth do
       begin
         LPToken := PChar(LToken);
 
@@ -2075,10 +2073,15 @@ var
         begin
           // TODO: Combined marks
           LCharWidth := GetTokenWidth(LPToken^, Length(LPToken^), LCharsBefore);
-          Inc(LBeginOfTokenWidth, LCharWidth);
-          Dec(LTokenWidth);
-          Inc(LCharsBefore);
-          Inc(LPToken);
+          if LBeginOfTokenWidth + LCharWidth < LMaxWidth then
+          begin
+            Inc(LBeginOfTokenWidth, LCharWidth);
+            Dec(LTokenWidth, LCharWidth);
+            Inc(LCharsBefore);
+            Inc(LPToken);
+          end
+          else
+            Break;
         end;
         LEndOfToken := '';
         while LPToken^ <> BCEDITOR_NONE_CHAR do
@@ -2089,7 +2092,7 @@ var
         FWordWrapLineLengths[k] := Length(LToken) - Length(LEndOfToken);
         LToken := LEndOfToken;
         AddLineNumberIntoCache;
-        LWidth := LTokenWidth - LBeginOfTokenWidth;
+        LWidth := LTokenWidth;
         LLength := 0;
 
         LTokenWidth := GetTokenWidth(LToken, Length(LToken), LCharsBefore);
@@ -6711,9 +6714,7 @@ begin
       FPaintHelper.SetBaseFont(FMinimap.Font);
       FMinimap.CharHeight := FPaintHelper.CharHeight - 1;
       FMinimap.VisibleLines := ClientHeight div FMinimap.CharHeight;
-      FMinimap.TopLine :=
-        Max(FTopLine - Abs(Trunc((FMinimap.VisibleLines - FVisibleLines) *
-        (FTopLine / Max(FLineNumbersCount - FVisibleLines, 1)))), 1);
+      FMinimap.TopLine := Max(FTopLine - Abs(Trunc((FMinimap.VisibleLines - FVisibleLines) * (FTopLine / Max(FLineNumbersCount - FVisibleLines, 1)))), 1);
       FPaintHelper.SetBaseFont(Font);
     end;
 
@@ -10912,13 +10913,13 @@ var
 
   procedure PaintLines;
   var
-    LLastColumn: Integer;
+    LFirstColumn, LLastColumn: Integer;
     LFromLineText, LToLineText: string;
     LCurrentRow: Integer;
     LFoldRange: TBCEditorCodeFoldingRange;
     LHighlighterAttribute: TBCEditorHighlighterAttribute;
-    LTokenText: string;
-    LTokenPosition, LRealTokenPosition, LTokenLength: Integer;
+    LTokenText, LRestOfTokenText: string;
+    LTokenPosition, {LRealTokenPosition,} LTokenLength: Integer;
     LFontStyles: TFontStyles;
     LKeyword, LWordAtSelection, LSelectedText: string;
     LMatchingPairUnderline: Boolean;
@@ -10961,7 +10962,7 @@ var
         LFontStyles := LHighlighterAttribute.FontStyles;
 
         if Assigned(FOnCustomTokenAttribute) then
-          FOnCustomTokenAttribute(Self, LTokenText, LCurrentLine, LRealTokenPosition, LForegroundColor,
+          FOnCustomTokenAttribute(Self, LTokenText, LCurrentLine, {Real}LTokenPosition, LForegroundColor,
             LBackgroundColor, LFontStyles);
 
         LIsCustomBackgroundColor := False;
@@ -10970,9 +10971,9 @@ var
         if FMatchingPair.Enabled and not FSyncEdit.Active then
           if FCurrentMatchingPair <> trNotFound then
             if (LCurrentLine - 1 = FCurrentMatchingPairMatch.OpenTokenPos.Line) and
-              (LRealTokenPosition = FCurrentMatchingPairMatch.OpenTokenPos.Char - 1) or
+              ({Real}LTokenPosition = FCurrentMatchingPairMatch.OpenTokenPos.Char - 1) or
               (LCurrentLine - 1 = FCurrentMatchingPairMatch.CloseTokenPos.Line) and
-              (LRealTokenPosition = FCurrentMatchingPairMatch.CloseTokenPos.Char - 1) then
+              ({Real}LTokenPosition = FCurrentMatchingPairMatch.CloseTokenPos.Char - 1) then
             begin
               if (FCurrentMatchingPair = trOpenAndCloseTokenFound) or (FCurrentMatchingPair = trCloseAndOpenTokenFound)
               then
@@ -11145,6 +11146,7 @@ var
 
       LTextCaretY := GetTextCaretY + 1;
 
+      LFirstColumn := 1;
       if FWordWrap.Enabled then
         LLastColumn := FWordWrapLineLengths[LDisplayLine]
       else
@@ -11251,7 +11253,9 @@ var
         while not FHighlighter.GetEndOfLine do
         begin
           LTokenPosition := FHighlighter.GetTokenPosition;
-          LRealTokenPosition := LTokenPosition;
+          if FWordWrap.Enabled then
+            Inc(LTokenPosition, LFirstColumn - 1);
+          //LRealTokenPosition := LTokenPosition;
           FHighlighter.GetToken(LTokenText);
           LTokenLength := FHighlighter.GetTokenLength;
 
@@ -11275,11 +11279,27 @@ var
           begin
             if LTokenPosition + LTokenLength > LLastColumn then
             begin
+              if LTokenLength > FWordWrapLineLengths[LCurrentRow] then
+              begin
+                LTokenText := Copy(LTokenText, LFirstColumn, LFirstColumn + FWordWrapLineLengths[LCurrentRow] - 1);
+                LTokenLength := Length(LTokenText);
+                Inc(LFirstColumn, FWordWrapLineLengths[LCurrentRow]);
+                PrepareToken;
+              end;
+              Inc(LWrappedRowCount);
+              Inc(LLastColumn, FWordWrapLineLengths[LCurrentRow + LWrappedRowCount]);
+              Break;
+            end;
+          end
+          {if FWordWrap.Enabled then
+          begin
+            if LTokenPosition + LTokenLength > LLastColumn then
+            begin
               Inc(LWrappedRowCount);
               Inc(LLastColumn, FWordWrapLineLengths[LCurrentRow + LWrappedRowCount]);
               Break;
             end
-          end
+          end }
           else
           if LTokenPosition > LLastColumn then
             Break;
@@ -11307,7 +11327,6 @@ var
           Inc(LLineRect.Bottom, FMinimap.CharHeight)
         else
           Inc(LLineRect.Bottom, GetLineHeight);
-
         Inc(LDisplayLine);
         LCurrentRow := GetDisplayTextLineNumber(LDisplayLine);
         if LWrappedRowCount > FVisibleLines then
