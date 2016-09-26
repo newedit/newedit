@@ -2049,10 +2049,9 @@ var
     LEndOfTokenWidth, LCharWidth: Integer;
     LLastChar, LEndOfToken: string;
   begin
-    LMaxWidth := WordWrapWidth;
-    if LMaxWidth = 0 then
+    if not Visible then
       Exit;
-    LMaxWidth := Max(LMaxWidth, FPaintHelper.CharWidth + 2);
+    LMaxWidth := Max(WordWrapWidth, FPaintHelper.CharWidth + 2);
     if j = 1 then
       FHighlighter.ResetCurrentRange
     else
@@ -2114,8 +2113,7 @@ var
       Inc(LCharsBefore, GetTokenCharCount(LToken, LCharsBefore));
       FHighlighter.Next;
     end;
-    //Inc(LLength, (LMaxWidth - LWidth) div FPaintHelper.CharWidth);
-    FWordWrapLineLengths[k] := LMaxWidth div FPaintHelper.CharWidth; //(LMaxWidth - LWidth) div FPaintHelper.CharWidth; // LLength;
+    FWordWrapLineLengths[k] := LMaxWidth div FPaintHelper.CharWidth;
     AddLineNumberIntoCache;
   end;
 
@@ -6381,7 +6379,6 @@ begin
 
   if FHorizontalScrollPosition <> AValue then
   begin
-  //  {$IFDEF DEBUG}OutputDebugString(PChar(Format('FHorizontalScrollPosition = %d', [FHorizontalScrollPosition])));{$ENDIF}
     FHorizontalScrollPosition := AValue;
     UpdateScrollBars;
     Invalidate;
@@ -11152,9 +11149,7 @@ var
       LTextCaretY := GetTextCaretY + 1;
 
       LFirstColumn := 1;
-       {$IFDEF DEBUG}OutputDebugString(PChar(Format('Result = %d', [LDisplayLine])));{$ENDIF}
-        {$IFDEF DEBUG}OutputDebugString(PChar(Format('Length = %d', [ Length(FWordWrapLineLengths)])));{$ENDIF}
-      if FWordWrap.Enabled and (LDisplayLine < Length(FWordWrapLineLengths)) then
+      if FWordWrap.Enabled then
         LLastColumn := FWordWrapLineLengths[LDisplayLine]
       else
         LLastColumn := GetVisibleChars(LCurrentLine, LCurrentLineText);
@@ -11286,15 +11281,14 @@ var
           begin
             if LTokenPosition + LTokenLength > LLastColumn then
             begin
-              if (LCurrentRow < Length(FWordWrapLineLengths)) and (LTokenLength > FWordWrapLineLengths[LCurrentRow]) then
+              if LTokenLength > FWordWrapLineLengths[LCurrentRow] then
               begin
                 LTokenText := Copy(LTokenText, LFirstColumn, FWordWrapLineLengths[LCurrentRow]);
                 LTokenLength := Length(LTokenText);
                 Inc(LFirstColumn, FWordWrapLineLengths[LCurrentRow]);
                 PrepareToken;
               end;
-              if LCurrentRow + LWrappedRowCount < Length(FWordWrapLineLengths) then
-                Inc(LLastColumn, FWordWrapLineLengths[LCurrentRow + LWrappedRowCount]);
+              Inc(LLastColumn, FWordWrapLineLengths[LCurrentRow + LWrappedRowCount]);
               Inc(LWrappedRowCount);
               Break;
             end;
