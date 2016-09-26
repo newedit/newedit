@@ -2051,6 +2051,7 @@ var
   begin
     if not Visible then
       Exit;
+
     LMaxWidth := Max(WordWrapWidth, FPaintHelper.CharWidth + 2);
     if j = 1 then
       FHighlighter.ResetCurrentRange
@@ -10344,6 +10345,7 @@ var
   LTextPosition: TBCEditorTextPosition;
   LWrappedRowCount: Integer;
   LExpandedCharsBefore: Integer;
+  LAddWrappedCount: Boolean;
 
   function IsBookmarkOnCurrentLine: Boolean;
   var
@@ -10675,12 +10677,9 @@ var
 
           if LLastColumn = LCurrentLineLength + 1 then
             Inc(LTokenRect.Right, FItalicOffset + 1);
-          if FWordWrap.Enabled then
-            if LLastColumn = FWordWrapLineLengths[LDisplayLine + LWrappedRowCount - 1] + 1 then
-            begin
-              Inc(LTokenRect.Right, FItalicOffset + 1);
-              FItalicOffset := 0;
-            end;
+
+          if LAddWrappedCount then
+            Inc(LTokenRect.Right, FItalicOffset + 1);
         end
       end;
 
@@ -11135,7 +11134,6 @@ var
 
       LCurrentLineText := FLines[LCurrentLine - 1];
       LPaintedColumn := 1;
-      FItalicOffset := 0;
 
       LIsCurrentLine := False;
 
@@ -11222,6 +11220,7 @@ var
       while LCurrentRow = LCurrentLine do
       begin
         LPaintedWidth := 0;
+        FItalicOffset := 0;
 
         if Assigned(FMultiCarets) then
           LIsCurrentLine := IsMultiEditCaretFound(LCurrentLine)
@@ -11251,6 +11250,7 @@ var
 
         LTokenHelper.Length := 0;
         LTokenHelper.EmptySpace := esNone;
+        LAddWrappedCount := False;
 
         while not FHighlighter.GetEndOfLine do
         begin
@@ -11288,20 +11288,11 @@ var
                 Inc(LFirstColumn, FWordWrapLineLengths[LCurrentRow]);
                 PrepareToken;
               end;
-              Inc(LLastColumn, FWordWrapLineLengths[LCurrentRow + LWrappedRowCount]);
-              Inc(LWrappedRowCount);
+              Inc(LLastColumn, FWordWrapLineLengths[LCurrentRow + LWrappedRowCount + 1]);
+              LAddWrappedCount := True;
               Break;
             end;
           end
-          {if FWordWrap.Enabled then
-          begin
-            if LTokenPosition + LTokenLength > LLastColumn then
-            begin
-              Inc(LWrappedRowCount);
-              Inc(LLastColumn, FWordWrapLineLengths[LCurrentRow + LWrappedRowCount]);
-              Break;
-            end
-          end }
           else
           if LTokenPosition > LLastColumn then
             Break;
@@ -11312,6 +11303,9 @@ var
         end;
 
         PaintHighlightToken(True);
+
+        if LAddWrappedCount then
+          Inc(LWrappedRowCount);
 
         if not AMinimap then
         begin
