@@ -112,6 +112,8 @@ inherited MainForm: TMainForm
       CompletionProposal.ShortCut = 16416
       CompletionProposal.Trigger.Chars = '.'
       CompletionProposal.Trigger.Enabled = False
+      Constraints.MinHeight = 150
+      Constraints.MinWidth = 200
       Ctl3D = True
       Directories.Colors = 'Colors'
       Directories.Highlighters = 'Highlighters'
@@ -330,7 +332,7 @@ inherited MainForm: TMainForm
         Flat = True
         SkinData.SkinSection = 'TOOLBUTTON'
         Images = ImagesDataModule.ImageListSmall
-        ImageIndex = 142
+        ImageIndex = 144
       end
       object SpeedButtonInSelection: TBCSpeedButton
         Left = 306
@@ -344,7 +346,7 @@ inherited MainForm: TMainForm
         Flat = True
         SkinData.SkinSection = 'TOOLBUTTON'
         Images = ImagesDataModule.ImageListSmall
-        ImageIndex = 143
+        ImageIndex = 145
       end
       object BCSpeedButton1: TBCSpeedButton
         AlignWithMargins = True
@@ -377,7 +379,7 @@ inherited MainForm: TMainForm
         Flat = True
         SkinData.SkinSection = 'TOOLBUTTON'
         Images = ImagesDataModule.ImageListSmall
-        ImageIndex = 141
+        ImageIndex = 143
       end
       object ComboBoxSearchText: TBCComboBox
         Left = 27
@@ -625,19 +627,19 @@ inherited MainForm: TMainForm
     end
     object ActionSearchEngine: TAction
       Hint = 'Select search engine'
-      ImageIndex = 141
+      ImageIndex = 143
       OnExecute = ActionSearchEngineExecute
     end
     object ActionCaseSensitive: TAction
       GroupIndex = 1
       Hint = 'Case sensitive'
-      ImageIndex = 142
+      ImageIndex = 144
       OnExecute = ActionCaseSensitiveExecute
     end
     object ActionInSelection: TAction
       GroupIndex = 2
       Hint = 'In selection'
-      ImageIndex = 143
+      ImageIndex = 145
       OnExecute = ActionInSelectionExecute
     end
   end

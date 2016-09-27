@@ -327,14 +327,18 @@ end;
 procedure TMainForm.ActionFindNextExecute(Sender: TObject);
 begin
   inherited;
-  if Assigned(Editor) then
+  if Editor.Search.SearchText <> ComboBoxSearchText.Text then
+    Editor.Search.SearchText := ComboBoxSearchText.Text
+  else
     Editor.FindNext;
 end;
 
 procedure TMainForm.ActionFindPreviousExecute(Sender: TObject);
 begin
   inherited;
-  if Assigned(Editor) then
+  if Editor.Search.SearchText <> ComboBoxSearchText.Text then
+    Editor.Search.SearchText := ComboBoxSearchText.Text
+  else
     Editor.FindPrevious;
 end;
 
