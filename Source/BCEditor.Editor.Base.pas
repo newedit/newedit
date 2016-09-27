@@ -9518,7 +9518,7 @@ var
   begin
     Result := 0;
     LTempLine := LCurrentLine;
-    if Length(FCodeFoldingRangeFromLine) > 1 then
+    if LTempLine < Length(FCodeFoldingRangeFromLine) then
     begin
       while LTempLine > 0 do
       begin
@@ -11154,7 +11154,8 @@ var
 
       LWrappedRowCount := 0;
 
-      SetLineSelectionVariables;
+      if not FWordWrap.Enabled then
+        SetLineSelectionVariables;
 
       LFoldRange := nil;
       if FCodeFolding.Visible then
@@ -11221,6 +11222,9 @@ var
       begin
         LPaintedWidth := 0;
         FItalicOffset := 0;
+
+        if FWordWrap.Enabled then
+          SetLineSelectionVariables;
 
         if Assigned(FMultiCarets) then
           LIsCurrentLine := IsMultiEditCaretFound(LCurrentLine)
@@ -12797,6 +12801,7 @@ var
   LChar: Integer;
   LIsWrapped: Boolean;
   LPLine: PChar;
+  LWordWrapLineLength: Integer;
 
   function GetWrapLineLength(ARow: Integer): Integer;
   begin
@@ -12828,10 +12833,12 @@ begin
 
     if FScrollPageWidth > 0 then
     begin
-      if Result.Row >= Length(FWordWrapLineLengths) then
-        Result.Row := Length(FWordWrapLineLengths) - 1;
+      LWordWrapLineLength :=  Length(FWordWrapLineLengths);
 
-      while Result.Column - 1 > GetWrapLineLength(Result.Row) do
+      if Result.Row >= LWordWrapLineLength then
+        Result.Row := LWordWrapLineLength - 1;
+
+      while (Result.Row < LWordWrapLineLength) and (Result.Column - 1 > GetWrapLineLength(Result.Row)) do
       begin
         LIsWrapped := True;
 
@@ -14473,7 +14480,7 @@ begin
   begin
     Exclude(FStateFlags, sfCaretChanged);
     LCaretDisplayPosition := DisplayCaretPosition;
-    if FWordWrap.Enabled then
+    if FWordWrap.Enabled and (LCaretDisplayPosition.Row < Length(FWordWrapLineLengths)) then
     begin
       if FWordWrapLineLengths[LCaretDisplayPosition.Row] = 0 then
       begin
