@@ -300,7 +300,6 @@ type
     procedure DoPasteFromClipboard;
     procedure DoScroll(const ACommand: TBCEditorCommand);
     procedure DoSelectedText(const AValue: string); overload;
-    procedure DoSelectedText(APasteMode: TBCEditorSelectionMode; AValue: PChar; AAddToUndoList: Boolean); overload;
     procedure DoSelectedText(APasteMode: TBCEditorSelectionMode; AValue: PChar; AAddToUndoList: Boolean;
       ATextCaretPosition: TBCEditorTextPosition; AChangeBlockNumber: Integer = 0); overload;
     procedure DoSetBookmark(const ACommand: TBCEditorCommand; AData: Pointer);
@@ -4310,7 +4309,7 @@ begin
         if LTextCaretPosition.Char > LLength + 1 then
           LTextCaretPosition.Char := LLength + 1;
 
-        FUndoList.AddChange(crLineBreak, GetTextPosition(1, LTextCaretPosition.Line + 1), LTextCaretPosition,
+        FUndoList.AddChange(crLineBreak, {GetTextPosition(1, LTextCaretPosition.Line + 1)}LTextCaretPosition, LTextCaretPosition,
           GetTextPosition(1, LTextCaretPosition.Line + 1), '', smNormal);
 
         FLines.Attributes[LTextCaretPosition.Line + 1].LineState := lsModified;
@@ -4534,12 +4533,11 @@ begin
       FSyncEdit.MoveEndPositionChar(Length(LClipBoardText));
   end;
 
-  DoSelectedText(LPasteMode, PChar(LClipBoardText), True);
+  DoSelectedText(LPasteMode, PChar(LClipBoardText), True, TextCaretPosition);
 
   LEndPositionOfBlock := SelectionEndPosition;
 
-  FUndoList.AddChange(crPaste, LTextCaretPosition, LStartPositionOfBlock, LEndPositionOfBlock, SelectedText,
-    LPasteMode);
+  FUndoList.AddChange(crPaste, LTextCaretPosition, LStartPositionOfBlock, LEndPositionOfBlock, SelectedText, LPasteMode);
   FUndoList.EndBlock;
 
   if FSyncEdit.Active then
@@ -6826,10 +6824,7 @@ begin
   FLines.TabWidth := FTabs.Width;
   FLines.Columns := toColumns in FTabs.Options;
   if FWordWrap.Enabled then
-  begin
-    if FWordWrap.Enabled then
-      FResetLineNumbersCache := True;
-  end;
+    FResetLineNumbersCache := True;
   Invalidate;
 end;
 
@@ -11143,14 +11138,16 @@ var
       LTextCaretY := GetTextCaretY + 1;
 
       LFirstColumn := 1;
-      LLastColumn := GetVisibleChars(LCurrentLine, LCurrentLineText);
-
-      SetLineSelectionVariables;
 
       if FWordWrap.Enabled and (LDisplayLine < Length(FWordWrapLineLengths)) then
-        LLastColumn := FWordWrapLineLengths[LDisplayLine];
+        LLastColumn := FWordWrapLineLengths[LDisplayLine]
+      else
+        LLastColumn := GetVisibleChars(LCurrentLine, LCurrentLineText);
 
       LWrappedRowCount := 0;
+
+      if not FWordWrap.Enabled then
+        SetLineSelectionVariables;
 
       LFoldRange := nil;
       if FCodeFolding.Visible then
@@ -11217,6 +11214,9 @@ var
       begin
         LPaintedWidth := 0;
         FItalicOffset := 0;
+
+        if FWordWrap.Enabled then
+          SetLineSelectionVariables;
 
         if Assigned(FMultiCarets) then
           LIsCurrentLine := IsMultiEditCaretFound(LCurrentLine)
@@ -11693,12 +11693,7 @@ end;
 
 procedure TBCBaseEditor.DoSelectedText(const AValue: string);
 begin
-  DoSelectedText(FSelection.ActiveMode, PChar(AValue), True);
-end;
-
-procedure TBCBaseEditor.DoSelectedText(APasteMode: TBCEditorSelectionMode; AValue: PChar; AAddToUndoList: Boolean);
-begin
-  DoSelectedText(APasteMode, AValue, AAddToUndoList, TextCaretPosition);
+  DoSelectedText(FSelection.ActiveMode, PChar(AValue), True, TextCaretPosition);
 end;
 
 procedure TBCBaseEditor.DoSelectedText(APasteMode: TBCEditorSelectionMode; AValue: PChar; AAddToUndoList: Boolean;
@@ -11970,6 +11965,9 @@ var
       if eoTrimTrailingSpaces in Options then
         for i := LBeginLine to LBeginLine + LInsertedLines do
           DoTrimTrailingSpaces(i);
+
+    if FWordWrap.Enabled then
+      CreateLineNumbersCache(True);
 
     { Force caret reset }
     TextCaretPosition := LTextCaretPosition;
@@ -13868,7 +13866,7 @@ begin
   LSelectionMode := FSelection.ActiveMode;
   SetCaretAndSelection(ABlockBeginPosition, ABlockBeginPosition, ABlockEndPosition);
   FSelection.ActiveMode := smColumn;
-  DoSelectedText(smColumn, AChangeStr, AAddToUndoList);
+  DoSelectedText(smColumn, AChangeStr, AAddToUndoList, TextCaretPosition);
   FSelection.ActiveMode := LSelectionMode;
 end;
 
