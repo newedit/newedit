@@ -7471,8 +7471,7 @@ begin
   Result := True;
 end;
 
-function TBCBaseEditor.DoOnReplaceText(const ASearch, AReplace: string; ALine, AColumn: Integer; DeleteLine: Boolean)
-  : TBCEditorReplaceAction;
+function TBCBaseEditor.DoOnReplaceText(const ASearch, AReplace: string; ALine, AColumn: Integer; DeleteLine: Boolean): TBCEditorReplaceAction;
 begin
   Result := raCancel;
   if Assigned(FOnReplaceText) then
@@ -7481,8 +7480,7 @@ end;
 
 function TBCBaseEditor.DoSearchMatchNotFoundWraparoundDialog: Boolean;
 begin
-  Result := MessageDialog(Format(SBCEditorSearchMatchNotFound, [SLineBreak + SLineBreak]), mtConfirmation,
-    [mbYes, mbNo]) = mrYes;
+  Result := MessageDialog(Format(SBCEditorSearchMatchNotFound, [SLineBreak + SLineBreak]), mtConfirmation, [mbYes, mbNo]) = mrYes;
 end;
 
 function TBCBaseEditor.GetReadOnly: Boolean;
@@ -11136,26 +11134,23 @@ var
       LPaintedColumn := 1;
 
       LIsCurrentLine := False;
-
       LCurrentLineLength := Length(LCurrentLineText);
 
       LTokenPosition := 0;
       LTokenLength := 0;
       LExpandedCharsBefore := 0;
       LCurrentRow := LCurrentLine;
-
       LTextCaretY := GetTextCaretY + 1;
 
       LFirstColumn := 1;
-      if FWordWrap.Enabled then
-        LLastColumn := FWordWrapLineLengths[LDisplayLine]
-      else
-        LLastColumn := GetVisibleChars(LCurrentLine, LCurrentLineText);
+      LLastColumn := GetVisibleChars(LCurrentLine, LCurrentLineText);
+
+      SetLineSelectionVariables;
+
+      if FWordWrap.Enabled and (LDisplayLine < Length(FWordWrapLineLengths)) then
+        LLastColumn := FWordWrapLineLengths[LDisplayLine];
 
       LWrappedRowCount := 0;
-
-      if not FWordWrap.Enabled then
-        SetLineSelectionVariables;
 
       LFoldRange := nil;
       if FCodeFolding.Visible then
@@ -11222,9 +11217,6 @@ var
       begin
         LPaintedWidth := 0;
         FItalicOffset := 0;
-
-        if FWordWrap.Enabled then
-          SetLineSelectionVariables;
 
         if Assigned(FMultiCarets) then
           LIsCurrentLine := IsMultiEditCaretFound(LCurrentLine)
