@@ -10912,8 +10912,8 @@ var
     LCurrentRow: Integer;
     LFoldRange: TBCEditorCodeFoldingRange;
     LHighlighterAttribute: TBCEditorHighlighterAttribute;
-    LTokenText, LRestOfTokenText: string;
-    LTokenPosition, {LRealTokenPosition,} LTokenLength: Integer;
+    LTokenText: string;
+    LTokenPosition, LTokenLength: Integer;
     LFontStyles: TFontStyles;
     LKeyword, LWordAtSelection, LSelectedText: string;
     LMatchingPairUnderline: Boolean;
@@ -10956,7 +10956,7 @@ var
         LFontStyles := LHighlighterAttribute.FontStyles;
 
         if Assigned(FOnCustomTokenAttribute) then
-          FOnCustomTokenAttribute(Self, LTokenText, LCurrentLine, {Real}LTokenPosition, LForegroundColor,
+          FOnCustomTokenAttribute(Self, LTokenText, LCurrentLine, LTokenPosition, LForegroundColor,
             LBackgroundColor, LFontStyles);
 
         LIsCustomBackgroundColor := False;
@@ -10965,9 +10965,9 @@ var
         if FMatchingPair.Enabled and not FSyncEdit.Active then
           if FCurrentMatchingPair <> trNotFound then
             if (LCurrentLine - 1 = FCurrentMatchingPairMatch.OpenTokenPos.Line) and
-              ({Real}LTokenPosition = FCurrentMatchingPairMatch.OpenTokenPos.Char - 1) or
+              (LTokenPosition = FCurrentMatchingPairMatch.OpenTokenPos.Char - 1) or
               (LCurrentLine - 1 = FCurrentMatchingPairMatch.CloseTokenPos.Line) and
-              ({Real}LTokenPosition = FCurrentMatchingPairMatch.CloseTokenPos.Char - 1) then
+              (LTokenPosition = FCurrentMatchingPairMatch.CloseTokenPos.Char - 1) then
             begin
               if (FCurrentMatchingPair = trOpenAndCloseTokenFound) or (FCurrentMatchingPair = trCloseAndOpenTokenFound)
               then
@@ -11253,7 +11253,6 @@ var
           LTokenPosition := FHighlighter.GetTokenPosition;
           if FWordWrap.Enabled then
             Inc(LTokenPosition, LFirstColumn - 1);
-          //LRealTokenPosition := LTokenPosition;
           FHighlighter.GetToken(LTokenText);
           LTokenLength := FHighlighter.GetTokenLength;
 
