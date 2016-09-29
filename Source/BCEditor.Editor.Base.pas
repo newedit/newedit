@@ -13956,12 +13956,6 @@ begin
   FLines.LoadFromBuffer(LBuffer, FEncoding);
   CreateLineNumbersCache(True);
 
-  if FCodeFolding.Visible then
-  begin
-    ScanCodeFoldingRanges;
-    CodeFoldingResetCaches;
-  end;
-
   if CanFocus then
     SetFocus;
   FWordWrap.Enabled := LWordWrapEnabled;
