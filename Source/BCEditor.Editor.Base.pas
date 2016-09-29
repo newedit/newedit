@@ -11270,7 +11270,7 @@ var
           FHighlighter.GetToken(LTokenText);
           LTokenLength := FHighlighter.GetTokenLength;
 
-          if LTokenPosition + LTokenLength >= LFirstColumn then
+          if (LTokenPosition + LTokenLength >= LFirstColumn) or (LTokenLength = 0) then
           begin
             LIsSyncEditBlock := False;
             if FSyncEdit.BlockSelected then
@@ -11299,7 +11299,8 @@ var
                   Inc(LFirstColumn, FWordWrapLineLengths[LCurrentRow]);
                   PrepareToken;
                 end;
-                Inc(LLastColumn, FWordWrapLineLengths[LCurrentRow + LWrappedRowCount + 1]);
+                if LCurrentRow + LWrappedRowCount + 1 < Length(FWordWrapLineLengths) then
+                  Inc(LLastColumn, FWordWrapLineLengths[LCurrentRow + LWrappedRowCount + 1]);
                 LAddWrappedCount := True;
                 Break;
               end;
