@@ -10922,6 +10922,7 @@ var
     LIsCustomBackgroundColor: Boolean;
     LTextPosition: TBCEditorTextPosition;
     LTextCaretY: Integer;
+    LWrappedRowCountTemp: Integer;
 
     function GetWordAtSelection(var ASelectedText: string): string;
     var
@@ -11138,11 +11139,13 @@ var
       LTextCaretY := GetTextCaretY + 1;
 
       LFirstColumn := 1;
+      LWrappedRowCountTemp := 0;
 
       if FWordWrap.Enabled and (LDisplayLine < Length(FWordWrapLineLengths)) then
       begin
         LLastColumn := FWordWrapLineLengths[LDisplayLine];
         i := LDisplayLine - 1;
+        LWrappedRowCountTemp := i;
         if i > 0 then
         begin
           while (i > 0) and (GetDisplayTextLineNumber(i) = LCurrentLine) do
@@ -11150,7 +11153,7 @@ var
             LFirstColumn := LFirstColumn + FWordWrapLineLengths[i];
             Dec(i);
           end;
-          LLastColumn := LFirstColumn + FWordWrapLineLengths[LDisplayLine];
+          LLastColumn := LFirstColumn + FWordWrapLineLengths[LDisplayLine] - 1;
         end;
       end
       else
@@ -11254,6 +11257,7 @@ var
             FHighlighter.SetCurrentRange(FLines.Ranges[LCurrentLine - 2]);
 
           FHighlighter.SetCurrentLine(LCurrentLineText);
+          LWrappedRowCount := LWrappedRowCountTemp;
         end;
 
         LTokenHelper.Length := 0;
