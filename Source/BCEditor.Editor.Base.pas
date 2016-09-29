@@ -10907,7 +10907,7 @@ var
 
   procedure PaintLines;
   var
-    LFirstColumn, LLastColumn: Integer;
+    i, LFirstColumn, LLastColumn: Integer;
     LFromLineText, LToLineText: string;
     LCurrentRow: Integer;
     LFoldRange: TBCEditorCodeFoldingRange;
@@ -11140,7 +11140,19 @@ var
       LFirstColumn := 1;
 
       if FWordWrap.Enabled and (LDisplayLine < Length(FWordWrapLineLengths)) then
-        LLastColumn := FWordWrapLineLengths[LDisplayLine]
+      begin
+        LLastColumn := FWordWrapLineLengths[LDisplayLine];
+        i := LDisplayLine - 1;
+        if i > 0 then
+        begin
+          while (i > 0) and (GetDisplayTextLineNumber(i) = LCurrentLine) do
+          begin
+            LFirstColumn := LFirstColumn + FWordWrapLineLengths[i];
+            Dec(i);
+          end;
+          LLastColumn := LFirstColumn + FWordWrapLineLengths[LDisplayLine];
+        end;
+      end
       else
         LLastColumn := GetVisibleChars(LCurrentLine, LCurrentLineText);
 
@@ -11251,48 +11263,49 @@ var
         while not FHighlighter.GetEndOfLine do
         begin
           LTokenPosition := FHighlighter.GetTokenPosition;
-          if FWordWrap.Enabled then
-            Inc(LTokenPosition, LFirstColumn - 1);
           FHighlighter.GetToken(LTokenText);
           LTokenLength := FHighlighter.GetTokenLength;
 
-          LIsSyncEditBlock := False;
-          if FSyncEdit.BlockSelected then
+          if LTokenPosition + LTokenLength >= LFirstColumn then
           begin
-            LTextPosition := GetTextPosition(LTokenPosition + 1, LCurrentLine - 1);
-            if FSyncEdit.IsTextPositionInBlock(LTextPosition) then
-              LIsSyncEditBlock := True;
-          end;
-
-          LIsSearchInSelectionBlock := False;
-          if FSearch.InSelection.Active then
-          begin
-            LTextPosition := GetTextPosition(LTokenPosition + 1, LCurrentLine - 1);
-            if FSearch.InSelection.IsTextPositionInBlock(LTextPosition) then
-              LIsSearchInSelectionBlock := True;
-          end;
-
-          if FWordWrap.Enabled then
-          begin
-            if LTokenPosition + LTokenLength > LLastColumn then
+            LIsSyncEditBlock := False;
+            if FSyncEdit.BlockSelected then
             begin
-              if LTokenLength > FWordWrapLineLengths[LCurrentRow] then
-              begin
-                LTokenText := Copy(LTokenText, LFirstColumn, FWordWrapLineLengths[LCurrentRow]);
-                LTokenLength := Length(LTokenText);
-                Inc(LFirstColumn, FWordWrapLineLengths[LCurrentRow]);
-                PrepareToken;
-              end;
-              Inc(LLastColumn, FWordWrapLineLengths[LCurrentRow + LWrappedRowCount + 1]);
-              LAddWrappedCount := True;
-              Break;
+              LTextPosition := GetTextPosition(LTokenPosition + 1, LCurrentLine - 1);
+              if FSyncEdit.IsTextPositionInBlock(LTextPosition) then
+                LIsSyncEditBlock := True;
             end;
-          end
-          else
-          if LTokenPosition > LLastColumn then
-            Break;
 
-          PrepareToken;
+            LIsSearchInSelectionBlock := False;
+            if FSearch.InSelection.Active then
+            begin
+              LTextPosition := GetTextPosition(LTokenPosition + 1, LCurrentLine - 1);
+              if FSearch.InSelection.IsTextPositionInBlock(LTextPosition) then
+                LIsSearchInSelectionBlock := True;
+            end;
+
+            if FWordWrap.Enabled then
+            begin
+              if LTokenPosition + LTokenLength > LLastColumn then
+              begin
+                if LTokenLength > FWordWrapLineLengths[LCurrentRow] then
+                begin
+                  LTokenText := Copy(LTokenText, LFirstColumn, FWordWrapLineLengths[LCurrentRow]);
+                  LTokenLength := Length(LTokenText);
+                  Inc(LFirstColumn, FWordWrapLineLengths[LCurrentRow]);
+                  PrepareToken;
+                end;
+                Inc(LLastColumn, FWordWrapLineLengths[LCurrentRow + LWrappedRowCount + 1]);
+                LAddWrappedCount := True;
+                Break;
+              end;
+            end
+            else
+            if LTokenPosition > LLastColumn then
+              Break;
+
+            PrepareToken;
+          end;
 
           FHighlighter.Next;
         end;
