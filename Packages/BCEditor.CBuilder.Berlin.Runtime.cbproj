@@ -164,6 +164,12 @@
         <DelphiCompile Include="..\Source\BCEditor.Editor.CodeFolding.Hint.Form.pas">
             <BuildOrder>91</BuildOrder>
         </DelphiCompile>
+				<DelphiCompile Include="..\Source\BCEditor.Editor.CodeFolding.Hint.Indicator.Colors.pas">
+            <BuildOrder>91</BuildOrder>
+        </DelphiCompile>
+				<DelphiCompile Include="..\Source\BCEditor.Editor.CodeFolding.Hint.Indicator.pas">
+            <BuildOrder>91</BuildOrder>
+        </DelphiCompile>
         <DelphiCompile Include="..\Source\BCEditor.Editor.CodeFolding.Hint.pas">
             <BuildOrder>14</BuildOrder>
         </DelphiCompile>

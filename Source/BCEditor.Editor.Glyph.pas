@@ -23,7 +23,7 @@ type
     procedure SetMaskColor(AValue: TColor);
     procedure SetVisible(AValue: Boolean);
   public
-    constructor Create(AModule: THandle; const AName: string; AMaskColor: TColor);
+    constructor Create(AModule: THandle = 0; const AName: string = ''; AMaskColor: TColor = clFuchsia);
     destructor Destroy; override;
 
     procedure Assign(ASource: TPersistent); override;
@@ -43,7 +43,7 @@ implementation
 uses
   Winapi.Windows, System.SysUtils;
 
-constructor TBCEditorGlyph.Create(AModule: THandle; const AName: string; AMaskColor: TColor);
+constructor TBCEditorGlyph.Create(AModule: THandle = 0; const AName: string = ''; AMaskColor: TColor = clFuchsia);
 begin
   inherited Create;
 

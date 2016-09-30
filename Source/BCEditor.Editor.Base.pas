@@ -776,8 +776,6 @@ begin
 {$endif}
   Height := 150;
   Width := 200;
-  Constraints.MinHeight := 150;
-  Constraints.MinWidth := 200;
   Cursor := crIBeam;
   Color := clWindow;
   DoubleBuffered := False;
