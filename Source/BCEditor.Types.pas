@@ -335,7 +335,6 @@ type
     cfoHighlightFoldingLine,
     cfoHighlightIndentGuides,
     cfoHighlightMatchingPair,
-    cfoShowCollapsedCodeHint,
     cfoShowCollapsedLine,
     cfoShowIndentGuides,
     cfoShowTreeLine,
@@ -350,6 +349,9 @@ type
   TBCEditorMinimapIndicatorOption = (ioInvertBlending, ioShowBorder, ioUseBlending);
   TBCEditorMinimapIndicatorOptions = set of TBCEditorMinimapIndicatorOption;
 
+  TBCEditorCodeFoldingHintIndicatorOption = (hioShowBorder, hioShowMark);
+  TBCEditorCodeFoldingHintIndicatorOptions = set of TBCEditorCodeFoldingHintIndicatorOption;
+
   TBCEditorQuadColor = packed record
   case Boolean of
     True: (Blue, Green, Red, Alpha: Byte);
@@ -357,6 +359,27 @@ type
   end;
   PBCEditorQuadColor = ^TBCEditorQuadColor;
 
+
+  TBCEditorCodeFoldingHintIndicatorPadding = class(TPadding)
+  protected
+    class procedure InitDefaults(Margins: TMargins); override;
+  published
+    property Left default 0;
+    property Top default 1;
+    property Right default 0;
+    property Bottom default 1;
+  end;
+
 implementation
+
+class procedure TBCEditorCodeFoldingHintIndicatorPadding.InitDefaults(Margins: TMargins);
+begin
+  with Margins do begin
+    Left := 0;
+    Right := 0;
+    Top := 1;
+    Bottom := 1;
+  end;
+end;
 
 end.

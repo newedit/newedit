@@ -8676,8 +8676,8 @@ begin
       Exit;
     end;
 
-  if (AButton = mbLeft) and FCodeFolding.Visible and (Lines.Count > 0) and
-    (cfoShowCollapsedCodeHint in FCodeFolding.Options) and (cfoUncollapseByHintClick in FCodeFolding.Options) then
+  if (AButton = mbLeft) and FCodeFolding.Visible and (Lines.Count > 0) and FCodeFolding.Hint.Indicator.Visible and
+    (cfoUncollapseByHintClick in FCodeFolding.Options) then
     if DoOnCodeFoldingHintClick(Point(X, Y)) then
     begin
       Include(FStateFlags, sfCodeFoldingInfoClicked);
@@ -8906,7 +8906,7 @@ begin
     end;
   end;
 
-  if FCodeFolding.Visible and (cfoShowCollapsedCodeHint in CodeFolding.Options) and FCodeFolding.Hint.Visible then
+  if FCodeFolding.Visible and FCodeFolding.Hint.Indicator.Visible and FCodeFolding.Hint.Visible then
   begin
     LLine := GetDisplayTextLineNumber(GetSelectedRow(Y));
 
@@ -9396,51 +9396,87 @@ end;
 procedure TBCBaseEditor.PaintCodeFoldingCollapseMark(AFoldRange: TBCEditorCodeFoldingRange;
   const ACurrentLineText: string; const ATokenPosition, ATokenLength, ALine: Integer; ALineRect: TRect);
 var
-  LOldPenColor: TColor;
+  LOldPenColor, LOldBrushColor: TColor;
   LCollapseMarkRect: TRect;
   i, X, Y: Integer;
   LBrush: TBrush;
   LDisplayPosition: TBCEditorDisplayPosition;
+  LPoints: array [0..2] of TPoint;
+  LDotSpace: Integer;
 begin
   LOldPenColor := Canvas.Pen.Color;
-  if FCodeFolding.Visible and (cfoShowCollapsedCodeHint in CodeFolding.Options) and Assigned(AFoldRange) and
+  LOldBrushColor  := Canvas.Brush.Color;
+  if FCodeFolding.Visible and FCodeFolding.Hint.Indicator.Visible and Assigned(AFoldRange) and
     AFoldRange.Collapsed and not AFoldRange.ParentCollapsed then
   begin
     LDisplayPosition.Row := ALine;
     LDisplayPosition.Column := ATokenPosition + ATokenLength + 2;
     if FSpecialChars.Visible and (ALine <> FLines.Count) and (ALine <> FLineNumbersCount) then
       Inc(LDisplayPosition.Column);
-    LCollapseMarkRect.Left := DisplayPositionToPixels(LDisplayPosition, ACurrentLineText).X - FHorizontalScrollPosition;
-    LCollapseMarkRect.Right := LCollapseMarkRect.Left + FPaintHelper.CharWidth * 4 - 2;
-    LCollapseMarkRect.Top := ALineRect.Top + 2;
-    LCollapseMarkRect.Bottom := ALineRect.Bottom - 2;
+    LCollapseMarkRect.Left := DisplayPositionToPixels(LDisplayPosition, ACurrentLineText).X - FHorizontalScrollPosition -
+      FCodeFolding.Hint.Indicator.Padding.Left;
+    LCollapseMarkRect.Right := FCodeFolding.Hint.Indicator.Padding.Right + LCollapseMarkRect.Left +
+      FCodeFolding.Hint.Indicator.Width;
+    LCollapseMarkRect.Top := FCodeFolding.Hint.Indicator.Padding.Top + ALineRect.Top;
+    LCollapseMarkRect.Bottom := ALineRect.Bottom - FCodeFolding.Hint.Indicator.Padding.Bottom;
 
     if LCollapseMarkRect.Right > FLeftMarginWidth then
     begin
-      LBrush := TBrush.Create;
-      try
-        LBrush.Color := FCodeFolding.Colors.FoldingLine;
-        Winapi.Windows.FrameRect(Canvas.Handle, LCollapseMarkRect, LBrush.Handle);
-      finally
-        LBrush.Free;
-      end;
-      Canvas.Pen.Color := FCodeFolding.Colors.FoldingLine;
-      { [...] }
-      Y := LCollapseMarkRect.Top + (LCollapseMarkRect.Bottom - LCollapseMarkRect.Top) div 2;
-      X := LCollapseMarkRect.Left + FPaintHelper.CharWidth - 1;
-      for i := 1 to 3 do
+      if FCodeFolding.Hint.Indicator.Glyph.Visible then
+        FCodeFolding.Hint.Indicator.Glyph.Draw(Canvas, LCollapseMarkRect.Left, ALineRect.Top, ALineRect.Height)
+      else
       begin
-        Canvas.Rectangle(X, Y, X + 2, Y + 2);
-        X := X + FPaintHelper.CharWidth - 1;
+        if BackgroundColor <> FCodeFolding.Hint.Indicator.Colors.Background then
+        begin
+          Canvas.Brush.Color := FCodeFolding.Hint.Indicator.Colors.Background;
+          FillRect(LCollapseMarkRect);
+        end;
+
+        if hioShowBorder in FCodeFolding.Hint.Indicator.Options then
+        begin
+          LBrush := TBrush.Create;
+          try
+            LBrush.Color := FCodeFolding.Hint.Indicator.Colors.Border;
+            Winapi.Windows.FrameRect(Canvas.Handle, LCollapseMarkRect, LBrush.Handle);
+          finally
+            LBrush.Free;
+          end;
+        end;
+
+        if hioShowMark in FCodeFolding.Hint.Indicator.Options then
+        begin
+          Canvas.Pen.Color := FCodeFolding.Hint.Indicator.Colors.Mark;
+          Canvas.Brush.Color := FCodeFolding.Hint.Indicator.Colors.Mark;
+          case FCodeFolding.Hint.Indicator.MarkStyle of
+            imsThreeDots:
+              begin
+                { [...] }
+                LDotSpace := (LCollapseMarkRect.Width - 8) div 4;
+                Y := LCollapseMarkRect.Top + (LCollapseMarkRect.Bottom - LCollapseMarkRect.Top) div 2;
+                X := LCollapseMarkRect.Left + LDotSpace + (LCollapseMarkRect.Width - LDotSpace * 4 - 6) div 2;
+                for i := 1 to 3 do
+                begin
+                  Canvas.Rectangle(X, Y, X + 2, Y + 2);
+                  X := X + LDotSpace + 2;
+                end;
+              end;
+            imsTriangle:
+              begin
+                LPoints[0] := Point(LCollapseMarkRect.Left + (LCollapseMarkRect.Width - LCollapseMarkRect.Height) div 2 + 2, LCollapseMarkRect.Top + 2);
+                LPoints[1] := Point(LCollapseMarkRect.Right - (LCollapseMarkRect.Width - LCollapseMarkRect.Height) div 2 - 3 - (LCollapseMarkRect.Width + 1) mod 2, LCollapseMarkRect.Top + 2);
+                LPoints[2] := Point(LCollapseMarkRect.Left + LCollapseMarkRect.Width div 2 - (LCollapseMarkRect.Width + 1) mod 2, LCollapseMarkRect.Bottom - 3);
+                Canvas.Polygon(LPoints);
+              end;
+          end;
+        end;
       end;
     end;
-
     Inc(LCollapseMarkRect.Left, FLeftMarginWidth);
-    LCollapseMarkRect.Right := LCollapseMarkRect.Left + FPaintHelper.CharWidth * 4 - 2;
-
+    LCollapseMarkRect.Right := LCollapseMarkRect.Left + FCodeFolding.Hint.Indicator.Width;
     AFoldRange.CollapseMarkRect := LCollapseMarkRect;
   end;
   Canvas.Pen.Color := LOldPenColor;
+  Canvas.Brush.Color := LOldBrushColor;
 end;
 
 procedure TBCBaseEditor.PaintGuides(const AFirstRow, ALastRow: Integer; const AMinimap: Boolean);

@@ -6,13 +6,17 @@ uses
   System.Classes, Vcl.Controls, BCEditor.Editor.CodeFolding.Hint.Indicator.Colors, BCEditor.Editor.Glyph,
   BCEditor.Types;
 
+const
+  BCEDITOR_CODE_FOLDING_HINT_INDICATOR_DEFAULT_OPTIONS = [hioShowBorder, hioShowMark];
+
 type
   TBCEditorCodeFoldingHintIndicator = class(TPersistent)
   strict private
     FColors: TBCEditorCodeFoldingHintIndicatorColors;
     FGlyph: TBCEditorGlyph;
     FMarkStyle: TBCEditorCodeFoldingHintIndicatorMarkStyle;
-    FPadding: TPadding;
+    FOptions: TBCEditorCodeFoldingHintIndicatorOptions;
+    FPadding: TBCEditorCodeFoldingHintIndicatorPadding;
     FVisible: Boolean;
     FWidth: Integer;
     procedure SetGlyph(const AValue: TBCEditorGlyph);
@@ -24,9 +28,10 @@ type
     property Colors: TBCEditorCodeFoldingHintIndicatorColors read FColors write FColors;
     property Glyph: TBCEditorGlyph read FGlyph write SetGlyph;
     property MarkStyle: TBCEditorCodeFoldingHintIndicatorMarkStyle read FMarkStyle write FMarkStyle default imsThreeDots;
-    property Padding: TPadding read FPadding write FPadding;
+    property Options: TBCEditorCodeFoldingHintIndicatorOptions read FOptions write FOptions default BCEDITOR_CODE_FOLDING_HINT_INDICATOR_DEFAULT_OPTIONS;
+    property Padding: TBCEditorCodeFoldingHintIndicatorPadding read FPadding write FPadding;
     property Visible: Boolean read FVisible write FVisible default True;
-    property Width: Integer read FWidth write FWidth default 52;
+    property Width: Integer read FWidth write FWidth default 26;
   end;
 
 implementation
@@ -37,11 +42,12 @@ begin
 
   FColors := TBCEditorCodeFoldingHintIndicatorColors.Create;
   FGlyph := TBCEditorGlyph.Create;
-  FPadding := TPadding.Create(nil);
+  FPadding := TBCEditorCodeFoldingHintIndicatorPadding.Create(nil);
   FGlyph.Visible := False;
   FMarkStyle := imsThreeDots;
   FVisible := True;
-  FWidth := 52;
+  FOptions := BCEDITOR_CODE_FOLDING_HINT_INDICATOR_DEFAULT_OPTIONS;
+  FWidth := 26;
 end;
 
 destructor TBCEditorCodeFoldingHintIndicator.Destroy;

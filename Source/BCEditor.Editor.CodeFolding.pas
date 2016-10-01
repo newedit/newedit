@@ -7,8 +7,8 @@ uses
   BCEditor.Editor.CodeFolding.Hint;
 
 const
-  BCEDITOR_CODE_FOLDING_DEFAULT_OPTIONS = [cfoShowCollapsedCodeHint, cfoHighlightIndentGuides, cfoHighlightMatchingPair,
-    cfoShowIndentGuides, cfoShowTreeLine, cfoUncollapseByHintClick];
+  BCEDITOR_CODE_FOLDING_DEFAULT_OPTIONS = [cfoHighlightIndentGuides, cfoHighlightMatchingPair, cfoShowIndentGuides,
+    cfoShowTreeLine, cfoUncollapseByHintClick];
 
 type
   TBCEditorCodeFolding = class(TPersistent)
