@@ -109,6 +109,11 @@ unit BCEditor.JsonDataObjects;
   // Reading a large file >64 MB from a network drive in Windows 2003 Server or older can lead to
   // an INSUFFICIENT RESOURCES error. By enabling this switch, large files are read in 20 MB blocks.
   {$DEFINE WORKAROUND_NETWORK_FILE_INSUFFICIENT_RESOURCES}
+
+  // If defined, the TzSpecificLocalTimeToSystemTime is imported with GetProcAddress and if it is
+  // not available (Windows 2000) an alternative implementation is used.
+  {$DEFINE SUPPORT_WINDOWS2000}
+
 {$ENDIF MSWINDOWS}
 
 interface
@@ -1047,10 +1052,35 @@ var
   {$ENDIF USE_NAME_STRING_LITERAL}
 
 {$IFDEF MSWINDOWS}
-{ TODO: This does not work in Windows 2000
+
+  {$IFDEF SUPPORT_WINDOWS2000}
+var
+  TzSpecificLocalTimeToSystemTime: function(lpTimeZoneInformation: PTimeZoneInformation;
+    var lpLocalTime, lpUniversalTime: TSystemTime): BOOL; stdcall;
+
+function TzSpecificLocalTimeToSystemTimeWin2000(lpTimeZoneInformation: PTimeZoneInformation;
+  var lpLocalTime, lpUniversalTime: TSystemTime): BOOL; stdcall;
+var
+  TimeZoneInfo: TTimeZoneInformation;
+begin
+  if lpTimeZoneInformation <> nil then
+    TimeZoneInfo := lpTimeZoneInformation^
+  else
+    GetTimeZoneInformation(TimeZoneInfo);
+
+  // Reverse the bias so that SystemTimeToTzSpecificLocalTime becomes TzSpecificLocalTimeToSystemTime
+  TimeZoneInfo.Bias := -TimeZoneInfo.Bias;
+  TimeZoneInfo.StandardBias := -TimeZoneInfo.StandardBias;
+  TimeZoneInfo.DaylightBias := -TimeZoneInfo.DaylightBias;
+
+  Result := SystemTimeToTzSpecificLocalTime(@TimeZoneInfo, lpLocalTime, lpUniversalTime);
+end;
+  {$ELSE}
 function TzSpecificLocalTimeToSystemTime(lpTimeZoneInformation: PTimeZoneInformation;
   var lpLocalTime, lpUniversalTime: TSystemTime): BOOL; stdcall;
-  external kernel32 name 'TzSpecificLocalTimeToSystemTime';    }
+  external kernel32 name 'TzSpecificLocalTimeToSystemTime';
+  {$ENDIF SUPPORT_WINDOWS2000}
+
 {$ENDIF MSWINDOWS}
 
 {$IFDEF USE_NAME_STRING_LITERAL}
@@ -1245,15 +1275,14 @@ end;
 function DateTimeToISO8601(Value: TDateTime): string;
 {$IFDEF MSWINDOWS}
 var
-  LocalTime{, UtcTime}: TSystemTime;
-//  Offset: TDateTime;
-//  Hour, Min, Sec, MSec: Word;
+  LocalTime, UtcTime: TSystemTime;
+  Offset: TDateTime;
+  Hour, Min, Sec, MSec: Word;
 begin
   DateTimeToSystemTime(Value, LocalTime);
   Result := Format('%.4d-%.2d-%.2dT%.2d:%.2d:%.2d.%d',
     [LocalTime.wYear, LocalTime.wMonth, LocalTime.wDay,
      LocalTime.wHour, LocalTime.wMinute, LocalTime.wSecond, LocalTime.wMilliseconds]);
-  {TODO: This does not work in Windows 2000
   if TzSpecificLocalTimeToSystemTime(nil, LocalTime, UtcTime) then
   begin
     Offset := Value - SystemTimeToDateTime(UtcTime);
@@ -1264,7 +1293,7 @@ begin
       Result := Format('%s+%.2d:%.2d', [Result, Hour, Min])
     else
       Result := Result + 'Z';
-  end;}
+  end;
 end;
 {$ELSE}
 var
@@ -1293,9 +1322,8 @@ begin
   if UseUtcTime then
   begin
     DateTimeToSystemTime(Value, LocalTime);
-    {TODO: This does not work in Windows 2000
     if not TzSpecificLocalTimeToSystemTime(nil, LocalTime, UtcTime) then
-      UtcTime := LocalTime;}
+      UtcTime := LocalTime;
     Result := Format('%.4d-%.2d-%.2dT%.2d:%.2d:%.2d.%dZ',
       [UtcTime.wYear, UtcTime.wMonth, UtcTime.wDay,
        UtcTime.wHour, UtcTime.wMinute, UtcTime.wSecond, UtcTime.wMilliseconds]);
@@ -7842,6 +7870,13 @@ initialization
   {$IFDEF USE_NAME_STRING_LITERAL}
   InitializeJsonMemInfo;
   {$ENDIF USE_NAME_STRING_LITERAL}
+  {$IFDEF MSWINDOWS}
+    {$IFDEF SUPPORT_WINDOWS2000}
+  TzSpecificLocalTimeToSystemTime := GetProcAddress(GetModuleHandle(kernel32), PAnsiChar('TzSpecificLocalTimeToSystemTime'));
+  if not Assigned(TzSpecificLocalTimeToSystemTime) then
+    TzSpecificLocalTimeToSystemTime := TzSpecificLocalTimeToSystemTimeWin2000;
+    {$ENDIF SUPPORT_WINDOWS2000}
+  {$ENDIF MSWINDOWS}
   // Make sTrue and sFalse a mutable string (RefCount<>-1) so that UStrAsg doesn't always
   // create a new string.
   UniqueString(sTrue);
