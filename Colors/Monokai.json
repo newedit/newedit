@@ -2,8 +2,8 @@
    "Colors": {
       "Info": {
          "General": {
-            "Version": "1.7.0",
-            "Date": "17.09.2016"
+            "Version": "1.8.0",
+            "Date": "01.10.2016"
          },
          "Author": {
             "Name": "Lasse Rautiainen",
@@ -24,6 +24,9 @@
             "CodeFoldingHintBackground": "$00222827",
             "CodeFoldingHintBorder": "$00414746",
             "CodeFoldingHintText": "$00F8F8F2",
+						"CodeFoldingHintIndicatorBackground": "$00222827",
+            "CodeFoldingHintIndicatorBorder": "$00414746",
+            "CodeFoldingHintIndicatorMark": "$00414746",
             "CompletionProposalBackground": "$00222827",
             "CompletionProposalForeground": "$00F8F8F2",
             "CompletionProposalSelectedBackground": "$003E4849",
