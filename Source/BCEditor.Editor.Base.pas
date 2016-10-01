@@ -12227,10 +12227,7 @@ begin
         Inc(LPLine);
       end
       else
-      begin
-        Inc(i, Result.Char - i);
-        Break;
-      end;
+        Inc(LChar);
       Inc(i);
     end;
     while (LPLine^ <> BCEDITOR_NONE_CHAR) and
@@ -12829,10 +12826,7 @@ begin
         Inc(LPLine);
       end
       else
-      begin
-        Inc(LChar, ATextPosition.Char - i);
-        Break;
-      end;
+        Inc(LChar);
       Inc(i);
     end;
 
