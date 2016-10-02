@@ -105,6 +105,7 @@ contains
   BCEditor.Editor.Undo in '..\Source\BCEditor.Editor.Undo.pas',
   BCEditor.Editor.Undo.Item in '..\Source\BCEditor.Editor.Undo.Item.pas',
   BCEditor.Editor.Undo.List in '..\Source\BCEditor.Editor.Undo.List.pas',
+	BCEditor.Editor.UnknownChars in '..\Source\BCEditor.Editor.UnknownChars.pas',
   BCEditor.Editor.Utils in '..\Source\BCEditor.Editor.Utils.pas',
   BCEditor.Editor.WordWrap in '..\Source\BCEditor.Editor.WordWrap.pas',
   BCEditor.Editor.WordWrap.Colors in '..\Source\BCEditor.Editor.WordWrap.Colors.pas',

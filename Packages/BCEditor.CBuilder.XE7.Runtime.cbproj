@@ -320,6 +320,9 @@
         <DelphiCompile Include="..\Source\BCEditor.Editor.Undo.pas">
             <BuildOrder>63</BuildOrder>
         </DelphiCompile>
+				<DelphiCompile Include="..\Source\BCEditor.Editor.UnknownChars.pas">
+            <BuildOrder>63</BuildOrder>
+        </DelphiCompile>
         <DelphiCompile Include="..\Source\BCEditor.Editor.Utils.pas">
             <BuildOrder>64</BuildOrder>
         </DelphiCompile>
