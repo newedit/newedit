@@ -1301,10 +1301,10 @@ begin
   Result := ADisplayLineNumber;
 
   LLength := Length(FLineNumbersCache);
-  if Assigned(FLineNumbersCache) and (LLength > 0) and (ADisplayLineNumber >= FLineNumbersCache[LLength - 1]) then
+  if Assigned(FLineNumbersCache) and (LLength > 0) and (ADisplayLineNumber > FLineNumbersCache[LLength - 1]) then
     CreateLineNumbersCache(True);
 
-  if Assigned(FLineNumbersCache) and (ADisplayLineNumber < Length(FLineNumbersCache)) and
+  if Assigned(FLineNumbersCache) and (ADisplayLineNumber <= Length(FLineNumbersCache)) and
     (FLineNumbersCache[ADisplayLineNumber] = ADisplayLineNumber) then
     Result := ADisplayLineNumber
   else
