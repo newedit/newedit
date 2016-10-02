@@ -14,7 +14,7 @@ uses
   BCEditor.Editor.Tabs, BCEditor.Editor.Undo, BCEditor.Editor.Undo.List, BCEditor.Editor.WordWrap,
   BCEditor.Editor.CodeFolding.Hint.Form, BCEditor.Highlighter, BCEditor.Highlighter.Attributes,
   BCEditor.KeyboardHandler, BCEditor.Lines, BCEditor.Search, BCEditor.Search.RegularExpressions,
-  BCEditor.Search.WildCard, BCEditor.PaintHelper, BCEditor.Editor.SyncEdit, BCEditor.Utils
+  BCEditor.Search.WildCard, BCEditor.PaintHelper, BCEditor.Editor.SyncEdit, BCEditor.Utils, BCEditor.Editor.UnknownChars
   {$if defined(USE_ALPHASKINS)}, sCommonData, acSBUtils{$endif};
 
 const
@@ -187,6 +187,8 @@ type
     FUndo: TBCEditorUndo;
     FUndoList: TBCEditorUndoList;
     FUndoRedo: Boolean;
+    FUnknownCharHigh: Byte;
+    FUnknownChars: TBCEditorUnknownChars;
     FURIOpener: Boolean;
     FVisibleLines: Integer;
     FWantReturns: Boolean;
@@ -219,23 +221,23 @@ type
     function GetHookedCommandHandlersCount: Integer;
     function GetHorizontalScrollMax: Integer;
     function GetLastChar(APToken: PChar): string;
-    function GetTextCaretPosition: TBCEditorTextPosition;
     function GetLeadingExpandedLength(const AStr: string; const ABorder: Integer = 0): Integer;
     function GetLeftMarginWidth: Integer;
     function GetLineHeight: Integer;
     function GetLineIndentLevel(const ALine: Integer): Integer;
     function GetMatchingToken(const ADisplayPosition: TBCEditorDisplayPosition; var AMatch: TBCEditorMatchingPairMatch): TBCEditorMatchingTokenResult;
-    function GetMouseMoveScrollCursors(AIndex: Integer): HCursor;
     function GetMouseMoveScrollCursorIndex: Integer;
+    function GetMouseMoveScrollCursors(AIndex: Integer): HCursor;
     function GetScrollPageWidth: Integer;
-    function GetSelectionAvailable: Boolean;
-    function GetSelectedText: string;
     function GetSearchResultCount: Integer;
+    function GetSelectedRow(const Y: Integer): Integer;
+    function GetSelectedText: string;
+    function GetSelectionAvailable: Boolean;
     function GetSelectionBeginPosition: TBCEditorTextPosition;
     function GetSelectionEndPosition: TBCEditorTextPosition;
-    function GetSelectedRow(const Y: Integer): Integer;
     function GetText: string;
     function GetTextBetween(ATextBeginPosition: TBCEditorTextPosition; ATextEndPosition: TBCEditorTextPosition): string;
+    function GetTextCaretPosition: TBCEditorTextPosition;
     function GetTextCaretY: Integer;
     function GetTokenCharCount(const AToken: string; const ACharsBefore: Integer): Integer;
     function GetTokenWidth(const AToken: string; const ALength: Integer; const ACharsBefore: Integer): Integer;
@@ -249,11 +251,11 @@ type
     function IsMultiEditCaretFound(const ALine: Integer): Boolean;
     function IsWordSelected: Boolean;
     function LeftSpaceCount(const ALine: string; AWantTabs: Boolean = False): Integer;
-    function NextWordPosition: TBCEditorTextPosition; overload;
     function NextWordPosition(const ATextPosition: TBCEditorTextPosition): TBCEditorTextPosition; overload;
+    function NextWordPosition: TBCEditorTextPosition; overload;
     function PixelsToTextPosition(X, Y: Integer): TBCEditorTextPosition;
-    function PreviousWordPosition: TBCEditorTextPosition; overload;
     function PreviousWordPosition(const ATextPosition: TBCEditorTextPosition; APreviousLine: Boolean = False): TBCEditorTextPosition; overload;
+    function PreviousWordPosition: TBCEditorTextPosition; overload;
     function RescanHighlighterRangesFrom(const AIndex: Integer): Integer;
     function RowColumnToCharIndex(const ATextPosition: TBCEditorTextPosition): Integer;
     function SearchText(const ASearchText: string): Integer;
@@ -262,16 +264,16 @@ type
     function StringWordStart(const ALine: string; AStart: Integer): Integer;
     function WordWrapWidth: Integer;
     procedure ActiveLineChanged(ASender: TObject);
-    procedure AssignSearchEngine;
     procedure AfterSetText(ASender: TObject);
+    procedure AssignSearchEngine;
     procedure BeforeSetText(ASender: TObject);
     procedure CaretChanged(ASender: TObject);
     procedure CheckIfAtMatchingKeywords;
     procedure ClearCodeFolding;
     procedure CodeFoldingCollapse(AFoldRange: TBCEditorCodeFoldingRange);
     procedure CodeFoldingLinesDeleted(AFirstLine: Integer; ACount: Integer);
-    procedure CodeFoldingResetCaches;
     procedure CodeFoldingOnChange(AEvent: TBCEditorCodeFoldingChanges);
+    procedure CodeFoldingResetCaches;
     procedure CodeFoldingUncollapse(AFoldRange: TBCEditorCodeFoldingRange);
     procedure CompletionProposalTimerHandler(ASender: TObject);
     procedure ComputeScroll(const APoint: TPoint);
@@ -299,9 +301,9 @@ type
     procedure DoPageUpOrDown(const ACommand: TBCEditorCommand);
     procedure DoPasteFromClipboard;
     procedure DoScroll(const ACommand: TBCEditorCommand);
-    procedure DoSelectedText(const AValue: string); overload;
     procedure DoSelectedText(APasteMode: TBCEditorSelectionMode; AValue: PChar; AAddToUndoList: Boolean;
       ATextCaretPosition: TBCEditorTextPosition; AChangeBlockNumber: Integer = 0); overload;
+    procedure DoSelectedText(const AValue: string); overload;
     procedure DoSetBookmark(const ACommand: TBCEditorCommand; AData: Pointer);
     procedure DoShiftTabKey;
     procedure DoSyncEdit;
@@ -316,19 +318,18 @@ type
     procedure FindAll(const ASearchText: string = '');
     procedure FindWords(const AWord: string; AList: TList; ACaseSensitive: Boolean; AWholeWordsOnly: Boolean);
     procedure FontChanged(ASender: TObject);
-    procedure FreeScrollShadowBitmap;
     procedure FreeMinimapBitmaps;
     procedure FreeMultiCarets;
+    procedure FreeScrollShadowBitmap;
     procedure GetMinimapLeftRight(var ALeft: Integer; var ARight: Integer);
     procedure InitCodeFolding;
     procedure InsertLine; overload;
     procedure LinesChanging(ASender: TObject);
     procedure MinimapChanged(ASender: TObject);
     procedure MouseMoveScrollTimerHandler(ASender: TObject);
-    procedure MoveCaretAndSelection(const ABeforeTextPosition, AAfterTextPosition: TBCEditorTextPosition;
-      ASelectionCommand: Boolean);
-    procedure MoveCaretHorizontally(const X: Integer; ASelectionCommand: Boolean);
-    procedure MoveCaretVertically(const Y: Integer; ASelectionCommand: Boolean);
+    procedure MoveCaretAndSelection(const ABeforeTextPosition, AAfterTextPosition: TBCEditorTextPosition; const ASelectionCommand: Boolean);
+    procedure MoveCaretHorizontally(const X: Integer; const ASelectionCommand: Boolean);
+    procedure MoveCaretVertically(const Y: Integer; const ASelectionCommand: Boolean);
     procedure MoveCharLeft;
     procedure MoveCharRight;
     procedure MoveLineDown;
@@ -346,15 +347,14 @@ type
     procedure SetActiveLine(const AValue: TBCEditorActiveLine);
     procedure SetBackgroundColor(const AValue: TColor);
     procedure SetBorderStyle(AValue: TBorderStyle);
-    procedure SetDisplayCaretX(AValue: Integer);
-    procedure SetDisplayCaretY(AValue: Integer);
     procedure SetCodeFolding(AValue: TBCEditorCodeFolding);
     procedure SetDefaultKeyCommands;
+    procedure SetDisplayCaretX(AValue: Integer);
+    procedure SetDisplayCaretY(AValue: Integer);
+    procedure SetEncoding(AValue: TEncoding);
     procedure SetForegroundColor(const AValue: TColor);
-    procedure SetInsertMode(const AValue: Boolean);
-    procedure SetTextCaretX(AValue: Integer);
-    procedure SetTextCaretY(AValue: Integer);
     procedure SetHorizontalScrollPosition(AValue: Integer);
+    procedure SetInsertMode(const AValue: Boolean);
     procedure SetKeyCommands(const AValue: TBCEditorKeyCommands);
     procedure SetLeftMargin(const AValue: TBCEditorLeftMargin);
     procedure SetLeftMarginWidth(AValue: Integer);
@@ -363,7 +363,6 @@ type
     procedure SetModified(AValue: Boolean);
     procedure SetMouseMoveScrollCursors(AIndex: Integer; AValue: HCursor);
     procedure SetOptions(AValue: TBCEditorOptions);
-    procedure SetTextCaretPosition(AValue: TBCEditorTextPosition);
     procedure SetRightMargin(const AValue: TBCEditorRightMargin);
     procedure SetScroll(const AValue: TBCEditorScroll);
     procedure SetSearch(const AValue: TBCEditorSearch);
@@ -377,14 +376,19 @@ type
     procedure SetTabs(const AValue: TBCEditorTabs);
     procedure SetText(const AValue: string);
     procedure SetTextBetween(ATextBeginPosition: TBCEditorTextPosition; ATextEndPosition: TBCEditorTextPosition; const AValue: string);
+    procedure SetTextCaretPosition(AValue: TBCEditorTextPosition);
+    procedure SetTextCaretX(AValue: Integer);
+    procedure SetTextCaretY(AValue: Integer);
     procedure SetTopLine(AValue: Integer);
     procedure SetUndo(const AValue: TBCEditorUndo);
+    procedure SetUnknownChars(const AValue: TBCEditorUnknownChars);
+    procedure SetUnknownCharHigh;
     procedure SetWordBlock(const ATextPosition: TBCEditorTextPosition);
     procedure SetWordWrap(const AValue: TBCEditorWordWrap);
     procedure SizeOrFontChanged(const AFontChanged: Boolean);
     procedure SpecialCharsChanged(ASender: TObject);
-    procedure SyncEditChanged(ASender: TObject);
     procedure SwapInt(var ALeft: Integer; var ARight: Integer);
+    procedure SyncEditChanged(ASender: TObject);
     procedure TabsChanged(ASender: TObject);
     procedure UndoRedoAdded(ASender: TObject);
     procedure UpdateFoldRanges(ACurrentLine, ALineCount: Integer); overload;
@@ -637,7 +641,7 @@ type
     property CompletionProposal: TBCEditorCompletionProposal read FCompletionProposal write FCompletionProposal;
     property Cursor default crIBeam;
     property Directories: TBCEditorDirectories read FDirectories write FDirectories;
-    property Encoding: TEncoding read FEncoding write FEncoding;
+    property Encoding: TEncoding read FEncoding write SetEncoding;
     property Font;
     property ForegroundColor: TColor read FForegroundColor write SetForegroundColor default clWindowText;
     property Highlighter: TBCEditorHighlighter read FHighlighter;
@@ -712,6 +716,7 @@ type
     property TopLine: Integer read FTopLine write SetTopLine;
     property Undo: TBCEditorUndo read FUndo write SetUndo;
     property UndoList: TBCEditorUndoList read FUndoList;
+    property UnknownChars: TBCEditorUnknownChars read FUnknownChars write SetUnknownChars;
     property URIOpener: Boolean read FURIOpener write FURIOpener;
     property VisibleLines: Integer read FVisibleLines;
     property WantReturns: Boolean read FWantReturns write SetWantReturns default True;
@@ -805,6 +810,8 @@ begin
   { Special chars }
   FSpecialChars := TBCEditorSpecialChars.Create;
   FSpecialChars.OnChange := SpecialCharsChanged;
+  { Unknown chars }
+  FUnknownChars := TBCEditorUnknownChars.Create;
   { Caret }
   FCaret := TBCEditorCaret.Create;
   FCaret.OnChange := CaretChanged;
@@ -989,6 +996,7 @@ begin
   FTabs.Free;
   FUndo.Free;
   FSpecialChars.Free;
+  FUnknownChars.Free;
   FCaret.Free;
   FreeMultiCarets;
   FMatchingPair.Free;
@@ -5187,7 +5195,7 @@ begin
 end;
 
 procedure TBCBaseEditor.MoveCaretAndSelection(const ABeforeTextPosition, AAfterTextPosition: TBCEditorTextPosition;
-  ASelectionCommand: Boolean);
+  const ASelectionCommand: Boolean);
 var
   LReason: TBCEditorChangeReason;
 begin
@@ -5218,7 +5226,7 @@ begin
   DecPaintLock;
 end;
 
-procedure TBCBaseEditor.MoveCaretHorizontally(const X: Integer; ASelectionCommand: Boolean);
+procedure TBCBaseEditor.MoveCaretHorizontally(const X: Integer; const ASelectionCommand: Boolean);
 var
   LTextCaretPosition: TBCEditorTextPosition;
   LDestinationPosition: TBCEditorTextPosition;
@@ -5306,7 +5314,7 @@ begin
   end;
 end;
 
-procedure TBCBaseEditor.MoveCaretVertically(const Y: Integer; ASelectionCommand: Boolean);
+procedure TBCBaseEditor.MoveCaretVertically(const Y: Integer; const ASelectionCommand: Boolean);
 var
   LDestinationPosition: TBCEditorDisplayPosition;
   LDestinationLineChar: TBCEditorTextPosition;
@@ -6283,6 +6291,15 @@ begin
   FKeyCommands.ResetDefaults;
 end;
 
+procedure TBCBaseEditor.SetEncoding(AValue: System.SysUtils.TEncoding);
+begin
+  if AValue <> FEncoding then
+  begin
+    FEncoding := AValue;
+    SetUnknownCharHigh;
+  end;
+end;
+
 procedure TBCBaseEditor.SetForegroundColor(const AValue: TColor);
 begin
   if FForegroundColor <> AValue then
@@ -6586,6 +6603,24 @@ end;
 procedure TBCBaseEditor.SetUndo(const AValue: TBCEditorUndo);
 begin
   FUndo.Assign(AValue);
+end;
+
+procedure TBCBaseEditor.SetUnknownCharHigh;
+begin
+  FUnknownCharHigh := 0;
+  if FUnknownChars.Enabled then
+  begin
+    if FEncoding = System.SysUtils.TEncoding.ANSI then
+      FUnknownCharHigh := 255
+    else
+    if FEncoding = System.SysUtils.TEncoding.ASCII then
+      FUnknownCharHigh := 127
+  end;
+end;
+
+procedure TBCBaseEditor.SetUnknownChars(const AValue: TBCEditorUnknownChars);
+begin
+  FUnknownChars.Assign(AValue);
 end;
 
 procedure TBCBaseEditor.SetWordBlock(const ATextPosition: TBCEditorTextPosition);
@@ -10517,7 +10552,7 @@ var
 
           while LCurrentLine - 1 = LTextPosition.Line do
           begin
-            if Length(LTokenHelper.Text) - Length(LText) + LTokenHelper.CharsBefore + ATokenLength < LTextPosition.Char then
+            if {Length(LTokenHelper.Text)} LTokenHelper.Length - Length(LText) + LTokenHelper.CharsBefore + ATokenLength < LTextPosition.Char then
               Break;
 
             if FSearch.InSelection.Active then
@@ -10543,7 +10578,7 @@ var
             LCharCount := LTextPosition.Char - LTokenHelper.CharsBefore - 1;
 
             if LAnySelection then
-              Dec(LCharCount, Length(LTokenHelper.Text) - Length(LText));
+              Dec(LCharCount, LTokenHelper.Length - Length(LText));
 
             if LCharCount > 0 then
             begin
@@ -10552,7 +10587,7 @@ var
               LToken := Copy(LText, LCharCount + 1, Length(LText));
             end
             else
-              LCharCount := Length(LTokenHelper.Text) - Length(LText);
+              LCharCount := LTokenHelper.Length - Length(LText);
             LToken := Copy(LToken, 1, Min(LSearchTextLength, LTextPosition.Char + LSearchTextLength -
               LTokenHelper.CharsBefore - LCharCount - 1));
             LSearchRect.Right := LSearchRect.Left + GetTokenWidth(LToken, Length(LToken), LPaintedColumn);
@@ -10692,7 +10727,6 @@ var
     LFirstUnselectedPartOfToken := False;
     LSecondUnselectedPartOfToken := False;
     LIsPartOfTokenSelected := False;
-    LTokenLength := 0;
 
     if LIsSelectionInsideLine then
     begin
@@ -10725,6 +10759,7 @@ var
       LBackgroundColor := LCustomBackgroundColor;
 
     LText := LTokenHelper.Text;
+    LTokenLength := 0;
 
     if LIsPartOfTokenSelected then
     begin
@@ -10752,8 +10787,9 @@ var
     else
     begin
       SetDrawingColors(LSelected);
-      LTokenRect.Right := LTokenRect.Left + GetTokenWidth(LText, Length(LText), LTokenHelper.ExpandedCharsBefore);
-      PaintToken(LText, Length(LText));
+      LTokenLength := Length(LText);
+      LTokenRect.Right := LTokenRect.Left + GetTokenWidth(LText, LTokenLength, LTokenHelper.ExpandedCharsBefore);
+      PaintToken(LText, LTokenLength);
     end;
 
     if AFillToEndOfLine and (LTokenRect.Left < LLineRect.Right) then
@@ -10862,14 +10898,36 @@ var
 
     LTokenHelper.EmptySpace := LEmptySpace;
 
+    if FUnknownCharHigh > 0 then
+    while LPToken^ <> BCEDITOR_NONE_CHAR do
+    begin
+      if Ord(LPToken^) > FUnknownCharHigh then
+        LPToken^ := Char(FUnknownChars.ReplaceChar);
+      Inc(LPToken);
+    end;
+
     if LCanAppend then
     begin
       Insert(AToken, LTokenHelper.Text, LTokenHelper.Length + 1);
+     { if LTokenHelper.Length + ATokenLength > LTokenHelper.MaxLength then
+      begin
+        LTokenHelper.MaxLength := LTokenHelper.Length + ATokenLength + 32;
+        SetLength(LTokenHelper.Text, LTokenHelper.MaxLength);
+      end;
+      for i := 1 to ATokenLength do
+        LTokenHelper.Text[LTokenHelper.Length + i] := AToken[i]; }
       Inc(LTokenHelper.Length, ATokenLength);
     end
     else
     begin
       LTokenHelper.Length := ATokenLength;
+     { if LTokenHelper.Length > LTokenHelper.MaxLength then
+      begin
+        LTokenHelper.MaxLength := LTokenHelper.Length + 32;
+        SetLength(LTokenHelper.Text, LTokenHelper.MaxLength);
+      end;
+      for i := 1 to ATokenLength do
+        LTokenHelper.Text[i] := AToken[i]; }
       LTokenHelper.Text := AToken;
       LTokenHelper.CharsBefore := ACharsBefore;
       LTokenHelper.ExpandedCharsBefore := LExpandedCharsBefore;
@@ -13920,20 +13978,23 @@ begin
   SetLength(LBuffer, AStream.Size);
   AStream.ReadBuffer(Pointer(LBuffer)^, Length(LBuffer));
   if Assigned(AEncoding) then
-    FEncoding := AEncoding
+    Encoding := AEncoding
   else
   { Identify encoding }
   if IsUTF8Buffer(LBuffer, LWithBOM) then
   begin
     if LWithBOM then
-      FEncoding := TEncoding.UTF8
+      Encoding := TEncoding.UTF8
     else
-      FEncoding := BCEditor.Encoding.TEncoding.UTF8WithoutBOM;
+      Encoding := BCEditor.Encoding.TEncoding.UTF8WithoutBOM;
   end
   else
+  begin
     TEncoding.GetBufferEncoding(LBuffer, FEncoding);
+    SetUnknownCharHigh;
+  end;
 
-  FLines.LoadFromBuffer(LBuffer, FEncoding);
+  FLines.LoadFromBuffer(LBuffer, Encoding);
   CreateLineNumbersCache(True);
 
   if CanFocus then
@@ -14150,8 +14211,8 @@ end;
 procedure TBCBaseEditor.SaveToStream(AStream: TStream; AEncoding: System.SysUtils.TEncoding = nil);
 begin
   if Assigned(AEncoding) then
-    FEncoding := AEncoding;
-  FLines.SaveToStream(AStream, FEncoding);
+    Encoding := AEncoding;
+  FLines.SaveToStream(AStream, Encoding);
   SetModified(False);
   if not (uoUndoAfterSave in FUndo.Options) then
     UndoList.Clear;

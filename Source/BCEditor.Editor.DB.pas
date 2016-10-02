@@ -138,6 +138,7 @@ type
     property TabStop;
     property Tag;
     property Undo;
+    property UnknownChars;
     property WantReturns;
     property Width;
     property Visible;
