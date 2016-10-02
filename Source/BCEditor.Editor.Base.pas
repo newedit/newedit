@@ -1295,20 +1295,17 @@ end;
 
 function TBCBaseEditor.GetDisplayLineNumber(const ADisplayLineNumber: Integer): Integer;
 var
-  LFirst: Integer;
-  LLast: Integer;
-  LPivot: Integer;
+  LLength, LFirst, LLast, LPivot: Integer;
   LFound: Boolean;
 begin
   Result := ADisplayLineNumber;
 
-  if Assigned(FLineNumbersCache) and (ADisplayLineNumber >= Length(FLineNumbersCache)) then
+  LLength := Length(FLineNumbersCache);
+  if Assigned(FLineNumbersCache) and (LLength > 0) and (ADisplayLineNumber >= FLineNumbersCache[LLength - 1]) then
     CreateLineNumbersCache(True);
 
-  if ADisplayLineNumber >= Length(FLineNumbersCache) then
-    Exit;
-
-  if Assigned(FLineNumbersCache) and (FLineNumbersCache[ADisplayLineNumber] = ADisplayLineNumber) then
+  if Assigned(FLineNumbersCache) and (ADisplayLineNumber < Length(FLineNumbersCache)) and
+    (FLineNumbersCache[ADisplayLineNumber] = ADisplayLineNumber) then
     Result := ADisplayLineNumber
   else
   begin
