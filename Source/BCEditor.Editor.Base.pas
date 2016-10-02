@@ -582,6 +582,7 @@ type
     procedure ExportToHTML(const AFileName: string; const ACharSet: string = ''; AEncoding: System.SysUtils.TEncoding = nil); overload;
     procedure ExportToHTML(AStream: TStream; const ACharSet: string = ''; AEncoding: System.SysUtils.TEncoding = nil); overload;
     procedure FoldAll(const AFromLineNumber: Integer = -1; const AToLineNumber: Integer = -1);
+    procedure FoldAllByLevel(const AFromLevel: Integer; const AToLevel: Integer);
     procedure GotoBookmark(const ABookmark: Integer);
     procedure GotoLineAndCenter(const ATextLine: Integer);
     procedure HookEditorLines(ALines: TBCEditorLines; AUndo, ARedo: TBCEditorUndoList);
@@ -617,6 +618,7 @@ type
     procedure ToggleBookmark(AIndex: Integer = -1);
     procedure ToggleSelectedCase(ACase: TBCEditorCase = cNone);
     procedure UnfoldAll(const AFromLineNumber: Integer = -1; const AToLineNumber: Integer = -1);
+    procedure UnfoldAllByLevel(const AFromLevel: Integer; const AToLevel: Integer);
     procedure UnhookEditorLines;
     procedure UnlockUndo;
     procedure UnregisterCommandHandler(AHookedCommandEvent: TBCEditorHookedCommandEvent);
@@ -1304,7 +1306,7 @@ begin
   if Assigned(FLineNumbersCache) and (LLength > 0) and (ADisplayLineNumber > FLineNumbersCache[LLength - 1]) then
     CreateLineNumbersCache(True);
 
-  if Assigned(FLineNumbersCache) and (ADisplayLineNumber <= Length(FLineNumbersCache)) and
+  if Assigned(FLineNumbersCache) and (ADisplayLineNumber < Length(FLineNumbersCache)) and
     (FLineNumbersCache[ADisplayLineNumber] = ADisplayLineNumber) then
     Result := ADisplayLineNumber
   else
@@ -13244,6 +13246,29 @@ begin
   UpdateScrollBars;
 end;
 
+procedure TBCBaseEditor.FoldAllByLevel(const AFromLevel: Integer; const AToLevel: Integer);
+var
+  i: Integer;
+  LCodeFoldingRange: TBCEditorCodeFoldingRange;
+begin
+  ClearMatchingPair;
+  FResetLineNumbersCache := True;
+  for i := FAllCodeFoldingRanges.AllCount - 1 downto 0 do
+  begin
+    LCodeFoldingRange := FAllCodeFoldingRanges[i];
+    if (LCodeFoldingRange.FoldRangeLevel >= AFromLevel) and (LCodeFoldingRange.FoldRangeLevel <= AToLevel) then
+      if not LCodeFoldingRange.Collapsed and LCodeFoldingRange.Collapsable then
+      with LCodeFoldingRange do
+      begin
+        Collapsed := True;
+        SetParentCollapsedOfSubCodeFoldingRanges(True, FoldRangeLevel);
+      end;
+  end;
+  CheckIfAtMatchingKeywords;
+  Refresh;
+  UpdateScrollBars;
+end;
+
 procedure TBCBaseEditor.UnfoldAll(const AFromLineNumber: Integer = -1; const AToLineNumber: Integer = -1);
 var
   i: Integer;
@@ -13264,6 +13289,28 @@ begin
   begin
     LCodeFoldingRange := FAllCodeFoldingRanges[i];
     if (LCodeFoldingRange.FromLine >= LFromLine) and (LCodeFoldingRange.FromLine <= LToLine) then
+      if LCodeFoldingRange.Collapsed and LCodeFoldingRange.Collapsable then
+      with LCodeFoldingRange do
+      begin
+        Collapsed := False;
+        SetParentCollapsedOfSubCodeFoldingRanges(False, FoldRangeLevel);
+      end;
+  end;
+  Refresh;
+  UpdateScrollBars;
+end;
+
+procedure TBCBaseEditor.UnfoldAllByLevel(const AFromLevel: Integer; const AToLevel: Integer);
+var
+  i: Integer;
+  LCodeFoldingRange: TBCEditorCodeFoldingRange;
+begin
+  ClearMatchingPair;
+  FResetLineNumbersCache := True;
+  for i := FAllCodeFoldingRanges.AllCount - 1 downto 0 do
+  begin
+    LCodeFoldingRange := FAllCodeFoldingRanges[i];
+    if (LCodeFoldingRange.FoldRangeLevel >= AFromLevel) and (LCodeFoldingRange.FoldRangeLevel <= AToLevel) then
       if LCodeFoldingRange.Collapsed and LCodeFoldingRange.Collapsable then
       with LCodeFoldingRange do
       begin
