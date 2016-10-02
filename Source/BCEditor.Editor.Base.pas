@@ -2008,10 +2008,10 @@ end;
 
 function TBCBaseEditor.WordWrapWidth: Integer;
 begin
-  case FWordWrap.Style of
-    wwsPageWidth:
+  case FWordWrap.Width of
+    wwwPage:
       Result := FScrollPageWidth;
-    wwsRightMargin:
+    wwwRightMargin:
       Result := FRightMargin.Position * FPaintHelper.CharWidth;
   else
     Result := 0;
@@ -2366,7 +2366,7 @@ begin
   Result := PixelAndRowToDisplayPosition(LRect.Right, ARow, ALineText).Column;
 
   if FWordWrap.Enabled then
-    if FWordWrap.Style = wwsRightMargin then
+    if FWordWrap.Width = wwwRightMargin then
       Result := FRightMargin.Position;
 end;
 
@@ -5520,7 +5520,7 @@ end;
 procedure TBCBaseEditor.RightMarginChanged(ASender: TObject);
 begin
   if FWordWrap.Enabled then
-    if FWordWrap.Style = wwsRightMargin then
+    if FWordWrap.Width = wwwRightMargin then
       FResetLineNumbersCache := True;
 
   if not (csLoading in ComponentState) then
@@ -6997,7 +6997,7 @@ begin
     if AValue then
     begin
       SetHorizontalScrollPosition(0);
-      if FWordWrap.Style = wwsRightMargin then
+      if FWordWrap.Width = wwwRightMargin then
         FRightMargin.Visible := True;
     end;
     TopLine := LOldTopLine;
