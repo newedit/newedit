@@ -4594,6 +4594,7 @@ procedure TBCBaseEditor.DoSetBookmark(const ACommand: TBCEditorCommand; AData: P
 var
   i: Integer;
   LTextCaretPosition: TBCEditorTextPosition;
+  LBookmark: TBCEditorMark;
 begin
   LTextCaretPosition := TextCaretPosition;
   if FLeftMargin.Bookmarks.ShortCuts then
@@ -4601,7 +4602,11 @@ begin
     i := ACommand - ecSetBookmark1;
     if Assigned(AData) then
       LTextCaretPosition := TBCEditorTextPosition(AData^);
-    SetBookmark(i, LTextCaretPosition);
+    LBookmark := FBookmarkList.Find(i);
+    if Assigned(LBookmark) and (LBookmark.Line = LTextCaretPosition.Line) then
+      DeleteBookmark(LBookmark)
+    else
+      SetBookmark(i, LTextCaretPosition);
   end;
 end;
 
