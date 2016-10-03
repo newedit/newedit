@@ -100,6 +100,7 @@ inherited MainForm: TMainForm
       CodeFolding.Hint.Font.Height = -11
       CodeFolding.Hint.Font.Name = 'Courier New'
       CodeFolding.Hint.Font.Style = []
+      CodeFolding.Hint.Indicator.Glyph.Visible = False
       CompletionProposal.CloseChars = '()[]. '
       CompletionProposal.Columns = <
         item
@@ -112,8 +113,6 @@ inherited MainForm: TMainForm
       CompletionProposal.ShortCut = 16416
       CompletionProposal.Trigger.Chars = '.'
       CompletionProposal.Trigger.Enabled = False
-      Constraints.MinHeight = 150
-      Constraints.MinWidth = 200
       Ctl3D = True
       Directories.Colors = 'Colors'
       Directories.Highlighters = 'Highlighters'
@@ -183,7 +182,7 @@ inherited MainForm: TMainForm
         FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
         FF00}
       WordWrap.Indicator.MaskColor = clFuchsia
-      WordWrap.Style = wwsPageWidth
+      WordWrap.Width = wwwPage
     end
     object PanelSearch: TBCPanel
       AlignWithMargins = True
@@ -438,7 +437,7 @@ inherited MainForm: TMainForm
   end
   inherited SkinManager: TBCSkinManager
     Effects.AllowGlowing = False
-    IsDefault = False
+    IsDefault = True
     MenuSupport.UseExtraLine = False
     ThirdParty.ThirdEdits = ' '#13#10'TBCEditorPrintPreview'#13#10
     ThirdParty.ThirdVirtualTrees = 'TVirtualDrawTree'#13#10
