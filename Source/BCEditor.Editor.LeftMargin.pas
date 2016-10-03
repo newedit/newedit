@@ -3,14 +3,14 @@ unit BCEditor.Editor.LeftMargin;
 interface
 
 uses
-  System.Classes, Vcl.Graphics, System.UITypes, BCEditor.Editor.LeftMargin.Bookmarks, BCEditor.Editor.Bookmarks,
+  System.Classes, Vcl.Graphics, System.UITypes, BCEditor.Editor.LeftMargin.Bookmarks, BCEditor.Editor.Marks,
   BCEditor.Editor.LeftMargin.Border, BCEditor.Consts, BCEditor.Editor.LeftMargin.LineState,
   BCEditor.Editor.LeftMargin.LineNumbers, BCEditor.Editor.LeftMargin.Colors;
 
 type
   TLeftMarginGetTextEvent = procedure(ASender: TObject; ALine: Integer; var AText: string) of object;
   TLeftMarginPaintEvent = procedure(ASender: TObject; ALine: Integer; X, Y: Integer) of object;
-  TLeftMarginClickEvent = procedure(ASender: TObject; AButton: TMouseButton; X, Y, ALine: Integer; ABookmark: TBCEditorBookmark) of object;
+  TLeftMarginClickEvent = procedure(ASender: TObject; AButton: TMouseButton; X, Y, ALine: Integer; AMark: TBCEditorMark) of object;
 
   TBCEditorLeftMargin = class(TPersistent)
   strict private

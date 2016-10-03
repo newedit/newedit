@@ -29,8 +29,8 @@ type
 
   TBCEditorCaretChangedEvent = procedure(ASender: TObject; X, Y: Integer) of object;
 
-  TBCEditorBookmarkPanelPaintEvent = procedure(ASender: TObject; ACanvas: TCanvas; ARect: TRect; AFirstLine: Integer; ALastLine: Integer) of object;
-  TBCEditorBookmarkPanelLinePaintEvent = procedure(ASender: TObject; ACanvas: TCanvas; ARect: TRect; ALineNumber: Integer) of object;
+  TBCEditorMarkPanelPaintEvent = procedure(ASender: TObject; ACanvas: TCanvas; ARect: TRect; AFirstLine: Integer; ALastLine: Integer) of object;
+  TBCEditorMarkPanelLinePaintEvent = procedure(ASender: TObject; ACanvas: TCanvas; ARect: TRect; ALineNumber: Integer) of object;
 
   TBCEditorLinePaintEvent = procedure(ASender: TObject; ACanvas: TCanvas; ARect: TRect; ALineNumber: Integer; const AIsMinimapLine: Boolean) of object;
 

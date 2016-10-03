@@ -40,7 +40,7 @@ contains
   BCEditor.Editor in '..\Source\BCEditor.Editor.pas',
   BCEditor.Editor.ActiveLine in '..\Source\BCEditor.Editor.ActiveLine.pas',
   BCEditor.Editor.Base in '..\Source\BCEditor.Editor.Base.pas',
-  BCEditor.Editor.Bookmarks in '..\Source\BCEditor.Editor.Bookmarks.pas',
+  BCEditor.Editor.Marks in '..\Source\BCEditor.Editor.Marks.pas',
   BCEditor.Editor.Caret in '..\Source\BCEditor.Editor.Caret.pas',
   BCEditor.Editor.Caret.MultiEdit in '..\Source\BCEditor.Editor.Caret.MultiEdit.pas',
   BCEditor.Editor.Caret.MultiEdit.Colors in '..\Source\BCEditor.Editor.Caret.MultiEdit.Colors.pas',

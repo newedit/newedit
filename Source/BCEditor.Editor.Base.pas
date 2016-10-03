@@ -5,7 +5,7 @@ interface
 uses
   Winapi.Windows, Winapi.Messages, System.Classes, System.SysUtils, System.Contnrs, System.UITypes, Vcl.Forms,
   Vcl.Controls, Vcl.Graphics, Vcl.StdCtrls, Vcl.ExtCtrls, Vcl.Dialogs, BCEditor.Consts, BCEditor.Editor.ActiveLine,
-  BCEditor.Editor.Bookmarks, BCEditor.Editor.Caret, BCEditor.Editor.CodeFolding, BCEditor.Editor.CodeFolding.Regions,
+  BCEditor.Editor.Marks, BCEditor.Editor.Caret, BCEditor.Editor.CodeFolding, BCEditor.Editor.CodeFolding.Regions,
   BCEditor.Editor.CodeFolding.Ranges, BCEditor.Types, BCEditor.Editor.CompletionProposal,
   BCEditor.Editor.CompletionProposal.PopupWindow, BCEditor.Editor.Glyph, BCEditor.Editor.InternalImage,
   BCEditor.Editor.KeyCommands, BCEditor.Editor.LeftMargin, BCEditor.Editor.MatchingPair, BCEditor.Editor.Minimap,
@@ -28,7 +28,7 @@ type
     FAltEnabled: Boolean;
     FAlwaysShowCaret: Boolean;
     FBackgroundColor: TColor;
-    FBookmarks: array [0 .. 8] of TBCEditorBookmark;
+    FBookmarkList: TBCEditorMarkList;
     FBorderStyle: TBorderStyle;
     FCaret: TBCEditorCaret;
     FCaretOffset: TPoint;
@@ -81,7 +81,7 @@ type
     FLineNumbersCount: Integer;
     FLines: TBCEditorLines;
     FLinespacing: Integer;
-    FMarkList: TBCEditorBookmarkList;
+    FMarkList: TBCEditorMarkList;
     FMatchingPair: TBCEditorMatchingPair;
     FMatchingPairMatchStack: array of TBCEditorMatchingPairTokenMatch;
     FMatchingPairOpenDuplicate, FMatchingPairCloseDuplicate: array of Integer;
@@ -108,15 +108,17 @@ type
     FMultiCaretTimer: TTimer;
     FMultiCaretPosition: TBCEditorDisplayPosition;
     FOldMouseMovePoint: TPoint;
-    FOnAfterBookmarkPanelPaint: TBCEditorBookmarkPanelPaintEvent;
     FOnAfterBookmarkPlaced: TNotifyEvent;
-    FOnAfterClearBookmark: TNotifyEvent;
+    FOnAfterMarkPanelPaint: TBCEditorMarkPanelPaintEvent;
+    FOnAfterMarkPlaced: TNotifyEvent;
+    FOnAfterDeleteBookmark: TNotifyEvent;
+    FOnAfterDeleteMark: TNotifyEvent;
     FOnAfterLinePaint: TBCEditorLinePaintEvent;
-    FOnBeforeBookmarkPanelPaint: TBCEditorBookmarkPanelPaintEvent;
-    FOnBeforeBookmarkPlaced: TBCEditorBookmarkEvent;
+    FOnBeforeMarkPanelPaint: TBCEditorMarkPanelPaintEvent;
+    FOnBeforeMarkPlaced: TBCEditorMarkEvent;
     FOnBeforeCompletionProposalExecute: TBCEditorCompletionProposalEvent;
-    FOnBeforeClearBookmark: TBCEditorBookmarkEvent;
-    FOnBookmarkPanelLinePaint: TBCEditorBookmarkPanelLinePaintEvent;
+    FOnBeforeDeleteMark: TBCEditorMarkEvent;
+    FOnMarkPanelLinePaint: TBCEditorMarkPanelLinePaintEvent;
     FOnCaretChanged: TBCEditorCaretChangedEvent;
     FOnChange: TNotifyEvent;
     FOnChainLinesChanged: TNotifyEvent;
@@ -267,6 +269,7 @@ type
     procedure AfterSetText(ASender: TObject);
     procedure AssignSearchEngine;
     procedure BeforeSetText(ASender: TObject);
+    procedure BookmarkListChange(ASender: TObject);
     procedure CaretChanged(ASender: TObject);
     procedure CheckIfAtMatchingKeywords;
     procedure ClearCodeFolding;
@@ -448,10 +451,6 @@ type
     procedure DoCopyToClipboard(const AText: string);
     procedure DoExecuteCompletionProposal; virtual;
     procedure DoKeyPressW(var AMessage: TWMKey);
-    procedure DoOnAfterBookmarkPlaced;
-    procedure DoOnAfterClearBookmark;
-    procedure DoOnBeforeBookmarkPlaced(var ABookmark: TBCEditorBookmark);
-    procedure DoOnBeforeClearBookmark(var ABookmark: TBCEditorBookmark);
     procedure DoOnCommandProcessed(ACommand: TBCEditorCommand; AChar: Char; AData: Pointer);
     procedure DoOnLeftMarginClick(AButton: TMouseButton; AShift: TShiftState; X, Y: Integer);
     procedure DoOnMinimapClick(AButton: TMouseButton; X, Y: Integer);
@@ -527,10 +526,9 @@ type
     function GetHighlighterFileName(const AFileName: string): string;
     function FindPrevious: Boolean;
     function FindNext: Boolean;
-    function GetBookmark(ABookmark: Integer; var ATextPosition: TBCEditorTextPosition): Boolean;
+    function GetBookmark(const AIndex: Integer; var ATextPosition: TBCEditorTextPosition): Boolean;
     function GetPositionOfMouse(out ATextPosition: TBCEditorTextPosition): Boolean;
     function GetWordAtPixels(X, Y: Integer): string;
-    function IsBookmark(ABookmark: Integer): Boolean;
     function IsCommentChar(AChar: Char): Boolean;
     function IsTextPositionInSelection(const ATextPosition: TBCEditorTextPosition): Boolean;
     function IsWordBreakChar(AChar: Char): Boolean;
@@ -562,7 +560,6 @@ type
     procedure CaretZero;
     procedure ChainEditor(AEditor: TBCBaseEditor);
     procedure Clear;
-    procedure ClearBookmark(ABookmark: Integer);
     procedure ClearBookmarks;
     procedure ClearMarks;
     procedure ClearMatchingPair;
@@ -571,6 +568,9 @@ type
     procedure CommandProcessor(ACommand: TBCEditorCommand; AChar: Char; AData: Pointer);
     procedure CopyToClipboard;
     procedure CutToClipboard;
+    procedure DeleteBookmark(ABookmark: TBCEditorMark); overload;
+    procedure DeleteBookmark(const AIndex: Integer); overload;
+    procedure DeleteMark(AMark: TBCEditorMark);
     procedure DeleteLines(const ALineNumber: Integer; const ACount: Integer);
     procedure DeleteWhitespace;
     procedure DoUndo;
@@ -583,7 +583,7 @@ type
     procedure ExportToHTML(AStream: TStream; const ACharSet: string = ''; AEncoding: System.SysUtils.TEncoding = nil); overload;
     procedure FoldAll(const AFromLineNumber: Integer = -1; const AToLineNumber: Integer = -1);
     procedure FoldAllByLevel(const AFromLevel: Integer; const AToLevel: Integer);
-    procedure GotoBookmark(const ABookmark: Integer);
+    procedure GotoBookmark(const AIndex: Integer);
     procedure GotoLineAndCenter(const ATextLine: Integer);
     procedure HookEditorLines(ALines: TBCEditorLines; AUndo, ARedo: TBCEditorUndoList);
     procedure InsertLine(const ALineNumber: Integer; const AValue: string); overload;
@@ -613,9 +613,10 @@ type
     procedure SetFocus; override;
     procedure SetLineColor(ALine: Integer; AForegroundColor, ABackgroundColor: TColor);
     procedure SetLineColorToDefault(ALine: Integer);
+    procedure SetMark(const AIndex: Integer; const ATextPosition: TBCEditorTextPosition; const AImageIndex: Integer);
     procedure SetOption(const AOption: TBCEditorOption; const AEnabled: Boolean);
     procedure Sort(ASortOrder: TBCEditorSortOrder = soToggle);
-    procedure ToggleBookmark(AIndex: Integer = -1);
+    procedure ToggleBookmark(const AIndex: Integer = -1);
     procedure ToggleSelectedCase(ACase: TBCEditorCase = cNone);
     procedure UnfoldAll(const AFromLineNumber: Integer = -1; const AToLineNumber: Integer = -1);
     procedure UnfoldAllByLevel(const AFromLevel: Integer; const AToLevel: Integer);
@@ -628,6 +629,7 @@ type
     property BackgroundColor: TColor read FBackgroundColor write SetBackgroundColor default clWindow;
     property AllCodeFoldingRanges: TBCEditorAllCodeFoldingRanges read FAllCodeFoldingRanges;
     property AlwaysShowCaret: Boolean read FAlwaysShowCaret write SetAlwaysShowCaret;
+    property Bookmarks: TBCEditorMarkList read FBookmarkList;
     property BorderStyle: TBorderStyle read FBorderStyle write SetBorderStyle default bsSingle;
     property CanPaste: Boolean read GetCanPaste;
     property CanRedo: Boolean read GetCanRedo;
@@ -655,20 +657,22 @@ type
     property LineNumbersCount: Integer read FLineNumbersCount;
     property Lines: TBCEditorLines read FLines write SetLines;
     property LineSpacing: Integer read FLinespacing write FLinespacing;
-    property Marks: TBCEditorBookmarkList read FMarkList;
+    property Marks: TBCEditorMarkList read FMarkList;
     property MatchingPair: TBCEditorMatchingPair read FMatchingPair write FMatchingPair;
     property Minimap: TBCEditorMinimap read FMinimap write FMinimap;
     property Modified: Boolean read FModified write SetModified;
     property MouseMoveScrollCursors[AIndex: Integer]: HCursor read GetMouseMoveScrollCursors write SetMouseMoveScrollCursors;
-    property OnAfterBookmarkPanelPaint: TBCEditorBookmarkPanelPaintEvent read FOnAfterBookmarkPanelPaint write FOnAfterBookmarkPanelPaint;
     property OnAfterBookmarkPlaced: TNotifyEvent read FOnAfterBookmarkPlaced write FOnAfterBookmarkPlaced;
-    property OnAfterClearBookmark: TNotifyEvent read FOnAfterClearBookmark write FOnAfterClearBookmark;
+    property OnAfterMarkPanelPaint: TBCEditorMarkPanelPaintEvent read FOnAfterMarkPanelPaint write FOnAfterMarkPanelPaint;
+    property OnAfterMarkPlaced: TNotifyEvent read FOnAfterMarkPlaced write FOnAfterMarkPlaced;
+    property OnAfterDeleteBookmark: TNotifyEvent read FOnAfterDeleteBookmark write FOnAfterDeleteBookmark;
+    property OnAfterDeleteMark: TNotifyEvent read FOnAfterDeleteMark write FOnAfterDeleteMark;
     property OnAfterLinePaint: TBCEditorLinePaintEvent read FOnAfterLinePaint write FOnAfterLinePaint;
-    property OnBeforeBookmarkPanelPaint: TBCEditorBookmarkPanelPaintEvent read FOnBeforeBookmarkPanelPaint write FOnBeforeBookmarkPanelPaint;
-    property OnBeforeBookmarkPlaced: TBCEditorBookmarkEvent read FOnBeforeBookmarkPlaced write FOnBeforeBookmarkPlaced;
-    property OnBeforeClearBookmark: TBCEditorBookmarkEvent read FOnBeforeClearBookmark write FOnBeforeClearBookmark;
+    property OnBeforeMarkPanelPaint: TBCEditorMarkPanelPaintEvent read FOnBeforeMarkPanelPaint write FOnBeforeMarkPanelPaint;
+    property OnBeforeMarkPlaced: TBCEditorMarkEvent read FOnBeforeMarkPlaced write FOnBeforeMarkPlaced;
+    property OnBeforeDeleteMark: TBCEditorMarkEvent read FOnBeforeDeleteMark write FOnBeforeDeleteMark;
     property OnBeforeCompletionProposalExecute: TBCEditorCompletionProposalEvent read FOnBeforeCompletionProposalExecute write FOnBeforeCompletionProposalExecute;
-    property OnBookmarkPanelLinePaint: TBCEditorBookmarkPanelLinePaintEvent read FOnBookmarkPanelLinePaint write FOnBookmarkPanelLinePaint;
+    property OnMarkPanelLinePaint: TBCEditorMarkPanelLinePaintEvent read FOnMarkPanelLinePaint write FOnMarkPanelLinePaint;
     property OnCaretChanged: TBCEditorCaretChangedEvent read FOnCaretChanged write FOnCaretChanged;
     property OnChange: TNotifyEvent read FOnChange write FOnChange;
     property OnCommandProcessed: TBCEditorProcessCommandEvent read FOnCommandProcessed write FOnCommandProcessed;
@@ -857,7 +861,10 @@ begin
   FSelection := TBCEditorSelection.Create;
   FSelection.OnChange := SelectionChanged;
   { Bookmarks }
-  FMarkList := TBCEditorBookmarkList.Create(Self);
+  FBookmarkList := TBCEditorMarkList.Create(Self);
+  FBookmarkList.OnChange := BookmarkListChange;
+  { Marks }
+  FMarkList := TBCEditorMarkList.Create(Self);
   FMarkList.OnChange := MarkListChange;
   { LeftMargin mast be initialized strongly after FPaintHelper initialization }
   FLeftMargin := TBCEditorLeftMargin.Create(Self);
@@ -973,6 +980,7 @@ begin
     while destruction }
   FHookedCommandHandlers.Free;
   FHookedCommandHandlers := nil;
+  FBookmarkList.Free;
   FMarkList.Free;
   FKeyCommands.Free;
   FKeyCommands := nil;
@@ -3146,6 +3154,11 @@ begin
   ClearCodeFolding;
 end;
 
+procedure TBCBaseEditor.BookmarkListChange(ASender: TObject);
+begin
+  Invalidate;
+end;
+
 procedure TBCBaseEditor.CaretChanged(ASender: TObject);
 begin
   if FCaret.MultiEdit.Enabled then
@@ -4580,7 +4593,6 @@ end;
 procedure TBCBaseEditor.DoSetBookmark(const ACommand: TBCEditorCommand; AData: Pointer);
 var
   i: Integer;
-  LMoveBookmark: Boolean;
   LTextCaretPosition: TBCEditorTextPosition;
 begin
   LTextCaretPosition := TextCaretPosition;
@@ -4589,15 +4601,7 @@ begin
     i := ACommand - ecSetBookmark1;
     if Assigned(AData) then
       LTextCaretPosition := TBCEditorTextPosition(AData^);
-    if Assigned(FBookmarks[i]) then
-    begin
-      LMoveBookmark := FBookmarks[i].Line <> LTextCaretPosition.Line;
-      ClearBookmark(i);
-      if LMoveBookmark then
-        SetBookmark(i, LTextCaretPosition);
-    end
-    else
-      SetBookmark(i, LTextCaretPosition);
+    SetBookmark(i, LTextCaretPosition);
   end;
 end;
 
@@ -7952,24 +7956,6 @@ begin
     KeyPressW(LKey);
 end;
 
-procedure TBCBaseEditor.DoOnAfterBookmarkPlaced;
-begin
-  if Assigned(FOnAfterBookmarkPlaced) then
-    FOnAfterBookmarkPlaced(Self);
-end;
-
-procedure TBCBaseEditor.DoOnAfterClearBookmark;
-begin
-  if Assigned(FOnAfterClearBookmark) then
-    FOnAfterClearBookmark(Self);
-end;
-
-procedure TBCBaseEditor.DoOnBeforeClearBookmark(var ABookmark: TBCEditorBookmark);
-begin
-  if Assigned(FOnBeforeClearBookmark) then
-    FOnBeforeClearBookmark(Self, ABookmark);
-end;
-
 procedure TBCBaseEditor.DoOnCommandProcessed(ACommand: TBCEditorCommand; AChar: Char; AData: Pointer);
 var
   LTextCaretPosition: TBCEditorTextPosition;
@@ -8026,8 +8012,8 @@ var
   i: Integer;
   LOffset: Integer;
   LLine: Integer;
-  LMarks: TBCEditorBookmarks;
-  LMark: TBCEditorBookmark;
+  LMarks: TBCEditorMarks;
+  LMark: TBCEditorMark;
   LFoldRange: TBCEditorCodeFoldingRange;
   LCodeFoldingRegion: Boolean;
   LTextCaretPosition: TBCEditorTextPosition;
@@ -8145,12 +8131,6 @@ begin
     Canvas.Brush.Color := FBackgroundColor;
     FOnPaint(Self, Canvas);
   end;
-end;
-
-procedure TBCBaseEditor.DoOnBeforeBookmarkPlaced(var ABookmark: TBCEditorBookmark);
-begin
-  if Assigned(FOnBeforeBookmarkPlaced) then
-    FOnBeforeBookmarkPlaced(Self, ABookmark);
 end;
 
 procedure TBCBaseEditor.DoOnProcessCommand(var ACommand: TBCEditorCommand; var AChar: Char; AData: Pointer);
@@ -8437,8 +8417,8 @@ begin
   ClearCodeFolding;
   ClearMatchingPair;
   ClearSelection;
+  FBookmarkList.Clear;
   FMarkList.Clear;
-  FillChar(FBookmarks, SizeOf(FBookmarks), 0);
   FUndoList.Clear;
   FRedoList.Clear;
   FResetLineNumbersCache := True;
@@ -8447,18 +8427,28 @@ end;
 
 procedure TBCBaseEditor.LinesDeleted(ASender: TObject; AIndex: Integer; ACount: Integer);
 var
-  i, LRunner: Integer;
-  LMark: TBCEditorBookmark;
-begin
-  for i := 0 to Marks.Count - 1 do
+  LRunner: Integer;
+
+
+  procedure UpdateMarks(AMarkList: TBCEditorMarkList);
+  var
+    i: Integer;
+    LMark: TBCEditorMark;
   begin
-    LMark := Marks[i];
-    if LMark.Line >= AIndex + ACount then
-      LMark.Line := LMark.Line - ACount
-    else
-    if LMark.Line > AIndex then
-      LMark.Line := AIndex;
+    for i := 0 to AMarkList.Count - 1 do
+    begin
+      LMark := Marks[i];
+      if LMark.Line >= AIndex + ACount then
+        LMark.Line := LMark.Line - ACount
+      else
+      if LMark.Line > AIndex then
+        LMark.Line := AIndex;
+    end;
   end;
+
+begin
+  UpdateMarks(FBookmarkList);
+  UpdateMarks(FMarkList);
 
   if FCodeFolding.Visible then
     CodeFoldingLinesDeleted(AIndex + 1, ACount);
@@ -8486,11 +8476,13 @@ end;
 
 procedure TBCBaseEditor.LinesInserted(ASender: TObject; AIndex: Integer; ACount: Integer);
 var
-  i, LLength: Integer;
+  LLength: Integer;
   LLastScan: Integer;
-  LMark: TBCEditorBookmark;
-begin
-  if not FLines.Streaming then
+
+  procedure UpdateMarks(AMarkList: TBCEditorMarkList);
+  var
+    i: Integer;
+    LMark: TBCEditorMark;
   begin
     for i := 0 to Marks.Count - 1 do
     begin
@@ -8498,6 +8490,13 @@ begin
       if LMark.Line >= AIndex + 1 then
         LMark.Line := LMark.Line + ACount;
     end;
+  end;
+
+begin
+  if not FLines.Streaming then
+  begin
+    UpdateMarks(FBookmarkList);
+    UpdateMarks(FMarkList);
 
     if FCodeFolding.Visible then
       UpdateFoldRanges(AIndex + 1, ACount);
@@ -9648,13 +9647,24 @@ var
   LLineRect: TRect;
   LLineHeight: Integer;
 
-  procedure DrawMark(ABookmark: TBCEditorBookmark; var ALeftMarginOffset: Integer; AMarkRow: Integer);
+  procedure DrawBookmark(ABookmark: TBCEditorMark; var ALeftMarginOffset: Integer; AMarkRow: Integer);
+  begin
+    if not Assigned(FInternalBookmarkImage) then
+      FInternalBookmarkImage := TBCEditorInternalImage.Create(HInstance, BCEDITOR_BOOKMARK_IMAGES, 9);
+    if ALeftMarginOffset = 0 then
+      FInternalBookmarkImage.Draw(Canvas, ABookmark.ImageIndex,
+        AClipRect.Left + FLeftMargin.Bookmarks.Panel.LeftMargin + ALeftMarginOffset,
+        (AMarkRow - TopLine) * LLineHeight, LLineHeight, clFuchsia);
+    Inc(ALeftMarginOffset, FLeftMargin.Bookmarks.Panel.OtherMarkXOffset);
+  end;
+
+  procedure DrawMark(AMark: TBCEditorMark; var ALeftMarginOffset: Integer; AMarkRow: Integer);
   var
     Y: Integer;
   begin
-    if not ABookmark.InternalImage and Assigned(FLeftMargin.Bookmarks.Images) then
+    if Assigned(FLeftMargin.Bookmarks.Images) then
     begin
-      if ABookmark.ImageIndex <= FLeftMargin.Bookmarks.Images.Count then
+      if AMark.ImageIndex <= FLeftMargin.Bookmarks.Images.Count then
       begin
         ALeftMarginOffset := 0;
 
@@ -9664,23 +9674,10 @@ var
           Y := 0;
         with FLeftMargin.Bookmarks do
           Images.Draw(Canvas, AClipRect.Left + Panel.LeftMargin + ALeftMarginOffset,
-            (AMarkRow - TopLine) * LLineHeight + Y, ABookmark.ImageIndex);
+            (AMarkRow - TopLine) * LLineHeight + Y, AMark.ImageIndex);
         Inc(ALeftMarginOffset, FLeftMargin.Bookmarks.Panel.OtherMarkXOffset);
       end;
     end
-    else
-    begin
-      if ABookmark.ImageIndex in [0 .. 8] then
-      begin
-        if not Assigned(FInternalBookmarkImage) then
-          FInternalBookmarkImage := TBCEditorInternalImage.Create(HInstance, BCEDITOR_BOOKMARK_IMAGES, 9);
-        if ALeftMarginOffset = 0 then
-          FInternalBookmarkImage.Draw(Canvas, ABookmark.ImageIndex,
-            AClipRect.Left + FLeftMargin.Bookmarks.Panel.LeftMargin + ALeftMarginOffset,
-            (AMarkRow - TopLine) * LLineHeight, LLineHeight, clFuchsia);
-        Inc(ALeftMarginOffset, FLeftMargin.Bookmarks.Panel.OtherMarkXOffset);
-      end;
-    end;
   end;
 
   procedure PaintLineNumbers;
@@ -9803,8 +9800,8 @@ var
           end;
         end;
       end;
-      if Assigned(FOnBeforeBookmarkPanelPaint) then
-        FOnBeforeBookmarkPanelPaint(Self, Canvas, LPanelRect, AFirstLine, ALastLine);
+      if Assigned(FOnBeforeMarkPanelPaint) then
+        FOnBeforeMarkPanelPaint(Self, Canvas, LPanelRect, AFirstLine, ALastLine);
     end;
     Canvas.Brush.Color := LOldColor;
   end;
@@ -9849,42 +9846,33 @@ var
   var
     i, j: Integer;
     LLeftMarginOffsets: PIntegerArray;
-    LHasOtherMarks: Boolean;
-    LBookmark: TBCEditorBookmark;
+    LBookmark: TBCEditorMark;
     LBookmarkLine: Integer;
   begin
-    if FLeftMargin.Bookmarks.Visible and FLeftMargin.Bookmarks.Visible and (Marks.Count > 0) and
-      (ALastLine >= AFirstLine) then
+    if FLeftMargin.Bookmarks.Visible and FLeftMargin.Bookmarks.Visible and
+      ((FBookmarkList.Count > 0) or (FMarkList.Count > 0)) and (ALastLine >= AFirstLine) then
     begin
       LLeftMarginOffsets := AllocMem((ALastLine - AFirstLine + 1) * SizeOf(Integer));
       try
-        LHasOtherMarks := False;
         for i := AFirstLine to ALastLine do
         begin
           LBookmarkLine := GetDisplayTextLineNumber(i);
-
-          for j := 0 to Marks.Count - 1 do
+          { Bookmarks }
+          for j := 0 to FBookmarkList.Count - 1 do
           begin
-            LBookmark := Marks[j];
+            LBookmark := FBookmarkList[j];
             if LBookmark.Line + 1 = LBookmarkLine then
               if LBookmark.Visible then
-              begin
-                if not LBookmark.IsBookmark then
-                  LHasOtherMarks := True
-                else
-                if not FCodeFolding.Visible or FCodeFolding.Visible then
-                  DrawMark(LBookmark, LLeftMarginOffsets[ALastLine - i], LBookmarkLine);
-              end;
+                DrawBookmark(LBookmark, LLeftMarginOffsets[ALastLine - i], LBookmarkLine);
           end;
-          if LHasOtherMarks then
-            for j := 0 to Marks.Count - 1 do
-            begin
-              LBookmark := Marks[j];
-              if LBookmark.Line + 1 = LBookmarkLine then
-                if LBookmark.Visible and not LBookmark.IsBookmark then
-                  if not FCodeFolding.Visible or FCodeFolding.Visible then
-                    DrawMark(LBookmark, LLeftMarginOffsets[ALastLine - i], LBookmarkLine);
-            end;
+          { Other marks }
+          for j := 0 to FMarkList.Count - 1 do
+          begin
+            LBookmark := FMarkList[j];
+            if LBookmark.Line + 1 = LBookmarkLine then
+              if LBookmark.Visible then
+                DrawMark(LBookmark, LLeftMarginOffsets[ALastLine - i], LBookmarkLine);
+          end;
         end;
       finally
         FreeMem(LLeftMarginOffsets);
@@ -9952,7 +9940,7 @@ var
   begin
     if FLeftMargin.Bookmarks.Panel.Visible then
     begin
-      if Assigned(FOnBookmarkPanelLinePaint) then
+      if Assigned(FOnMarkPanelLinePaint) then
       begin
         LPanelRect.Left := AClipRect.Left;
         LPanelRect.Top := 0;
@@ -9967,11 +9955,11 @@ var
           LLineRect.Right := LPanelRect.Right;
           LLineRect.Top := (LLine - TopLine) * LLineHeight;
           LLineRect.Bottom := LLineRect.Top + LLineHeight;
-          FOnBookmarkPanelLinePaint(Self, Canvas, LLineRect, LLine);
+          FOnMarkPanelLinePaint(Self, Canvas, LLineRect, LLine);
         end;
       end;
-      if Assigned(FOnAfterBookmarkPanelPaint) then
-        FOnAfterBookmarkPanelPaint(Self, Canvas, LPanelRect, AFirstLine, ALastLine);
+      if Assigned(FOnAfterMarkPanelPaint) then
+        FOnAfterMarkPanelPaint(Self, Canvas, LPanelRect, AFirstLine, ALastLine);
     end;
   end;
 
@@ -10362,18 +10350,10 @@ var
 
   function IsBookmarkOnCurrentLine: Boolean;
   var
-    i: Integer;
-    LMark: TBCEditorBookmark;
+    LMark: TBCEditorMark;
   begin
-    Result := False;
-
-    for i := 0 to 8 do
-    begin
-      LMark := FBookmarks[i];
-      if Assigned(LMark) then
-        if LMark.Line = LCurrentLine - 1 then
-          Exit(True);
-    end;
+    LMark := FBookmarkList.Find(LCurrentLine - 1);
+    Result := Assigned(LMark);
   end;
 
   function GetBackgroundColor: TColor;
@@ -12407,23 +12387,18 @@ begin
     Result := True;
 end;
 
-function TBCBaseEditor.GetBookmark(ABookmark: Integer; var ATextPosition: TBCEditorTextPosition): Boolean;
+function TBCBaseEditor.GetBookmark(const AIndex: Integer; var ATextPosition: TBCEditorTextPosition): Boolean;
 var
-  i: Integer;
-  LMark: TBCEditorBookmark;
+  LBookmark: TBCEditorMark;
 begin
   Result := False;
-  if Assigned(Marks) then
-    for i := 0 to Marks.Count - 1 do
-    begin
-      LMark := Marks[i];
-      if LMark.IsBookmark and (LMark.Index = ABookmark) then
-      begin
-        ATextPosition.Char := LMark.Char;
-        ATextPosition.Line := LMark.Line;
-        Exit(True);
-      end;
-    end;
+  LBookmark := FBookmarkList.Find(AIndex);
+  if Assigned(LBookmark) then
+  begin
+    ATextPosition.Char := LBookmark.Char;
+    ATextPosition.Line := LBookmark.Line;
+    Exit(True);
+  end;
 end;
 
 function TBCBaseEditor.GetPositionOfMouse(out ATextPosition: TBCEditorTextPosition): Boolean;
@@ -12448,13 +12423,6 @@ end;
 function TBCBaseEditor.IsCommentChar(AChar: Char): Boolean;
 begin
   Result := Assigned(FHighlighter) and CharInSet(AChar, FHighlighter.Comments.Chars);
-end;
-
-function TBCBaseEditor.IsBookmark(ABookmark: Integer): Boolean;
-var
-  LTextPosition: TBCEditorTextPosition;
-begin
-  Result := GetBookmark(ABookmark, LTextPosition);
 end;
 
 function TBCBaseEditor.IsTextPositionInSelection(const ATextPosition: TBCEditorTextPosition): Boolean;
@@ -13154,36 +13122,46 @@ begin
   UpdateScrollBars;
 end;
 
-procedure TBCBaseEditor.ClearBookmark(ABookmark: Integer);
+procedure TBCBaseEditor.DeleteBookmark(ABookmark: TBCEditorMark);
 begin
-  if (ABookmark in [0 .. 8]) and Assigned(FBookmarks[ABookmark]) then
+  if Assigned(ABookmark) then
   begin
-    DoOnBeforeClearBookmark(FBookmarks[ABookmark]);
-    FMarkList.Remove(FBookmarks[ABookmark]);
-    FBookmarks[ABookmark] := nil;
-    DoOnAfterClearBookmark;
+    FBookmarkList.Remove(ABookmark);
+    if Assigned(FOnAfterDeleteBookmark) then
+      FOnAfterDeleteBookmark(Self);
+  end;
+end;
+
+procedure TBCBaseEditor.DeleteBookmark(const AIndex: Integer);
+var
+  LBookmark: TBCEditorMark;
+begin
+  LBookmark := FBookmarkList.Find(AIndex);
+  DeleteBookmark(LBookmark);
+end;
+
+procedure TBCBaseEditor.DeleteMark(AMark: TBCEditorMark);
+begin
+  if Assigned(AMark) then
+  begin
+    if Assigned(FOnBeforeDeleteMark) then
+      FOnBeforeDeleteMark(Self, AMark);
+    FBookmarkList.Remove(AMark);
+    if Assigned(FOnAfterDeleteMark) then
+      FOnAfterDeleteMark(Self);
   end
 end;
 
 procedure TBCBaseEditor.ClearBookmarks;
-var
-  i: Integer;
 begin
-  for i := 0 to Length(FBookmarks) - 1 do
-    if Assigned(FBookmarks[i]) then
-      ClearBookmark(i);
+  while FBookmarkList.Count > 0 do
+    DeleteBookmark(FBookmarkList[0]);
 end;
 
 procedure TBCBaseEditor.ClearMarks;
-var
-  i: Integer;
 begin
-  i := 0;
-  while i < Marks.Count do
-    if not Marks.Items[i].IsBookmark then
-      Marks.Delete(i)
-    else
-      Inc(i);
+  while FMarkList.Count > 0 do
+    DeleteMark(FMarkList[0]);
 end;
 
 procedure TBCBaseEditor.ClearCodeFolding;
@@ -13846,26 +13824,29 @@ procedure TBCBaseEditor.ExportToHTML(AStream: TStream; const ACharSet: string = 
   AEncoding: System.SysUtils.TEncoding = nil);
 begin
   with TBCEditorExportHTML.Create(FLines, FHighlighter, Font, ACharSet) do
-    try
-      SaveToStream(AStream, AEncoding);
-    finally
-      Free;
-    end;
+  try
+    SaveToStream(AStream, AEncoding);
+  finally
+    Free;
+  end;
 end;
 
-procedure TBCBaseEditor.GotoBookmark(const ABookmark: Integer);
+procedure TBCBaseEditor.GotoBookmark(const AIndex: Integer);
 var
   LTextPosition: TBCEditorTextPosition;
+  LBookmark: TBCEditorMark;
 begin
-  if (ABookmark in [0 .. 8]) and Assigned(FBookmarks[ABookmark]) and (FBookmarks[ABookmark].Line <= FLines.Count) then
+  LBookmark := FBookmarkList.Find(AIndex);
+  if Assigned(LBookmark) then
   begin
-    LTextPosition.Char := FBookmarks[ABookmark].Char;
-    LTextPosition.Line := FBookmarks[ABookmark].Line;
+    LTextPosition.Char := LBookmark.Char;
+    LTextPosition.Line := LBookmark.Line;
 
     GotoLineAndCenter(LTextPosition.Line);
 
     if GetSelectionAvailable then
       Invalidate;
+
     FSelectionBeginPosition := TextCaretPosition;
     FSelectionEndPosition := FSelectionBeginPosition;
   end;
@@ -14285,11 +14266,15 @@ end;
 
 procedure TBCBaseEditor.SetBookmark(const AIndex: Integer; const ATextPosition: TBCEditorTextPosition);
 var
-  LBookmark: TBCEditorBookmark;
+  LBookmark: TBCEditorMark;
 begin
-  if (AIndex in [0 .. 8]) and (ATextPosition.Line >= 0) and (ATextPosition.Line <= Max(0, FLines.Count - 1)) then
+  if (ATextPosition.Line >= 0) and (ATextPosition.Line <= Max(0, FLines.Count - 1)) then
   begin
-    LBookmark := TBCEditorBookmark.Create(Self);
+    LBookmark := FBookmarkList.Find(AIndex);
+    if Assigned(LBookmark) then
+      DeleteBookmark(LBookmark);
+
+    LBookmark := TBCEditorMark.Create(Self);
     with LBookmark do
     begin
       Line := ATextPosition.Line;
@@ -14297,17 +14282,10 @@ begin
       ImageIndex := AIndex;
       Index := AIndex;
       Visible := True;
-      InternalImage := not Assigned(FLeftMargin.Bookmarks.Images);
     end;
-    DoOnBeforeBookmarkPlaced(LBookmark);
-    if Assigned(LBookmark) then
-    begin
-      if Assigned(FBookmarks[AIndex]) then
-        ClearBookmark(AIndex);
-      FBookmarks[AIndex] := LBookmark;
-      FMarkList.Add(FBookmarks[AIndex]);
-    end;
-    DoOnAfterBookmarkPlaced;
+    FBookmarkList.Add(LBookmark);
+    if Assigned(FOnAfterBookmarkPlaced) then
+      FOnAfterBookmarkPlaced(Self);
   end;
 end;
 
@@ -14348,6 +14326,33 @@ procedure TBCBaseEditor.SetLineColorToDefault(ALine: Integer);
 begin
   if (ALine >= 0) and (ALine < FLines.Count) then
     Invalidate;
+end;
+
+procedure TBCBaseEditor.SetMark(const AIndex: Integer; const ATextPosition: TBCEditorTextPosition; const AImageIndex: Integer);
+var
+  LMark: TBCEditorMark;
+begin
+  if (ATextPosition.Line >= 0) and (ATextPosition.Line <= Max(0, FLines.Count - 1)) then
+  begin
+    LMark := FMarkList.Find(AIndex);
+    if Assigned(LMark) then
+      DeleteMark(LMark);
+
+    LMark := TBCEditorMark.Create(Self);
+    with LMark do
+    begin
+      Line := ATextPosition.Line;
+      Char := ATextPosition.Char;
+      ImageIndex := AIndex;
+      Index := AIndex;
+      Visible := True;
+    end;
+    if Assigned(FOnBeforeMarkPlaced) then
+      FOnBeforeMarkPlaced(Self, LMark);
+    FMarkList.Add(LMark);
+    if Assigned(FOnAfterMarkPlaced) then
+      FOnAfterMarkPlaced(Self);
+  end;
 end;
 
 procedure TBCBaseEditor.SetOption(const AOption: TBCEditorOption; const AEnabled: Boolean);
@@ -14413,27 +14418,27 @@ begin
   end;
 end;
 
-procedure TBCBaseEditor.ToggleBookmark(AIndex: Integer = -1);
+procedure TBCBaseEditor.ToggleBookmark(const AIndex: Integer = -1);
 var
-  i: Integer;
+//  i: Integer;
   LTextPosition: TBCEditorTextPosition;
-  LMark: TBCEditorBookmark;
+//  LMark: TBCEditorMark;
 begin
   if AIndex <> -1 then
   begin
-    if not GetBookmark(AIndex, LTextPosition) then
-      SetBookmark(AIndex, TextCaretPosition)
+    if GetBookmark(AIndex, LTextPosition) then
+      DeleteBookmark(AIndex)
     else
-      ClearBookmark(AIndex);
+      SetBookmark(AIndex, TextCaretPosition)
   end
-  else
+ (* else
   begin
     for i := 0 to Marks.Count - 1 do
     begin
-      LMark := Marks[i];
+      LMark := FBookmarkList[i];
       if GetTextCaretY = LMark.Line then
       begin
-        ClearBookmark(LMark.Index);
+        DeleteBookmark(LMark.Index);
         Exit;
       end;
     end;
@@ -14444,7 +14449,7 @@ begin
         SetBookmark(i, TextCaretPosition);
         Exit;
       end;
-  end;
+  end;*)
 end;
 
 procedure TBCBaseEditor.UnhookEditorLines;

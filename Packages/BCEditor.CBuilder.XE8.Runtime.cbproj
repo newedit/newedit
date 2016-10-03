@@ -131,7 +131,7 @@
         <DelphiCompile Include="..\Source\BCEditor.Editor.Base.pas">
             <BuildOrder>4</BuildOrder>
         </DelphiCompile>
-        <DelphiCompile Include="..\Source\BCEditor.Editor.Bookmarks.pas">
+        <DelphiCompile Include="..\Source\BCEditor.Editor.Marks.pas">
             <BuildOrder>5</BuildOrder>
         </DelphiCompile>
 				 <DelphiCompile Include="..\Source\BCEditor.Editor.Caret.MultiEdit.Colors.pas">
