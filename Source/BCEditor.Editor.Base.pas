@@ -13202,6 +13202,7 @@ var
   i: Integer;
   LFromLine, LToLine: Integer;
   LCodeFoldingRange: TBCEditorCodeFoldingRange;
+  LTextCaretPosition: TBCEditorTextPosition;
 begin
   if AFromLineNumber <> -1 then
     LFromLine := AFromLineNumber
@@ -13211,6 +13212,7 @@ begin
     LToLine := AToLineNumber
   else
     LToLine := FLines.Count;
+  LTextCaretPosition := TextCaretPosition;
   ClearMatchingPair;
   FResetLineNumbersCache := True;
   for i := FAllCodeFoldingRanges.AllCount - 1 downto 0 do
@@ -13227,6 +13229,10 @@ begin
   CheckIfAtMatchingKeywords;
   Refresh;
   UpdateScrollBars;
+
+  if LTextCaretPosition.Line > FLines.Count - 1 then
+    LTextCaretPosition.Line := FLines.Count - 1;
+  TextCaretPosition := LTextCaretPosition;
 end;
 
 procedure TBCBaseEditor.FoldAllByLevel(const AFromLevel: Integer; const AToLevel: Integer);
