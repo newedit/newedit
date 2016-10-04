@@ -1963,7 +1963,7 @@ begin
 
   if FSelection.Mode = smNormal then
   begin
-    LLineLength := Length(FLines[Result.Line]);
+    LLineLength := FLines.StringLength(Result.Line);
 
     if Result.Char > LLineLength then
       Result.Char := LLineLength + 1;
@@ -1982,7 +1982,7 @@ begin
 
   if FSelection.Mode = smNormal then
   begin
-    LLineLength := Length(FLines[Result.Line]);
+    LLineLength := FLines.StringLength(Result.Line);
 
     if Result.Char > LLineLength then
       Result.Char := LLineLength + 1;
@@ -3092,13 +3092,11 @@ begin
         Inc(Result);
         LCurrentTextPosition.Char := LFound;
 
-        //if not FSearch.InSelection.Active then
-          SelectionBeginPosition := LCurrentTextPosition;
+        SelectionBeginPosition := LCurrentTextPosition;
 
         Inc(LCurrentTextPosition.Char, LSearchLength);
 
-        //if not FSearch.InSelection.Active then
-          SelectionEndPosition := LCurrentTextPosition;
+        SelectionEndPosition := LCurrentTextPosition;
 
         if TopLine + FVisibleLines <= LCurrentTextPosition.Line then
           TopLine := LCurrentTextPosition.Line - FVisibleLines div 2 + 1;
@@ -10665,9 +10663,9 @@ var
 
           LBottom := Min(LTokenRect.Bottom, Canvas.ClipRect.Bottom);
 
-          LMaxX := 0;
+          LMaxX := LTokenRect.Right + 1;
           for LY := LTokenRect.Top to LBottom - 1 do
-            for LX := LTokenRect.Right + 1 to LTextRect.Right - 1 do
+            for LX := LMaxX to LTextRect.Right - 1 do
               if GetPixel(Canvas.Handle, LX, LY) <> LRGBColor then
                 if LX > LMaxX then
                   LMaxX := LX;
@@ -10893,25 +10891,11 @@ var
     if LCanAppend then
     begin
       Insert(AToken, LTokenHelper.Text, LTokenHelper.Length + 1);
-     { if LTokenHelper.Length + ATokenLength > LTokenHelper.MaxLength then
-      begin
-        LTokenHelper.MaxLength := LTokenHelper.Length + ATokenLength + 32;
-        SetLength(LTokenHelper.Text, LTokenHelper.MaxLength);
-      end;
-      for i := 1 to ATokenLength do
-        LTokenHelper.Text[LTokenHelper.Length + i] := AToken[i]; }
       Inc(LTokenHelper.Length, ATokenLength);
     end
     else
     begin
       LTokenHelper.Length := ATokenLength;
-     { if LTokenHelper.Length > LTokenHelper.MaxLength then
-      begin
-        LTokenHelper.MaxLength := LTokenHelper.Length + 32;
-        SetLength(LTokenHelper.Text, LTokenHelper.MaxLength);
-      end;
-      for i := 1 to ATokenLength do
-        LTokenHelper.Text[i] := AToken[i]; }
       LTokenHelper.Text := AToken;
       LTokenHelper.CharsBefore := ACharsBefore;
       LTokenHelper.ExpandedCharsBefore := LExpandedCharsBefore;
@@ -14431,9 +14415,7 @@ end;
 
 procedure TBCBaseEditor.ToggleBookmark(const AIndex: Integer = -1);
 var
-//  i: Integer;
   LTextPosition: TBCEditorTextPosition;
-//  LMark: TBCEditorMark;
 begin
   if AIndex <> -1 then
   begin
@@ -14442,25 +14424,6 @@ begin
     else
       SetBookmark(AIndex, TextCaretPosition)
   end
- (* else
-  begin
-    for i := 0 to Marks.Count - 1 do
-    begin
-      LMark := FBookmarkList[i];
-      if GetTextCaretY = LMark.Line then
-      begin
-        DeleteBookmark(LMark.Index);
-        Exit;
-      end;
-    end;
-    LTextPosition := TextCaretPosition;
-    for i := 0 to 8 do
-      if not GetBookmark(i, LTextPosition) then { Variables used because X and Y are var parameters }
-      begin
-        SetBookmark(i, TextCaretPosition);
-        Exit;
-      end;
-  end;*)
 end;
 
 procedure TBCBaseEditor.UnhookEditorLines;
