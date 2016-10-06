@@ -62,24 +62,27 @@ const
   ecNormalSelect = 231;
   ecColumnSelect = 232;
   { Bookmark }
-  ecGotoBookmark1 = 302;
-  ecGotoBookmark2 = 303;
-  ecGotoBookmark3 = 304;
-  ecGotoBookmark4 = 305;
-  ecGotoBookmark5 = 306;
-  ecGotoBookmark6 = 307;
-  ecGotoBookmark7 = 308;
-  ecGotoBookmark8 = 309;
-  ecGotoBookmark9 = 310;
-  ecSetBookmark1 = 352;
-  ecSetBookmark2 = 353;
-  ecSetBookmark3 = 354;
-  ecSetBookmark4 = 355;
-  ecSetBookmark5 = 356;
-  ecSetBookmark6 = 357;
-  ecSetBookmark7 = 358;
-  ecSetBookmark8 = 359;
-  ecSetBookmark9 = 360;
+  ecToggleBookmark = 300;
+  ecGotoBookmark1 = 310;
+  ecGotoBookmark2 = 311;
+  ecGotoBookmark3 = 312;
+  ecGotoBookmark4 = 313;
+  ecGotoBookmark5 = 314;
+  ecGotoBookmark6 = 315;
+  ecGotoBookmark7 = 316;
+  ecGotoBookmark8 = 317;
+  ecGotoBookmark9 = 318;
+  ecSetBookmark1 = 320;
+  ecSetBookmark2 = 321;
+  ecSetBookmark3 = 322;
+  ecSetBookmark4 = 323;
+  ecSetBookmark5 = 324;
+  ecSetBookmark6 = 325;
+  ecSetBookmark7 = 326;
+  ecSetBookmark8 = 327;
+  ecSetBookmark9 = 328;
+  ecGotoNextBookmark = 330;
+  ecGotoPreviousBookmark = 331;
   { Focus }
   ecGotFocus = 480;
   ecLostFocus = 481;
@@ -223,7 +226,7 @@ type
   end;
 
 const
-  EditorCommandStrings: array [0 .. 103] of TBCEditorCommandString = (
+  EditorCommandStrings: array [0 .. 106] of TBCEditorCommandString = (
     (Value: ecNone; Name: 'ecNone'),
     (Value: ecLeft; Name: 'ecLeft'),
     (Value: ecRight; Name: 'ecRight'),
@@ -293,6 +296,7 @@ const
     (Value: ecColumnSelect; Name: 'ecColumnSelect'),
     (Value: ecUserFirst; Name: 'ecUserFirst'),
     (Value: ecContextHelp; Name: 'ecContextHelp'),
+    (Value: ecToggleBookmark; Name: 'ecToggleBookmark'),
     (Value: ecGotoBookmark1; Name: 'ecGotoBookmark1'),
     (Value: ecGotoBookmark2; Name: 'ecGotoBookmark2'),
     (Value: ecGotoBookmark3; Name: 'ecGotoBookmark3'),
@@ -311,6 +315,8 @@ const
     (Value: ecSetBookmark7; Name: 'ecSetBookmark7'),
     (Value: ecSetBookmark8; Name: 'ecSetBookmark8'),
     (Value: ecSetBookmark9; Name: 'ecSetBookmark9'),
+    (Value: ecGotoNextBookmark; Name: 'ecGotoNextBookmark'),
+    (Value: ecGotoPreviousBookmark; Name: 'ecGotoPreviousBookmark'),
     (Value: ecString; Name: 'ecString'),
     (Value: ecMoveLineUp; Name: 'ecMoveLineUp'),
     (Value: ecMoveLineDown; Name: 'ecMoveLineDown'),
@@ -673,7 +679,7 @@ begin
   Add(ecBlockUnindent, [ssCtrl, ssShift], Ord('U'));
   { Fragment deletion }
   Add(ecDeleteWord, [ssCtrl], Ord('T'));
-  Add(ecDeleteWord, [ssCtrl], VK_DELETE); //SecondaryShortCuts.Strings = ('Ctrl+Del')
+  Add(ecDeleteWord, [ssCtrl], VK_DELETE);
   { Line operations }
   Add(ecInsertLine, [ssCtrl], Ord('M'));
   Add(ecMoveLineUp, [ssCtrl, ssAlt], VK_UP);
@@ -683,6 +689,7 @@ begin
   Add(ecMoveCharLeft, [ssAlt, ssCtrl], VK_LEFT);
   Add(ecMoveCharRight, [ssAlt, ssCtrl], VK_RIGHT);
   { Bookmarks }
+  Add(ecToggleBookmark, [ssCtrl], VK_F2);
   Add(ecGotoBookmark1, [ssCtrl], Ord('1'));
   Add(ecGotoBookmark2, [ssCtrl], Ord('2'));
   Add(ecGotoBookmark3, [ssCtrl], Ord('3'));
@@ -701,6 +708,8 @@ begin
   Add(ecSetBookmark7, [ssCtrl, ssShift], Ord('7'));
   Add(ecSetBookmark8, [ssCtrl, ssShift], Ord('8'));
   Add(ecSetBookmark9, [ssCtrl, ssShift], Ord('9'));
+  Add(ecGotoNextBookmark, [], VK_F2);
+  Add(ecGotoPreviousBookmark, [ssShift], VK_F2);
   { Selection modes }
   Add(ecNormalSelect, [ssCtrl, ssAlt], Ord('N'));
   Add(ecColumnSelect, [ssCtrl, ssAlt], Ord('C'));
