@@ -2990,7 +2990,7 @@ var
   LCurrentTextPosition: TBCEditorTextPosition;
   LSearchLength, LSearchIndex, LFound: Integer;
   LFindAllCount: Integer;
-  LIsBackward, LIsFromCursor: Boolean;
+  LIsBackward: Boolean;
   LIsEndUndoBlock: Boolean;
   LResultOffset: Integer;
 
@@ -3018,7 +3018,6 @@ begin
     Exit;
 
   LIsBackward := soBackwards in FSearch.Options;
-  LIsFromCursor := not (soEntireScope in FSearch.Options);
   LTextCaretPosition := TextCaretPosition;
 
   if FSearch.InSelection.Active then
@@ -3037,22 +3036,19 @@ begin
     LEndTextPosition.Char := FLines.StringLength(LEndTextPosition.Line) + 1;
   end;
 
-  if LIsFromCursor then
+  if LIsBackward then
   begin
-    if LIsBackward then
-    begin
-      LEndTextPosition := LTextCaretPosition;
-      Dec(LEndTextPosition.Char);
-    end
-    else
-    if FSearch.InSelection.Active then
-    begin
-      if FSearch.InSelection.IsTextPositionInBlock(LTextCaretPosition) then
-        LStartTextPosition := LTextCaretPosition
-    end
-    else
-      LStartTextPosition := LTextCaretPosition;
-  end;
+    LEndTextPosition := LTextCaretPosition;
+    Dec(LEndTextPosition.Char);
+  end
+  else
+  if FSearch.InSelection.Active then
+  begin
+    if FSearch.InSelection.IsTextPositionInBlock(LTextCaretPosition) then
+      LStartTextPosition := LTextCaretPosition
+  end
+  else
+    LStartTextPosition := LTextCaretPosition;
 
   if LIsBackward then
     LCurrentTextPosition := LEndTextPosition
@@ -6217,6 +6213,8 @@ begin
       if FSearch.Enabled then
       begin
         FindAll; { For search map and search count }
+        if soEntireScope in FSearch.Options then
+          CaretZero;
         if SelectionAvailable then
           TextCaretPosition := SelectionBeginPosition;
         if Assigned(FSearchEngine)then

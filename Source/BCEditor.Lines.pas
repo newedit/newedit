@@ -119,10 +119,10 @@ type
     property OnPutted: TStringListChangeEvent read FOnPutted write FOnPutted;
     property Owner: TObject read FOwner write FOwner;
     property Ranges[AIndex: Integer]: TBCEditorLinesRange read GetRange write PutRange;
-    property Strings[AIndex: Integer]: string read Get write Put; default; //FI:C110 FixInsight ignore
+    property Strings[AIndex: Integer]: string read Get write Put; default;
     property Streaming: Boolean read FStreaming;
     property TabWidth: Integer read FTabWidth write SetTabWidth;
-    property Text: string read GetTextStr write SetTextStr; //FI:C110 FixInsight ignore
+    property Text: string read GetTextStr write SetTextStr;
   end;
 
   EBCEditorLinesException = class(Exception);

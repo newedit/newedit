@@ -334,7 +334,7 @@ begin
   ARun := StartPosition + 1;
 end;
 
-constructor TBCEditorDefaultParser.Create(AToken: TBCEditorToken); //FI:W525 FixInsight ignore
+constructor TBCEditorDefaultParser.Create(AToken: TBCEditorToken);
 begin
   FToken := AToken;
 end;

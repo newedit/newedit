@@ -326,7 +326,7 @@ var
   var
     j: Integer;
   begin
-    for j := 0 to LList.Count - 1 do //FI:W528 FixInsight ignore
+    for j := 0 to LList.Count - 1 do
       LYPos := LYPos + FLineHeight;
   end;
 
