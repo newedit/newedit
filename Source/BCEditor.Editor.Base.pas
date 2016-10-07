@@ -10969,6 +10969,8 @@ var
       LTokenHelper.MatchingPairUnderline := AMatchingPairUnderline;
     end;
 
+    LPToken := PChar(AToken);
+
     if LPToken^ = BCEDITOR_TAB_CHAR then
     begin
       if toColumns in FTabs.Options then
@@ -14445,6 +14447,7 @@ begin
     if Assigned(FOnBeforeMarkPlaced) then
       FOnBeforeMarkPlaced(Self, LMark);
     FMarkList.Add(LMark);
+    FMarkList.Sort(CompareIndexes);
     if Assigned(FOnAfterMarkPlaced) then
       FOnAfterMarkPlaced(Self);
   end;
