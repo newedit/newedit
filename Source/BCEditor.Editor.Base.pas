@@ -13220,24 +13220,42 @@ end;
 procedure TBCBaseEditor.FoldAllByLevel(const AFromLevel: Integer; const AToLevel: Integer);
 var
   i: Integer;
+  LFromLine, LToLine: Integer;
   LCodeFoldingRange: TBCEditorCodeFoldingRange;
+  LTextCaretPosition: TBCEditorTextPosition;
 begin
+  if SelectionAvailable then
+  begin
+    LFromLine := SelectionBeginPosition.Line;
+    LToLine := SelectionEndPosition.Line;
+  end
+  else
+  begin
+    LFromLine := 1;
+    LToLine := FLines.Count;
+  end;
+  LTextCaretPosition := TextCaretPosition;
   ClearMatchingPair;
   FResetLineNumbersCache := True;
   for i := FAllCodeFoldingRanges.AllCount - 1 downto 0 do
   begin
     LCodeFoldingRange := FAllCodeFoldingRanges[i];
-    if (LCodeFoldingRange.FoldRangeLevel >= AFromLevel) and (LCodeFoldingRange.FoldRangeLevel <= AToLevel) then
-      if not LCodeFoldingRange.Collapsed and LCodeFoldingRange.Collapsable then
-      with LCodeFoldingRange do
-      begin
-        Collapsed := True;
-        SetParentCollapsedOfSubCodeFoldingRanges(True, FoldRangeLevel);
-      end;
+    if (LCodeFoldingRange.FromLine >= LFromLine) and (LCodeFoldingRange.FromLine <= LToLine) then
+      if (LCodeFoldingRange.FoldRangeLevel >= AFromLevel) and (LCodeFoldingRange.FoldRangeLevel <= AToLevel) then
+        if not LCodeFoldingRange.Collapsed and LCodeFoldingRange.Collapsable then
+        with LCodeFoldingRange do
+        begin
+          Collapsed := True;
+          SetParentCollapsedOfSubCodeFoldingRanges(True, FoldRangeLevel);
+        end;
   end;
   CheckIfAtMatchingKeywords;
   Refresh;
   UpdateScrollBars;
+
+  if LTextCaretPosition.Line > FLines.Count - 1 then
+    LTextCaretPosition.Line := FLines.Count - 1;
+  TextCaretPosition := LTextCaretPosition;
 end;
 
 procedure TBCBaseEditor.UnfoldAll(const AFromLineNumber: Integer = -1; const AToLineNumber: Integer = -1);
@@ -13274,20 +13292,32 @@ end;
 procedure TBCBaseEditor.UnfoldAllByLevel(const AFromLevel: Integer; const AToLevel: Integer);
 var
   i: Integer;
+  LFromLine, LToLine: Integer;
   LCodeFoldingRange: TBCEditorCodeFoldingRange;
 begin
+    if SelectionAvailable then
+  begin
+    LFromLine := SelectionBeginPosition.Line;
+    LToLine := SelectionEndPosition.Line;
+  end
+  else
+  begin
+    LFromLine := 1;
+    LToLine := FLines.Count;
+  end;
   ClearMatchingPair;
   FResetLineNumbersCache := True;
   for i := FAllCodeFoldingRanges.AllCount - 1 downto 0 do
   begin
     LCodeFoldingRange := FAllCodeFoldingRanges[i];
-    if (LCodeFoldingRange.FoldRangeLevel >= AFromLevel) and (LCodeFoldingRange.FoldRangeLevel <= AToLevel) then
-      if LCodeFoldingRange.Collapsed and LCodeFoldingRange.Collapsable then
-      with LCodeFoldingRange do
-      begin
-        Collapsed := False;
-        SetParentCollapsedOfSubCodeFoldingRanges(False, FoldRangeLevel);
-      end;
+    if (LCodeFoldingRange.FromLine >= LFromLine) and (LCodeFoldingRange.FromLine <= LToLine) then
+      if (LCodeFoldingRange.FoldRangeLevel >= AFromLevel) and (LCodeFoldingRange.FoldRangeLevel <= AToLevel) then
+        if LCodeFoldingRange.Collapsed and LCodeFoldingRange.Collapsable then
+        with LCodeFoldingRange do
+        begin
+          Collapsed := False;
+          SetParentCollapsedOfSubCodeFoldingRanges(False, FoldRangeLevel);
+        end;
   end;
   Refresh;
   UpdateScrollBars;
