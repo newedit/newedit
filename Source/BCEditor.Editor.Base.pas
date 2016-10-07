@@ -295,6 +295,8 @@ type
     procedure DoEditorBottom(const ACommand: TBCEditorCommand);
     procedure DoEditorTop(const ACommand: TBCEditorCommand);
     procedure DoEndKey(const ASelection: Boolean);
+    procedure DoGotoNextBookmark;
+    procedure DoGotoPreviousBookmark;
     procedure DoHomeKey(const ASelection: Boolean);
     procedure DoImeStr(AData: Pointer);
     procedure DoLineBreak;
@@ -311,6 +313,7 @@ type
     procedure DoShiftTabKey;
     procedure DoSyncEdit;
     procedure DoTabKey;
+    procedure DoToggleBookmark;
     procedure DoToggleSelectedCase(const ACommand: TBCEditorCommand);
     procedure DoTrimTrailingSpaces(ATextLine: Integer);
     procedure DoWordLeft(const ACommand: TBCEditorCommand);
@@ -584,7 +587,7 @@ type
     procedure FoldAll(const AFromLineNumber: Integer = -1; const AToLineNumber: Integer = -1);
     procedure FoldAllByLevel(const AFromLevel: Integer; const AToLevel: Integer);
     procedure GotoBookmark(const AIndex: Integer);
-    procedure GotoLineAndCenter(const ATextLine: Integer);
+    procedure GotoLineAndCenter(const ALine: Integer; const AChar: Integer = 1);
     procedure HookEditorLines(ALines: TBCEditorLines; AUndo, ARedo: TBCEditorUndoList);
     procedure InsertLine(const ALineNumber: Integer; const AValue: string); overload;
     procedure InsertBlock(const ABlockBeginPosition, ABlockEndPosition: TBCEditorTextPosition; AChangeStr: PChar; AAddToUndoList: Boolean);
@@ -4143,6 +4146,44 @@ begin
   MoveCaretAndSelection(LTextCaretPosition, LEndOfLineCaretPosition, ASelection);
 end;
 
+procedure TBCBaseEditor.DoGotoNextBookmark;
+var
+  i: Integer;
+  LMark: TBCEditorMark;
+  LTextCaretPosition: TBCEditorTextPosition;
+begin
+  LTextCaretPosition := TextCaretPosition;
+  for i := 0 to FBookmarkList.Count - 1 do
+  begin
+    LMark := FBookmarkList.Items[i];
+    if (LMark.Line > LTextCaretPosition.Line) or
+      (LMark.Line = LTextCaretPosition.Line) and (LMark.Char > LTextCaretPosition.Char) then
+    begin
+      GotoBookmark(LMark.Index);
+      Exit;
+    end;
+  end;
+end;
+
+procedure TBCBaseEditor.DoGotoPreviousBookmark;
+var
+  i: Integer;
+  LMark: TBCEditorMark;
+  LTextCaretPosition: TBCEditorTextPosition;
+begin
+  LTextCaretPosition := TextCaretPosition;
+  for i := FBookmarkList.Count - 1 downto 0 do
+  begin
+    LMark := FBookmarkList.Items[i];
+    if (LMark.Line < LTextCaretPosition.Line) or
+      (LMark.Line = LTextCaretPosition.Line) and (LMark.Char < LTextCaretPosition.Char) then
+    begin
+      GotoBookmark(LMark.Index);
+      Exit;
+    end;
+  end;
+end;
+
 procedure TBCBaseEditor.DoHomeKey(const ASelection: Boolean);
 var
   LLineText: string;
@@ -4820,6 +4861,29 @@ begin
   finally
     FUndoList.EndBlock;
   end;
+end;
+
+procedure TBCBaseEditor.DoToggleBookmark;
+var
+  i, LIndex: Integer;
+  LMark: TBCEditorMark;
+  LTextCaretPosition: TBCEditorTextPosition;
+begin
+  LTextCaretPosition := TextCaretPosition;
+  for i := 0 to FBookmarkList.Count - 1 do
+  begin
+    LMark := FBookmarkList.Items[i];
+    if LMark.Line = LTextCaretPosition.Line then
+    begin
+      DeleteBookmark(LMark);
+      Exit;
+    end;
+  end;
+  LIndex := 0;
+  if FBookmarkList.Count > 0 then
+    LIndex := FBookmarkList.Items[FBookmarkList.Count - 1].Index + 1;
+  LIndex := Max(BCEDITOR_BOOKMARK_IMAGE_COUNT, LIndex);
+  SetBookmark(LIndex, LTextCaretPosition);
 end;
 
 procedure TBCBaseEditor.PaintCaretBlock(ADisplayCaretPosition: TBCEditorDisplayPosition);
@@ -6212,7 +6276,7 @@ begin
     scSearch:
       if FSearch.Enabled then
       begin
-        FindAll; { For search map and search count }
+        FindAll;
         if soEntireScope in FSearch.Options then
           CaretZero;
         if SelectionAvailable then
@@ -9651,7 +9715,8 @@ var
   procedure DrawBookmark(ABookmark: TBCEditorMark; var ALeftMarginOffset: Integer; AMarkRow: Integer);
   begin
     if not Assigned(FInternalBookmarkImage) then
-      FInternalBookmarkImage := TBCEditorInternalImage.Create(HInstance, BCEDITOR_BOOKMARK_IMAGES, 9);
+      FInternalBookmarkImage := TBCEditorInternalImage.Create(HInstance, BCEDITOR_BOOKMARK_IMAGES,
+        BCEDITOR_BOOKMARK_IMAGE_COUNT);
     if ALeftMarginOffset = 0 then
       FInternalBookmarkImage.Draw(Canvas, ABookmark.ImageIndex,
         AClipRect.Left + FLeftMargin.Bookmarks.Panel.LeftMargin + ALeftMarginOffset,
@@ -13708,6 +13773,12 @@ begin
       ecGotoXY, ecSelectionGotoXY:
         if Assigned(AData) then
           MoveCaretAndSelection(TextCaretPosition, TBCEditorTextPosition(AData^), ACommand = ecSelectionGotoXY);
+      ecToggleBookmark:
+        DoToggleBookmark;
+      ecGotoNextBookmark:
+        DoGotoNextBookmark;
+      ecGotoPreviousBookmark:
+        DoGotoPreviousBookmark;
       ecGotoBookmark1 .. ecGotoBookmark9:
         if FLeftMargin.Bookmarks.ShortCuts then
           GotoBookmark(ACommand - ecGotoBookmark1);
@@ -13865,7 +13936,7 @@ begin
     LTextPosition.Char := LBookmark.Char;
     LTextPosition.Line := LBookmark.Line;
 
-    GotoLineAndCenter(LTextPosition.Line);
+    GotoLineAndCenter(LTextPosition.Line, LTextPosition.Char);
 
     if GetSelectionAvailable then
       Invalidate;
@@ -13875,7 +13946,7 @@ begin
   end;
 end;
 
-procedure TBCBaseEditor.GotoLineAndCenter(const ATextLine: Integer);
+procedure TBCBaseEditor.GotoLineAndCenter(const ALine: Integer; const AChar: Integer = 1);
 var
   i: Integer;
   LCodeFoldingRange: TBCEditorCodeFoldingRange;
@@ -13885,13 +13956,13 @@ begin
     for i := 0 to FAllCodeFoldingRanges.AllCount - 1 do
     begin
       LCodeFoldingRange := FAllCodeFoldingRanges[i];
-      if LCodeFoldingRange.FromLine > ATextLine then
+      if LCodeFoldingRange.FromLine > ALine then
         Break
       else
-      if (LCodeFoldingRange.FromLine <= ATextLine) and LCodeFoldingRange.Collapsed then
+      if (LCodeFoldingRange.FromLine <= ALine) and LCodeFoldingRange.Collapsed then
         CodeFoldingUncollapse(LCodeFoldingRange);
     end;
-  LTextCaretPosition := GetTextPosition(1, ATextLine);
+  LTextCaretPosition := GetTextPosition(AChar, ALine);
   TopLine := Max(LTextCaretPosition.Line - (ClientHeight div GetLineHeight) div 2, 1);
   SetTextCaretPosition(LTextCaretPosition);
   if GetSelectionAvailable then
@@ -14302,11 +14373,12 @@ begin
     begin
       Line := ATextPosition.Line;
       Char := ATextPosition.Char;
-      ImageIndex := AIndex;
+      ImageIndex := Min(AIndex, 9);
       Index := AIndex;
       Visible := True;
     end;
     FBookmarkList.Add(LBookmark);
+    FBookmarkList.Sort(CompareIndexes);
     if Assigned(FOnAfterBookmarkPlaced) then
       FOnAfterBookmarkPlaced(Self);
   end;
@@ -14408,7 +14480,7 @@ begin
       begin
         S := S + LStringList.Strings[i];
         if i <> 0 then
-          S := S + Chr(13) + Chr(10);
+          S := S + SLineBreak;
       end;
     end
     else

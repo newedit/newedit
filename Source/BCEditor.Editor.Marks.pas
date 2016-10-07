@@ -51,10 +51,17 @@ type
     property OnChange: TNotifyEvent read FOnChange write FOnChange;
   end;
 
+function CompareIndexes(Item1, Item2: Pointer): Integer;
+
 implementation
 
 uses
   BCEditor.Editor.Base, System.Types;
+
+function CompareIndexes(Item1, Item2: Pointer): Integer;
+begin
+  Result := TBCEditorMark(Item1).Index - TBCEditorMark(Item2).Index;
+end;
 
 constructor TBCEditorMark.Create(AOwner: TCustomControl);
 begin
