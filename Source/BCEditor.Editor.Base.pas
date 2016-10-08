@@ -14380,7 +14380,7 @@ begin
       Visible := True;
     end;
     FBookmarkList.Add(LBookmark);
-    FBookmarkList.Sort(CompareIndexes);
+    FBookmarkList.Sort(CompareLines);
     if Assigned(FOnAfterBookmarkPlaced) then
       FOnAfterBookmarkPlaced(Self);
   end;
@@ -14447,7 +14447,7 @@ begin
     if Assigned(FOnBeforeMarkPlaced) then
       FOnBeforeMarkPlaced(Self, LMark);
     FMarkList.Add(LMark);
-    FMarkList.Sort(CompareIndexes);
+    FMarkList.Sort(CompareLines);
     if Assigned(FOnAfterMarkPlaced) then
       FOnAfterMarkPlaced(Self);
   end;
