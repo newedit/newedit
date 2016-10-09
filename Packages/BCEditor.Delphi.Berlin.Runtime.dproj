@@ -128,7 +128,6 @@
         <DCCReference Include="..\Source\BCEditor.Editor.pas"/>
         <DCCReference Include="..\Source\BCEditor.Editor.ActiveLine.pas"/>
         <DCCReference Include="..\Source\BCEditor.Editor.Base.pas"/>
-        <DCCReference Include="..\Source\BCEditor.Editor.Marks.pas"/>
         <DCCReference Include="..\Source\BCEditor.Editor.Caret.pas"/>
         <DCCReference Include="..\Source\BCEditor.Editor.Caret.MultiEdit.pas"/>
         <DCCReference Include="..\Source\BCEditor.Editor.Caret.MultiEdit.Colors.pas"/>
@@ -157,11 +156,13 @@
         <DCCReference Include="..\Source\BCEditor.Editor.KeyCommands.pas"/>
         <DCCReference Include="..\Source\BCEditor.Editor.LeftMargin.pas"/>
         <DCCReference Include="..\Source\BCEditor.Editor.LeftMargin.Bookmarks.pas"/>
-        <DCCReference Include="..\Source\BCEditor.Editor.LeftMargin.Bookmarks.Panel.pas"/>
         <DCCReference Include="..\Source\BCEditor.Editor.LeftMargin.Border.pas"/>
         <DCCReference Include="..\Source\BCEditor.Editor.LeftMargin.Colors.pas"/>
         <DCCReference Include="..\Source\BCEditor.Editor.LeftMargin.LineNumbers.pas"/>
         <DCCReference Include="..\Source\BCEditor.Editor.LeftMargin.LineState.pas"/>
+        <DCCReference Include="..\Source\BCEditor.Editor.LeftMargin.Marks.pas"/>
+        <DCCReference Include="..\Source\BCEditor.Editor.LeftMargin.MarksPanel.pas"/>
+				<DCCReference Include="..\Source\BCEditor.Editor.Marks.pas"/>
         <DCCReference Include="..\Source\BCEditor.Editor.MatchingPair.pas"/>
         <DCCReference Include="..\Source\BCEditor.Editor.MatchingPair.Colors.pas"/>
         <DCCReference Include="..\Source\BCEditor.Editor.Minimap.pas"/>
@@ -284,16 +285,7 @@
                         <Overwrite>true</Overwrite>
                     </Platform>
                 </DeployFile>
-                <DeployClass Name="DependencyModule">
-                    <Platform Name="Win32">
-                        <Operation>0</Operation>
-                        <Extensions>.dll;.bpl</Extensions>
-                    </Platform>
-                    <Platform Name="OSX32">
-                        <Operation>1</Operation>
-                        <Extensions>.dylib</Extensions>
-                    </Platform>
-                </DeployClass>
+                <DeployClass Name="ProjectiOSDeviceResourceRules"/>
                 <DeployClass Name="ProjectOSXResource">
                     <Platform Name="OSX32">
                         <RemoteDir>Contents\Resources</RemoteDir>
@@ -605,7 +597,16 @@
                         <Operation>1</Operation>
                     </Platform>
                 </DeployClass>
-                <DeployClass Name="ProjectiOSDeviceResourceRules"/>
+                <DeployClass Name="DependencyModule">
+                    <Platform Name="Win32">
+                        <Operation>0</Operation>
+                        <Extensions>.dll;.bpl</Extensions>
+                    </Platform>
+                    <Platform Name="OSX32">
+                        <Operation>1</Operation>
+                        <Extensions>.dylib</Extensions>
+                    </Platform>
+                </DeployClass>
                 <ProjectRoot Platform="iOSDevice64" Name="$(PROJECTNAME).app"/>
                 <ProjectRoot Platform="Win64" Name="$(PROJECTNAME)"/>
                 <ProjectRoot Platform="iOSDevice32" Name="$(PROJECTNAME).app"/>

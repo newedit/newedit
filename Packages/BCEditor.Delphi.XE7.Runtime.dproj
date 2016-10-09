@@ -129,7 +129,6 @@
         <DCCReference Include="..\Source\BCEditor.Editor.pas"/>
         <DCCReference Include="..\Source\BCEditor.Editor.ActiveLine.pas"/>
         <DCCReference Include="..\Source\BCEditor.Editor.Base.pas"/>
-        <DCCReference Include="..\Source\BCEditor.Editor.Marks.pas"/>
         <DCCReference Include="..\Source\BCEditor.Editor.Caret.pas"/>
 				<DCCReference Include="..\Source\BCEditor.Editor.Caret.MultiEdit.pas"/>
         <DCCReference Include="..\Source\BCEditor.Editor.Caret.MultiEdit.Colors.pas"/>
@@ -158,11 +157,13 @@
         <DCCReference Include="..\Source\BCEditor.Editor.KeyCommands.pas"/>
         <DCCReference Include="..\Source\BCEditor.Editor.LeftMargin.pas"/>
         <DCCReference Include="..\Source\BCEditor.Editor.LeftMargin.Bookmarks.pas"/>
-        <DCCReference Include="..\Source\BCEditor.Editor.LeftMargin.Bookmarks.Panel.pas"/>
         <DCCReference Include="..\Source\BCEditor.Editor.LeftMargin.Border.pas"/>
         <DCCReference Include="..\Source\BCEditor.Editor.LeftMargin.Colors.pas"/>
         <DCCReference Include="..\Source\BCEditor.Editor.LeftMargin.LineNumbers.pas"/>
         <DCCReference Include="..\Source\BCEditor.Editor.LeftMargin.LineState.pas"/>
+				<DCCReference Include="..\Source\BCEditor.Editor.LeftMargin.Marks.pas"/>
+				<DCCReference Include="..\Source\BCEditor.Editor.LeftMargin.MarksPanel.pas"/>
+				<DCCReference Include="..\Source\BCEditor.Editor.Marks.pas"/>
         <DCCReference Include="..\Source\BCEditor.Editor.MatchingPair.pas"/>
         <DCCReference Include="..\Source\BCEditor.Editor.MatchingPair.Colors.pas"/>
         <DCCReference Include="..\Source\BCEditor.Editor.Minimap.pas"/>

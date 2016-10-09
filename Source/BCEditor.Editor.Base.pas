@@ -227,6 +227,7 @@ type
     function GetLeftMarginWidth: Integer;
     function GetLineHeight: Integer;
     function GetLineIndentLevel(const ALine: Integer): Integer;
+    function GetMarkBackgroundColor(const ALine: Integer): TColor;
     function GetMatchingToken(const ADisplayPosition: TBCEditorDisplayPosition; var AMatch: TBCEditorMatchingPairMatch): TBCEditorMatchingTokenResult;
     function GetMouseMoveScrollCursorIndex: Integer;
     function GetMouseMoveScrollCursors(AIndex: Integer): HCursor;
@@ -314,6 +315,7 @@ type
     procedure DoSyncEdit;
     procedure DoTabKey;
     procedure DoToggleBookmark;
+    procedure DoToggleMark;
     procedure DoToggleSelectedCase(const ACommand: TBCEditorCommand);
     procedure DoTrimTrailingSpaces(ATextLine: Integer);
     procedure DoWordLeft(const ACommand: TBCEditorCommand);
@@ -616,7 +618,8 @@ type
     procedure SetFocus; override;
     procedure SetLineColor(ALine: Integer; AForegroundColor, ABackgroundColor: TColor);
     procedure SetLineColorToDefault(ALine: Integer);
-    procedure SetMark(const AIndex: Integer; const ATextPosition: TBCEditorTextPosition; const AImageIndex: Integer);
+    procedure SetMark(const AIndex: Integer; const ATextPosition: TBCEditorTextPosition; const AImageIndex: Integer;
+      const AColor: TColor = clNone);
     procedure SetOption(const AOption: TBCEditorOption; const AEnabled: Boolean);
     procedure Sort(ASortOrder: TBCEditorSortOrder = soToggle);
     procedure ToggleBookmark(const AIndex: Integer = -1);
@@ -1482,6 +1485,35 @@ begin
       Inc(Result);
 
     Inc(LPLine);
+  end;
+end;
+
+function TBCBaseEditor.GetMarkBackgroundColor(const ALine: Integer): TColor;
+var
+  i: Integer;
+  LMark: TBCEditorMark;
+begin
+  Result := clNone;
+  { Bookmarks }
+  if FLeftMargin.Colors.BookmarkBackground <> clNone then
+  for i := 0 to FBookmarkList.Count - 1 do
+  begin
+    LMark := FBookmarkList.Items[i];
+    if LMark.Line + 1 = ALine then
+    begin
+      Result := FLeftMargin.Colors.BookmarkBackground;
+      Break;
+    end;
+  end;
+  { Other marks }
+  for i := 0 to FMarkList.Count - 1 do
+  begin
+    LMark := FMarkList.Items[i];
+    if (LMark.Line + 1 = ALine) and (LMark.Background <> clNone) then
+    begin
+      Result := LMark.Background;
+      Break;
+    end;
   end;
 end;
 
@@ -4632,17 +4664,14 @@ var
   LBookmark: TBCEditorMark;
 begin
   LTextCaretPosition := TextCaretPosition;
-  if FLeftMargin.Bookmarks.ShortCuts then
-  begin
-    i := ACommand - ecSetBookmark1;
-    if Assigned(AData) then
-      LTextCaretPosition := TBCEditorTextPosition(AData^);
-    LBookmark := FBookmarkList.Find(i);
-    if Assigned(LBookmark) and (LBookmark.Line = LTextCaretPosition.Line) then
-      DeleteBookmark(LBookmark)
-    else
-      SetBookmark(i, LTextCaretPosition);
-  end;
+  i := ACommand - ecSetBookmark1;
+  if Assigned(AData) then
+    LTextCaretPosition := TBCEditorTextPosition(AData^);
+  LBookmark := FBookmarkList.Find(i);
+  if Assigned(LBookmark) and (LBookmark.Line = LTextCaretPosition.Line) then
+    DeleteBookmark(LBookmark)
+  else
+    SetBookmark(i, LTextCaretPosition);
 end;
 
 procedure TBCBaseEditor.DoShiftTabKey;
@@ -4884,6 +4913,29 @@ begin
   end;
   LIndex := Max(BCEDITOR_BOOKMARK_IMAGE_COUNT, LIndex + 1);
   SetBookmark(LIndex, LTextCaretPosition);
+end;
+
+procedure TBCBaseEditor.DoToggleMark;
+var
+  i, LIndex: Integer;
+  LMark: TBCEditorMark;
+  LTextCaretPosition: TBCEditorTextPosition;
+begin
+  LTextCaretPosition := TextCaretPosition;
+  LIndex := 0;
+  for i := 0 to FMarkList.Count - 1 do
+  begin
+    LMark := FMarkList.Items[i];
+    if LMark.Line = LTextCaretPosition.Line then
+    begin
+      DeleteMark(LMark);
+      Exit;
+    end;
+    if LMark.Index > LIndex then
+      LIndex := LMark.Index;
+  end;
+  LIndex := LIndex + 1;
+  SetMark(LIndex, LTextCaretPosition, FLeftMargin.Marks.DefaultImageIndex);
 end;
 
 procedure TBCBaseEditor.PaintCaretBlock(ADisplayCaretPosition: TBCEditorDisplayPosition);
@@ -8074,11 +8126,11 @@ end;
 
 procedure TBCBaseEditor.DoOnLeftMarginClick(AButton: TMouseButton; AShift: TShiftState; X, Y: Integer);
 var
-  i: Integer;
-  LOffset: Integer;
+//  i: Integer;
+//  LOffset: Integer;
   LLine: Integer;
-  LMarks: TBCEditorMarks;
-  LMark: TBCEditorMark;
+//  LMarks: TBCEditorMarks;
+//  LMark: TBCEditorMark;
   LFoldRange: TBCEditorCodeFoldingRange;
   LCodeFoldingRegion: Boolean;
   LTextCaretPosition: TBCEditorTextPosition;
@@ -8096,9 +8148,14 @@ begin
     SelectionEndPosition := FSelectionBeginPosition;
   end;
 
-  if (X < LeftMargin.Bookmarks.Panel.Width) and (Y div GetLineHeight <= DisplayCaretY - TopLine) and
-    LeftMargin.Bookmarks.Visible and (bpoToggleBookmarkByClick in LeftMargin.Bookmarks.Panel.Options) then
-    ToggleBookmark;
+  if (X < LeftMargin.MarksPanel.Width) and (Y div GetLineHeight <= DisplayCaretY - TopLine) then
+  begin
+    if LeftMargin.Bookmarks.Visible and (bpoToggleBookmarkByClick in LeftMargin.MarksPanel.Options) then
+      DoToggleBookmark
+    else
+    if LeftMargin.Marks.Visible and (bpoToggleMarkByClick in LeftMargin.MarksPanel.Options) then
+      DoToggleMark
+  end;
 
   LCodeFoldingRegion := (X >= FLeftMarginWidth - FCodeFolding.GetWidth) and (X <= FLeftMarginWidth);
 
@@ -8117,7 +8174,7 @@ begin
       Exit;
     end;
   end;
-  if Assigned(FOnLeftMarginClick) then
+  {if Assigned(FOnLeftMarginClick) then
   begin
     LLine := DisplayToTextPosition(GetDisplayPosition(1, LSelectedRow)).Line;
     if LLine <= FLines.Count then
@@ -8136,7 +8193,7 @@ begin
       end;
       FOnLeftMarginClick(Self, AButton, X, Y, LLine, LMark);
     end;
-  end;
+  end; }
 end;
 
 procedure TBCBaseEditor.DoOnMinimapClick(AButton: TMouseButton; X, Y: Integer);
@@ -8726,7 +8783,7 @@ begin
   begin
     LDisplayPosition := TextToDisplayPosition(SelectionEndPosition);
 
-    if X < LeftMargin.Bookmarks.Panel.Width then
+    if X < LeftMargin.MarksPanel.Width then
     begin
       LRowCount := Y div GetLineHeight;
       LRow := LDisplayPosition.Row - TopLine;
@@ -9352,7 +9409,7 @@ procedure TBCBaseEditor.PaintCodeFolding(AClipRect: TRect; AFirstRow, ALastRow: 
 var
   i, LLine: Integer;
   LFoldRange: TBCEditorCodeFoldingRange;
-  LOldBrushColor, LOldPenColor: TColor;
+  LOldBrushColor, LOldPenColor, LBackground: TColor;
 begin
   LOldBrushColor := Canvas.Brush.Color;
   LOldPenColor := Canvas.Pen.Color;
@@ -9372,12 +9429,20 @@ begin
 
     AClipRect.Top := (i - FTopLine) * GetLineHeight;
     AClipRect.Bottom := AClipRect.Top + GetLineHeight;
-    // TODO: xxx
     if (not Assigned(FMultiCarets) and (GetTextCaretY + 1 = LLine) or Assigned(FMultiCarets) and
       IsMultiEditCaretFound(LLine)) and (FCodeFolding.Colors.ActiveLineBackground <> clNone) then
     begin
       Canvas.Brush.Color := FCodeFolding.Colors.ActiveLineBackground;
       FillRect(AClipRect);
+    end
+    else
+    begin
+      LBackground := GetMarkBackgroundColor(i);
+      if LBackground <> clNone then
+      begin
+        Canvas.Brush.Color := LBackground;
+        FillRect(AClipRect);
+      end
     end;
     if Assigned(LFoldRange) and (LLine >= LFoldRange.FromLine) and (LLine <= LFoldRange.ToLine) then
     begin
@@ -9714,38 +9779,31 @@ var
   LLineRect: TRect;
   LLineHeight: Integer;
 
-  procedure DrawBookmark(ABookmark: TBCEditorMark; var ALeftMarginOffset: Integer; AMarkRow: Integer);
+  procedure DrawBookmark(ABookmark: TBCEditorMark; var AOverlappingOffset: Integer; AMarkRow: Integer);
   begin
     if not Assigned(FInternalBookmarkImage) then
       FInternalBookmarkImage := TBCEditorInternalImage.Create(HInstance, BCEDITOR_BOOKMARK_IMAGES,
         BCEDITOR_BOOKMARK_IMAGE_COUNT);
-    if ALeftMarginOffset = 0 then
-      FInternalBookmarkImage.Draw(Canvas, ABookmark.ImageIndex,
-        AClipRect.Left + FLeftMargin.Bookmarks.Panel.LeftMargin + ALeftMarginOffset,
-        (AMarkRow - TopLine) * LLineHeight, LLineHeight, clFuchsia);
-    Inc(ALeftMarginOffset, FLeftMargin.Bookmarks.Panel.OtherMarkXOffset);
+    FInternalBookmarkImage.Draw(Canvas, ABookmark.ImageIndex,
+      AClipRect.Left + FLeftMargin.Bookmarks.LeftMargin,
+      (AMarkRow - TopLine) * LLineHeight, LLineHeight, clFuchsia);
+    Inc(AOverlappingOffset, FLeftMargin.Marks.OverlappingOffset);
   end;
 
-  procedure DrawMark(AMark: TBCEditorMark; var ALeftMarginOffset: Integer; AMarkRow: Integer);
+  procedure DrawMark(AMark: TBCEditorMark; const AOverlappingOffset: Integer; AMarkRow: Integer);
   var
     Y: Integer;
   begin
     if Assigned(FLeftMargin.Bookmarks.Images) then
-    begin
       if AMark.ImageIndex <= FLeftMargin.Bookmarks.Images.Count then
       begin
-        ALeftMarginOffset := 0;
-
         if LLineHeight > FLeftMargin.Bookmarks.Images.Height then
           Y := LLineHeight shr 1 - FLeftMargin.Bookmarks.Images.Height shr 1
         else
           Y := 0;
-        with FLeftMargin.Bookmarks do
-          Images.Draw(Canvas, AClipRect.Left + Panel.LeftMargin + ALeftMarginOffset,
-            (AMarkRow - TopLine) * LLineHeight + Y, AMark.ImageIndex);
-        Inc(ALeftMarginOffset, FLeftMargin.Bookmarks.Panel.OtherMarkXOffset);
+        FLeftMargin.Marks.Images.Draw(Canvas, AClipRect.Left + FLeftMargin.Marks.LeftMargin + AOverlappingOffset,
+          (AMarkRow - TopLine) * LLineHeight + Y, AMark.ImageIndex);
       end;
-    end
   end;
 
   procedure PaintLineNumbers;
@@ -9754,7 +9812,7 @@ var
     LLineNumber: string;
     LTextSize: TSize;
     LLeftMarginWidth: Integer;
-    LOldColor: TColor;
+    LOldColor, LBackground: TColor;
     LLastTextLine: Integer;
   begin
     FPaintHelper.SetBaseFont(FLeftMargin.Font);
@@ -9778,14 +9836,22 @@ var
 
         FPaintHelper.SetBackgroundColor(FLeftMargin.Colors.Background);
 
-        // TODO: xxx
-        if (not Assigned(FMultiCarets) and (LLine = GetTextCaretY + 1) or Assigned(FMultiCarets) and
-          IsMultiEditCaretFound(LLine)) and (FLeftMargin.Colors.ActiveLineBackground <> clNone) then
+        if (not Assigned(FMultiCarets) and (LLine = GetTextCaretY + 1) or
+          Assigned(FMultiCarets) and IsMultiEditCaretFound(LLine)) and (FLeftMargin.Colors.ActiveLineBackground <> clNone) then
         begin
           FPaintHelper.SetBackgroundColor(FLeftMargin.Colors.ActiveLineBackground);
           Canvas.Brush.Color := FLeftMargin.Colors.ActiveLineBackground;
           if Assigned(FMultiCarets) then
             FillRect(LLineRect);
+        end
+        else
+        begin
+          LBackground := GetMarkBackgroundColor(i);
+          if LBackground <> clNone then
+          begin
+            FPaintHelper.SetBackgroundColor(LBackground);
+            Canvas.Brush.Color := LBackground;
+          end
         end;
 
         LPreviousLine := LLine;
@@ -9841,12 +9907,19 @@ var
     i: Integer;
     LPanelRect: TRect;
     LPanelActiveLineRect: TRect;
-    LOldColor: TColor;
+    LOldColor, LBackground: TColor;
+
+    procedure SetPanelActiveLineRect;
+    begin
+      LPanelActiveLineRect := System.Types.Rect(AClipRect.Left, (i - TopLine) * LLineHeight,
+        AClipRect.Left + FLeftMargin.MarksPanel.Width, (i - TopLine + 1) * LLineHeight);
+    end;
+
   begin
     LOldColor := Canvas.Brush.Color;
-    if FLeftMargin.Bookmarks.Panel.Visible then
+    if FLeftMargin.MarksPanel.Visible then
     begin
-      LPanelRect := System.Types.Rect(AClipRect.Left, 0, AClipRect.Left + FLeftMargin.Bookmarks.Panel.Width,
+      LPanelRect := System.Types.Rect(AClipRect.Left, 0, AClipRect.Left + FLeftMargin.MarksPanel.Width,
         ClientHeight);
       if FLeftMargin.Colors.BookmarkPanelBackground <> clNone then
       begin
@@ -9858,15 +9931,22 @@ var
       begin
         LLine := GetDisplayTextLineNumber(i);
 
-        if not Assigned(FMultiCarets) and (LLine = GetTextCaretY + 1) or Assigned(FMultiCarets) and
-          (IsMultiEditCaretFound(LLine)) then
+        if not Assigned(FMultiCarets) and (LLine = GetTextCaretY + 1) or
+          Assigned(FMultiCarets) and IsMultiEditCaretFound(LLine) then
         begin
-          LPanelActiveLineRect := System.Types.Rect(AClipRect.Left, (i - TopLine) * LLineHeight,
-            AClipRect.Left + FLeftMargin.Bookmarks.Panel.Width, (i - TopLine + 1) * LLineHeight);
-
-          // TODO: xxx
+          SetPanelActiveLineRect;
           Canvas.Brush.Color := FLeftMargin.Colors.ActiveLineBackground;
           FillRect(LPanelActiveLineRect);
+        end
+        else
+        begin
+          LBackground := GetMarkBackgroundColor(i);
+          if LBackground <> clNone then
+          begin
+            SetPanelActiveLineRect;
+            Canvas.Brush.Color := LBackground;
+            FillRect(LPanelActiveLineRect);
+          end
         end;
       end;
       if Assigned(FOnBeforeMarkPanelPaint) then
@@ -9914,37 +9994,37 @@ var
   procedure PaintBookmarks;
   var
     i, j: Integer;
-    LLeftMarginOffsets: PIntegerArray;
-    LBookmark: TBCEditorMark;
-    LBookmarkLine: Integer;
+    LOverlappingOffsets: PIntegerArray;
+    LMark: TBCEditorMark;
+    LMarkLine: Integer;
   begin
     if FLeftMargin.Bookmarks.Visible and FLeftMargin.Bookmarks.Visible and
       ((FBookmarkList.Count > 0) or (FMarkList.Count > 0)) and (ALastLine >= AFirstLine) then
     begin
-      LLeftMarginOffsets := AllocMem((ALastLine - AFirstLine + 1) * SizeOf(Integer));
+      LOverlappingOffsets := AllocMem((ALastLine - AFirstLine + 1) * SizeOf(Integer));
       try
         for i := AFirstLine to ALastLine do
         begin
-          LBookmarkLine := GetDisplayTextLineNumber(i);
+          LMarkLine := GetDisplayTextLineNumber(i);
           { Bookmarks }
           for j := 0 to FBookmarkList.Count - 1 do
           begin
-            LBookmark := FBookmarkList.Items[j];
-            if LBookmark.Line + 1 = LBookmarkLine then
-              if LBookmark.Visible then
-                DrawBookmark(LBookmark, LLeftMarginOffsets[ALastLine - i], LBookmarkLine);
+            LMark := FBookmarkList.Items[j];
+            if LMark.Line + 1 = LMarkLine then
+              if LMark.Visible then
+                DrawBookmark(LMark, LOverlappingOffsets[ALastLine - i], LMarkLine);
           end;
           { Other marks }
           for j := 0 to FMarkList.Count - 1 do
           begin
-            LBookmark := FMarkList.Items[j];
-            if LBookmark.Line + 1 = LBookmarkLine then
-              if LBookmark.Visible then
-                DrawMark(LBookmark, LLeftMarginOffsets[ALastLine - i], LBookmarkLine);
+            LMark := FMarkList.Items[j];
+            if LMark.Line + 1 = LMarkLine then
+              if LMark.Visible then
+                DrawMark(LMark, LOverlappingOffsets[ALastLine - i], LMarkLine);
           end;
         end;
       finally
-        FreeMem(LLeftMarginOffsets);
+        FreeMem(LOverlappingOffsets);
       end;
     end;
   end;
@@ -10007,13 +10087,13 @@ var
     i: Integer;
     LPanelRect: TRect;
   begin
-    if FLeftMargin.Bookmarks.Panel.Visible then
+    if FLeftMargin.MarksPanel.Visible then
     begin
       if Assigned(FOnMarkPanelLinePaint) then
       begin
         LPanelRect.Left := AClipRect.Left;
         LPanelRect.Top := 0;
-        LPanelRect.Right := FLeftMargin.Bookmarks.Panel.Width;
+        LPanelRect.Right := FLeftMargin.MarksPanel.Width;
         LPanelRect.Bottom := AClipRect.Bottom;
         for i := AFirstLine to ALastLine do
         begin
@@ -10427,14 +10507,18 @@ var
 
   function GetBackgroundColor: TColor;
   var
+    LBackground: TColor;
     LHighlighterAttribute: TBCEditorHighlighterAttribute;
   begin
+    LBackground := GetMarkBackgroundColor(LCurrentLine);
     if AMinimap and (moShowBookmarks in FMinimap.Options) and LBookmarkOnCurrentLine then
       Result := FMinimap.Colors.Bookmark
     else
-    // TODO: xxx
     if LIsCurrentLine and FActiveLine.Visible and (FActiveLine.Color <> clNone) then
       Result := FActiveLine.Color
+    else
+    if LBackground <> clNone then
+      Result := LBackground
     else
     if LIsSyncEditBlock then
       Result := FSyncEdit.Colors.Background
@@ -13802,7 +13886,8 @@ begin
         if FLeftMargin.Bookmarks.ShortCuts then
           GotoBookmark(ACommand - ecGotoBookmark1);
       ecSetBookmark1 .. ecSetBookmark9:
-        DoSetBookmark(ACommand, AData);
+        if FLeftMargin.Bookmarks.ShortCuts then
+          DoSetBookmark(ACommand, AData);
       ecWordLeft, ecSelectionWordLeft:
         DoWordLeft(ACommand);
       ecWordRight, ecSelectionWordRight:
@@ -14442,7 +14527,8 @@ begin
     Invalidate;
 end;
 
-procedure TBCBaseEditor.SetMark(const AIndex: Integer; const ATextPosition: TBCEditorTextPosition; const AImageIndex: Integer);
+procedure TBCBaseEditor.SetMark(const AIndex: Integer; const ATextPosition: TBCEditorTextPosition;
+  const AImageIndex: Integer; const AColor: TColor = clNone);
 var
   LMark: TBCEditorMark;
 begin
@@ -14457,6 +14543,10 @@ begin
     begin
       Line := ATextPosition.Line;
       Char := ATextPosition.Char;
+      if AColor <> clNone then
+        Color := AColor
+      else
+        Color := FLeftMargin.Colors.MarkBackground;
       ImageIndex := AIndex;
       Index := AIndex;
       Visible := True;

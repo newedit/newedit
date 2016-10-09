@@ -161,7 +161,8 @@ type
   TBCEditorCompletionProposalOptions = set of TBCEditorCompletionProposalOption;
 
   TBCEditorLeftMarginBookMarkPanelOption = (
-    bpoToggleBookmarkByClick
+    bpoToggleBookmarkByClick,
+    bpoToggleMarkByClick
   );
   TBCEditorLeftMarginBookMarkPanelOptions = set of TBCEditorLeftMarginBookMarkPanelOption;
 

@@ -131,9 +131,6 @@
         <DelphiCompile Include="..\Source\BCEditor.Editor.Base.pas">
             <BuildOrder>4</BuildOrder>
         </DelphiCompile>
-        <DelphiCompile Include="..\Source\BCEditor.Editor.Marks.pas">
-            <BuildOrder>5</BuildOrder>
-        </DelphiCompile>
 				<DelphiCompile Include="..\Source\BCEditor.Editor.Caret.MultiEdit.Colors.pas">
             <BuildOrder>6</BuildOrder>
         </DelphiCompile>
@@ -203,7 +200,10 @@
         <DelphiCompile Include="..\Source\BCEditor.Editor.KeyCommands.pas">
             <BuildOrder>27</BuildOrder>
         </DelphiCompile>
-        <DelphiCompile Include="..\Source\BCEditor.Editor.LeftMargin.Bookmarks.Panel.pas">
+				<DelphiCompile Include="..\Source\BCEditor.Editor.LeftMargin.Marks.pas">
+            <BuildOrder>28</BuildOrder>
+        </DelphiCompile>
+        <DelphiCompile Include="..\Source\BCEditor.Editor.LeftMargin.MarksPanel.pas">
             <BuildOrder>28</BuildOrder>
         </DelphiCompile>
         <DelphiCompile Include="..\Source\BCEditor.Editor.LeftMargin.Bookmarks.pas">
@@ -223,6 +223,9 @@
         </DelphiCompile>
         <DelphiCompile Include="..\Source\BCEditor.Editor.LeftMargin.pas">
             <BuildOrder>34</BuildOrder>
+        </DelphiCompile>
+				<DelphiCompile Include="..\Source\BCEditor.Editor.Marks.pas">
+            <BuildOrder>5</BuildOrder>
         </DelphiCompile>
         <DelphiCompile Include="..\Source\BCEditor.Editor.MatchingPair.Colors.pas">
             <BuildOrder>36</BuildOrder>
