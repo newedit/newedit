@@ -38,7 +38,7 @@ type
   PEditorStringRecordList = ^TBCEditorStringRecordList;
   TBCEditorStringRecordList = array [0 .. CMAXSTRINGS - 1] of TBCEditorStringRecord;
 
-  TStringListChangeEvent = procedure(ASender: TObject; AIndex: Integer; ACount: Integer) of object;
+  TStringListChangeEvent = procedure(ASender: TObject; const AIndex: Integer; const ACount: Integer) of object;
 
   TBCEditorLines = class(TStrings)
   strict private
@@ -591,11 +591,9 @@ begin
           ExpandedLength := -1;
           Flags := [sfExpandedLengthUnknown];
           New(Attribute);
-          with Attribute^ do begin
-            Foreground := clNone;
-            Background := clNone;
-            LineState := lsNone;
-          end;
+          Attribute^.Foreground := clNone;
+          Attribute^.Background := clNone;
+          Attribute^.LineState := lsNone;
         end;
       end;
     end;
@@ -782,11 +780,9 @@ begin
         ExpandedLength := -1;
         Flags := [sfExpandedLengthUnknown];
         New(Attribute);
-        with Attribute^ do begin
-          Foreground := clNone;
-          Background := clNone;
-          LineState := lsNone;
-        end;
+        Attribute^.Foreground := clNone;
+        Attribute^.Background := clNone;
+        Attribute^.LineState := lsNone;
       end;
       Inc(FCount);
 

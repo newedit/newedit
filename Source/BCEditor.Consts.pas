@@ -61,7 +61,6 @@ const
   clMatchingPairUnderline = $00CC9999;
   clMinimapVisibleLines = $00E6FAFF;
   clMinimapBookmark = clGreen;
-  clWordWrapIndicatorBackground = $00FFFFFF;
   clWordWrapIndicatorArrow = clNavy;
   clWordWrapIndicatorLines = clBlack;
   clSyncEditBackground = $00FCFDCD;

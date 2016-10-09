@@ -3,11 +3,12 @@ unit BCEditor.Editor.Marks;
 interface
 
 uses
-  Vcl.Controls, System.Classes, System.Contnrs, BCEditor.Consts;
+  Vcl.Controls, System.Classes, System.Contnrs, Vcl.Graphics, BCEditor.Consts;
 
 type
   TBCEditorMark = class
   protected
+    FBackground: TColor;
     FChar: Integer;
     FData: Pointer;
     FEditor: TCustomControl;
@@ -17,7 +18,7 @@ type
     FVisible: Boolean;
   public
     constructor Create(AOwner: TCustomControl);
-
+    property Background: TColor read FBackground write FBackground default clNone;
     property Char: Integer read FChar write FChar;
     property Data: Pointer read FData write FData;
     property ImageIndex: Integer read FImageIndex write FImageIndex;
@@ -67,6 +68,7 @@ constructor TBCEditorMark.Create(AOwner: TCustomControl);
 begin
   inherited Create;
 
+  FBackground := clNone;
   FIndex := -1;
   FEditor := AOwner;
 end;

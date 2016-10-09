@@ -439,9 +439,9 @@ type
     procedure ChainLinesChanged(ASender: TObject);
     procedure ChainLinesChanging(ASender: TObject);
     procedure ChainLinesCleared(ASender: TObject);
-    procedure ChainLinesDeleted(ASender: TObject; AIndex: Integer; ACount: Integer);
-    procedure ChainLinesInserted(ASender: TObject; AIndex: Integer; ACount: Integer);
-    procedure ChainLinesPutted(ASender: TObject; AIndex: Integer; ACount: Integer);
+    procedure ChainLinesDeleted(ASender: TObject; const AIndex: Integer; const ACount: Integer);
+    procedure ChainLinesInserted(ASender: TObject; const AIndex: Integer; const ACount: Integer);
+    procedure ChainLinesPutted(ASender: TObject; const AIndex: Integer; const ACount: Integer);
     procedure ChainUndoRedoAdded(ASender: TObject);
     procedure CreateParams(var AParams: TCreateParams); override;
     procedure CreateWnd; override;
@@ -473,13 +473,13 @@ type
     procedure KeyUp(var AKey: Word; AShift: TShiftState); override;
     procedure LinesChanged(ASender: TObject);
     procedure LinesHookChanged;
-    procedure LinesBeforeDeleted(ASender: TObject; AIndex: Integer; ACount: Integer);
-    procedure LinesBeforeInserted(ASender: TObject; AIndex: Integer; ACount: Integer);
-    procedure LinesBeforePutted(ASender: TObject; AIndex: Integer; ACount: Integer);
+    procedure LinesBeforeDeleted(ASender: TObject; const AIndex: Integer; const ACount: Integer);
+    procedure LinesBeforeInserted(ASender: TObject; const AIndex: Integer; const ACount: Integer);
+    procedure LinesBeforePutted(ASender: TObject; const AIndex: Integer; const ACount: Integer);
     procedure LinesCleared(ASender: TObject);
-    procedure LinesDeleted(ASender: TObject; AIndex: Integer; ACount: Integer);
-    procedure LinesInserted(ASender: TObject; AIndex: Integer; ACount: Integer);
-    procedure LinesPutted(ASender: TObject; AIndex: Integer; ACount: Integer);
+    procedure LinesDeleted(ASender: TObject; const AIndex: Integer; const ACount: Integer);
+    procedure LinesInserted(ASender: TObject; const AIndex: Integer; const ACount: Integer);
+    procedure LinesPutted(ASender: TObject; const AIndex: Integer; const ACount: Integer);
     procedure Loaded; override;
     procedure MarkListChange(ASender: TObject);
     procedure MouseDown(AButton: TMouseButton; AShift: TShiftState; X, Y: Integer); override;
@@ -2189,7 +2189,7 @@ var
   LPixel: PBCEditorQuadColor;
   LAlpha: Single;
 begin
-  ABitmap.Height := 0;
+  ABitmap.Height := 0; { background color }
   ABitmap.Height := AClipRect.Height;
 
   for LRow := 0 to ABitmap.Height - 1 do
@@ -4870,6 +4870,7 @@ var
   LTextCaretPosition: TBCEditorTextPosition;
 begin
   LTextCaretPosition := TextCaretPosition;
+  LIndex := 0;
   for i := 0 to FBookmarkList.Count - 1 do
   begin
     LMark := FBookmarkList.Items[i];
@@ -4878,11 +4879,10 @@ begin
       DeleteBookmark(LMark);
       Exit;
     end;
+    if LMark.Index > LIndex then
+      LIndex := LMark.Index;
   end;
-  LIndex := 0;
-  if FBookmarkList.Count > 0 then
-    LIndex := FBookmarkList.Items[FBookmarkList.Count - 1].Index + 1;
-  LIndex := Max(BCEDITOR_BOOKMARK_IMAGE_COUNT, LIndex);
+  LIndex := Max(BCEDITOR_BOOKMARK_IMAGE_COUNT, LIndex + 1);
   SetBookmark(LIndex, LTextCaretPosition);
 end;
 
@@ -7593,21 +7593,21 @@ begin
   FOriginalLines.OnCleared(ASender);
 end;
 
-procedure TBCBaseEditor.ChainLinesDeleted(ASender: TObject; AIndex: Integer; ACount: Integer);
+procedure TBCBaseEditor.ChainLinesDeleted(ASender: TObject; const AIndex: Integer; const ACount: Integer);
 begin
   if Assigned(FOnChainLinesDeleted) then
     FOnChainLinesDeleted(ASender, AIndex, ACount);
   FOriginalLines.OnDeleted(ASender, AIndex, ACount);
 end;
 
-procedure TBCBaseEditor.ChainLinesInserted(ASender: TObject; AIndex: Integer; ACount: Integer);
+procedure TBCBaseEditor.ChainLinesInserted(ASender: TObject; const AIndex: Integer; const ACount: Integer);
 begin
   if Assigned(FOnChainLinesInserted) then
     FOnChainLinesInserted(ASender, AIndex, ACount);
   FOriginalLines.OnInserted(ASender, AIndex, ACount);
 end;
 
-procedure TBCBaseEditor.ChainLinesPutted(ASender: TObject; AIndex: Integer; ACount: Integer);
+procedure TBCBaseEditor.ChainLinesPutted(ASender: TObject; const AIndex: Integer; const ACount: Integer);
 begin
   if Assigned(FOnChainLinesPutted) then
     FOnChainLinesPutted(ASender, AIndex, ACount);
@@ -8461,17 +8461,17 @@ begin
   Invalidate;
 end;
 
-procedure TBCBaseEditor.LinesBeforeDeleted(ASender: TObject; AIndex: Integer; ACount: Integer);
+procedure TBCBaseEditor.LinesBeforeDeleted(ASender: TObject; const AIndex: Integer; const ACount: Integer);
 begin
   { Do nothing }
 end;
 
-procedure TBCBaseEditor.LinesBeforeInserted(ASender: TObject; AIndex: Integer; ACount: Integer);
+procedure TBCBaseEditor.LinesBeforeInserted(ASender: TObject; const AIndex: Integer; const ACount: Integer);
 begin
   { Do nothing }
 end;
 
-procedure TBCBaseEditor.LinesBeforePutted(ASender: TObject; AIndex: Integer; ACount: Integer);
+procedure TBCBaseEditor.LinesBeforePutted(ASender: TObject; const AIndex: Integer; const ACount: Integer);
 begin
   { Do nothing }
 end;
@@ -8490,10 +8490,10 @@ begin
   SetModified(False);
 end;
 
-procedure TBCBaseEditor.LinesDeleted(ASender: TObject; AIndex: Integer; ACount: Integer);
+procedure TBCBaseEditor.LinesDeleted(ASender: TObject; const AIndex: Integer; const ACount: Integer);
 var
   LRunner: Integer;
-
+  LIndex: Integer;
 
   procedure UpdateMarks(AMarkList: TBCEditorMarkList);
   var
@@ -8503,32 +8503,34 @@ var
     for i := 0 to AMarkList.Count - 1 do
     begin
       LMark := Marks[i];
-      if LMark.Line >= AIndex + ACount then
+      if LMark.Line >= LIndex + ACount then
         LMark.Line := LMark.Line - ACount
       else
-      if LMark.Line > AIndex then
-        LMark.Line := AIndex;
+      if LMark.Line > LIndex then
+        LMark.Line := LIndex;
     end;
   end;
 
 begin
+  LIndex := AIndex;
+
   UpdateMarks(FBookmarkList);
   UpdateMarks(FMarkList);
 
   if FCodeFolding.Visible then
-    CodeFoldingLinesDeleted(AIndex + 1, ACount);
+    CodeFoldingLinesDeleted(LIndex + 1, ACount);
 
   if Assigned(FOnLinesDeleted) then
-    FOnLinesDeleted(Self, AIndex, ACount);
+    FOnLinesDeleted(Self, LIndex, ACount);
 
   if Assigned(FHighlighter) then
   begin
-    AIndex := Max(AIndex, 1);
+    LIndex := Max(LIndex, 1);
     if FLines.Count > 0 then
     begin
-      LRunner := RescanHighlighterRangesFrom(AIndex - 1);
-      if LRunner = AIndex - 1 then
-        RescanHighlighterRangesFrom(AIndex - 1);
+      LRunner := RescanHighlighterRangesFrom(LIndex - 1);
+      if LRunner = LIndex - 1 then
+        RescanHighlighterRangesFrom(LIndex - 1);
     end;
   end;
 
@@ -8539,7 +8541,7 @@ begin
   Invalidate;
 end;
 
-procedure TBCBaseEditor.LinesInserted(ASender: TObject; AIndex: Integer; ACount: Integer);
+procedure TBCBaseEditor.LinesInserted(ASender: TObject; const AIndex: Integer; const ACount: Integer);
 var
   LLength: Integer;
   LLastScan: Integer;
@@ -8591,7 +8593,7 @@ begin
   Invalidate;
 end;
 
-procedure TBCBaseEditor.LinesPutted(ASender: TObject; AIndex: Integer; ACount: Integer);
+procedure TBCBaseEditor.LinesPutted(ASender: TObject; const AIndex: Integer; const ACount: Integer);
 var
   LLastScan: Integer;
 begin
@@ -9370,7 +9372,7 @@ begin
 
     AClipRect.Top := (i - FTopLine) * GetLineHeight;
     AClipRect.Bottom := AClipRect.Top + GetLineHeight;
-
+    // TODO: xxx
     if (not Assigned(FMultiCarets) and (GetTextCaretY + 1 = LLine) or Assigned(FMultiCarets) and
       IsMultiEditCaretFound(LLine)) and (FCodeFolding.Colors.ActiveLineBackground <> clNone) then
     begin
@@ -9776,6 +9778,7 @@ var
 
         FPaintHelper.SetBackgroundColor(FLeftMargin.Colors.Background);
 
+        // TODO: xxx
         if (not Assigned(FMultiCarets) and (LLine = GetTextCaretY + 1) or Assigned(FMultiCarets) and
           IsMultiEditCaretFound(LLine)) and (FLeftMargin.Colors.ActiveLineBackground <> clNone) then
         begin
@@ -9851,19 +9854,19 @@ var
         FillRect(LPanelRect);
       end;
       if FLeftMargin.Colors.ActiveLineBackground <> clNone then
+      for i := AFirstLine to ALastTextLine do
       begin
-        for i := AFirstLine to ALastTextLine do
-        begin
-          LLine := GetDisplayTextLineNumber(i);
+        LLine := GetDisplayTextLineNumber(i);
 
-          if not Assigned(FMultiCarets) and (LLine = GetTextCaretY + 1) or Assigned(FMultiCarets) and
-            (IsMultiEditCaretFound(LLine)) then
-          begin
-            LPanelActiveLineRect := System.Types.Rect(AClipRect.Left, (i - TopLine) * LLineHeight,
-              AClipRect.Left + FLeftMargin.Bookmarks.Panel.Width, (i - TopLine + 1) * LLineHeight);
-            Canvas.Brush.Color := FLeftMargin.Colors.ActiveLineBackground;
-            FillRect(LPanelActiveLineRect);
-          end;
+        if not Assigned(FMultiCarets) and (LLine = GetTextCaretY + 1) or Assigned(FMultiCarets) and
+          (IsMultiEditCaretFound(LLine)) then
+        begin
+          LPanelActiveLineRect := System.Types.Rect(AClipRect.Left, (i - TopLine) * LLineHeight,
+            AClipRect.Left + FLeftMargin.Bookmarks.Panel.Width, (i - TopLine + 1) * LLineHeight);
+
+          // TODO: xxx
+          Canvas.Brush.Color := FLeftMargin.Colors.ActiveLineBackground;
+          FillRect(LPanelActiveLineRect);
         end;
       end;
       if Assigned(FOnBeforeMarkPanelPaint) then
@@ -9926,7 +9929,7 @@ var
           { Bookmarks }
           for j := 0 to FBookmarkList.Count - 1 do
           begin
-            LBookmark := FBookmarkList[j];
+            LBookmark := FBookmarkList.Items[j];
             if LBookmark.Line + 1 = LBookmarkLine then
               if LBookmark.Visible then
                 DrawBookmark(LBookmark, LLeftMarginOffsets[ALastLine - i], LBookmarkLine);
@@ -9934,7 +9937,7 @@ var
           { Other marks }
           for j := 0 to FMarkList.Count - 1 do
           begin
-            LBookmark := FMarkList[j];
+            LBookmark := FMarkList.Items[j];
             if LBookmark.Line + 1 = LBookmarkLine then
               if LBookmark.Visible then
                 DrawMark(LBookmark, LLeftMarginOffsets[ALastLine - i], LBookmarkLine);
@@ -10287,7 +10290,7 @@ begin
             FPaintHelper.SetBackgroundColor(FBackgroundColor);
           FPaintHelper.SetForegroundColor(Canvas.Pen.Color);
           FPaintHelper.SetStyle([]);
-          LPilcrow := Char($00B6);
+          LPilcrow := BCEDITOR_PILCROW_CHAR;
           Winapi.Windows.ExtTextOut(Canvas.Handle, LCharRect.Left, LCharRect.Top, ETO_OPAQUE or ETO_CLIPPED,
             @LCharRect, PChar(LPilcrow), 1, nil);
         end
@@ -10429,6 +10432,7 @@ var
     if AMinimap and (moShowBookmarks in FMinimap.Options) and LBookmarkOnCurrentLine then
       Result := FMinimap.Colors.Bookmark
     else
+    // TODO: xxx
     if LIsCurrentLine and FActiveLine.Visible and (FActiveLine.Color <> clNone) then
       Result := FActiveLine.Color
     else

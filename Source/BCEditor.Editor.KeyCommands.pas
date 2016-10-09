@@ -46,9 +46,8 @@ const
   ecSelectionEditorTop = ecEditorTop + ecSelection;
   ecSelectionEditorBottom = ecEditorBottom + ecSelection;
   ecSelectionGotoXY = ecGotoXY + ecSelection;
-  ecSelectionScope = ecSelection + 21;
-  ecSelectionWord = ecSelection + 22;
-  ecSelectAll = ecSelection + 23;
+  ecSelectionWord = ecSelection + 21;
+  ecSelectAll = ecSelection + 22;
   { Scrolling }
   ecScrollUp = 211;
   ecScrollDown = 212;
