@@ -16,7 +16,7 @@ type
     FLineNumberLine: TColor;
     FLineStateModified: TColor;
     FLineStateNormal: TColor;
-    FMarkBackground: TColor;
+    FMarkDefaultBackground: TColor;
   public
     constructor Create;
     procedure Assign(ASource: TPersistent); override;
@@ -29,7 +29,7 @@ type
     property LineNumberLine: TColor read FLineNumberLine write FLineNumberLine default clLeftMarginFontForeground;
     property LineStateModified: TColor read FLineStateModified write FLineStateModified default clYellow;
     property LineStateNormal: TColor read FLineStateNormal write FLineStateNormal default clLime;
-    property MarkBackground: TColor read FMarkBackground write FMarkBackground default clNone;
+    property MarkDefaultBackground: TColor read FMarkDefaultBackground write FMarkDefaultBackground default clNone;
   end;
 
 implementation
@@ -46,7 +46,7 @@ begin
   FLineNumberLine := clLeftMarginFontForeground;
   FLineStateModified := clYellow;
   FLineStateNormal := clLime;
-  FMarkBackground := clNone;
+  FMarkDefaultBackground := clNone;
 end;
 
 procedure TBCEditorLeftMarginColors.Assign(ASource: TPersistent);
@@ -61,7 +61,7 @@ begin
     Self.FLineNumberLine := FLineNumberLine;
     Self.FLineStateModified := FLineStateModified;
     Self.FLineStateNormal := FLineStateNormal;
-    Self.FMarkBackground := FMarkBackground;
+    Self.FMarkDefaultBackground := FMarkDefaultBackground;
   end
   else
     inherited Assign(ASource);

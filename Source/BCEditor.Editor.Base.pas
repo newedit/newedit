@@ -9851,6 +9851,7 @@ var
           begin
             FPaintHelper.SetBackgroundColor(LBackground);
             Canvas.Brush.Color := LBackground;
+            FillRect(LLineRect); // TODO ?
           end
         end;
 
@@ -9926,12 +9927,13 @@ var
         Canvas.Brush.Color := FLeftMargin.Colors.BookmarkPanelBackground;
         FillRect(LPanelRect);
       end;
-      if FLeftMargin.Colors.ActiveLineBackground <> clNone then
+      //if FLeftMargin.Colors.ActiveLineBackground <> clNone then
       for i := AFirstLine to ALastTextLine do
       begin
         LLine := GetDisplayTextLineNumber(i);
 
-        if not Assigned(FMultiCarets) and (LLine = GetTextCaretY + 1) or
+        if (FLeftMargin.Colors.ActiveLineBackground <> clNone) and
+          not Assigned(FMultiCarets) and (LLine = GetTextCaretY + 1) or
           Assigned(FMultiCarets) and IsMultiEditCaretFound(LLine) then
         begin
           SetPanelActiveLineRect;
@@ -10496,6 +10498,7 @@ var
   LWrappedRowCount: Integer;
   LExpandedCharsBefore: Integer;
   LAddWrappedCount: Boolean;
+  LMarkColor: TColor;
 
   function IsBookmarkOnCurrentLine: Boolean;
   var
@@ -10507,18 +10510,16 @@ var
 
   function GetBackgroundColor: TColor;
   var
-    LBackground: TColor;
     LHighlighterAttribute: TBCEditorHighlighterAttribute;
   begin
-    LBackground := GetMarkBackgroundColor(LCurrentLine);
     if AMinimap and (moShowBookmarks in FMinimap.Options) and LBookmarkOnCurrentLine then
       Result := FMinimap.Colors.Bookmark
     else
+    if LMarkColor <> clNone then
+      Result := LMarkColor
+    else
     if LIsCurrentLine and FActiveLine.Visible and (FActiveLine.Color <> clNone) then
       Result := FActiveLine.Color
-    else
-    if LBackground <> clNone then
-      Result := LBackground
     else
     if LIsSyncEditBlock then
       Result := FSyncEdit.Colors.Background
@@ -11202,6 +11203,12 @@ var
           end;
         end;
 
+        if LMarkColor <> clNone then
+        begin
+          LIsCustomBackgroundColor := True;
+          LBackgroundColor := LMarkColor;
+        end;
+
         PrepareTokenHelper(LTokenText, LTokenPosition, LTokenLength, LForegroundColor, LBackgroundColor, LFontStyles,
           LMatchingPairUnderline, LIsCustomBackgroundColor)
       end
@@ -11287,6 +11294,8 @@ var
     while LDisplayLine <= ALastLine do
     begin
       LCurrentLine := GetDisplayTextLineNumber(LDisplayLine);
+
+      LMarkColor := GetMarkBackgroundColor(LCurrentLine);
 
       if AMinimap and (moShowBookmarks in FMinimap.Options) then
         LBookmarkOnCurrentLine := IsBookmarkOnCurrentLine;
@@ -14544,9 +14553,9 @@ begin
       Line := ATextPosition.Line;
       Char := ATextPosition.Char;
       if AColor <> clNone then
-        Color := AColor
+        Background := AColor
       else
-        Color := FLeftMargin.Colors.MarkBackground;
+        Background := FLeftMargin.Colors.MarkDefaultBackground;
       ImageIndex := AImageIndex;
       Index := AIndex;
       Visible := True;

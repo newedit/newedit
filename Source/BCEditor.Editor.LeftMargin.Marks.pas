@@ -50,9 +50,11 @@ begin
   if Assigned(ASource) and (ASource is TBCEditorLeftMarginMarks) then
   with ASource as TBCEditorLeftMarginMarks do
   begin
+    Self.FDefaultImageIndex := FDefaultImageIndex;
     Self.FImages := FImages;
     Self.FLeftMargin := FLeftMargin;
     Self.FOverlappingOffset := FOverlappingOffset;
+    Self.FShortCuts := FShortCuts;
     Self.FVisible := FVisible;
     if Assigned(Self.FOnChange) then
       Self.FOnChange(Self);
