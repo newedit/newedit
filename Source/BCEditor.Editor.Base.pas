@@ -9794,11 +9794,11 @@ var
   var
     Y: Integer;
   begin
-    if Assigned(FLeftMargin.Bookmarks.Images) then
-      if AMark.ImageIndex <= FLeftMargin.Bookmarks.Images.Count then
+    if Assigned(FLeftMargin.Marks.Images) then
+      if AMark.ImageIndex <= FLeftMargin.Marks.Images.Count then
       begin
-        if LLineHeight > FLeftMargin.Bookmarks.Images.Height then
-          Y := LLineHeight shr 1 - FLeftMargin.Bookmarks.Images.Height shr 1
+        if LLineHeight > FLeftMargin.Marks.Images.Height then
+          Y := LLineHeight shr 1 - FLeftMargin.Marks.Images.Height shr 1
         else
           Y := 0;
         FLeftMargin.Marks.Images.Draw(Canvas, AClipRect.Left + FLeftMargin.Marks.LeftMargin + AOverlappingOffset,
@@ -9991,7 +9991,7 @@ var
       end;
   end;
 
-  procedure PaintBookmarks;
+  procedure PaintMarks;
   var
     i, j: Integer;
     LOverlappingOffsets: PIntegerArray;
@@ -10121,7 +10121,7 @@ begin
   PaintBookmarkPanel;
   PaintWordWrapIndicator;
   PaintBorder;
-  PaintBookmarks;
+  PaintMarks;
   PaintActiveLineIndicator;
   PaintSyncEditIndicator;
   PaintLineState;
@@ -13288,7 +13288,7 @@ begin
   begin
     if Assigned(FOnBeforeDeleteMark) then
       FOnBeforeDeleteMark(Self, AMark);
-    FBookmarkList.Remove(AMark);
+    FMarkList.Remove(AMark);
     if Assigned(FOnAfterDeleteMark) then
       FOnAfterDeleteMark(Self);
   end
@@ -14547,7 +14547,7 @@ begin
         Color := AColor
       else
         Color := FLeftMargin.Colors.MarkBackground;
-      ImageIndex := AIndex;
+      ImageIndex := AImageIndex;
       Index := AIndex;
       Visible := True;
     end;
