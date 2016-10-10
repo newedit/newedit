@@ -8158,13 +8158,13 @@ begin
   end;
 
   if Assigned(FOnLeftMarginClick) then
-    if LLine <= FLines.Count then
+    if LLine - 1 < FLines.Count then
     for i := 0 to FMarkList.Count - 1 do
     begin
       LMark := FMarkList.Items[i];
-      if LMark.Line = LLine then
+      if LMark.Line = LLine - 1 then
       begin
-        FOnLeftMarginClick(Self, AButton, X, Y, LLine, LMark);
+        FOnLeftMarginClick(Self, AButton, X, Y, LLine - 1, LMark);
         Break;
       end;
     end;
