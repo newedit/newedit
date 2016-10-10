@@ -1,4 +1,4 @@
-Version 1.7.1. 
+Version 1.8.0
 
 Use the Issues page to report bugs or send them directly to lasse@bonecode.com.
 
