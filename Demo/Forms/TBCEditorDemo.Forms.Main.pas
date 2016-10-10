@@ -13,7 +13,7 @@ uses
   sComboBox, BCControl.ComboBox, sLabel, EhLibVCL, GridsEh, BCEditor.MacroRecorder, BCCommon.Dialog.Popup.SearchEngine;
 
 const
-  BCEDITORDEMO_CAPTION = 'TBCEditor Control Demo v1.8.0 beta';
+  BCEDITORDEMO_CAPTION = 'TBCEditor Control Demo v1.8.0';
 
   TITLE_BAR_CAPTION = 1;
   TITLE_BAR_ENCODING = 2;
