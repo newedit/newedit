@@ -5350,7 +5350,6 @@ var
   LDestinationPosition: TBCEditorTextPosition;
   LCurrentLineLength: Integer;
   LChangeY: Boolean;
-  LCaretRowColumn: TBCEditorDisplayPosition;
   LPLine: PChar;
 begin
   LTextCaretPosition := TextCaretPosition;
@@ -5415,21 +5414,6 @@ begin
   end;
 
   MoveCaretAndSelection(FSelectionBeginPosition, LDestinationPosition, ASelectionCommand);
-
-  if FWordWrap.Enabled and (X > 0) and (DisplayCaretX < FLines.ExpandedStringLengths[LTextCaretPosition.Line]) then
-  begin
-    LCaretRowColumn := DisplayCaretPosition;
-
-    if (FWordWrapLineLengths[LCaretRowColumn.Row] = 0) and
-      (LCaretRowColumn.Column - 1 > GetVisibleChars(LCaretRowColumn.Row)) or
-      (FWordWrapLineLengths[LCaretRowColumn.Row] <> 0) and
-      (LCaretRowColumn.Column - 1 > FWordWrapLineLengths[LCaretRowColumn.Row]) then
-    begin
-      Inc(LCaretRowColumn.Row);
-      LCaretRowColumn.Column := 1;
-      DisplayCaretPosition := LCaretRowColumn;
-    end;
-  end;
 end;
 
 procedure TBCBaseEditor.MoveCaretVertically(const Y: Integer; const ASelectionCommand: Boolean);
@@ -8126,17 +8110,16 @@ end;
 
 procedure TBCBaseEditor.DoOnLeftMarginClick(AButton: TMouseButton; AShift: TShiftState; X, Y: Integer);
 var
-//  i: Integer;
-//  LOffset: Integer;
+  i: Integer;
   LLine: Integer;
-//  LMarks: TBCEditorMarks;
-//  LMark: TBCEditorMark;
+  LMark: TBCEditorMark;
   LFoldRange: TBCEditorCodeFoldingRange;
   LCodeFoldingRegion: Boolean;
   LTextCaretPosition: TBCEditorTextPosition;
   LSelectedRow: Integer;
 begin
   LSelectedRow := GetSelectedRow(Y);
+  LLine := GetDisplayTextLineNumber(LSelectedRow);
   LTextCaretPosition := DisplayToTextPosition(GetDisplayPosition(1, LSelectedRow));
   TextCaretPosition := LTextCaretPosition;
 
@@ -8161,7 +8144,6 @@ begin
 
   if FCodeFolding.Visible and LCodeFoldingRegion and (Lines.Count > 0) then
   begin
-    LLine := GetDisplayTextLineNumber(LSelectedRow);
     LFoldRange := CodeFoldingCollapsableFoldRangeForLine(LLine);
 
     if Assigned(LFoldRange) then
@@ -8174,26 +8156,18 @@ begin
       Exit;
     end;
   end;
-  {if Assigned(FOnLeftMarginClick) then
-  begin
-    LLine := DisplayToTextPosition(GetDisplayPosition(1, LSelectedRow)).Line;
+
+  if Assigned(FOnLeftMarginClick) then
     if LLine <= FLines.Count then
+    for i := 0 to FMarkList.Count - 1 do
     begin
-      Marks.GetMarksForLine(LLine, LMarks);
-      LOffset := 0;
-      for i := 1 to BCEDITOR_MAX_BOOKMARKS do
+      LMark := FMarkList.Items[i];
+      if LMark.Line = LLine then
       begin
-        LMark := LMarks[i];
-        if Assigned(LMark) then
-        begin
-          Inc(LOffset, FLeftMargin.Bookmarks.Panel.OtherMarkXOffset);
-          if X < LOffset then
-            Break;
-        end;
+        FOnLeftMarginClick(Self, AButton, X, Y, LLine, LMark);
+        Break;
       end;
-      FOnLeftMarginClick(Self, AButton, X, Y, LLine, LMark);
     end;
-  end; }
 end;
 
 procedure TBCBaseEditor.DoOnMinimapClick(AButton: TMouseButton; X, Y: Integer);
@@ -9851,7 +9825,7 @@ var
           begin
             FPaintHelper.SetBackgroundColor(LBackground);
             Canvas.Brush.Color := LBackground;
-            FillRect(LLineRect); // TODO ?
+            FillRect(LLineRect);
           end
         end;
 
@@ -9927,7 +9901,7 @@ var
         Canvas.Brush.Color := FLeftMargin.Colors.BookmarkPanelBackground;
         FillRect(LPanelRect);
       end;
-      //if FLeftMargin.Colors.ActiveLineBackground <> clNone then
+
       for i := AFirstLine to ALastTextLine do
       begin
         LLine := GetDisplayTextLineNumber(i);
@@ -10502,10 +10476,17 @@ var
 
   function IsBookmarkOnCurrentLine: Boolean;
   var
+    i: Integer;
     LMark: TBCEditorMark;
   begin
-    LMark := FBookmarkList.Find(LCurrentLine - 1);
-    Result := Assigned(LMark);
+    Result := True;
+    for i := 0 to FBookmarkList.Count - 1 do
+    begin
+      LMark := FBookmarkList.Items[i];
+      if LMark.Line = LCurrentLine - 1 then
+        Exit;
+    end;
+    Result := False;
   end;
 
   function GetBackgroundColor: TColor;
@@ -11088,7 +11069,6 @@ var
     LIsCustomBackgroundColor: Boolean;
     LTextPosition: TBCEditorTextPosition;
     LTextCaretY: Integer;
-    LWrappedRowCountTemp: Integer;
 
     function GetWordAtSelection(var ASelectedText: string): string;
     var
@@ -11313,13 +11293,11 @@ var
       LTextCaretY := GetTextCaretY + 1;
 
       LFirstColumn := 1;
-      LWrappedRowCountTemp := 0;
 
       if FWordWrap.Enabled and (LDisplayLine < Length(FWordWrapLineLengths)) then
       begin
         LLastColumn := FWordWrapLineLengths[LDisplayLine];
         i := LDisplayLine - 1;
-        LWrappedRowCountTemp := i;
         if i > 0 then
         begin
           while (i > 0) and (GetDisplayTextLineNumber(i) = LCurrentLine) do
@@ -11431,7 +11409,6 @@ var
             FHighlighter.SetCurrentRange(FLines.Ranges[LCurrentLine - 2]);
 
           FHighlighter.SetCurrentLine(LCurrentLineText);
-          LWrappedRowCount := LWrappedRowCountTemp;
         end;
 
         LTokenHelper.Length := 0;
@@ -11466,11 +11443,11 @@ var
             begin
               if LTokenPosition + LTokenLength > LLastColumn then
               begin
-                if LTokenLength > FWordWrapLineLengths[LCurrentRow] then
+                if LTokenLength > FWordWrapLineLengths[LCurrentRow + LWrappedRowCount] then
                 begin
-                  LTokenText := Copy(LTokenText, LFirstColumn, FWordWrapLineLengths[LCurrentRow]);
+                  LTokenText := Copy(LTokenText, LFirstColumn, FWordWrapLineLengths[LCurrentRow + LWrappedRowCount]);
                   LTokenLength := Length(LTokenText);
-                  Inc(LFirstColumn, FWordWrapLineLengths[LCurrentRow]);
+                  Inc(LFirstColumn, FWordWrapLineLengths[LCurrentRow + LWrappedRowCount]);
                   PrepareToken;
                 end;
                 if LCurrentRow + LWrappedRowCount + 1 < Length(FWordWrapLineLengths) then
@@ -12559,8 +12536,7 @@ begin
   Result := False;
   Winapi.Windows.GetCursorPos(LCursorPoint);
   LCursorPoint := ScreenToClient(LCursorPoint);
-  if (LCursorPoint.X < 0) or (LCursorPoint.Y < 0) or (LCursorPoint.X > Self.Width) or (LCursorPoint.Y > Self.Height)
-  then
+  if (LCursorPoint.X < 0) or (LCursorPoint.Y < 0) or (LCursorPoint.X > Self.Width) or (LCursorPoint.Y > Self.Height) then
     Exit;
   ATextPosition := PixelsToTextPosition(LCursorPoint.X, LCursorPoint.Y);
   Result := True;
