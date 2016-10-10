@@ -10515,11 +10515,11 @@ var
     if AMinimap and (moShowBookmarks in FMinimap.Options) and LBookmarkOnCurrentLine then
       Result := FMinimap.Colors.Bookmark
     else
-    if LMarkColor <> clNone then
-      Result := LMarkColor
-    else
     if LIsCurrentLine and FActiveLine.Visible and (FActiveLine.Color <> clNone) then
       Result := FActiveLine.Color
+    else
+    if LMarkColor <> clNone then
+      Result := LMarkColor
     else
     if LIsSyncEditBlock then
       Result := FSyncEdit.Colors.Background
@@ -11203,7 +11203,7 @@ var
           end;
         end;
 
-        if LMarkColor <> clNone then
+        if (LMarkColor <> clNone) and not (LIsCurrentLine and FActiveLine.Visible and (FActiveLine.Color <> clNone)) then
         begin
           LIsCustomBackgroundColor := True;
           LBackgroundColor := LMarkColor;
