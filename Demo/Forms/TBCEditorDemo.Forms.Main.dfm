@@ -49,7 +49,7 @@ inherited MainForm: TMainForm
     ParentDoubleBuffered = False
     TabOrder = 1
     SkinData.SkinSection = 'TRANSPARENT'
-    object ObjectInspectorEh: TObjectInspectorEh
+    object ObjectInspector: TJvInspector
       AlignWithMargins = True
       Left = 0
       Top = 5
@@ -59,8 +59,14 @@ inherited MainForm: TMainForm
       Margins.Top = 5
       Margins.Right = 6
       Margins.Bottom = 5
+      ParentCustomHint = False
+      Style = isItemPainter
       Align = alClient
-      Options = [goVertLineEh, goEditingEh, goAlwaysShowEditorEh]
+      Divider = 150
+      ItemHeight = 16
+      Painter = JvInspectorDotNETPainter1
+      TabStop = True
+      TabOrder = 0
     end
   end
   object PanelLeft: TBCPanel [3]
@@ -441,6 +447,7 @@ inherited MainForm: TMainForm
     MenuSupport.UseExtraLine = False
     SkinInfo = 'N/A'
     ThirdParty.ThirdEdits = ' '#13#10'TBCEditorPrintPreview'#13#10
+    ThirdParty.ThirdListViews = ' '#13#10'TJvInspector'#13#10
     ThirdParty.ThirdVirtualTrees = 'TVirtualDrawTree'#13#10
     Left = 166
     Top = 26
@@ -779,5 +786,35 @@ inherited MainForm: TMainForm
   object OpenDialog: TsOpenDialog
     Left = 342
     Top = 52
+  end
+  object JvInspectorDotNETPainter1: TJvInspectorDotNETPainter
+    CategoryFont.Charset = DEFAULT_CHARSET
+    CategoryFont.Color = clBtnText
+    CategoryFont.Height = -11
+    CategoryFont.Name = 'Tahoma'
+    CategoryFont.Style = []
+    NameFont.Charset = DEFAULT_CHARSET
+    NameFont.Color = clWindowText
+    NameFont.Height = -11
+    NameFont.Name = 'Tahoma'
+    NameFont.Style = []
+    ValueFont.Charset = DEFAULT_CHARSET
+    ValueFont.Color = clNavy
+    ValueFont.Height = -11
+    ValueFont.Name = 'Tahoma'
+    ValueFont.Style = []
+    DrawNameEndEllipsis = False
+    HideSelectFont.Charset = DEFAULT_CHARSET
+    HideSelectFont.Color = clHighlightText
+    HideSelectFont.Height = -11
+    HideSelectFont.Name = 'Tahoma'
+    HideSelectFont.Style = []
+    SelectedFont.Charset = DEFAULT_CHARSET
+    SelectedFont.Color = clHighlightText
+    SelectedFont.Height = -11
+    SelectedFont.Name = 'Tahoma'
+    SelectedFont.Style = []
+    Left = 820
+    Top = 250
   end
 end

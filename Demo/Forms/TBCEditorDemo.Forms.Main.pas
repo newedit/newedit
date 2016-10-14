@@ -6,14 +6,15 @@ uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics, Vcl.Controls,
   BCCommon.Form.Base, Vcl.Forms, Vcl.Dialogs, Vcl.ExtCtrls, Vcl.ComCtrls, BCEditor.Editor, BCEditor.Highlighter,
   BCEditor.Editor.Base, Vcl.Buttons, Vcl.AppEvnts, System.Actions, Vcl.ActnList, BCEditor.Print, BCCommon.Images,
-  BCComponent.SkinManager, BCControl.Panel, BCControl.StatusBar, BCComponent.TitleBar, Vcl.Menus, ObjectInspectorEh,
+  BCComponent.SkinManager, BCControl.Panel, BCControl.StatusBar, BCComponent.TitleBar, Vcl.Menus,
   BCControl.Splitter, sPanel, BCComponent.MultiStringHolder, sSkinManager, sStatusBar, sSplitter, acTitleBar,
   sSkinProvider, sDialogs, Vcl.StdCtrls, System.Diagnostics, BCCommon.Dialog.Popup.Highlighter, BCEditor.Types,
   BCCommon.Dialog.Popup.Encoding, BCCommon.Dialog.Popup.Highlighter.Color, sSpeedButton, BCControl.SpeedButton,
-  sComboBox, BCControl.ComboBox, sLabel, EhLibVCL, GridsEh, BCEditor.MacroRecorder, BCCommon.Dialog.Popup.SearchEngine;
+  sComboBox, BCControl.ComboBox, sLabel, BCEditor.MacroRecorder, BCCommon.Dialog.Popup.SearchEngine,
+  JvExControls, JvPropertyStoreEditor, JvInspector, JvBaseDlg, JvWinDialogs, JvComponentBase;
 
 const
-  BCEDITORDEMO_CAPTION = 'TBCEditor Control Demo v1.8.0';
+  BCEDITORDEMO_CAPTION = 'TBCEditor Control Demo v1.8.1';
 
   TITLE_BAR_CAPTION = 1;
   TITLE_BAR_ENCODING = 2;
@@ -32,7 +33,6 @@ type
     MenuItemSeparator1: TMenuItem;
     MenuItemSeparator2: TMenuItem;
     MultiStringHolderFileTypes: TBCMultiStringHolder;
-    ObjectInspectorEh: TObjectInspectorEh;
     PanelLeft: TBCPanel;
     PanelProperty: TBCPanel;
     PopupMenuFile: TPopupMenu;
@@ -62,6 +62,8 @@ type
     ActionSearchEngine: TAction;
     ActionCaseSensitive: TAction;
     ActionInSelection: TAction;
+    ObjectInspector: TJvInspector;
+    JvInspectorDotNETPainter1: TJvInspectorDotNETPainter;
     procedure ActionFileOpenExecute(Sender: TObject);
     procedure ActionPreviewExecute(Sender: TObject);
     procedure ActionSearchExecute(Sender: TObject);
@@ -178,16 +180,16 @@ end;
 
 procedure TMainForm.SetMatchesFound;
 var
-  s: string;
+  LLabel: string;
 begin
-  s := '';
+  LLabel := '';
 
   if Assigned(Editor) and (Editor.SearchResultCount > 1) then
-    s := 'es';
+    LLabel := 'es';
   if Assigned(Editor) and (Editor.SearchResultCount > 0) then
-    s := Format('%d match%s found', [Editor.SearchResultCount, s]);
+    LLabel := Format('%d match%s found', [Editor.SearchResultCount, LLabel]);
 
-  LabelSearchResultCount.Caption := s;
+  LabelSearchResultCount.Caption := LLabel;
 end;
 
 procedure TMainForm.TitleBarItems2Click(Sender: TObject);
@@ -264,42 +266,42 @@ end;
 
 procedure TMainForm.EditorCaretChanged(Sender: TObject; X, Y: Integer);
 var
-  InfoText: string;
+  LInfoText: string;
 begin
   inherited;
-  InfoText := Format('%d: %d', [Y, X]);
-  if StatusBar.Panels[0].Text <> InfoText then
-    StatusBar.Panels[0].Text := InfoText;
+  LInfoText := Format('%d: %d', [Y, X]);
+  if StatusBar.Panels[0].Text <> LInfoText then
+    StatusBar.Panels[0].Text := LInfoText;
 end;
 
 procedure TMainForm.InitializeEditorPrint(AEditorPrint: TBCEditorPrint);
 var
-  Alignment: TAlignment;
+  LAlignment: TAlignment;
 
-  procedure SetHeaderFooter(Option: Integer; Value: string);
+  procedure SetHeaderFooter(AOption: Integer; AValue: string);
   begin
-    case Option of
+    case AOption of
       0, 1:
         with AEditorPrint.Footer do
         begin
-          case Option of
+          case AOption of
             0:
-              Alignment := taLeftJustify;
+              LAlignment := taLeftJustify;
             1:
-              Alignment := taRightJustify;
+              LAlignment := taRightJustify;
           end;
-          Add(Value, nil, Alignment, 1);
+          Add(AValue, nil, LAlignment, 1);
         end;
       2, 3:
         with AEditorPrint.Header do
         begin
-          case Option of
+          case AOption of
             2:
-              Alignment := taLeftJustify;
+              LAlignment := taLeftJustify;
             3:
-              Alignment := taRightJustify;
+              LAlignment := taRightJustify;
           end;
-          Add(Value, nil, Alignment, 1);
+          Add(AValue, nil, LAlignment, 1);
         end;
     end;
   end;
@@ -407,6 +409,8 @@ end;
 procedure TMainForm.FormCreate(Sender: TObject);
 begin
   inherited;
+  ObjectInspector.InspectObject := Editor;
+
   TitleBar.Items[TITLE_BAR_CAPTION].Caption := BCEDITORDEMO_CAPTION;
   SkinManager.ExtendedBorders := True;
   { IDE can lose these properties }
@@ -430,8 +434,6 @@ end;
 
 procedure TMainForm.FormShow(Sender: TObject);
 begin
-  ObjectInspectorEh.Component := Editor;
-  ObjectInspectorEh.LabelColWidth := ScaleSize(145);
   if Editor.CanFocus then
     Editor.SetFocus;
 end;
@@ -502,7 +504,10 @@ begin
     CodeFolding.Visible := Highlighter.CodeFoldingRangeCount > 0;
   end;
   TitleBar.Items[TITLE_BAR_HIGHLIGHTER].Caption := Editor.Highlighter.Name;
-  Editor.Lines.Text := Editor.Highlighter.Info.General.Sample;
+  Editor.Lines.Text := // Editor.Highlighter.Info.General.Sample;
+    'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
+  // TESTAA: Ei Toimi kolmannella rivillä  // Software distributed under the License is distributed on an "AS IS" basis,
+  Editor.WordWrap.Enabled := True;
   Editor.CaretZero;
   StatusBar.Panels[3].Text := '';
   Caption := BCEDITORDEMO_CAPTION;
