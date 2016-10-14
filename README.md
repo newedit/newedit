@@ -64,7 +64,7 @@ Documentation will be written after the project stabilizes and dust settles. Thi
 
 <h3>Screenshots</h3>
 
-![bceditor1](https://cloud.githubusercontent.com/assets/11475177/19395732/ca016fee-9247-11e6-982a-c2b1b08bb14a.png)
+![bceditor1](https://cloud.githubusercontent.com/assets/11475177/19395785/2734e6dc-9248-11e6-9d12-7bfc6c536776.png)
 ![bceditor0](https://cloud.githubusercontent.com/assets/11475177/11832901/3ac6cfc4-a3c6-11e5-984e-2e174beacd74.png)
 ![bceditor2](https://cloud.githubusercontent.com/assets/11475177/11452991/a3785e88-9602-11e5-801c-d8e9a7b8ab64.png)
 ![bceditor3](https://cloud.githubusercontent.com/assets/11475177/11452992/a37b154c-9602-11e5-882c-5a73809be517.png)
