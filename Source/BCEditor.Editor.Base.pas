@@ -2099,6 +2099,8 @@ var
     if not Visible then
       Exit;
 
+    // TODO Refactor
+
     LMaxWidth := Max(WordWrapWidth, FPaintHelper.CharWidth + 2);
     if j = 1 then
       FHighlighter.ResetCurrentRange
@@ -10922,7 +10924,7 @@ var
 
       if FSelection.Mode = smNormal then
       begin
-        SetDrawingColors(LIsLineSelected or LSelected and (LLineSelectionEnd > LLastColumn));
+        SetDrawingColors(not (soToEndOfLine in FSelection.Options) and (LIsLineSelected or LSelected and (LLineSelectionEnd > LLastColumn)));
         LTokenRect.Right := LLineRect.Right;
         FillRect(LTokenRect);
       end
@@ -11441,15 +11443,24 @@ var
 
             if FWordWrap.Enabled then
             begin
+              // TODO Refactor
+
+              if LTokenLength > FWordWrapLineLengths[LCurrentRow + LWrappedRowCount] then
+              begin
+                LTokenText := Copy(LTokenText, LFirstColumn, FWordWrapLineLengths[LCurrentRow + LWrappedRowCount]);
+                LTokenLength := Length(LTokenText);
+                LTokenPosition := LFirstColumn - 1;
+
+                PrepareToken;
+
+                Inc(LFirstColumn, FWordWrapLineLengths[LCurrentRow + LWrappedRowCount]);
+                if LCurrentRow + LWrappedRowCount + 1 < Length(FWordWrapLineLengths) then
+                  Inc(LLastColumn, FWordWrapLineLengths[LCurrentRow + LWrappedRowCount + 1]);
+                LAddWrappedCount := True;
+                Break;
+              end;
               if LTokenPosition + LTokenLength > LLastColumn then
               begin
-                if LTokenLength > FWordWrapLineLengths[LCurrentRow + LWrappedRowCount] then
-                begin
-                  LTokenText := Copy(LTokenText, LFirstColumn, FWordWrapLineLengths[LCurrentRow + LWrappedRowCount]);
-                  LTokenLength := Length(LTokenText);
-                  Inc(LFirstColumn, FWordWrapLineLengths[LCurrentRow + LWrappedRowCount]);
-                  PrepareToken;
-                end;
                 if LCurrentRow + LWrappedRowCount + 1 < Length(FWordWrapLineLengths) then
                   Inc(LLastColumn, FWordWrapLineLengths[LCurrentRow + LWrappedRowCount + 1]);
                 LAddWrappedCount := True;

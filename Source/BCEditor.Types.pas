@@ -94,6 +94,7 @@ type
     soExpandRealNumbers,
     soHighlightSimilarTerms,
     soTermsCaseSensitive,
+    soToEndOfLine,
     soTripleClickRowSelect
   );
   TBCEditorSelectionOptions = set of TBCEditorSelectionOption;
