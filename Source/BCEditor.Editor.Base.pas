@@ -4412,12 +4412,14 @@ begin
         FLines.Add('');
 
       Inc(LTextCaretPosition.Line);
+      LTextCaretPosition.Char := 1;
 
       FLines.Insert(LTextCaretPosition.Line, '');
       FUndoList.AddChange(crLineBreak, LTextCaretPosition, LTextCaretPosition, LTextCaretPosition, '', smNormal);
 
       FLines.Attributes[LTextCaretPosition.Line].LineState := lsModified;
 
+      DisplayCaretX := 1;
       DisplayCaretY := FDisplayCaretY + 1;
     end;
     DoTrimTrailingSpaces(LTextCaretPosition.Line);
