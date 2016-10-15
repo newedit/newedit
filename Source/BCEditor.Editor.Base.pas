@@ -14632,6 +14632,8 @@ begin
     else
       SetBookmark(AIndex, TextCaretPosition)
   end
+  else
+    DoToggleBookmark;
 end;
 
 procedure TBCBaseEditor.UnhookEditorLines;
