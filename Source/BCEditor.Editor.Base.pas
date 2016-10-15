@@ -10031,7 +10031,7 @@ var
     LDisplayPosition: TBCEditorDisplayPosition;
   begin
     if FSyncEdit.Enabled and not FSyncEdit.Active and FSyncEdit.Activator.Visible and GetSelectionAvailable then
-      if SelectionBeginPosition.Line <> SelectionEndPosition.Line then
+      if (SelectionBeginPosition.Line <> SelectionEndPosition.Line) or FSyncEdit.BlockSelected then
       begin
         LDisplayPosition := TextToDisplayPosition(SelectionEndPosition);
         FSyncEdit.Activator.Draw(Canvas, AClipRect.Left + FActiveLine.Indicator.Left,
