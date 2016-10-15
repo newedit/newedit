@@ -250,6 +250,7 @@ type
   TBCEditorEmptySpace = (
     esNone,
     esSpace,
+    esSubstitute,
     esTab
   );
 

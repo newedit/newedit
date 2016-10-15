@@ -400,7 +400,7 @@ end;
 
 function TBCEditorLines.GetTextStr: string;
 var
-  i, LLength, LSize, LLineBreakLength: Integer;
+  i, j, LLength, LSize, LLineBreakLength: Integer;
   LPValue: PChar;
   LLineBreak: string;
 begin
@@ -415,7 +415,12 @@ begin
     if LLength <> 0 then
     begin
       System.Move(Pointer(FList^[i].Value)^, LPValue^, LLength * SizeOf(Char));
-      Inc(LPValue, LLength);
+      for j := 0 to LLength - 1 do
+      begin
+        if LPValue^ = BCEDITOR_SUBSTITUTE_CHAR then
+          LPValue^ := BCEDITOR_NONE_CHAR;
+        Inc(LPValue);
+      end;
     end;
     if i = FCount - 1 then
       Exit;
@@ -546,8 +551,10 @@ end;
 
 procedure TBCEditorLines.LoadFromBuffer(var ABuffer: TBytes; AEncoding: TEncoding = nil);
 var
+  i: Integer;
   LSize: Integer;
   LStrBuffer: string;
+  LPStrBuffer: PChar;
 begin
   FStreaming := True;
 
@@ -556,6 +563,13 @@ begin
     LSize := TEncoding.GetBufferEncoding(ABuffer, AEncoding);
     LStrBuffer := AEncoding.GetString(ABuffer, LSize, Length(ABuffer) - LSize);
     SetLength(ABuffer, 0);
+    LPStrBuffer := PChar(LStrBuffer);
+    for i := 1 to Length(LStrBuffer) do
+    begin
+      if LPStrBuffer^ = BCEDITOR_NONE_CHAR then
+        LPStrBuffer^ := BCEDITOR_SUBSTITUTE_CHAR;
+      Inc(LPStrBuffer);
+    end;
     SetTextStr(LStrBuffer);
     SetLength(LStrBuffer, 0);
   finally

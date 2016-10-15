@@ -63,6 +63,7 @@ type
     FHorizontalScrollPosition: Integer;
     FInsertMode: Boolean;
     FInternalBookmarkImage: TBCEditorInternalImage;
+    FInternalNullImage: TBCEditorInternalImage;
     FIsScrolling: Boolean;
     FItalicOffset: Byte;
     FKeyboardHandler: TBCEditorKeyboardHandler;
@@ -1000,6 +1001,7 @@ begin
   FWordWrap.Free;
   FPaintHelper.Free;
   FInternalBookmarkImage.Free;
+  FInternalNullImage.Free;
   FFontDummy.Free;
   FOriginalLines.Free;
   FreeScrollShadowBitmap;
@@ -1441,7 +1443,7 @@ begin
     if LChar^ = BCEDITOR_TAB_CHAR then
       Inc(Result, FTabs.Width - (Result mod FTabs.Width))
     else
-    if LChar^ = BCEDITOR_SPACE_CHAR then
+    if (LChar^ = BCEDITOR_SPACE_CHAR) or (LChar^ = BCEDITOR_SUBSTITUTE_CHAR) then
       Inc(Result)
     else
       Exit;
@@ -1472,7 +1474,7 @@ begin
   if ALine >= FLines.Count then
     Exit;
   LPLine := PChar(FLines[ALine]);
-  while (LPLine^ <> BCEDITOR_NONE_CHAR) and ((LPLine^ = BCEDITOR_TAB_CHAR) or (LPLine^ = BCEDITOR_SPACE_CHAR)) do
+  while (LPLine^ <> BCEDITOR_NONE_CHAR) and ((LPLine^ = BCEDITOR_TAB_CHAR) or (LPLine^ = BCEDITOR_SPACE_CHAR) or (LPLine^ = BCEDITOR_SUBSTITUTE_CHAR)) do
   begin
     if LPLine^ = BCEDITOR_TAB_CHAR then
     begin
@@ -2380,6 +2382,10 @@ begin
     Exit;
 
   LPToken := PChar(AToken);
+
+  if LPToken^ = BCEDITOR_SUBSTITUTE_CHAR then
+    Exit(BCEDITOR_NULL_IMAGE_WIDTH * ALength)
+  else
   if LPToken^ = BCEDITOR_SPACE_CHAR then
     Exit(FPaintHelper.FontStock.CharWidth * ALength)
   else
@@ -5721,7 +5727,7 @@ var
       while (LTextPtr^ <> BCEDITOR_NONE_CHAR) and (LKeyWordPtr^ <> BCEDITOR_NONE_CHAR) and
         ((LTextPtr^ = LKeyWordPtr^) or (LSkipRegionItem.SkipEmptyChars and (LTextPtr^ < BCEDITOR_EXCLAMATION_MARK))) do
       begin
-        if (LTextPtr^ <> BCEDITOR_SPACE_CHAR) and (LTextPtr^ <> BCEDITOR_TAB_CHAR) then
+        if (LTextPtr^ <> BCEDITOR_SPACE_CHAR) and (LTextPtr^ <> BCEDITOR_TAB_CHAR) and (LTextPtr^ <> BCEDITOR_SUBSTITUTE_CHAR) then
           Inc(LKeyWordPtr);
         Inc(LTextPtr);
       end;
@@ -5760,7 +5766,7 @@ var
             begin
               if not LSkipRegionItem.SkipEmptyChars or
                 (LSkipRegionItem.SkipEmptyChars and (LTextPtr^ <> BCEDITOR_SPACE_CHAR) and
-                (LTextPtr^ <> BCEDITOR_TAB_CHAR)) then
+                (LTextPtr^ <> BCEDITOR_TAB_CHAR) and (LTextPtr^ <> BCEDITOR_SUBSTITUTE_CHAR)) then
                 Inc(LKeyWordPtr);
               Inc(LTextPtr);
             end;
@@ -5921,10 +5927,10 @@ var
                 { Check if open keyword found }
                 while (LTextPtr^ <> BCEDITOR_NONE_CHAR) and (LKeyWordPtr^ <> BCEDITOR_NONE_CHAR) and
                   ((UpCase(LTextPtr^) = LKeyWordPtr^) or (LTextPtr^ = BCEDITOR_SPACE_CHAR) or
-                  (LTextPtr^ = BCEDITOR_TAB_CHAR)) do
+                  (LTextPtr^ = BCEDITOR_TAB_CHAR) or (LTextPtr^ = BCEDITOR_SUBSTITUTE_CHAR)) do
                 begin
-                  if ((LKeyWordPtr^ = BCEDITOR_SPACE_CHAR) or (LKeyWordPtr^ = BCEDITOR_TAB_CHAR)) or
-                    (LTextPtr^ <> BCEDITOR_SPACE_CHAR) and (LTextPtr^ <> BCEDITOR_TAB_CHAR) then
+                  if ((LKeyWordPtr^ = BCEDITOR_SPACE_CHAR) or (LKeyWordPtr^ = BCEDITOR_TAB_CHAR) or (LKeyWordPtr^ = BCEDITOR_SUBSTITUTE_CHAR)) or
+                    (LTextPtr^ <> BCEDITOR_SPACE_CHAR) and (LTextPtr^ <> BCEDITOR_TAB_CHAR) and (LTextPtr^ = BCEDITOR_SUBSTITUTE_CHAR) then
                     Inc(LKeyWordPtr);
                   Inc(LTextPtr);
                 end;
@@ -10570,6 +10576,25 @@ var
     LTokenLength: Integer;
     LLastColumn: Integer;
 
+    procedure PaintSubstituteChars;
+    var
+      i: Integer;
+      LCharWidth: Integer;
+      LRect: TRect;
+    begin
+      LCharWidth := LTextRect.Width div LTokenLength;
+      LRect := LTokenRect;
+      Inc(LRect.Left, 1);
+      if not Assigned(FInternalNullImage) then
+        FInternalNullImage := TBCEditorInternalImage.Create(HInstance, BCEDITOR_NULL_IMAGE);
+      for i := 0 to LTokenLength - 1 do
+      begin
+        LRect.Right := LRect.Left + LCharWidth;
+        FInternalNullImage.Draw(Canvas, 0, LRect.Left, LRect.Top, LRect.Height);
+        Inc(LRect.Left, LCharWidth);
+      end;
+    end;
+
     procedure PaintSpecialCharSpace;
     var
       i: Integer;
@@ -10759,15 +10784,23 @@ var
         if FMinimap.Align = maLeft then
           LTextRect.Right := Min(LTextRect.Right, FMinimap.Width);
 
+       // TODO: BCEDITOR_TAB_CHAR and BCEDITOR_SUBSTITUTE_CHAR also?
       if LTokenHelper.IsItalic and (LPChar^ <> BCEDITOR_SPACE_CHAR) and (ATokenLength = Length(AToken)) then
         Inc(LTextRect.Right, FPaintHelper.CharWidth);
 
+      // TODO: BCEDITOR_TAB_CHAR and BCEDITOR_SUBSTITUTE_CHAR also?
       if (FItalicOffset <> 0) and (not LTokenHelper.IsItalic or (LPChar^ = BCEDITOR_SPACE_CHAR)) then
       begin
         Inc(LTextRect.Left, FItalicOffset + 1);
         FItalicOffset := 0;
       end;
 
+      if LTokenHelper.EmptySpace = esSubstitute then
+      begin
+        FillRect(LTextRect);
+        PaintSubstituteChars;
+      end
+      else
       if FSpecialChars.Visible and (LTokenHelper.EmptySpace <> esNone) and
         (not (scoShowOnlyInSelection in FSpecialChars.Options) or
         (scoShowOnlyInSelection in FSpecialChars.Options) and (Canvas.Brush.Color = FSelection.Colors.Background)) and
@@ -10798,6 +10831,7 @@ var
         if not AMinimap or AMinimap and (moShowSearchResults in FMinimap.Options) then
           PaintSearchResults;
 
+         // TODO: BCEDITOR_TAB_CHAR and BCEDITOR_SUBSTITUTE_CHAR also?
         if LTokenHelper.IsItalic and (LPChar^ <> BCEDITOR_SPACE_CHAR) and (ATokenLength = Length(AToken)) then
         begin
           FItalicOffset := 0;
@@ -10987,6 +11021,9 @@ var
     else
     if LPToken^ = BCEDITOR_TAB_CHAR then
       LEmptySpace := esTab
+    else
+    if LPToken^ = BCEDITOR_SUBSTITUTE_CHAR then
+      LEmptySpace := esSubstitute
     else
       LEmptySpace := esNone;
 
