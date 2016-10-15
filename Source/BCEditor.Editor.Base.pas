@@ -296,8 +296,6 @@ type
     procedure DoEditorBottom(const ACommand: TBCEditorCommand);
     procedure DoEditorTop(const ACommand: TBCEditorCommand);
     procedure DoEndKey(const ASelection: Boolean);
-    procedure DoGotoNextBookmark;
-    procedure DoGotoPreviousBookmark;
     procedure DoHomeKey(const ASelection: Boolean);
     procedure DoImeStr(AData: Pointer);
     procedure DoLineBreak;
@@ -589,6 +587,8 @@ type
     procedure FoldAll(const AFromLineNumber: Integer = -1; const AToLineNumber: Integer = -1);
     procedure FoldAllByLevel(const AFromLevel: Integer; const AToLevel: Integer);
     procedure GotoBookmark(const AIndex: Integer);
+    procedure GotoNextBookmark;
+    procedure GotoPreviousBookmark;
     procedure GotoLineAndCenter(const ALine: Integer; const AChar: Integer = 1);
     procedure HookEditorLines(ALines: TBCEditorLines; AUndo, ARedo: TBCEditorUndoList);
     procedure InsertLine(const ALineNumber: Integer; const AValue: string); overload;
@@ -4180,7 +4180,7 @@ begin
   MoveCaretAndSelection(LTextCaretPosition, LEndOfLineCaretPosition, ASelection);
 end;
 
-procedure TBCBaseEditor.DoGotoNextBookmark;
+procedure TBCBaseEditor.GotoNextBookmark;
 var
   i: Integer;
   LMark: TBCEditorMark;
@@ -4199,7 +4199,7 @@ begin
   end;
 end;
 
-procedure TBCBaseEditor.DoGotoPreviousBookmark;
+procedure TBCBaseEditor.GotoPreviousBookmark;
 var
   i: Integer;
   LMark: TBCEditorMark;
@@ -13877,9 +13877,9 @@ begin
       ecToggleBookmark:
         DoToggleBookmark;
       ecGotoNextBookmark:
-        DoGotoNextBookmark;
+        GotoNextBookmark;
       ecGotoPreviousBookmark:
-        DoGotoPreviousBookmark;
+        GotoPreviousBookmark;
       ecGotoBookmark1 .. ecGotoBookmark9:
         if FLeftMargin.Bookmarks.ShortCuts then
           GotoBookmark(ACommand - ecGotoBookmark1);
