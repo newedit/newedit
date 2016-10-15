@@ -4197,6 +4197,8 @@ begin
       Exit;
     end;
   end;
+  if FBookmarkList.Count > 0 then
+    GotoBookmark(FBookmarkList.Items[0].Index);
 end;
 
 procedure TBCBaseEditor.GotoPreviousBookmark;
@@ -4216,6 +4218,8 @@ begin
       Exit;
     end;
   end;
+  if FBookmarkList.Count > 0 then
+    GotoBookmark(FBookmarkList.Items[FBookmarkList.Count - 1].Index);
 end;
 
 procedure TBCBaseEditor.DoHomeKey(const ASelection: Boolean);
