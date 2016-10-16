@@ -299,6 +299,7 @@ type
     procedure DoEndKey(const ASelection: Boolean);
     procedure DoHomeKey(const ASelection: Boolean);
     procedure DoImeStr(AData: Pointer);
+    procedure DoInsertText(const AText: string);
     procedure DoLineBreak;
     procedure DoLineComment;
     procedure DoPageLeftOrRight(const ACommand: TBCEditorCommand);
@@ -4572,8 +4573,12 @@ begin
 end;
 
 procedure TBCBaseEditor.DoPasteFromClipboard;
+begin
+  DoInsertText(GetClipboardText);
+end;
+
+procedure TBCBaseEditor.DoInsertText(const AText: string);
 var
-  LClipBoardText: string;
   LTextCaretPosition: TBCEditorTextPosition;
   LStartPositionOfBlock: TBCEditorTextPosition;
   LEndPositionOfBlock: TBCEditorTextPosition;
@@ -4612,8 +4617,6 @@ begin
     end;
   end;
 
-  LClipBoardText := GetClipboardText;
-
   if GetSelectionAvailable then
   begin
     LStartPositionOfBlock := SelectionBeginPosition;
@@ -4623,17 +4626,17 @@ begin
 
     if FSyncEdit.Active then
       FSyncEdit.MoveEndPositionChar(-FSelectionEndPosition.Char + FSelectionBeginPosition.Char +
-        Length(LClipBoardText));
+        Length(AText));
   end
   else
   begin
     LStartPositionOfBlock := LTextCaretPosition;
 
     if FSyncEdit.Active then
-      FSyncEdit.MoveEndPositionChar(Length(LClipBoardText));
+      FSyncEdit.MoveEndPositionChar(Length(AText));
   end;
 
-  DoSelectedText(LPasteMode, PChar(LClipBoardText), True, TextCaretPosition);
+  DoSelectedText(LPasteMode, PChar(AText), True, TextCaretPosition);
 
   LEndPositionOfBlock := SelectionEndPosition;
 
@@ -5246,7 +5249,7 @@ end;
 
 procedure TBCBaseEditor.InsertText(const AText: string);
 begin
-  CommandProcessor(ecImeStr, BCEDITOR_NONE_CHAR, PChar(AText));
+  DoInsertText(AText);
 end;
 
 procedure TBCBaseEditor.LinesChanging(ASender: TObject);
