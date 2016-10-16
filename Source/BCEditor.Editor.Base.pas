@@ -592,8 +592,9 @@ type
     procedure GotoPreviousBookmark;
     procedure GotoLineAndCenter(const ALine: Integer; const AChar: Integer = 1);
     procedure HookEditorLines(ALines: TBCEditorLines; AUndo, ARedo: TBCEditorUndoList);
-    procedure InsertLine(const ALineNumber: Integer; const AValue: string); overload;
     procedure InsertBlock(const ABlockBeginPosition, ABlockEndPosition: TBCEditorTextPosition; AChangeStr: PChar; AAddToUndoList: Boolean);
+    procedure InsertLine(const ALineNumber: Integer; const AValue: string); overload;
+    procedure InsertText(const AText: string);
     procedure LeftMarginChanged(ASender: TObject);
     procedure LoadFromFile(const AFileName: string; AEncoding: System.SysUtils.TEncoding = nil);
     procedure LoadFromStream(AStream: TStream; AEncoding: System.SysUtils.TEncoding = nil);
@@ -5241,6 +5242,11 @@ begin
   DisplayCaretX := 1;
   DisplayCaretY := FDisplayCaretY + 1;
   FUndoList.EndBlock;
+end;
+
+procedure TBCBaseEditor.InsertText(const AText: string);
+begin
+  CommandProcessor(ecImeStr, BCEDITOR_NONE_CHAR, PChar(AText));
 end;
 
 procedure TBCBaseEditor.LinesChanging(ASender: TObject);
