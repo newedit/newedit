@@ -407,7 +407,7 @@
         <DelphiCompile Include="..\Source\BCEditor.StyleHooks.pas">
             <BuildOrder>86</BuildOrder>
         </DelphiCompile>
-        <DelphiCompile Include="..\Source\BCEditor.TextDrawer.pas">
+        <DelphiCompile Include="..\Source\BCEditor.PaintHelper.pas">
             <BuildOrder>87</BuildOrder>
         </DelphiCompile>
         <DelphiCompile Include="..\Source\BCEditor.Types.pas">
