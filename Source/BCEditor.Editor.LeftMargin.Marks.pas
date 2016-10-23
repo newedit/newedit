@@ -27,7 +27,7 @@ type
     property Images: TImageList read FImages write SetImages;
     property LeftMargin: Integer read FLeftMargin write FLeftMargin default 2;
     property OnChange: TNotifyEvent read FOnChange write FOnChange;
-    property OverlappingOffset: Integer read FOverlappingOffset write FOverlappingOffset default 8;
+    property OverlappingOffset: Integer read FOverlappingOffset write FOverlappingOffset default 4;
     property Visible: Boolean read FVisible write SetVisible default True;
   end;
 
@@ -40,7 +40,7 @@ begin
   FOwner := AOwner;
   FDefaultImageIndex := -1;
   FLeftMargin := 2;
-  FOverlappingOffset := 8;
+  FOverlappingOffset := 4;
   FShortCuts := True;
   FVisible := True;
 end;

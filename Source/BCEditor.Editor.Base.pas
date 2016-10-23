@@ -574,7 +574,7 @@ type
     procedure CopyToClipboard;
     procedure CutToClipboard;
     procedure DeleteBookmark(ABookmark: TBCEditorMark); overload;
-    procedure DeleteBookmark(const AIndex: Integer); overload;
+    procedure DeleteBookmark(const ALine: Integer); overload;
     procedure DeleteMark(AMark: TBCEditorMark);
     procedure DeleteLines(const ALineNumber: Integer; const ACount: Integer);
     procedure DeleteWhitespace;
@@ -4677,19 +4677,15 @@ end;
 
 procedure TBCBaseEditor.DoSetBookmark(const ACommand: TBCEditorCommand; AData: Pointer);
 var
-  i: Integer;
+  LIndex: Integer;
   LTextCaretPosition: TBCEditorTextPosition;
-  LBookmark: TBCEditorMark;
 begin
   LTextCaretPosition := TextCaretPosition;
-  i := ACommand - ecSetBookmark1;
+  LIndex := ACommand - ecSetBookmark1;
   if Assigned(AData) then
     LTextCaretPosition := TBCEditorTextPosition(AData^);
-  LBookmark := FBookmarkList.Find(i);
-  if Assigned(LBookmark) and (LBookmark.Line = LTextCaretPosition.Line) then
-    DeleteBookmark(LBookmark)
-  else
-    SetBookmark(i, LTextCaretPosition);
+  DeleteBookmark(LTextCaretPosition.Line);
+  SetBookmark(LIndex, LTextCaretPosition);
 end;
 
 procedure TBCBaseEditor.DoShiftTabKey;
@@ -9781,8 +9777,7 @@ var
     if not Assigned(FInternalBookmarkImage) then
       FInternalBookmarkImage := TBCEditorInternalImage.Create(HInstance, BCEDITOR_BOOKMARK_IMAGES,
         BCEDITOR_BOOKMARK_IMAGE_COUNT);
-    FInternalBookmarkImage.Draw(Canvas, ABookmark.ImageIndex,
-      AClipRect.Left + FLeftMargin.Bookmarks.LeftMargin,
+    FInternalBookmarkImage.Draw(Canvas, ABookmark.ImageIndex, AClipRect.Left + FLeftMargin.Bookmarks.LeftMargin,
       (AMarkRow - TopLine) * LLineHeight, LLineHeight, clFuchsia);
     Inc(AOverlappingOffset, FLeftMargin.Marks.OverlappingOffset);
   end;
@@ -10006,7 +10001,7 @@ var
         begin
           LMarkLine := GetDisplayTextLineNumber(i);
           { Bookmarks }
-          for j := 0 to FBookmarkList.Count - 1 do
+          for j := FBookmarkList.Count - 1 downto 0 do
           begin
             LMark := FBookmarkList.Items[j];
             if LMark.Line + 1 = LMarkLine then
@@ -10014,7 +10009,7 @@ var
                 DrawBookmark(LMark, LOverlappingOffsets[ALastLine - i], LMarkLine);
           end;
           { Other marks }
-          for j := 0 to FMarkList.Count - 1 do
+          for j := FMarkList.Count - 1 downto 0 do
           begin
             LMark := FMarkList.Items[j];
             if LMark.Line + 1 = LMarkLine then
@@ -12588,7 +12583,7 @@ begin
   begin
     ATextPosition.Char := LBookmark.Char;
     ATextPosition.Line := LBookmark.Line;
-    Exit(True);
+    Result := True;
   end;
 end;
 
@@ -13322,12 +13317,20 @@ begin
   end;
 end;
 
-procedure TBCBaseEditor.DeleteBookmark(const AIndex: Integer);
+procedure TBCBaseEditor.DeleteBookmark(const ALine: Integer);
 var
+  LIndex: Integer;
   LBookmark: TBCEditorMark;
 begin
-  LBookmark := FBookmarkList.Find(AIndex);
-  DeleteBookmark(LBookmark);
+  for LIndex := 0 to FBookmarkList.Count - 1 do
+  begin
+    LBookmark := FBookmarkList.Items[LIndex];
+    if LBookmark.Line = ALine then
+    begin
+      DeleteBookmark(LBookmark);
+      Break;
+    end;
+  end;
 end;
 
 procedure TBCBaseEditor.DeleteMark(AMark: TBCEditorMark);
@@ -14673,14 +14676,13 @@ end;
 
 procedure TBCBaseEditor.ToggleBookmark(const AIndex: Integer = -1);
 var
-  LTextPosition: TBCEditorTextPosition;
+  LTextCaretPosition: TBCEditorTextPosition;
 begin
   if AIndex <> -1 then
   begin
-    if GetBookmark(AIndex, LTextPosition) then
-      DeleteBookmark(AIndex)
-    else
-      SetBookmark(AIndex, TextCaretPosition)
+    LTextCaretPosition := TextCaretPosition;
+    DeleteBookmark(LTextCaretPosition.Line);
+    SetBookmark(AIndex, LTextCaretPosition)
   end
   else
     DoToggleBookmark;
