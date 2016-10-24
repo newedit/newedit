@@ -5062,7 +5062,7 @@ begin
   if LKeyword = '' then
     Exit;
 
-  FindWords(LKeyword, FSearch.Lines, soCaseSensitive in FSearch.Options, False);
+  FindWords(LKeyword, FSearch.Lines, soCaseSensitive in FSearch.Options, soWholeWordsOnly in FSearch.Options);
 end;
 
 procedure TBCBaseEditor.FindWords(const AWord: string; AList: TList; ACaseSensitive: Boolean; AWholeWordsOnly: Boolean);
