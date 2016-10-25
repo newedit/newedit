@@ -5579,7 +5579,7 @@ procedure TBCBaseEditor.OpenLink(const AURI: string; ARangeType: TBCEditorRangeT
 var
   LURI: string;
 begin
-  case TBCEditorRangeType(ARangeType) of
+  case ARangeType of
     ttMailtoLink:
       if Pos(BCEDITOR_MAILTO, AURI) <> 1 then
         LURI := BCEDITOR_MAILTO + AURI;
@@ -9188,7 +9188,7 @@ begin
   if FMouseOverURI and (AButton = mbLeft) and (X > FLeftMarginWidth) then
   begin
     Winapi.Windows.GetCursorPos(LCursorPoint);
-    LCursorPoint := (LCursorPoint);
+    LCursorPoint := ScreenToClient(LCursorPoint);
     LTextPosition := PixelsToTextPosition(LCursorPoint.X, LCursorPoint.Y);
     GetHighlighterAttributeAtRowColumn(LTextPosition, LToken, LRangeType, LStart, LHighlighterAttribute);
     OpenLink(LToken, LRangeType);
