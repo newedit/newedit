@@ -5,6 +5,7 @@ interface
 resourcestring
 
   { BCEditor.Editor.Base }
+  SBCEditorVersion = 'Версия';
   SBCEditorScrollInfoTopLine = 'Верхняя строка: %d';
   SBCEditorScrollInfo = '%d - %d';
   SBCEditorSearchStringNotFound = 'Строка ''%s'' не найдена';
