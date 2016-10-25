@@ -3,7 +3,7 @@
       "Info": {
          "General": {
             "Version": "1.8.1",
-            "Date": "19.10.2016",
+            "Date": "25.10.2016",
             "Sample": [
                "Simple text file with Universal Resource Identifier highlighting and opener (with Ctrl key).\r\n",
                "\r\n",
@@ -32,7 +32,7 @@
                   "Attributes": {
                      "Element": "String"
                   },
-                  "Delimiters": "!#%'*,:;<>@[\\]^`{|}~",
+                  "Delimiters": "!%'*,:;<>@[\\]^`{|}~",
                   "Properties": {
                      "CloseOnTerm": true,
                      "CloseOnEndOfLine": true
@@ -47,7 +47,7 @@
                   "Attributes": {
                      "Element": "String"
                   },
-                  "Delimiters": "!#%'*,:;<>@[\\]^`{|}~",
+                  "Delimiters": "!%'*,:;<>@[\\]^`{|}~",
                   "Properties": {
                      "CloseOnTerm": true,
                      "CloseOnEndOfLine": true
