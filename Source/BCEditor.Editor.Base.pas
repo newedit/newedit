@@ -790,7 +790,7 @@ var
 begin
   inherited Create(AOwner);
 
-  FAbout := BCEDITOR_VERSION;
+  FAbout := SBCEditorVersion + ' ' + BCEDITOR_VERSION;
 
 {$if defined(USE_ALPHASKINS)}
   FCommonData := TsScrollWndData.Create(Self, True);
