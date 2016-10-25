@@ -23,6 +23,7 @@ const
 type
   TBCBaseEditor = class(TCustomControl)
   strict private
+    FAbout: string;
     FActiveLine: TBCEditorActiveLine;
     FAllCodeFoldingRanges: TBCEditorAllCodeFoldingRanges;
     FAltEnabled: Boolean;
@@ -634,6 +635,7 @@ type
     procedure UnregisterCommandHandler(AHookedCommandEvent: TBCEditorHookedCommandEvent);
     procedure UpdateCaret;
     procedure WndProc(var AMessage: TMessage); override;
+    property About: string read FAbout;
     property ActiveLine: TBCEditorActiveLine read FActiveLine write SetActiveLine;
     property BackgroundColor: TColor read FBackgroundColor write SetBackgroundColor default clWindow;
     property AllCodeFoldingRanges: TBCEditorAllCodeFoldingRanges read FAllCodeFoldingRanges;
@@ -787,6 +789,8 @@ var
   LIndex: Integer;
 begin
   inherited Create(AOwner);
+
+  FAbout := BCEDITOR_VERSION;
 
 {$if defined(USE_ALPHASKINS)}
   FCommonData := TsScrollWndData.Create(Self, True);
@@ -10800,15 +10804,17 @@ var
         if FMinimap.Align = maLeft then
           LTextRect.Right := Min(LTextRect.Right, FMinimap.Width);
 
-       // TODO: BCEDITOR_TAB_CHAR and BCEDITOR_SUBSTITUTE_CHAR also?
       if LTokenHelper.IsItalic and (LPChar^ <> BCEDITOR_SPACE_CHAR) and (ATokenLength = Length(AToken)) then
         Inc(LTextRect.Right, FPaintHelper.CharWidth);
 
-      // TODO: BCEDITOR_TAB_CHAR and BCEDITOR_SUBSTITUTE_CHAR also?
       if (FItalicOffset <> 0) and (not LTokenHelper.IsItalic or (LPChar^ = BCEDITOR_SPACE_CHAR)) then
       begin
-        Inc(LTextRect.Left, FItalicOffset + 1);
-        FItalicOffset := 0;
+        Inc(LTextRect.Left, FItalicOffset);
+        Inc(LTextRect.Right, FItalicOffset);
+        if not LTokenHelper.IsItalic then
+          Dec(LTextRect.Left);
+        if LPChar^ = BCEDITOR_SPACE_CHAR then
+          FItalicOffset := 0;
       end;
 
       if LTokenHelper.EmptySpace = esSubstitute then
@@ -10847,7 +10853,6 @@ var
         if not AMinimap or AMinimap and (moShowSearchResults in FMinimap.Options) then
           PaintSearchResults;
 
-         // TODO: BCEDITOR_TAB_CHAR and BCEDITOR_SUBSTITUTE_CHAR also?
         if LTokenHelper.IsItalic and (LPChar^ <> BCEDITOR_SPACE_CHAR) and (ATokenLength = Length(AToken)) then
         begin
           FItalicOffset := 0;
@@ -10860,13 +10865,13 @@ var
               if GetPixel(Canvas.Handle, LX, LY) <> LRGBColor then
                 if LX > LMaxX then
                   LMaxX := LX;
-          FItalicOffset := Max(LMaxX - LTokenRect.Right, 0);
+          FItalicOffset := Max(LMaxX - LTokenRect.Right + 1, 0);
 
           if LLastColumn = LCurrentLineLength + 1 then
-            Inc(LTokenRect.Right, FItalicOffset + 1);
+            Inc(LTokenRect.Right, FItalicOffset);
 
           if LAddWrappedCount then
-            Inc(LTokenRect.Right, FItalicOffset + 1);
+            Inc(LTokenRect.Right, FItalicOffset);
         end
       end;
 
