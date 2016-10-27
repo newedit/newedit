@@ -60,11 +60,10 @@ inherited MainForm: TMainForm
       Margins.Right = 6
       Margins.Bottom = 5
       ParentCustomHint = False
-      Style = isItemPainter
+      Style = isDotNet
       Align = alClient
-      Divider = 150
+      Divider = 118
       ItemHeight = 16
-      Painter = JvInspectorDotNETPainter1
       TabStop = True
       TabOrder = 0
     end
@@ -443,9 +442,8 @@ inherited MainForm: TMainForm
   end
   inherited SkinManager: TBCSkinManager
     Effects.AllowGlowing = False
-    IsDefault = True
+    IsDefault = False
     MenuSupport.UseExtraLine = False
-    SkinInfo = 'N/A'
     ThirdParty.ThirdEdits = ' '#13#10'TBCEditorPrintPreview'#13#10
     ThirdParty.ThirdListViews = ' '#13#10'TJvInspector'#13#10
     ThirdParty.ThirdVirtualTrees = 'TVirtualDrawTree'#13#10
@@ -786,35 +784,5 @@ inherited MainForm: TMainForm
   object OpenDialog: TsOpenDialog
     Left = 342
     Top = 52
-  end
-  object JvInspectorDotNETPainter1: TJvInspectorDotNETPainter
-    CategoryFont.Charset = DEFAULT_CHARSET
-    CategoryFont.Color = clBtnText
-    CategoryFont.Height = -11
-    CategoryFont.Name = 'Tahoma'
-    CategoryFont.Style = []
-    NameFont.Charset = DEFAULT_CHARSET
-    NameFont.Color = clWindowText
-    NameFont.Height = -11
-    NameFont.Name = 'Tahoma'
-    NameFont.Style = []
-    ValueFont.Charset = DEFAULT_CHARSET
-    ValueFont.Color = clNavy
-    ValueFont.Height = -11
-    ValueFont.Name = 'Tahoma'
-    ValueFont.Style = []
-    DrawNameEndEllipsis = False
-    HideSelectFont.Charset = DEFAULT_CHARSET
-    HideSelectFont.Color = clHighlightText
-    HideSelectFont.Height = -11
-    HideSelectFont.Name = 'Tahoma'
-    HideSelectFont.Style = []
-    SelectedFont.Charset = DEFAULT_CHARSET
-    SelectedFont.Color = clHighlightText
-    SelectedFont.Height = -11
-    SelectedFont.Name = 'Tahoma'
-    SelectedFont.Style = []
-    Left = 820
-    Top = 250
   end
 end

@@ -11,7 +11,7 @@ uses
   sSkinProvider, sDialogs, Vcl.StdCtrls, System.Diagnostics, BCCommon.Dialog.Popup.Highlighter, BCEditor.Types,
   BCCommon.Dialog.Popup.Encoding, BCCommon.Dialog.Popup.Highlighter.Color, sSpeedButton, BCControl.SpeedButton,
   sComboBox, BCControl.ComboBox, sLabel, BCEditor.MacroRecorder, BCCommon.Dialog.Popup.SearchEngine,
-  JvExControls, JvPropertyStoreEditor, JvInspector, JvBaseDlg, JvWinDialogs, JvComponentBase;
+  JvExControls, JvPropertyStoreEditor, JvInspector, JvComponentBase;
 
 const
   BCEDITORDEMO_CAPTION = 'TBCEditor Control Demo v1.8.1';
@@ -63,7 +63,6 @@ type
     ActionCaseSensitive: TAction;
     ActionInSelection: TAction;
     ObjectInspector: TJvInspector;
-    JvInspectorDotNETPainter1: TJvInspectorDotNETPainter;
     procedure ActionFileOpenExecute(Sender: TObject);
     procedure ActionPreviewExecute(Sender: TObject);
     procedure ActionSearchExecute(Sender: TObject);
@@ -504,10 +503,7 @@ begin
     CodeFolding.Visible := Highlighter.CodeFoldingRangeCount > 0;
   end;
   TitleBar.Items[TITLE_BAR_HIGHLIGHTER].Caption := Editor.Highlighter.Name;
-  Editor.Lines.Text := // Editor.Highlighter.Info.General.Sample;
-    'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
-  // TESTAA: Ei Toimi kolmannella rivillä  // Software distributed under the License is distributed on an "AS IS" basis,
-  Editor.WordWrap.Enabled := True;
+  Editor.Lines.Text := Editor.Highlighter.Info.General.Sample;
   Editor.CaretZero;
   StatusBar.Panels[3].Text := '';
   Caption := BCEDITORDEMO_CAPTION;
