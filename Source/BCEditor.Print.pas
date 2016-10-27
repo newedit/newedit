@@ -748,25 +748,28 @@ begin
   else
     Printer.Title := FTitle;
   Printer.BeginDoc;
-  PrintStatus(psBegin, AStartPage, FAbort);
-  UpdatePages(Printer.Canvas);
-
-  for i := 1 to Copies do
+  if Printer.Printing then
   begin
-    j := AStartPage;
-    if AEndPage < 0 then
-      AEndPage := FPageCount;
-    while (j <= AEndPage) and (not FAbort) do
+    PrintStatus(psBegin, AStartPage, FAbort);
+    UpdatePages(Printer.Canvas);
+
+    for i := 1 to Copies do
     begin
-      PrintPage(j);
-      if ((j < AEndPage) or (i < Copies)) and not FAbort then
-        Printer.NewPage;
-      Inc(j);
+      j := AStartPage;
+      if AEndPage < 0 then
+        AEndPage := FPageCount;
+      while (j <= AEndPage) and (not FAbort) do
+      begin
+        PrintPage(j);
+        if ((j < AEndPage) or (i < Copies)) and not FAbort then
+          Printer.NewPage;
+        Inc(j);
+      end;
     end;
+    if not FAbort then
+      PrintStatus(psEnd, AEndPage, FAbort);
+    Printer.EndDoc;
   end;
-  if not FAbort then
-    PrintStatus(psEnd, AEndPage, FAbort);
-  Printer.EndDoc;
   FPrinting := False;
 end;
 
