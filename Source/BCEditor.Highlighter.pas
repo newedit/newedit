@@ -516,10 +516,10 @@ var
   LTopLine: Integer;
   LCaretPosition: TBCEditorTextPosition;
 begin
-  FLoading := True;
   LEditor := FEditor as TBCBaseEditor;
   if Assigned(LEditor) then
   begin
+    FLoading := True;
     LTempLines := TStringList.Create;
     try
       if LEditor.Visible then
@@ -541,8 +541,8 @@ begin
       LTempLines.Free;
     end;
     UpdateColors;
+    FLoading := False;
   end;
-  FLoading := False;
 end;
 
 function TBCEditorHighlighter.GetAttribute(AIndex: Integer): TBCEditorHighlighterAttribute;

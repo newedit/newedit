@@ -421,7 +421,7 @@ type
     procedure WMIMENotify(var AMessage: TMessage); message WM_IME_NOTIFY;
     procedure WMKillFocus(var AMessage: TWMKillFocus); message WM_KILLFOCUS;
     procedure WMNCPaint(var AMessage: TMessage); message WM_NCPAINT;
-    procedure WMPaint(var Message: TWMPaint); message WM_PAINT;
+    procedure WMPaint(var AMessage: TWMPaint); message WM_PAINT;
     procedure WMPaste(var AMessage: TMessage); message WM_PASTE;
     procedure WMSetCursor(var AMessage: TWMSetCursor); message WM_SETCURSOR;
     procedure WMSetFocus(var AMessage: TWMSetFocus); message WM_SETFOCUS;
@@ -2135,37 +2135,48 @@ var
         FPaintHelper.SetStyle(LHighlighterAttribute.FontStyles);
       LTokenWidth := GetTokenWidth(LToken, Length(LToken), LCharsBefore);
 
-      while LTokenWidth >= LMaxWidth do
+      if LTokenWidth >= LMaxWidth then
       begin
-        LPToken := PChar(LToken);
-        LPStart := LPToken;
-        Inc(LPToken, Length(LToken) - 1);
-        LLastChar := GetLastChar(LPToken);
-        if LLastChar = '' then
-          LLastChar := LPToken^;
-        LCharsBefore := LCharsBefore + Length(LToken) - Length(LLastChar);
-        LEndOfTokenWidth := 0;
-        LEndOfToken := '';
-        while (LPToken^ <> BCEDITOR_NONE_CHAR) and (LTokenWidth >= LMaxWidth) do
+        if LLength > 0 then
         begin
-          LCharWidth := GetTokenWidth(LLastChar, Length(LLastChar), LCharsBefore);
-          Dec(LTokenWidth, LCharWidth);
-          if LTokenWidth >= LMaxWidth then
-            Dec(LCharsBefore, Length(LLastChar));
-          Inc(LEndOfTokenWidth, LCharWidth);
-          LEndOfToken := LLastChar + LEndOfToken;
-          if LTokenWidth >= LMaxWidth then
-          begin
-            Dec(LPToken);
-            LLastChar := GetLastChar(LPToken);
-            if LLastChar = '' then
-              LLastChar := LPToken^;
-          end
+          FWordWrapLineLengths[k] := LLength;
+          AddLineNumberIntoCache;
+          //LWidth := LTokenWidth;
+          LLength := 0;
         end;
-        FWordWrapLineLengths[k] := LPToken - LPStart;
-        LToken := LEndOfToken;
-        AddLineNumberIntoCache;
-        LTokenWidth := LEndOfTokenWidth;
+
+        while LTokenWidth >= LMaxWidth do
+        begin
+          LPToken := PChar(LToken);
+          LPStart := LPToken;
+          Inc(LPToken, Length(LToken) - 1);
+          LLastChar := GetLastChar(LPToken);
+          if LLastChar = '' then
+            LLastChar := LPToken^;
+          LCharsBefore := LCharsBefore + Length(LToken) - Length(LLastChar);
+          LEndOfTokenWidth := 0;
+          LEndOfToken := '';
+          while (LPToken^ <> BCEDITOR_NONE_CHAR) and (LTokenWidth >= LMaxWidth) do
+          begin
+            LCharWidth := GetTokenWidth(LLastChar, Length(LLastChar), LCharsBefore);
+            Dec(LTokenWidth, LCharWidth);
+            if LTokenWidth >= LMaxWidth then
+              Dec(LCharsBefore, Length(LLastChar));
+            Inc(LEndOfTokenWidth, LCharWidth);
+            LEndOfToken := LLastChar + LEndOfToken;
+            if LTokenWidth >= LMaxWidth then
+            begin
+              Dec(LPToken);
+              LLastChar := GetLastChar(LPToken);
+              if LLastChar = '' then
+                LLastChar := LPToken^;
+            end
+          end;
+          FWordWrapLineLengths[k] := LPToken - LPStart;
+          LToken := LEndOfToken;
+          AddLineNumberIntoCache;
+          LTokenWidth := LEndOfTokenWidth;
+        end;
       end;
 
       Inc(LWidth, LTokenWidth);
@@ -7387,7 +7398,7 @@ begin
     StyleServices.PaintBorder(Self, False);
 end;
 
-procedure TBCBaseEditor.WMPaint(var Message: TWMPaint);
+procedure TBCBaseEditor.WMPaint(var AMessage: TWMPaint);
 var
   LDC, LCompatibleDC: HDC;
   LCompatibleBitmap, LOldBitmap: HBITMAP;
@@ -7396,12 +7407,12 @@ begin
   if (FPaintLock <> 0) or FHighlighter.Loading then
     Exit;
 
-  if Message.DC <> 0 then
+  if AMessage.DC <> 0 then
   begin
     if not (csCustomPaint in ControlState) and (ControlCount = 0) then
       inherited
     else
-      PaintHandler(Message);
+      PaintHandler(AMessage);
   end
   else
   begin
@@ -7412,8 +7423,8 @@ begin
     LOldBitmap := SelectObject(LCompatibleDC, LCompatibleBitmap);
     try
       LDC := BeginPaint(Handle, LPaintStruct);
-      Message.DC := LCompatibleDC;
-      WMPaint(Message);
+      AMessage.DC := LCompatibleDC;
+      WMPaint(AMessage);
       BitBlt(LDC, 0, 0, ClientRect.Right, ClientRect.Bottom, LCompatibleDC, 0, 0, SRCCOPY);
       EndPaint(Handle, LPaintStruct);
     finally
@@ -8187,7 +8198,7 @@ begin
         CodeFoldingUncollapse(LFoldRange)
       else
         CodeFoldingCollapse(LFoldRange);
-      Refresh;
+      Invalidate;
       Exit;
     end;
   end;
@@ -8324,7 +8335,7 @@ begin
         TextCaretPosition := DisplayToTextPosition(LDisplayPosition);
         ComputeScroll(Point(X, Y));
         if (LOldTextCaretPosition.Line <> TextCaretPosition.Line) or (LOldTextCaretPosition.Char <> TextCaretPosition.Char) then
-          Refresh;
+          Invalidate;
       end;
     end
     else
@@ -11135,6 +11146,7 @@ var
     LIsCustomBackgroundColor: Boolean;
     LTextPosition: TBCEditorTextPosition;
     LTextCaretY: Integer;
+    LTokenAdded: Boolean;
 
     function GetWordAtSelection(var ASelectedText: string): string;
     var
@@ -11480,6 +11492,7 @@ var
         LTokenHelper.Length := 0;
         LTokenHelper.EmptySpace := esNone;
         LAddWrappedCount := False;
+        LTokenAdded := False;
 
         while not FHighlighter.GetEndOfLine do
         begin
@@ -11509,7 +11522,7 @@ var
             begin
               // TODO Refactor
 
-              if LTokenLength > FWordWrapLineLengths[LCurrentRow + LWrappedRowCount] then
+              if not LTokenAdded and (LTokenLength > FWordWrapLineLengths[LCurrentRow + LWrappedRowCount]) then
               begin
                 LTokenText := Copy(LTokenText, LFirstColumn, FWordWrapLineLengths[LCurrentRow + LWrappedRowCount]);
                 LTokenLength := Length(LTokenText);
@@ -11523,6 +11536,7 @@ var
                 LAddWrappedCount := True;
                 Break;
               end;
+
               if LTokenPosition + LTokenLength > LLastColumn then
               begin
                 if LCurrentRow + LWrappedRowCount + 1 < Length(FWordWrapLineLengths) then
@@ -11530,6 +11544,8 @@ var
                 LAddWrappedCount := True;
                 Break;
               end;
+
+              LTokenAdded := True;
             end
             else
             if LTokenPosition > LLastColumn then
@@ -13432,7 +13448,7 @@ begin
       end;
   end;
   CheckIfAtMatchingKeywords;
-  Refresh;
+  Invalidate;
   UpdateScrollBars;
 
   if LTextCaretPosition.Line > FLines.Count - 1 then
@@ -13479,7 +13495,7 @@ begin
     end;
   end;
   CheckIfAtMatchingKeywords;
-  Refresh;
+  Invalidate;
   UpdateScrollBars;
 
   if LTextCaretPosition.Line > FLines.Count - 1 then
@@ -13514,7 +13530,7 @@ begin
         SetParentCollapsedOfSubCodeFoldingRanges(False, FoldRangeLevel);
       end;
   end;
-  Refresh;
+  Invalidate;
   UpdateScrollBars;
 end;
 
@@ -13555,7 +13571,7 @@ begin
         end;
     end;
   end;
-  Refresh;
+  Invalidate;
   UpdateScrollBars;
 end;
 
