@@ -95,8 +95,7 @@ type
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
     procedure LoadFromStream(AStream: TStream);
-    procedure Print;
-    procedure PrintRange(AStartPage, AEndPage: Integer);
+    procedure Print(const AStartPage: Integer = 1; const AEndPage: Integer = -1);
     procedure PrintToCanvas(ACanvas: TCanvas; PageNumber: Integer);
     procedure SaveToStream(AStream: TStream);
     procedure UpdatePages(ACanvas: TCanvas);
@@ -729,34 +728,15 @@ begin
   PrintPage(PageNumber);
 end;
 
-procedure TBCEditorPrint.Print;
-var
-  LCanvas: TCanvas;
-  LHandle: THandle;
-begin
-  LCanvas := TCanvas.Create;
-  LHandle := GetDC(0);
-  try
-    if LHandle <> 0 then
-    begin
-      LCanvas.Handle := LHandle;
-      UpdatePages(LCanvas);
-      PrintRange(1, -1);
-      LCanvas.Handle := 0;
-    end;
-  finally
-    ReleaseDC(0, LHandle);
-    LCanvas.Free;
-  end;
-end;
-
-procedure TBCEditorPrint.PrintRange(AStartPage, AEndPage: Integer);
+procedure TBCEditorPrint.Print(const AStartPage: Integer = 1; const AEndPage: Integer = -1);
 var
   i, j: Integer;
+  LEndPage: Integer;
 begin
   if FSelectedOnly and not FSelectionAvailable then
     Exit;
 
+  LEndPage := AEndPage;
   FPrinting := True;
   FAbort := False;
   if FDocumentTitle <> '' then
@@ -772,18 +752,18 @@ begin
     for i := 1 to Copies do
     begin
       j := AStartPage;
-      if AEndPage < 0 then
-        AEndPage := FPageCount;
-      while (j <= AEndPage) and (not FAbort) do
+      if LEndPage < 0 then
+        LEndPage := FPageCount;
+      while (j <= LEndPage) and (not FAbort) do
       begin
         PrintPage(j);
-        if ((j < AEndPage) or (i < Copies)) and not FAbort then
+        if ((j < LEndPage) or (i < Copies)) and not FAbort then
           Printer.NewPage;
         Inc(j);
       end;
     end;
     if not FAbort then
-      PrintStatus(psEnd, AEndPage, FAbort);
+      PrintStatus(psEnd, LEndPage, FAbort);
     Printer.EndDoc;
   end;
   FPrinting := False;
