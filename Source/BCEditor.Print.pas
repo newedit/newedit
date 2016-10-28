@@ -730,8 +730,24 @@ begin
 end;
 
 procedure TBCEditorPrint.Print;
+var
+  LCanvas: TCanvas;
+  LHandle: THandle;
 begin
-  PrintRange(1, -1);
+  LCanvas := TCanvas.Create;
+  LHandle := GetDC(0);
+  try
+    if LHandle <> 0 then
+    begin
+      LCanvas.Handle := LHandle;
+      UpdatePages(LCanvas);
+      PrintRange(1, -1);
+      LCanvas.Handle := 0;
+    end;
+  finally
+    ReleaseDC(0, LHandle);
+    LCanvas.Free;
+  end;
 end;
 
 procedure TBCEditorPrint.PrintRange(AStartPage, AEndPage: Integer);
