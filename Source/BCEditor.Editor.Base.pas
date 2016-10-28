@@ -1,4 +1,7 @@
-﻿unit BCEditor.Editor.Base;
+﻿// TODO: Fix word wrap
+// TODO: Fix word wrap selection
+// TODO: Matching pair when word wrap
+unit BCEditor.Editor.Base;
 
 interface
 
@@ -2080,14 +2083,14 @@ end;
 
 procedure TBCBaseEditor.CreateLineNumbersCache(AResetCache: Boolean = False);
 var
-  i, j, k: Integer;
+  LIndex, LCurrentLine, LCacheLength: Integer;
   LCodeFoldingRange: TBCEditorCodeFoldingRange;
   LCollapsedCodeFolding: array of Boolean;
   LLineNumbersCacheLength: Integer;
 
   procedure ResizeCacheArray;
   begin
-    if FWordWrap.Enabled and (k >= LLineNumbersCacheLength) then
+    if FWordWrap.Enabled and (LCacheLength >= LLineNumbersCacheLength) then
     begin
       Inc(LLineNumbersCacheLength, 256);
       SetLength(FLineNumbersCache, LLineNumbersCacheLength);
@@ -2098,8 +2101,8 @@ var
 
   procedure AddLineNumberIntoCache;
   begin
-    FLineNumbersCache[k] := j;
-    Inc(k);
+    FLineNumbersCache[LCacheLength] := LCurrentLine;
+    Inc(LCacheLength);
     ResizeCacheArray;
   end;
 
@@ -2107,7 +2110,7 @@ var
   var
     LToken: string;
     LHighlighterAttribute: TBCEditorHighlighterAttribute;
-    LLength, LTokenWidth, LWidth, LMaxWidth: Integer;
+    LLength, LMaxLength, LTokenWidth, LWidth, LMaxWidth: Integer;
     LCharsBefore: Integer;
     LPToken, LPStart: PChar;
     LEndOfTokenWidth, LCharWidth: Integer;
@@ -2116,14 +2119,14 @@ var
     if not Visible then
       Exit;
 
-    // TODO Refactor
-
+    // TODO fix
+    LMaxLength := 0;
     LMaxWidth := Max(WordWrapWidth, FPaintHelper.CharWidth + 2);
-    if j = 1 then
+    if LCurrentLine = 1 then
       FHighlighter.ResetCurrentRange
     else
-      FHighlighter.SetCurrentRange(FLines.Ranges[j - 2]);
-    FHighlighter.SetCurrentLine(FLines[j - 1]);
+      FHighlighter.SetCurrentRange(FLines.Ranges[LCurrentLine - 2]);
+    FHighlighter.SetCurrentLine(FLines[LCurrentLine - 1]);
     LWidth := 0;
     LLength := 0;
     LCharsBefore := 0;
@@ -2139,7 +2142,7 @@ var
       begin
         if LLength > 0 then
         begin
-          FWordWrapLineLengths[k] := LLength;
+          FWordWrapLineLengths[LCacheLength] := LLength;
           AddLineNumberIntoCache;
           //LWidth := LTokenWidth;
           LLength := 0;
@@ -2172,9 +2175,12 @@ var
                 LLastChar := LPToken^;
             end
           end;
-          FWordWrapLineLengths[k] := LPToken - LPStart;
+          FWordWrapLineLengths[LCacheLength] := LPToken - LPStart;
+          if FWordWrapLineLengths[LCacheLength] > LMaxLength then
+            LMaxLength := FWordWrapLineLengths[LCacheLength];
           LToken := LEndOfToken;
           AddLineNumberIntoCache;
+          LWidth := 0;
           LTokenWidth := LEndOfTokenWidth;
         end;
       end;
@@ -2182,7 +2188,9 @@ var
       Inc(LWidth, LTokenWidth);
       if LWidth > LMaxWidth then
       begin
-        FWordWrapLineLengths[k] := LLength;
+        FWordWrapLineLengths[LCacheLength] := LLength;
+        if LLength > LMaxLength then
+          LMaxLength := LLength;
         AddLineNumberIntoCache;
         LWidth := LTokenWidth;
         LLength := 0;
@@ -2191,7 +2199,7 @@ var
       Inc(LCharsBefore, GetTokenCharCount(LToken, LCharsBefore));
       FHighlighter.Next;
     end;
-    FWordWrapLineLengths[k] := LMaxWidth div FPaintHelper.CharWidth;
+    FWordWrapLineLengths[LCacheLength] := LLength;
     AddLineNumberIntoCache;
   end;
 
@@ -2200,12 +2208,12 @@ begin
   begin
     FResetLineNumbersCache := False;
     SetLength(LCollapsedCodeFolding, Lines.Count + 1);
-    for i := 0 to FAllCodeFoldingRanges.AllCount - 1 do
+    for LIndex := 0 to FAllCodeFoldingRanges.AllCount - 1 do
     begin
-      LCodeFoldingRange := FAllCodeFoldingRanges[i];
+      LCodeFoldingRange := FAllCodeFoldingRanges[LIndex];
       if Assigned(LCodeFoldingRange) and LCodeFoldingRange.Collapsed then
-        for j := LCodeFoldingRange.FromLine + 1 to LCodeFoldingRange.ToLine do
-          LCollapsedCodeFolding[j] := True;
+        for LCurrentLine := LCodeFoldingRange.FromLine + 1 to LCodeFoldingRange.ToLine do
+          LCollapsedCodeFolding[LCurrentLine] := True;
     end;
     SetLength(FLineNumbersCache, 0);
     SetLength(FWordWrapLineLengths, 0);
@@ -2216,13 +2224,13 @@ begin
       SetLength(FWordWrapLineLengths, LLineNumbersCacheLength);
     end;
     SetLength(FLineNumbersCache, LLineNumbersCacheLength);
-    j := 1;
-    k := 1;
-    for i := 1 to Lines.Count do
+    LCurrentLine := 1;
+    LCacheLength := 1;
+    for LIndex := 1 to Lines.Count do
     begin
-      while (j <= Lines.Count) and LCollapsedCodeFolding[j] do { Skip collapsed lines }
-        Inc(j);
-      if j > Lines.Count then
+      while (LCurrentLine <= Lines.Count) and LCollapsedCodeFolding[LCurrentLine] do { Skip collapsed lines }
+        Inc(LCurrentLine);
+      if LCurrentLine > Lines.Count then
         Break;
 
       if FWordWrap.Enabled then
@@ -2230,14 +2238,14 @@ begin
       else
         AddLineNumberIntoCache;
 
-      Inc(j);
+      Inc(LCurrentLine);
     end;
 
-    if k <> Length(FLineNumbersCache) then
+    if LCacheLength <> Length(FLineNumbersCache) then
     begin
-      SetLength(FLineNumbersCache, k);
+      SetLength(FLineNumbersCache, LCacheLength);
       if FWordWrap.Enabled then
-        SetLength(FWordWrapLineLengths, k);
+        SetLength(FWordWrapLineLengths, LCacheLength);
     end;
     SetLength(LCollapsedCodeFolding, 0);
     FLineNumbersCount := Length(FLineNumbersCache) - 1;
@@ -11147,6 +11155,7 @@ var
     LTextPosition: TBCEditorTextPosition;
     LTextCaretY: Integer;
     LTokenAdded: Boolean;
+    LLinePosition: Integer;
 
     function GetWordAtSelection(var ASelectedText: string): string;
     var
@@ -11374,7 +11383,7 @@ var
 
       if FWordWrap.Enabled and (LDisplayLine < Length(FWordWrapLineLengths)) then
       begin
-        LLastColumn := FWordWrapLineLengths[LDisplayLine];
+        //LLastColumn := FWordWrapLineLengths[LDisplayLine];
         LLine := LDisplayLine - 1;
         if LLine > 0 then
         begin
@@ -11383,7 +11392,7 @@ var
             LFirstColumn := LFirstColumn + FWordWrapLineLengths[LLine];
             Dec(LLine);
           end;
-          LLastColumn := LFirstColumn + FWordWrapLineLengths[LDisplayLine] - 1;
+          //LLastColumn := LFirstColumn + FWordWrapLineLengths[LDisplayLine] - 1;
         end;
       end
       else
@@ -11493,6 +11502,10 @@ var
         LTokenHelper.EmptySpace := esNone;
         LAddWrappedCount := False;
         LTokenAdded := False;
+        LLinePosition := 0;
+
+        if FWordWrap.Enabled then
+          LLastColumn := FWordWrapLineLengths[LCurrentRow + LWrappedRowCount];
 
         while not FHighlighter.GetEndOfLine do
         begin
@@ -11520,27 +11533,26 @@ var
 
             if FWordWrap.Enabled then
             begin
-              // TODO Refactor
+              // TODO fix
 
               if not LTokenAdded and (LTokenLength > FWordWrapLineLengths[LCurrentRow + LWrappedRowCount]) then
               begin
                 LTokenText := Copy(LTokenText, LFirstColumn, FWordWrapLineLengths[LCurrentRow + LWrappedRowCount]);
                 LTokenLength := Length(LTokenText);
-                LTokenPosition := LFirstColumn - 1;
 
-                PrepareToken;
-
-                Inc(LFirstColumn, FWordWrapLineLengths[LCurrentRow + LWrappedRowCount]);
-                if LCurrentRow + LWrappedRowCount + 1 < Length(FWordWrapLineLengths) then
-                  Inc(LLastColumn, FWordWrapLineLengths[LCurrentRow + LWrappedRowCount + 1]);
-                LAddWrappedCount := True;
-                Break;
-              end;
-
-              if LTokenPosition + LTokenLength > LLastColumn then
+                if LTokenLength = FWordWrapLineLengths[LCurrentRow + LWrappedRowCount] then
+                begin
+                  PrepareToken;
+                  Inc(LFirstColumn, FWordWrapLineLengths[LCurrentRow + LWrappedRowCount]);
+                  LAddWrappedCount := True;
+                  Break;
+                end
+                else
+                  LFirstColumn := 1;
+              end
+              else
+              if LLinePosition + LTokenLength > LLastColumn then
               begin
-                if LCurrentRow + LWrappedRowCount + 1 < Length(FWordWrapLineLengths) then
-                  Inc(LLastColumn, FWordWrapLineLengths[LCurrentRow + LWrappedRowCount + 1]);
                 LAddWrappedCount := True;
                 Break;
               end;
@@ -11553,7 +11565,7 @@ var
 
             PrepareToken;
           end;
-
+          Inc(LLinePosition, LTokenLength);
           FHighlighter.Next;
         end;
 
