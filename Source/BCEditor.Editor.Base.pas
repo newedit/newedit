@@ -1349,6 +1349,15 @@ begin
       begin
         LFound := True;
         Result := LPivot;
+        if FWordWrap.Enabled then
+        begin
+          Dec(LPivot);
+          while FLineNumbersCache[LPivot] = ADisplayLineNumber do
+          begin
+            Result := LPivot;
+            Dec(LPivot);
+          end;
+        end;
       end
       else
       if FLineNumbersCache[LPivot] > ADisplayLineNumber then
@@ -3696,12 +3705,9 @@ begin
 
         LFoldRange := CodeFoldingFoldRangeForLineTo(LTextCaretPosition.Line);
         if Assigned(LFoldRange) and LFoldRange.Collapsed then
-        begin
-          DisplayCaretY := LFoldRange.FromLine;
-          DisplayCaretX := Length(Lines[LFoldRange.FromLine - 1]) + 2 + LCaretNewPosition.Char;  // TODO: Lines[LFoldRange.FromLine - 1] is wrong
-        end
-        else
-          TextCaretPosition := LCaretNewPosition;
+          LCaretNewPosition.Char := Length(Lines[LTextCaretPosition.Line - 1]) + 2 + LCaretNewPosition.Char;
+
+        TextCaretPosition := LCaretNewPosition;
       end;
     end
     else
@@ -11364,7 +11370,7 @@ var
       LTokenLength := 0;
       LExpandedCharsBefore := 0;
       LCurrentRow := LCurrentLine + 1;
-      LTextCaretY := GetTextCaretY + 1;
+      LTextCaretY := GetTextCaretY;
 
       LFirstColumn := 1;
       LWrappedRowCount := 0;
@@ -11461,7 +11467,7 @@ var
         if Assigned(FMultiCarets) then
           LIsCurrentLine := IsMultiEditCaretFound(LCurrentLine + 1)
         else
-          LIsCurrentLine := LTextCaretY = LCurrentLine + 1; // TODO +1 ?
+          LIsCurrentLine := LTextCaretY = LCurrentLine;
 
         LForegroundColor := FForegroundColor;
         LBackgroundColor := GetBackgroundColor;
