@@ -2195,7 +2195,7 @@ var
       Inc(LCharsBefore, GetTokenCharCount(LToken, LCharsBefore));
       FHighlighter.Next;
     end;
-    FWordWrapLineLengths[LCacheLength] := LLength;
+    FWordWrapLineLengths[LCacheLength] := LMaxWidth div FPaintHelper.CharWidth;
     AddLineNumberIntoCache;
   end;
 
@@ -11534,7 +11534,8 @@ var
               else
               if LLinePosition + LTokenLength > LLastColumn then
               begin
-                PrepareToken;
+                if LWrappedRowCount > 0 then
+                  PrepareToken;
                 LFirstColumn := 1;
                 LAddWrappedCount := True;
                 Break;
@@ -11901,8 +11902,8 @@ begin
       FDisplayCaretX := AValue.Column;
     if FDisplayCaretY <> AValue.Row then
     begin
-      if ActiveLine.Color <> clNone then
-        Invalidate;
+      //if ActiveLine.Color <> clNone then
+      //  Invalidate;
       FDisplayCaretY := AValue.Row;
     end;
     EnsureCursorPositionVisible;
