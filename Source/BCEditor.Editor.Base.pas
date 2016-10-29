@@ -11189,38 +11189,36 @@ var
         LIsCustomBackgroundColor := False;
         LMatchingPairUnderline := False;
 
-        if FMatchingPair.Enabled and not FSyncEdit.Active then
-          if FCurrentMatchingPair <> trNotFound then
-            if (LCurrentLine = FCurrentMatchingPairMatch.OpenTokenPos.Line) and
-              (LTokenPosition = FCurrentMatchingPairMatch.OpenTokenPos.Char - 1) or
-              (LCurrentLine = FCurrentMatchingPairMatch.CloseTokenPos.Line) and
-              (LTokenPosition = FCurrentMatchingPairMatch.CloseTokenPos.Char - 1) then
+        if FMatchingPair.Enabled and not FSyncEdit.Active and (FCurrentMatchingPair <> trNotFound) then
+          if (LCurrentLine = FCurrentMatchingPairMatch.OpenTokenPos.Line) and
+            (LTokenPosition = FCurrentMatchingPairMatch.OpenTokenPos.Char - 1) or
+            (LCurrentLine = FCurrentMatchingPairMatch.CloseTokenPos.Line) and
+            (LTokenPosition = FCurrentMatchingPairMatch.CloseTokenPos.Char - 1) then
+          begin
+            if (FCurrentMatchingPair = trOpenAndCloseTokenFound) or (FCurrentMatchingPair = trCloseAndOpenTokenFound) then
             begin
-              if (FCurrentMatchingPair = trOpenAndCloseTokenFound) or (FCurrentMatchingPair = trCloseAndOpenTokenFound)
-              then
+              LIsCustomBackgroundColor := mpoUseMatchedColor in FMatchingPair.Options;
+              if LIsCustomBackgroundColor then
               begin
-                LIsCustomBackgroundColor := mpoUseMatchedColor in FMatchingPair.Options;
-                if LIsCustomBackgroundColor then
-                begin
-                  if LForegroundColor = FMatchingPair.Colors.Matched then
-                    LForegroundColor := FBackgroundColor;
-                  LBackgroundColor := FMatchingPair.Colors.Matched;
-                end;
-                LMatchingPairUnderline := mpoUnderline in FMatchingPair.Options;
-              end
-              else
-              if mpoHighlightUnmatched in FMatchingPair.Options then
-              begin
-                LIsCustomBackgroundColor := mpoUseMatchedColor in FMatchingPair.Options;
-                if LIsCustomBackgroundColor then
-                begin
-                  if LForegroundColor = FMatchingPair.Colors.Unmatched then
-                    LForegroundColor := FBackgroundColor;
-                  LBackgroundColor := FMatchingPair.Colors.Unmatched;
-                end;
-                LMatchingPairUnderline := mpoUnderline in FMatchingPair.Options;
+                if LForegroundColor = FMatchingPair.Colors.Matched then
+                  LForegroundColor := FBackgroundColor;
+                LBackgroundColor := FMatchingPair.Colors.Matched;
               end;
+              LMatchingPairUnderline := mpoUnderline in FMatchingPair.Options;
+            end
+            else
+            if mpoHighlightUnmatched in FMatchingPair.Options then
+            begin
+              LIsCustomBackgroundColor := mpoUseMatchedColor in FMatchingPair.Options;
+              if LIsCustomBackgroundColor then
+              begin
+                if LForegroundColor = FMatchingPair.Colors.Unmatched then
+                  LForegroundColor := FBackgroundColor;
+                LBackgroundColor := FMatchingPair.Colors.Unmatched;
+              end;
+              LMatchingPairUnderline := mpoUnderline in FMatchingPair.Options;
             end;
+          end;
 
         if FSyncEdit.BlockSelected and LIsSyncEditBlock then
           LBackgroundColor := FSyncEdit.Colors.Background;
@@ -11244,8 +11242,7 @@ var
           begin
             LPToken := PChar(LTokenText);
             LPWord := PChar(LWordAtSelection);
-            while (LPToken^ <> BCEDITOR_NONE_CHAR) and (LPWord^ <> BCEDITOR_NONE_CHAR) and
-              (UpCase(LPToken^) = UpCase(LPWord^)) do
+            while (LPToken^ <> BCEDITOR_NONE_CHAR) and (LPWord^ <> BCEDITOR_NONE_CHAR) and (UpCase(LPToken^) = UpCase(LPWord^)) do
             begin
               Inc(LPToken);
               Inc(LPWord);
@@ -11382,7 +11379,7 @@ var
         if LLine > 0 then
         while (LLine > 0) and (GetDisplayTextLineNumber(LLine) = LCurrentLine + 1) do
         begin
-          LFirstColumn := LFirstColumn + FWordWrapLineLengths[LLine];
+          Inc(LFirstColumn, FWordWrapLineLengths[LLine]);
           Dec(LLine);
           Inc(LWrappedRowCount);
         end;
@@ -11487,7 +11484,12 @@ var
         LLinePosition := 0;
 
         if FWordWrap.Enabled then
-          LLastColumn := FWordWrapLineLengths[LDisplayLine];
+        begin
+          if LWrappedRowCount > 0 then
+            Inc(LLastColumn, FWordWrapLineLengths[LDisplayLine])
+          else
+            LLastColumn := FWordWrapLineLengths[LDisplayLine];
+        end;
 
         while not FHighlighter.GetEndOfLine do
         begin
@@ -11534,7 +11536,7 @@ var
               else
               if LLinePosition + LTokenLength > LLastColumn then
               begin
-                if LWrappedRowCount > 0 then
+                if LFirstColumn > 1 then
                   PrepareToken;
                 LFirstColumn := 1;
                 LAddWrappedCount := True;

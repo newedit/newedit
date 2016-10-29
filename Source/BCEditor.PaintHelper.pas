@@ -73,7 +73,7 @@ type
     procedure InternalReleaseDC(AValue: HDC);
     procedure ReleaseFontsInfo;
     procedure SetBaseFont(AValue: TFont);
-    procedure SetStyle(AValue: TFontStyles);
+    procedure SetStyle(const AValue: TFontStyles);
     procedure UseFontHandles;
     property FontData[AIndex: Integer]: PBCEditorFontData read GetFontData;
     property FontsInfo: PBCEditorSharedFontsInfo read FPSharedFontsInfo;
@@ -118,7 +118,7 @@ type
     procedure SetBaseFont(AValue: TFont);
     procedure SetBaseStyle(const AValue: TFontStyles);
     procedure SetForegroundColor(AValue: TColor);
-    procedure SetStyle(AValue: TFontStyles);
+    procedure SetStyle(const AValue: TFontStyles);
     property BackgroundColor: TColor read FBackgroundColor;
     property CharHeight: Integer read FCharHeight;
     property CharWidth: Integer read FCharWidth;
@@ -433,7 +433,7 @@ begin
     raise EBCEditorFontStockException.Create(SBCEditorValueMustBeSpecified);
 end;
 
-procedure TBCEditorFontStock.SetStyle(AValue: TFontStyles);
+procedure TBCEditorFontStock.SetStyle(const AValue: TFontStyles);
 var
   LIndex: Integer;
   LHandle: HDC;
@@ -576,7 +576,7 @@ begin
   end;
 end;
 
-procedure TBCEditorPaintHelper.SetStyle(AValue: TFontStyles);
+procedure TBCEditorPaintHelper.SetStyle(const AValue: TFontStyles);
 begin
   with FFontStock do
   begin
