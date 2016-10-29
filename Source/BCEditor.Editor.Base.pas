@@ -1,5 +1,4 @@
-﻿// TODO: Matching pair when word wrap
-// TODO: Fix moving with right arrow when word wrap
+﻿// TODO: Fix moving with right arrow when word wrap
 unit BCEditor.Editor.Base;
 
 interface
@@ -1339,8 +1338,8 @@ begin
     Result := ADisplayLineNumber
   else
   begin
-    LFirst := Low(FLineNumbersCache);
-    LLast := High(FLineNumbersCache);
+    LFirst := 1;
+    LLast := FLineNumbersCount;
     LFound := False;
 
     while (LFirst <= LLast) and not LFound do
@@ -1350,15 +1349,6 @@ begin
       begin
         LFound := True;
         Result := LPivot;
-        if FWordWrap.Enabled then
-        begin
-          Dec(LPivot);
-          while FLineNumbersCache[LPivot] = ADisplayLineNumber do
-          begin
-            Result := LPivot;
-            Dec(LPivot);
-          end;
-        end;
       end
       else
       if FLineNumbersCache[LPivot] > ADisplayLineNumber then
@@ -1739,7 +1729,6 @@ begin
         if LTextPosition.Line > FLines.Count then
           Break;
         InitializeCurrentLine;
-        //SetCurrentLine(FLines[LDisplayPosition.Row - 1]);
       end;
     end
     else
@@ -2143,7 +2132,6 @@ var
         begin
           FWordWrapLineLengths[LCacheLength] := LLength;
           AddLineNumberIntoCache;
-          //LWidth := LTokenWidth;
           LLength := 0;
         end;
 
@@ -3710,7 +3698,7 @@ begin
         if Assigned(LFoldRange) and LFoldRange.Collapsed then
         begin
           DisplayCaretY := LFoldRange.FromLine;
-          DisplayCaretX := Length(Lines[LFoldRange.FromLine - 1]) + 2 + LCaretNewPosition.Char;
+          DisplayCaretX := Length(Lines[LFoldRange.FromLine - 1]) + 2 + LCaretNewPosition.Char;  // TODO: Lines[LFoldRange.FromLine - 1] is wrong
         end
         else
           TextCaretPosition := LCaretNewPosition;
@@ -11821,11 +11809,12 @@ begin
       FCurrentMatchingPair := GetMatchingToken(LDisplayPosition, FCurrentMatchingPairMatch);
     end;
 
-  if FHighlighter.MatchingPairHighlight and (cfoHighlightMatchingPair in FCodeFolding.Options) then
+  if (FCurrentMatchingPair = trNotFound) and FHighlighter.MatchingPairHighlight and (cfoHighlightMatchingPair in FCodeFolding.Options) then
   begin
-    LFoldRange := CodeFoldingCollapsableFoldRangeForLine(LDisplayPosition.Row);
+    LLine := GetDisplayTextLineNumber(LDisplayPosition.Row);
+    LFoldRange := CodeFoldingCollapsableFoldRangeForLine(LLine);
     if not Assigned(LFoldRange) then
-      LFoldRange := CodeFoldingFoldRangeForLineTo(LDisplayPosition.Row);
+      LFoldRange := CodeFoldingFoldRangeForLineTo(LLine);
     if Assigned(LFoldRange) then
     begin
       if IsKeywordAtCaretPosition(nil, mpoHighlightAfterToken in FMatchingPair.Options) then
