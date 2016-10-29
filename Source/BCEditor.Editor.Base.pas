@@ -1,6 +1,5 @@
-﻿// TODO: Fix word wrap
-// TODO: Fix word wrap selection
-// TODO: Matching pair when word wrap
+﻿// TODO: Matching pair when word wrap
+// TODO: Fix moving with right arrow when word wrap
 unit BCEditor.Editor.Base;
 
 interface
@@ -1542,7 +1541,7 @@ var
   LMatchStackID: Integer;
   LOpenDuplicateLength, LCloseDuplicateLength: Integer;
   LCurrentLineText: string;
-  LDisplayPosition: TBCEditorDisplayPosition;
+  LTextPosition: TBCEditorTextPosition;
 
   function IsCommentOrString(AElement: string): Boolean;
   begin
@@ -1599,7 +1598,7 @@ var
       begin
         GetMatchingToken := trOpenAndCloseTokenFound;
         GetToken(AMatch.CloseToken);
-        AMatch.CloseTokenPos.Line := LDisplayPosition.Row - 1;
+        AMatch.CloseTokenPos.Line := LTextPosition.Line;
         AMatch.CloseTokenPos.Char := GetTokenPosition + 1;
         Result := True;
       end
@@ -1631,7 +1630,7 @@ var
         if LMatchStackID >= Length(FMatchingPairMatchStack) then
           SetLength(FMatchingPairMatchStack, Length(FMatchingPairMatchStack) + 32);
         GetToken(FMatchingPairMatchStack[LMatchStackID].Token);
-        FMatchingPairMatchStack[LMatchStackID].Position.Line := LDisplayPosition.Row - 1;
+        FMatchingPairMatchStack[LMatchStackID].Position.Line := LTextPosition.Line;
         FMatchingPairMatchStack[LMatchStackID].Position.Char := GetTokenPosition + 1;
       end;
       Next;
@@ -1640,11 +1639,11 @@ var
 
   procedure InitializeCurrentLine;
   begin
-    if LDisplayPosition.Row = 1 then
+    if LTextPosition.Line = 0 then
       FHighlighter.ResetCurrentRange
     else
-      FHighlighter.SetCurrentRange(FLines.Ranges[LDisplayPosition.Row - 2]);
-    LCurrentLineText := FLines[LDisplayPosition.Row - 1];
+      FHighlighter.SetCurrentRange(FLines.Ranges[LTextPosition.Line - 1]);
+    LCurrentLineText := FLines[LTextPosition.Line];
     FHighlighter.SetCurrentLine(LCurrentLineText);
   end;
 
@@ -1656,14 +1655,14 @@ begin
   if FHighlighter = nil then
     Exit;
 
-  LDisplayPosition := ADisplayPosition;
+  LTextPosition := DisplayToTextPosition(ADisplayPosition);
 
-  Dec(LDisplayPosition.Column);
+  Dec(LTextPosition.Char);
   with FHighlighter do
   begin
     InitializeCurrentLine;
 
-    LCaretX := LDisplayPosition.Column + 1;
+    LCaretX := LTextPosition.Char + 1;
     while not GetEndOfLine and (LCaretX > GetTokenPosition + GetTokenLength) do
       Next;
 
@@ -1687,7 +1686,7 @@ begin
       begin
         Result := trCloseTokenFound;
         AMatch.CloseToken := LOriginalToken;
-        AMatch.CloseTokenPos.Line := LDisplayPosition.Row - 1;
+        AMatch.CloseTokenPos.Line := LTextPosition.Line;
         AMatch.CloseTokenPos.Char := GetTokenPosition + 1;
         Break;
       end
@@ -1696,7 +1695,7 @@ begin
       begin
         Result := trOpenTokenFound;
         AMatch.OpenToken := LOriginalToken;
-        AMatch.OpenTokenPos.Line := LDisplayPosition.Row - 1;
+        AMatch.OpenTokenPos.Line := LTextPosition.Line;
         AMatch.OpenTokenPos.Char := GetTokenPosition + 1;
         Break;
       end;
@@ -1736,10 +1735,11 @@ begin
         while not GetEndOfLine do
           if CheckToken then
             Exit;
-        Inc(LDisplayPosition.Row);
-        if LDisplayPosition.Row > FLines.Count then
+        Inc(LTextPosition.Line);
+        if LTextPosition.Line > FLines.Count then
           Break;
-        SetCurrentLine(FLines[LDisplayPosition.Row - 1]);
+        InitializeCurrentLine;
+        //SetCurrentLine(FLines[LDisplayPosition.Row - 1]);
       end;
     end
     else
@@ -1760,10 +1760,10 @@ begin
         AMatch.OpenTokenPos := FMatchingPairMatchStack[LMatchStackID].Position;
       end
       else
-      while LDisplayPosition.Row > 1 do
+      while LTextPosition.Line > 0 do
       begin
         LDeltaLevel := -LLevel - 1;
-        Dec(LDisplayPosition.Row);
+        Dec(LTextPosition.Line);
 
         InitializeCurrentLine;
 
@@ -2119,7 +2119,6 @@ var
     if not Visible then
       Exit;
 
-    // TODO fix
     LMaxLength := 0;
     LMaxWidth := Max(WordWrapWidth, FPaintHelper.CharWidth + 2);
     if LCurrentLine = 1 then
@@ -10536,7 +10535,7 @@ var
     for LIndex := 0 to FBookmarkList.Count - 1 do
     begin
       LMark := FBookmarkList.Items[LIndex];
-      if LMark.Line = LCurrentLine - 1 then
+      if LMark.Line = LCurrentLine then
         Exit;
     end;
     Result := False;
@@ -10737,9 +10736,9 @@ var
           LTextPosition := PBCEditorTextPosition(FSearch.Lines.Items[LCurrentSearchIndex])^;
           LSearchTextLength := Length(FSearch.SearchText);
 
-          while LCurrentLine - 1 = LTextPosition.Line do
+          while LCurrentLine = LTextPosition.Line do
           begin
-            if {Length(LTokenHelper.Text)} LTokenHelper.Length - Length(LText) + LTokenHelper.CharsBefore + ATokenLength < LTextPosition.Char then
+            if LTokenHelper.Length - Length(LText) + LTokenHelper.CharsBefore + ATokenLength < LTextPosition.Char then
               Break;
 
             if FSearch.InSelection.Active then
@@ -11198,9 +11197,9 @@ var
 
         if FMatchingPair.Enabled and not FSyncEdit.Active then
           if FCurrentMatchingPair <> trNotFound then
-            if (LCurrentLine - 1 = FCurrentMatchingPairMatch.OpenTokenPos.Line) and
+            if (LCurrentLine = FCurrentMatchingPairMatch.OpenTokenPos.Line) and
               (LTokenPosition = FCurrentMatchingPairMatch.OpenTokenPos.Char - 1) or
-              (LCurrentLine - 1 = FCurrentMatchingPairMatch.CloseTokenPos.Line) and
+              (LCurrentLine = FCurrentMatchingPairMatch.CloseTokenPos.Line) and
               (LTokenPosition = FCurrentMatchingPairMatch.CloseTokenPos.Char - 1) then
             begin
               if (FCurrentMatchingPair = trOpenAndCloseTokenFound) or (FCurrentMatchingPair = trCloseAndOpenTokenFound)
@@ -11306,13 +11305,13 @@ var
       LLineSelectionStart := 0;
       LLineSelectionEnd := 0;
 
-      if LAnySelection and (LCurrentLine - 1 >= LSelectionBeginPosition.Line) and
-        (LCurrentLine - 1 <= LSelectionEndPosition.Line) then
+      if LAnySelection and (LCurrentLine >= LSelectionBeginPosition.Line) and
+        (LCurrentLine <= LSelectionEndPosition.Line) then
       begin
         LLineSelectionStart := 1;
         LLineSelectionEnd := LLastColumn + 1;
         if (FSelection.ActiveMode = smColumn) or
-          ((FSelection.ActiveMode = smNormal) and (LCurrentLine - 1 = LSelectionBeginPosition.Line)) then
+          ((FSelection.ActiveMode = smNormal) and (LCurrentLine = LSelectionBeginPosition.Line)) then
         begin
           if LSelectionBeginPosition.Char > LLastColumn then
           begin
@@ -11327,7 +11326,7 @@ var
           end;
         end;
         if (FSelection.ActiveMode = smColumn) or
-          ((FSelection.ActiveMode = smNormal) and (LCurrentLine - 1 = LSelectionEndPosition.Line)) then
+          ((FSelection.ActiveMode = smNormal) and (LCurrentLine = LSelectionEndPosition.Line)) then
         begin
           if LSelectionEndPosition.Char < 1 then
           begin
@@ -11360,14 +11359,14 @@ var
 
     while LDisplayLine <= ALastLine do
     begin
-      LCurrentLine := GetDisplayTextLineNumber(LDisplayLine);
+      LCurrentLine := GetDisplayTextLineNumber(LDisplayLine) - 1;
 
-      LMarkColor := GetMarkBackgroundColor(LCurrentLine);
+      LMarkColor := GetMarkBackgroundColor(LCurrentLine + 1);
 
       if AMinimap and (moShowBookmarks in FMinimap.Options) then
         LBookmarkOnCurrentLine := IsBookmarkOnCurrentLine;
 
-      LCurrentLineText := FLines[LCurrentLine - 1];
+      LCurrentLineText := FLines[LCurrentLine];
       LPaintedColumn := 1;
 
       LIsCurrentLine := False;
@@ -11376,37 +11375,33 @@ var
       LTokenPosition := 0;
       LTokenLength := 0;
       LExpandedCharsBefore := 0;
-      LCurrentRow := LCurrentLine;
+      LCurrentRow := LCurrentLine + 1;
       LTextCaretY := GetTextCaretY + 1;
 
       LFirstColumn := 1;
+      LWrappedRowCount := 0;
 
       if FWordWrap.Enabled and (LDisplayLine < Length(FWordWrapLineLengths)) then
       begin
-        //LLastColumn := FWordWrapLineLengths[LDisplayLine];
+        LLastColumn := LCurrentLineLength;
         LLine := LDisplayLine - 1;
         if LLine > 0 then
+        while (LLine > 0) and (GetDisplayTextLineNumber(LLine) = LCurrentLine + 1) do
         begin
-          while (LLine > 0) and (GetDisplayTextLineNumber(LLine) = LCurrentLine) do
-          begin
-            LFirstColumn := LFirstColumn + FWordWrapLineLengths[LLine];
-            Dec(LLine);
-          end;
-          //LLastColumn := LFirstColumn + FWordWrapLineLengths[LDisplayLine] - 1;
+          LFirstColumn := LFirstColumn + FWordWrapLineLengths[LLine];
+          Dec(LLine);
+          Inc(LWrappedRowCount);
         end;
       end
       else
-        LLastColumn := GetVisibleChars(LCurrentLine, LCurrentLineText);
+        LLastColumn := GetVisibleChars(LCurrentLine + 1, LCurrentLineText);
 
-      LWrappedRowCount := 0;
-
-      if not FWordWrap.Enabled then
-        SetLineSelectionVariables;
+      SetLineSelectionVariables;
 
       LFoldRange := nil;
       if FCodeFolding.Visible then
       begin
-        LFoldRange := CodeFoldingCollapsableFoldRangeForLine(LCurrentLine);
+        LFoldRange := CodeFoldingCollapsableFoldRangeForLine(LCurrentLine + 1);
         if Assigned(LFoldRange) and LFoldRange.Collapsed then
         begin
           LOpenTokenEndLen := 0;
@@ -11417,18 +11412,17 @@ var
 
           if LOpenTokenEndPos > 0 then
           begin
-            if LCurrentLine = 1 then
+            if LCurrentLine = 0 then
               FHighlighter.ResetCurrentRange
             else
-              FHighlighter.SetCurrentRange(FLines.Ranges[LCurrentLine - 2]);
+              FHighlighter.SetCurrentRange(FLines.Ranges[LCurrentLine - 1]);
             FHighlighter.SetCurrentLine(LFromLineText);
             repeat
               while not FHighlighter.GetEndOfLine and
                 (LOpenTokenEndPos > FHighlighter.GetTokenPosition + FHighlighter.GetTokenLength) do
                 FHighlighter.Next;
               LElement := FHighlighter.GetCurrentRangeAttribute.Element;
-              if (LElement <> BCEDITOR_ATTRIBUTE_ELEMENT_COMMENT) and (LElement <> BCEDITOR_ATTRIBUTE_ELEMENT_STRING)
-              then
+              if (LElement <> BCEDITOR_ATTRIBUTE_ELEMENT_COMMENT) and (LElement <> BCEDITOR_ATTRIBUTE_ELEMENT_STRING) then
                 Break;
               LOpenTokenEndPos := Pos(LFoldRange.RegionItem.OpenTokenEnd, AnsiUpperCase(LFromLineText),
                 LOpenTokenEndPos + 1);
@@ -11452,7 +11446,7 @@ var
                 LLineSelectionEnd := Length(LCurrentLineText);
             end;
 
-          if LCurrentLine - 1 = FCurrentMatchingPairMatch.OpenTokenPos.Line then
+          if LCurrentLine = FCurrentMatchingPairMatch.OpenTokenPos.Line then
           begin
             if (LFoldRange.RegionItem.OpenTokenEnd <> '') and (LOpenTokenEndPos > 0) then
               FCurrentMatchingPairMatch.CloseTokenPos.Char := LOpenTokenEndPos + LOpenTokenEndLen + 2 { +2 = '..' }
@@ -11464,18 +11458,22 @@ var
         end;
       end;
 
-      while LCurrentRow = LCurrentLine do
+      if LCurrentLine = 0 then
+        FHighlighter.ResetCurrentRange
+      else
+        FHighlighter.SetCurrentRange(FLines.Ranges[LCurrentLine - 1]);
+
+      FHighlighter.SetCurrentLine(LCurrentLineText);
+
+      while LCurrentRow = LCurrentLine + 1 do
       begin
         LPaintedWidth := 0;
         FItalicOffset := 0;
 
-        if FWordWrap.Enabled then
-          SetLineSelectionVariables;
-
         if Assigned(FMultiCarets) then
-          LIsCurrentLine := IsMultiEditCaretFound(LCurrentLine)
+          LIsCurrentLine := IsMultiEditCaretFound(LCurrentLine + 1)
         else
-          LIsCurrentLine := LTextCaretY = LCurrentLine;
+          LIsCurrentLine := LTextCaretY = LCurrentLine + 1; // TODO +1 ?
 
         LForegroundColor := FForegroundColor;
         LBackgroundColor := GetBackgroundColor;
@@ -11488,16 +11486,6 @@ var
         LLineEndRect := LLineRect;
         LLineEndRect.Left := -100;
 
-        if LWrappedRowCount = 0 then
-        begin
-          if LCurrentLine = 1 then
-            FHighlighter.ResetCurrentRange
-          else
-            FHighlighter.SetCurrentRange(FLines.Ranges[LCurrentLine - 2]);
-
-          FHighlighter.SetCurrentLine(LCurrentLineText);
-        end;
-
         LTokenHelper.Length := 0;
         LTokenHelper.EmptySpace := esNone;
         LAddWrappedCount := False;
@@ -11505,7 +11493,7 @@ var
         LLinePosition := 0;
 
         if FWordWrap.Enabled then
-          LLastColumn := FWordWrapLineLengths[LCurrentRow + LWrappedRowCount];
+          LLastColumn := FWordWrapLineLengths[LDisplayLine];
 
         while not FHighlighter.GetEndOfLine do
         begin
@@ -11518,7 +11506,7 @@ var
             LIsSyncEditBlock := False;
             if FSyncEdit.BlockSelected then
             begin
-              LTextPosition := GetTextPosition(LTokenPosition + 1, LCurrentLine - 1);
+              LTextPosition := GetTextPosition(LTokenPosition + 1, LCurrentLine);
               if FSyncEdit.IsTextPositionInBlock(LTextPosition) then
                 LIsSyncEditBlock := True;
             end;
@@ -11526,24 +11514,23 @@ var
             LIsSearchInSelectionBlock := False;
             if FSearch.InSelection.Active then
             begin
-              LTextPosition := GetTextPosition(LTokenPosition + 1, LCurrentLine - 1);
+              LTextPosition := GetTextPosition(LTokenPosition + 1, LCurrentLine);
               if FSearch.InSelection.IsTextPositionInBlock(LTextPosition) then
                 LIsSearchInSelectionBlock := True;
             end;
 
             if FWordWrap.Enabled then
             begin
-              // TODO fix
-
-              if not LTokenAdded and (LTokenLength > FWordWrapLineLengths[LCurrentRow + LWrappedRowCount]) then
+              if not LTokenAdded and (LTokenLength > FWordWrapLineLengths[LDisplayLine]) then
               begin
-                LTokenText := Copy(LTokenText, LFirstColumn, FWordWrapLineLengths[LCurrentRow + LWrappedRowCount]);
+                LTokenText := Copy(LTokenText, LFirstColumn, FWordWrapLineLengths[LDisplayLine]);
                 LTokenLength := Length(LTokenText);
+                Inc(LTokenPosition, LFirstColumn - 1);
 
-                if LTokenLength = FWordWrapLineLengths[LCurrentRow + LWrappedRowCount] then
+                if (LFirstColumn < FHighlighter.GetTokenLength) and (LTokenLength = FWordWrapLineLengths[LDisplayLine]) then
                 begin
                   PrepareToken;
-                  Inc(LFirstColumn, FWordWrapLineLengths[LCurrentRow + LWrappedRowCount]);
+                  Inc(LFirstColumn, FWordWrapLineLengths[LDisplayLine]);
                   LAddWrappedCount := True;
                   Break;
                 end
@@ -11553,6 +11540,8 @@ var
               else
               if LLinePosition + LTokenLength > LLastColumn then
               begin
+                PrepareToken;
+                LFirstColumn := 1;
                 LAddWrappedCount := True;
                 Break;
               end;
@@ -11577,7 +11566,7 @@ var
         if not AMinimap then
         begin
           PaintCodeFoldingCollapseMark(LFoldRange, LCurrentLineText, LTokenPosition, LTokenLength, LCurrentLine, LLineRect);
-          PaintSpecialCharsEndOfLine(LCurrentLine, LLineEndRect, (LCurrentLineLength + 1 >= LLineSelectionStart) and
+          PaintSpecialCharsEndOfLine(LCurrentLine + 1, LLineEndRect, (LCurrentLineLength + 1 >= LLineSelectionStart) and
             (LCurrentLineLength + 1 < LLineSelectionEnd));
           PaintCodeFoldingCollapsedLine(LFoldRange, LLineRect);
         end;
@@ -11862,7 +11851,7 @@ begin
         else
           FCurrentMatchingPairMatch.CloseTokenPos :=
             GetTextPosition(FCurrentMatchingPairMatch.OpenTokenPos.Char + Length(FCurrentMatchingPairMatch.OpenToken) +
-            2 { +2 = '..' } , LFoldRange.FromLine - 1);
+            2 { +2 = '..' }, LFoldRange.FromLine - 1);
       end;
     end;
   end;
@@ -13078,7 +13067,7 @@ begin
 
     if FScrollPageWidth > 0 then
     begin
-      LWordWrapLineLength :=  Length(FWordWrapLineLengths);
+      LWordWrapLineLength := Length(FWordWrapLineLengths);
 
       if Result.Row >= LWordWrapLineLength then
         Result.Row := LWordWrapLineLength - 1;
@@ -13217,7 +13206,7 @@ procedure TBCBaseEditor.AddCaret(const ADisplayPosition: TBCEditorDisplayPositio
   end;
 
 begin
-  if ADisplayPosition.Row > FLines.Count then
+  if ADisplayPosition.Row > FLineNumbersCount then
     Exit;
 
   if not Assigned(FMultiCarets) then
@@ -13287,7 +13276,7 @@ var
 begin
   LDisplayPosition := DisplayCaretPosition;
 
-  if LDisplayPosition.Row > FLines.Count then
+  if LDisplayPosition.Row > FLineNumbersCount then
     Exit;
 
   if Assigned(FMultiCarets) and (FMultiCarets.Count > 0) then
