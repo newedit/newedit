@@ -9777,6 +9777,8 @@ begin
             end
             else
             begin
+              Canvas.Pen.Color := FCodeFolding.Colors.Indent;
+
               Z := Y;
               if LIncY then
                 Inc(Z);
