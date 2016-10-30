@@ -1,5 +1,4 @@
-﻿// TODO: Fix moving with right arrow when word wrap
-unit BCEditor.Editor.Base;
+﻿unit BCEditor.Editor.Base;
 
 interface
 
@@ -3621,6 +3620,7 @@ var
   LSpaceBuffer: string;
   LChar: Char;
   LTextCaretPosition: TBCEditorTextPosition;
+  LDisplayPosition: TBCEditorDisplayPosition;
 begin
   LTextCaretPosition := TextCaretPosition;
   FUndoList.BeginBlock;
@@ -3703,9 +3703,14 @@ begin
 
         LHelper := BCEDITOR_CARRIAGE_RETURN + BCEDITOR_LINEFEED;
 
-        LFoldRange := CodeFoldingFoldRangeForLineTo(LTextCaretPosition.Line);
+        LDisplayPosition := TextToDisplayPosition(LCaretNewPosition);
+
+        LFoldRange := CodeFoldingFoldRangeForLineTo(LDisplayPosition.Row);
         if Assigned(LFoldRange) and LFoldRange.Collapsed then
-          LCaretNewPosition.Char := Length(Lines[LTextCaretPosition.Line - 1]) + 2 + LCaretNewPosition.Char;
+        begin
+          LCaretNewPosition.Line := LFoldRange.FromLine - 1;
+          Inc(LCaretNewPosition.Char, Length(FLines[LCaretNewPosition.Line]));
+        end;
 
         TextCaretPosition := LCaretNewPosition;
       end;
@@ -11486,7 +11491,7 @@ var
         if FWordWrap.Enabled then
         begin
           if LWrappedRowCount > 0 then
-            Inc(LLastColumn, FWordWrapLineLengths[LDisplayLine])
+            Inc(LLastColumn, FWordWrapLineLengths[LDisplayLine]) // TODO: Check line 11380
           else
             LLastColumn := FWordWrapLineLengths[LDisplayLine];
         end;
