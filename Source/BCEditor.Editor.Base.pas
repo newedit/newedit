@@ -3709,7 +3709,7 @@ begin
         if Assigned(LFoldRange) and LFoldRange.Collapsed then
         begin
           LCaretNewPosition.Line := LFoldRange.FromLine - 1;
-          Inc(LCaretNewPosition.Char, Length(FLines[LCaretNewPosition.Line]));
+          Inc(LCaretNewPosition.Char, Length(FLines[LCaretNewPosition.Line]) + 1);
         end;
 
         TextCaretPosition := LCaretNewPosition;
@@ -9750,7 +9750,7 @@ begin
   for LIndex := AFirstRow to ALastRow do
   begin
     LLine := GetDisplayTextLineNumber(LIndex);
-    LIncY := Odd(GetLineHeight) and not Odd(LLine);
+    LIncY := Odd(GetLineHeight) and not Odd(LIndex);
     for j := 0 to k - 1 do
     begin
       LCodeFoldingRange := LCodeFoldingRanges[j];
@@ -9760,6 +9760,7 @@ begin
         begin
           if not LCodeFoldingRange.RegionItem.ShowGuideLine then
             Continue;
+
           X := FLeftMarginWidth + GetLineIndentLevel(LCodeFoldingRange.ToLine - 1) * FPaintHelper.CharWidth;
 
           if not AMinimap then
@@ -9776,8 +9777,6 @@ begin
             end
             else
             begin
-              Canvas.Pen.Color := FCodeFolding.Colors.Indent;
-
               Z := Y;
               if LIncY then
                 Inc(Z);
