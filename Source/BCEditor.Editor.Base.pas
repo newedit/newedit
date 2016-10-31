@@ -527,6 +527,7 @@ type
 
     function CaretInView: Boolean;
     function CreateFileStream(const AFileName: string): TStream; virtual;
+    function DeleteBookmark(const ALine: Integer; const AIndex: Integer): Boolean; overload;
     function DisplayToTextPosition(const ADisplayPosition: TBCEditorDisplayPosition): TBCEditorTextPosition;
     function GetColorsFileName(const AFileName: string): string;
     function GetHighlighterFileName(const AFileName: string): string;
@@ -575,7 +576,6 @@ type
     procedure CopyToClipboard;
     procedure CutToClipboard;
     procedure DeleteBookmark(ABookmark: TBCEditorMark); overload;
-    procedure DeleteBookmark(const ALine: Integer); overload;
     procedure DeleteMark(AMark: TBCEditorMark);
     procedure DeleteLines(const ALineNumber: Integer; const ACount: Integer);
     procedure DeleteWhitespace;
@@ -4714,8 +4714,8 @@ begin
   LIndex := ACommand - ecSetBookmark1;
   if Assigned(AData) then
     LTextCaretPosition := TBCEditorTextPosition(AData^);
-  DeleteBookmark(LTextCaretPosition.Line);
-  SetBookmark(LIndex, LTextCaretPosition);
+  if not DeleteBookmark(LTextCaretPosition.Line, LIndex) then
+    SetBookmark(LIndex, LTextCaretPosition);
 end;
 
 procedure TBCBaseEditor.DoShiftTabKey;
@@ -11909,11 +11909,7 @@ begin
     if FDisplayCaretX <> AValue.Column then
       FDisplayCaretX := AValue.Column;
     if FDisplayCaretY <> AValue.Row then
-    begin
-      //if ActiveLine.Color <> clNone then
-      //  Invalidate;
       FDisplayCaretY := AValue.Row;
-    end;
     EnsureCursorPositionVisible;
     Include(FStateFlags, sfCaretChanged);
     Include(FStateFlags, sfScrollbarChanged);
@@ -13355,19 +13351,24 @@ begin
   end;
 end;
 
-procedure TBCBaseEditor.DeleteBookmark(const ALine: Integer);
+function TBCBaseEditor.DeleteBookmark(const ALine: Integer; const AIndex: Integer): Boolean;
 var
   LIndex: Integer;
   LBookmark: TBCEditorMark;
 begin
-  for LIndex := 0 to FBookmarkList.Count - 1 do
+  Result := False;
+  LIndex := 0;
+  while LIndex < FBookmarkList.Count do
   begin
     LBookmark := FBookmarkList.Items[LIndex];
     if LBookmark.Line = ALine then
     begin
+      if LBookmark.Index = AIndex then
+        Result := True;
       DeleteBookmark(LBookmark);
-      Break;
-    end;
+    end
+    else
+      Inc(LIndex);
   end;
 end;
 
@@ -14719,8 +14720,8 @@ begin
   if AIndex <> -1 then
   begin
     LTextCaretPosition := TextCaretPosition;
-    DeleteBookmark(LTextCaretPosition.Line);
-    SetBookmark(AIndex, LTextCaretPosition)
+    if not DeleteBookmark(LTextCaretPosition.Line, AIndex) then
+      SetBookmark(AIndex, LTextCaretPosition)
   end
   else
     DoToggleBookmark;
