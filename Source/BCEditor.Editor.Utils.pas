@@ -6,7 +6,6 @@ uses
   System.Classes, System.SysUtils, BCEditor.Types;
 
 function GetTextPosition(const AChar, ALine: Integer): TBCEditorTextPosition;
-function IsUTF8(AStream: TStream; out AWithBOM: Boolean): Boolean;
 function IsUTF8Buffer(const ABuffer: TBytes; out AWithBOM: Boolean): Boolean;
 function GetClipboardText: string;
 procedure SetClipboardText(const AText: string);
@@ -22,35 +21,6 @@ begin
   begin
     Char := AChar;
     Line := ALine;
-  end;
-end;
-
-// checks for a BOM in UTF-8 format or searches the first 16384 bytes for typical UTF-8 octet sequences
-function IsUTF8(AStream: TStream; out AWithBOM: Boolean): Boolean;
-const
-  MaxBufferSize = $4000;
-var
-  LBuffer: TBytes;
-  LBufferSize: Integer;
-begin
-  { if Stream is nil, let Delphi raise the exception, by accessing Stream,
-    to signal an invalid result }
-
-  // start analysis at actual Stream.Position
-  LBufferSize := Min(MaxBufferSize, AStream.Size - AStream.Position);
-
-  // if no special characteristics are found it is not UTF-8
-  Result := False;
-  AWithBOM := False;
-
-  if LBufferSize > 0 then
-  try
-    SetLength(LBuffer, LBufferSize);
-    AStream.ReadBuffer(Pointer(LBuffer)^, LBufferSize);
-    AStream.Seek(-LBufferSize, soFromCurrent);
-    Result := IsUTF8Buffer(LBuffer, AWithBOM);
-  finally
-    SetLength(LBuffer, 0);
   end;
 end;
 
