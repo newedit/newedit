@@ -6587,8 +6587,7 @@ begin
   begin
     FOptions := AValue;
 
-    if (eoDropFiles in FOptions) <> (eoDropFiles in AValue) and not (csDesigning in ComponentState) and HandleAllocated
-    then
+    if (eoDropFiles in FOptions) <> (eoDropFiles in AValue) and not (csDesigning in ComponentState) and HandleAllocated then
       DragAcceptFiles(Handle, eoDropFiles in FOptions);
 
     Invalidate;
@@ -11179,7 +11178,7 @@ var
       LPToken, LPWord: PChar;
     begin
       LHighlighterAttribute := FHighlighter.GetTokenAttribute;
-      if Assigned(LHighlighterAttribute) then
+      if Assigned(LHighlighterAttribute) and not (csDesigning in ComponentState) then
       begin
         LForegroundColor := LHighlighterAttribute.Foreground;
         if AMinimap and (FMinimap.Colors.Background <> clNone) then
