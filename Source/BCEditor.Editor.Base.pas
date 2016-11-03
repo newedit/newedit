@@ -8751,10 +8751,6 @@ begin
 {$if defined(USE_ALPHASKINS)}
   FCommonData.Loaded;
 {$endif}
-  LeftMarginChanged(Self);
-  MinimapChanged(Self);
-
-  UpdateScrollBars;
 end;
 
 procedure TBCBaseEditor.MarkListChange(ASender: TObject);
