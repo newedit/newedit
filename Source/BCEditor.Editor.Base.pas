@@ -525,6 +525,7 @@ type
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
 
+    function CanFocus: Boolean; override;
     function CaretInView: Boolean;
     function CreateFileStream(const AFileName: string): TStream; virtual;
     function DeleteBookmark(const ALine: Integer; const AIndex: Integer): Boolean; overload;
@@ -11178,7 +11179,7 @@ var
       LPToken, LPWord: PChar;
     begin
       LHighlighterAttribute := FHighlighter.GetTokenAttribute;
-      if Assigned(LHighlighterAttribute) and not (csDesigning in ComponentState) then
+      if  not (csDesigning in ComponentState) and Assigned(LHighlighterAttribute) then
       begin
         LForegroundColor := LHighlighterAttribute.Foreground;
         if AMinimap and (FMinimap.Colors.Background <> clNone) then
@@ -12442,6 +12443,14 @@ begin
 end;
 
 { Public declarations }
+
+function TBCBaseEditor.CanFocus: Boolean;
+begin
+  if csDesigning in ComponentState then
+    Result := False
+  else
+    Result := inherited CanFocus;
+end;
 
 function TBCBaseEditor.CaretInView: Boolean;
 var
