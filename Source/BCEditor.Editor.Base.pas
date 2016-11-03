@@ -6852,7 +6852,7 @@ procedure TBCBaseEditor.SizeOrFontChanged(const AFontChanged: Boolean);
 var
   LOldTextCaretPosition: TBCEditorTextPosition;
 begin
-  if Visible and HandleAllocated and (FPaintHelper.CharWidth <> 0) then
+  if Visible and CanFocus and HandleAllocated and (FPaintHelper.CharWidth <> 0) then
   begin
     FPaintHelper.SetBaseFont(Font);
     FScrollPageWidth := GetScrollPageWidth;
@@ -11490,12 +11490,7 @@ var
         LLinePosition := 0;
 
         if FWordWrap.Enabled then
-        begin
-          if LWrappedRowCount > 0 then
-            Inc(LLastColumn, FWordWrapLineLengths[LDisplayLine]) // TODO: Check line 11380
-          else
-            LLastColumn := FWordWrapLineLengths[LDisplayLine];
-        end;
+          LLastColumn := FWordWrapLineLengths[LDisplayLine];
 
         while not FHighlighter.GetEndOfLine do
         begin
