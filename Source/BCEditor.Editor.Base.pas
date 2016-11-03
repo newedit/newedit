@@ -5835,7 +5835,7 @@ var
 
   procedure RegionItemsClose;
   var
-    LItemIndex, LIndexDecrease: Integer;
+    LIndex, LItemIndex, LIndexDecrease: Integer;
     LCodeFoldingRange, LCodeFoldingRangeLast: TBCEditorCodeFoldingRange;
 
     procedure SetCodeFoldingRangeToLine(ACodeFoldingRange: TBCEditorCodeFoldingRange);
@@ -5862,10 +5862,14 @@ var
         CharInSet(UpCase(LPText^), FHighlighter.FoldCloseKeyChars) then
       begin
         LIndexDecrease := 1;
+        {$if defined(VER250)}
+        LCodeFoldingRange := nil;
+        {$endif}
         repeat
-          if LOpenTokenFoldRangeList.Count - LIndexDecrease < 0 then
+          LIndex := LOpenTokenFoldRangeList.Count - LIndexDecrease;
+          if LIndex < 0 then
             Break;
-          LCodeFoldingRange := LOpenTokenFoldRangeList.Items[LOpenTokenFoldRangeList.Count - LIndexDecrease];
+          LCodeFoldingRange := LOpenTokenFoldRangeList.Items[LIndex];
 
           if LCodeFoldingRange.RegionItem.CloseTokenBeginningOfLine and not LBeginningOfLine then
             Exit;
