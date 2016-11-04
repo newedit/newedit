@@ -853,7 +853,7 @@ begin
   { Font }
   FFontDummy := TFont.Create;
   FFontDummy.Name := 'Courier New';
-  FFontDummy.Size := 10;
+  FFontDummy.Size := 9;
   Font.Assign(FFontDummy);
   Font.OnChange := FontChanged;
   { Painting }
@@ -884,7 +884,7 @@ begin
   FLeftMargin := TBCEditorLeftMargin.Create(Self);
   FLeftMargin.OnChange := LeftMarginChanged;
   FLeftMarginCharWidth := FPaintHelper.CharWidth;
-  SetLeftMarginWidth(FLeftMargin.GetWidth);
+  FLeftMarginWidth := FLeftMargin.Width;
   { Right edge }
   FRightMargin := TBCEditorRightMargin.Create;
   FRightMargin.OnChange := RightMarginChanged;
@@ -6873,7 +6873,6 @@ begin
       LOldTextCaretPosition := TextCaretPosition;
       CreateLineNumbersCache(True);
       TextCaretPosition := LOldTextCaretPosition;
-      Invalidate;
     end;
 
     if AFontChanged then
@@ -6882,9 +6881,10 @@ begin
         LeftMarginChanged(Self);
       ResetCaret;
       Exclude(FStateFlags, sfCaretChanged);
-      Invalidate;
     end;
+
     UpdateScrollBars;
+    Invalidate;
 
     Exclude(FStateFlags, sfScrollbarChanged);
   end;
@@ -9341,7 +9341,7 @@ begin
 
       if FMinimap.Align = maRight then
       begin
-        LDrawRect.Left := FLeftMarginWidth + FScrollPageWidth;
+        LDrawRect.Left := ClientRect.Width - FMinimap.Width; //FLeftMarginWidth + FScrollPageWidth;
         LDrawRect.Right := ClientRect.Width;
         if FSearch.Map.Align = saRight then
           Dec(LDrawRect.Right, FSearch.Map.GetWidth);
@@ -10161,6 +10161,9 @@ procedure TBCBaseEditor.PaintMinimapIndicator(AClipRect: TRect);
 var
   LTop: Integer;
 begin
+  //if not Assigned(FMinimapIndicatorBitmap) then
+  //  FMinimapIndicatorBitmap := Vcl.Graphics.TBitmap.Create;
+
   with FMinimapIndicatorBitmap do
   begin
     Height := 0;
