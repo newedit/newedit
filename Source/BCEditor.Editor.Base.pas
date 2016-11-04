@@ -880,10 +880,11 @@ begin
   { Marks }
   FMarkList := TBCEditorMarkList.Create(Self);
   FMarkList.OnChange := MarkListChange;
-  { LeftMargin mast be initialized strongly after FPaintHelper initialization }
+  { LeftMargin }
   FLeftMargin := TBCEditorLeftMargin.Create(Self);
   FLeftMargin.OnChange := LeftMarginChanged;
-  FLeftMarginWidth := FLeftMargin.Width;
+  FLeftMarginCharWidth := FPaintHelper.CharWidth;
+  SetLeftMarginWidth(FLeftMargin.GetWidth);
   { Right edge }
   FRightMargin := TBCEditorRightMargin.Create;
   FRightMargin.OnChange := RightMarginChanged;
@@ -11179,7 +11180,7 @@ var
       LPToken, LPWord: PChar;
     begin
       LHighlighterAttribute := FHighlighter.GetTokenAttribute;
-      if  not (csDesigning in ComponentState) and Assigned(LHighlighterAttribute) then
+      if not (csDesigning in ComponentState) and Assigned(LHighlighterAttribute) then
       begin
         LForegroundColor := LHighlighterAttribute.Foreground;
         if AMinimap and (FMinimap.Colors.Background <> clNone) then
@@ -14260,8 +14261,6 @@ begin
     end
     else
       SetLeftMarginWidth(FLeftMargin.GetWidth);
-    FLeftMarginWidth := GetLeftMarginWidth;
-    Invalidate;
   end;
 end;
 
