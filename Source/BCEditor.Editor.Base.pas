@@ -880,11 +880,6 @@ begin
   { Marks }
   FMarkList := TBCEditorMarkList.Create(Self);
   FMarkList.OnChange := MarkListChange;
-  { LeftMargin }
-  FLeftMargin := TBCEditorLeftMargin.Create(Self);
-  FLeftMargin.OnChange := LeftMarginChanged;
-  FLeftMarginCharWidth := FPaintHelper.CharWidth;
-  FLeftMarginWidth := FLeftMargin.Width;
   { Right edge }
   FRightMargin := TBCEditorRightMargin.Create;
   FRightMargin.OnChange := RightMarginChanged;
@@ -958,6 +953,11 @@ begin
   { Sync edit }
   FSyncEdit := TBCEditorSyncEdit.Create;
   FSyncEdit.OnChange := SyncEditChanged;
+  { LeftMargin }
+  FLeftMargin := TBCEditorLeftMargin.Create(Self);
+  FLeftMargin.OnChange := LeftMarginChanged;
+  FLeftMarginCharWidth := FPaintHelper.CharWidth;
+  FLeftMarginWidth := GetLeftMarginWidth;
   { Do update character constraints }
   FontChanged(nil);
   TabsChanged(nil);
@@ -9673,7 +9673,7 @@ end;
 
 procedure TBCBaseEditor.PaintGuides(const AFirstRow, ALastRow: Integer; const AMinimap: Boolean);
 var
-  LIndex, j, k: Integer;
+  LIndex, LRow, LRangeIndex: Integer;
   X, Y, Z: Integer;
   LLine, LCurrentLine: Integer;
   LOldColor: TColor;
@@ -9727,34 +9727,34 @@ begin
   LBottomLine := GetDisplayTextLineNumber(ALastRow);
 
   SetLength(LCodeFoldingRanges, FAllCodeFoldingRanges.AllCount);
-  k := 0;
+  LRangeIndex := 0;
   for LIndex := 0 to FAllCodeFoldingRanges.AllCount - 1 do
   begin
     LCodeFoldingRange := FAllCodeFoldingRanges[LIndex];
     if Assigned(LCodeFoldingRange) then
-      for j := AFirstRow to ALastRow do
+      for LRow := AFirstRow to ALastRow do
       begin
-        LLine := GetDisplayTextLineNumber(j);
+        LLine := GetDisplayTextLineNumber(LRow);
         if (LCodeFoldingRange.ToLine < LTopLine) or (LCodeFoldingRange.FromLine > LBottomLine) then
           Break
         else
         if not LCodeFoldingRange.Collapsed and not LCodeFoldingRange.ParentCollapsed and
           (LCodeFoldingRange.FromLine < LLine) and (LCodeFoldingRange.ToLine > LLine) then
         begin
-          LCodeFoldingRanges[k] := LCodeFoldingRange;
-          Inc(k);
+          LCodeFoldingRanges[LRangeIndex] := LCodeFoldingRange;
+          Inc(LRangeIndex);
           Break;
         end
       end;
   end;
 
-  for LIndex := AFirstRow to ALastRow do
+  for LRow := AFirstRow to ALastRow do
   begin
-    LLine := GetDisplayTextLineNumber(LIndex);
-    LIncY := Odd(GetLineHeight) and not Odd(LIndex);
-    for j := 0 to k - 1 do
+    LLine := GetDisplayTextLineNumber(LRow);
+    LIncY := Odd(GetLineHeight) and not Odd(LRow);
+    for LIndex := 0 to LRangeIndex - 1 do
     begin
-      LCodeFoldingRange := LCodeFoldingRanges[j];
+      LCodeFoldingRange := LCodeFoldingRanges[LIndex];
       if Assigned(LCodeFoldingRange) then
         if not LCodeFoldingRange.Collapsed and not LCodeFoldingRange.ParentCollapsed and
           (LCodeFoldingRange.FromLine < LLine) and (LCodeFoldingRange.ToLine > LLine) then
@@ -10161,9 +10161,6 @@ procedure TBCBaseEditor.PaintMinimapIndicator(AClipRect: TRect);
 var
   LTop: Integer;
 begin
-  //if not Assigned(FMinimapIndicatorBitmap) then
-  //  FMinimapIndicatorBitmap := Vcl.Graphics.TBitmap.Create;
-
   with FMinimapIndicatorBitmap do
   begin
     Height := 0;
@@ -12683,9 +12680,8 @@ end;
 
 function TBCBaseEditor.IsWordBreakChar(AChar: Char): Boolean;
 begin
-  Result := CharInSet(AChar, [BCEDITOR_NONE_CHAR .. BCEDITOR_SPACE_CHAR, '.', ',', ';', ':', '"', '''', '´', '`', '°',
-    '^', '!', '?', '&', '$', '@', '§', '%', '#', '~', '[', ']', '(', ')', '{', '}', '<', '>', '-', '=', '+', '*', '/',
-    '\', '|']);
+  Result := CharInSet(AChar, [BCEDITOR_NONE_CHAR .. BCEDITOR_SPACE_CHAR] + BCEDITOR_WORD_BREAK_CHARACTERS +
+    BCEDITOR_EXTRA_WORD_BREAK_CHARACTERS);
 end;
 
 function TBCBaseEditor.IsWordChar(AChar: Char): Boolean;
@@ -14254,16 +14250,16 @@ begin
     if FLeftMargin.LineNumbers.Visible and FLeftMargin.Autosize then
       FLeftMargin.AutosizeDigitCount(Lines.Count);
 
+    LWidth := FLeftMargin.GetWidth;
     if FLeftMargin.Autosize then
     begin
       FPaintHelper.SetBaseFont(FLeftMargin.Font);
       LWidth := FLeftMargin.RealLeftMarginWidth(FPaintHelper.CharWidth);
       FLeftMarginCharWidth := FPaintHelper.CharWidth;
       FPaintHelper.SetBaseFont(Font);
-      SetLeftMarginWidth(LWidth);
-    end
-    else
-      SetLeftMarginWidth(FLeftMargin.GetWidth);
+    end;
+    SetLeftMarginWidth(LWidth);
+    FLeftMarginWidth := GetLeftMarginWidth;
   end;
 end;
 
