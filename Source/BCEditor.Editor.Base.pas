@@ -333,6 +333,7 @@ type
     procedure FreeScrollShadowBitmap;
     procedure GetMinimapLeftRight(var ALeft: Integer; var ARight: Integer);
     procedure InitCodeFolding;
+    procedure InitializeScrollShadow;
     procedure InsertLine; overload;
     procedure LinesChanging(ASender: TObject);
     procedure MinimapChanged(ASender: TObject);
@@ -929,6 +930,7 @@ begin
   { Scroll }
   FScroll := TBCEditorScroll.Create;
   FScroll.OnChange := ScrollChanged;
+  InitializeScrollShadow;
   { Minimap }
   with FMinimapIndicatorBlendFunction do
   begin
@@ -6311,36 +6313,39 @@ begin
   end;
 end;
 
-procedure TBCBaseEditor.ScrollChanged(ASender: TObject);
+procedure TBCBaseEditor.InitializeScrollShadow;
 var
   LIndex: Integer;
 begin
-  if FScroll.Shadow.Visible then
+  FScrollShadowBlendFunction.SourceConstantAlpha := FScroll.Shadow.AlphaBlending;
+
+  if not Assigned(FScrollShadowBitmap) then
   begin
-    FScrollShadowBlendFunction.SourceConstantAlpha := FScroll.Shadow.AlphaBlending;
+    FScrollShadowBitmap := Vcl.Graphics.TBitmap.Create;
+    FScrollShadowBitmap.PixelFormat := pf32Bit;
+  end;
 
-    if not Assigned(FScrollShadowBitmap) then
-    begin
-      FScrollShadowBitmap := Vcl.Graphics.TBitmap.Create;
-      FScrollShadowBitmap.PixelFormat := pf32Bit;
-    end;
+  FScrollShadowBitmap.Canvas.Brush.Color := FScroll.Shadow.Color;
+  FScrollShadowBitmap.Width := Max(FScroll.Shadow.Width, 1);
 
-    FScrollShadowBitmap.Canvas.Brush.Color := FScroll.Shadow.Color;
-    FScrollShadowBitmap.Width := Max(FScroll.Shadow.Width, 1);
+  SetLength(FScrollShadowAlphaArray, FScrollShadowBitmap.Width);
+  if FScrollShadowAlphaByteArrayLength <> FScrollShadowBitmap.Width then
+  begin
+    FScrollShadowAlphaByteArrayLength := FScrollShadowBitmap.Width;
+    ReallocMem(FScrollShadowAlphaByteArray, FScrollShadowAlphaByteArrayLength * SizeOf(Byte));
+  end;
 
-    SetLength(FScrollShadowAlphaArray, FScrollShadowBitmap.Width);
-    if FScrollShadowAlphaByteArrayLength <> FScrollShadowBitmap.Width then
-    begin
-      FScrollShadowAlphaByteArrayLength := FScrollShadowBitmap.Width;
-      ReallocMem(FScrollShadowAlphaByteArray, FScrollShadowAlphaByteArrayLength * SizeOf(Byte));
-    end;
+  for LIndex := 0 to FScrollShadowBitmap.Width - 1 do
+  begin
+    FScrollShadowAlphaArray[LIndex] := (FScrollShadowBitmap.Width - LIndex) / FScrollShadowBitmap.Width;
+    FScrollShadowAlphaByteArray[LIndex] := Min(Round(Power(FScrollShadowAlphaArray[LIndex], 4) * 255.0), 255);
+  end;
+end;
 
-    for LIndex := 0 to FScrollShadowBitmap.Width - 1 do
-    begin
-      FScrollShadowAlphaArray[LIndex] := (FScrollShadowBitmap.Width - LIndex) / FScrollShadowBitmap.Width;
-      FScrollShadowAlphaByteArray[LIndex] := Min(Round(Power(FScrollShadowAlphaArray[LIndex], 4) * 255.0), 255);
-    end;
-  end
+procedure TBCBaseEditor.ScrollChanged(ASender: TObject);
+begin
+  if FScroll.Shadow.Visible then
+    InitializeScrollShadow
   else
     FreeScrollShadowBitmap;
   UpdateScrollBars;
