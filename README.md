@@ -49,8 +49,8 @@ The latest update: 30.10.2016 14:56, UTC+02:00
 Demo source build requires 
 
 - <a href="http://www.alphaskins.com/">AlphaSkins</a> (commercial) 
-- <a href="http://wiki.delphi-jedi.org/index.php?title=JEDI_Code_Library">JCL</a> /  <a href="http://jvcl.delphi-jedi.org/">JVCL</a>
 - <a href="https://github.com/bonecode/Common">Common</a>
+- <a href="https://github.com/bonecode/Components/tree/master/BCControls">BCControls</a>
 
 <h3>Documentation</h3>
 
