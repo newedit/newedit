@@ -2,8 +2,6 @@ Version 1.8.2
 
 Use the Issues page to report bugs or send them directly to lasse@bonecode.com.
 
-<b>Note!</b> Current trunk should never be considered as a stable version. Use the latest <a href="https://github.com/bonecode/TBCEditor/releases">release</a> version instead. 
-
 <h3>Description</h3>
 
 A syntax highlighting edit control for RAD Studio (Delphi/C++ Builder) with code folding, completion proposal, matching pair, minimap, sync edit, multi-caret editing, word wrap, support for non-fixed-width fonts, etc. External highlighter and color scheme files are in JSON format which can be also loaded from a stream.
