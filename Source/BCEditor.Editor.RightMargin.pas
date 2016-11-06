@@ -33,8 +33,8 @@ type
     property Cursor: TCursor read FCursor write FCursor default crHSplit;
     property OnChange: TNotifyEvent read FOnChange write SetOnChange;
     property Options: TBCEditorRightMarginOptions read FOptions write FOptions default [rmoMouseMove, rmoShowMovingHint];
-    property Position: Integer read FPosition write SetPosition;
-    property Visible: Boolean read FVisible write SetVisible;
+    property Position: Integer read FPosition write SetPosition default 80;
+    property Visible: Boolean read FVisible write SetVisible default True;
   end;
 
 implementation

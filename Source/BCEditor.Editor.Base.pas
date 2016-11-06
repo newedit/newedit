@@ -301,6 +301,7 @@ type
     procedure DoHomeKey(const ASelection: Boolean);
     procedure DoImeStr(AData: Pointer);
     procedure DoInsertText(const AText: string);
+    procedure DoLeftMarginAutoSize;
     procedure DoLineBreak;
     procedure DoLineComment;
     procedure DoPageLeftOrRight(const ACommand: TBCEditorCommand);
@@ -366,7 +367,6 @@ type
     procedure SetInsertMode(const AValue: Boolean);
     procedure SetKeyCommands(const AValue: TBCEditorKeyCommands);
     procedure SetLeftMargin(const AValue: TBCEditorLeftMargin);
-    procedure SetLeftMarginWidth(AValue: Integer);
     procedure SetLines(AValue: TBCEditorLines);
     procedure SetLineWithRightTrim(ALine: Integer; const ALineText: string);
     procedure SetModified(AValue: Boolean);
@@ -4339,6 +4339,39 @@ begin
   end;
 end;
 
+procedure TBCBaseEditor.DoLeftMarginAutoSize;
+var
+  LWidth: Integer;
+begin
+  if FLeftMargin.Autosize then
+  begin
+    if FLeftMargin.LineNumbers.Visible then
+      FLeftMargin.AutosizeDigitCount(Lines.Count);
+
+    FPaintHelper.SetBaseFont(FLeftMargin.Font);
+    LWidth := FLeftMargin.RealLeftMarginWidth(FPaintHelper.CharWidth);
+    FLeftMarginCharWidth := FPaintHelper.CharWidth;
+    FPaintHelper.SetBaseFont(Font);
+
+    if FLeftMargin.Width <> LWidth then
+    begin
+      FLeftMargin.OnChange := nil;
+      FLeftMargin.Width := LWidth;
+      FLeftMargin.OnChange := LeftMarginChanged;
+      if HandleAllocated then
+      begin
+        FScrollPageWidth := GetScrollPageWidth;
+        if FWordWrap.Enabled then
+          FResetLineNumbersCache := True;
+        UpdateScrollBars;
+        Invalidate;
+      end;
+    end;
+
+    FLeftMarginWidth := GetLeftMarginWidth;
+  end;
+end;
+
 procedure TBCBaseEditor.DoLineBreak;
 var
   LTextCaretPosition: TBCEditorTextPosition;
@@ -5063,8 +5096,8 @@ begin
     if ADisplayCaretPosition.Column <= Length(FLines[ADisplayCaretPosition.Row - 1]) then
       LTempBitmap.Canvas.TextOut(X, 0, FLines[ADisplayCaretPosition.Row - 1][ADisplayCaretPosition.Column]);
 
-    Canvas.CopyRect(Rect(LPoint.X + FCaret.Offsets.X, LPoint.Y + FCaret.Offsets.Y,
-      LPoint.X + FCaret.Offsets.X + LCaretWidth, LPoint.Y + FCaret.Offsets.Y + LCaretHeight), LTempBitmap.Canvas,
+    Canvas.CopyRect(Rect(LPoint.X + FCaret.Offsets.Left, LPoint.Y + FCaret.Offsets.Top,
+      LPoint.X + FCaret.Offsets.Left + LCaretWidth, LPoint.Y + FCaret.Offsets.Top + LCaretHeight), LTempBitmap.Canvas,
       Rect(0, Y, LCaretWidth, Y + LCaretHeight));
   finally
     LTempBitmap.Free
@@ -6524,23 +6557,6 @@ end;
 procedure TBCBaseEditor.SetLeftMargin(const AValue: TBCEditorLeftMargin);
 begin
   FLeftMargin.Assign(AValue);
-end;
-
-procedure TBCBaseEditor.SetLeftMarginWidth(AValue: Integer);
-begin
-  AValue := Max(AValue, 0);
-  if FLeftMargin.Width <> AValue then
-  begin
-    FLeftMargin.Width := AValue;
-    if HandleAllocated then
-    begin
-      FScrollPageWidth := GetScrollPageWidth;
-      if FWordWrap.Enabled then
-        FResetLineNumbersCache := True;
-      UpdateScrollBars;
-      Invalidate;
-    end;
-  end;
 end;
 
 procedure TBCBaseEditor.SetLines(AValue: TBCEditorLines);
@@ -8631,7 +8647,6 @@ end;
 
 procedure TBCBaseEditor.LinesInserted(ASender: TObject; const AIndex: Integer; const ACount: Integer);
 var
-  LLength: Integer;
   LLastScan: Integer;
 
   procedure UpdateMarks(AMarkList: TBCEditorMarkList);
@@ -8671,14 +8686,7 @@ begin
   CodeFoldingResetCaches;
   RefreshFind;
 
-  if FLeftMargin.LineNumbers.Visible and FLeftMargin.Autosize then
-    FLeftMargin.AutosizeDigitCount(Lines.Count);
-
-  LLength := FLeftMargin.RealLeftMarginWidth(FLeftMarginCharWidth);
-  if FLeftMargin.Autosize and (FLeftMargin.GetWidth <> LLength) then
-    SetLeftMarginWidth(LLength);
-
-  Invalidate;
+  DoLeftMarginAutoSize;
 end;
 
 procedure TBCBaseEditor.LinesPutted(ASender: TObject; const AIndex: Integer; const ACount: Integer);
@@ -11765,7 +11773,7 @@ begin
     LCaretStyle := FCaret.Styles.Overwrite;
   LHeight := 1;
   LWidth := 1;
-  FCaretOffset := Point(FCaret.Offsets.X, FCaret.Offsets.Y);
+  FCaretOffset := Point(FCaret.Offsets.Left, FCaret.Offsets.Top);
   case LCaretStyle of
     csHorizontalLine, csThinHorizontalLine:
       begin
@@ -14242,25 +14250,9 @@ begin
 end;
 
 procedure TBCBaseEditor.LeftMarginChanged(ASender: TObject);
-var
-  LWidth: Integer;
 begin
   if not (csLoading in ComponentState) and Assigned(FHighlighter) and not FHighlighter.Loading then
-  begin
-    if FLeftMargin.LineNumbers.Visible and FLeftMargin.Autosize then
-      FLeftMargin.AutosizeDigitCount(Lines.Count);
-
-    LWidth := FLeftMargin.GetWidth;
-    if FLeftMargin.Autosize then
-    begin
-      FPaintHelper.SetBaseFont(FLeftMargin.Font);
-      LWidth := FLeftMargin.RealLeftMarginWidth(FPaintHelper.CharWidth);
-      FLeftMarginCharWidth := FPaintHelper.CharWidth;
-      FPaintHelper.SetBaseFont(Font);
-    end;
-    SetLeftMarginWidth(LWidth);
-    FLeftMarginWidth := GetLeftMarginWidth;
-  end;
+    DoLeftMarginAutoSize
 end;
 
 procedure TBCBaseEditor.LoadFromFile(const AFileName: string; AEncoding: System.SysUtils.TEncoding = nil);
@@ -14333,14 +14325,12 @@ begin
     if AComponent = FChainedEditor then
       RemoveChainedEditor;
 
-    if Assigned(FLeftMargin) then
-      if Assigned(FLeftMargin.Bookmarks) then
-        if Assigned(FLeftMargin.Bookmarks.Images) then
-          if (AComponent = FLeftMargin.Bookmarks.Images) then
-          begin
-            FLeftMargin.Bookmarks.Images := nil;
-            Invalidate;
-          end;
+    if Assigned(FLeftMargin) and Assigned(FLeftMargin.Bookmarks) and Assigned(FLeftMargin.Bookmarks.Images) then
+      if (AComponent = FLeftMargin.Bookmarks.Images) then
+      begin
+        FLeftMargin.Bookmarks.Images := nil;
+        Invalidate;
+      end;
   end;
 end;
 

@@ -28,10 +28,10 @@ type
     procedure Assign(ASource: TPersistent); override;
   published
     property Colors: TBCEditorWordWrapColors read FColors write SetColors;
-    property Enabled: Boolean read FEnabled write SetEnabled;
+    property Enabled: Boolean read FEnabled write SetEnabled default False;
     property Indicator: TBCEditorGlyph read FIndicator write SetIndicator;
     property OnChange: TNotifyEvent read FOnChange write SetOnChange;
-    property Width: TBCEditorWordWrapWidth read FWidth write SetWidth;
+    property Width: TBCEditorWordWrapWidth read FWidth write SetWidth default wwwPage;
   end;
 
 implementation

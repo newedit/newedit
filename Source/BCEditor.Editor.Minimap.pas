@@ -53,7 +53,7 @@ type
     property Options: TBCEditorMinimapOptions read FOptions write FOptions default [];
     property Shadow: TBCEditorMinimapShadow read FShadow write FShadow;
     property Visible: Boolean read FVisible write SetVisible default False;
-    property Width: Integer read FWidth write SetWidth default 100;
+    property Width: Integer read FWidth write SetWidth default 140;
   end;
 
 implementation
