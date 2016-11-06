@@ -11,10 +11,10 @@ uses
   sSkinProvider, sDialogs, Vcl.StdCtrls, System.Diagnostics, BCCommon.Dialog.Popup.Highlighter, BCEditor.Types,
   BCCommon.Dialog.Popup.Encoding, BCCommon.Dialog.Popup.Highlighter.Color, sSpeedButton, BCControl.SpeedButton,
   sComboBox, BCControl.ComboBox, sLabel, BCEditor.MacroRecorder, BCCommon.Dialog.Popup.SearchEngine,
-  JvExControls, JvPropertyStoreEditor, JvInspector, JvComponentBase;
+  VirtualTrees, BCControl.ObjectInspector;
 
 const
-  BCEDITORDEMO_CAPTION = 'TBCEditor Control Demo v1.8.1';
+  BCEDITORDEMO_CAPTION = 'TBCEditor Control Demo v1.8.2';
 
   TITLE_BAR_CAPTION = 1;
   TITLE_BAR_ENCODING = 2;
@@ -23,79 +23,79 @@ const
 
 type
   TMainForm = class(TBCBaseForm)
+    ActionCaseSensitive: TAction;
+    ActionClose: TAction;
     ActionFileOpen: TAction;
+    ActionFindNext: TAction;
+    ActionFindPrevious: TAction;
+    ActionInSelection: TAction;
+    ActionOptions: TAction;
     ActionPreview: TAction;
     ActionSearch: TAction;
+    ActionSearchEngine: TAction;
+    ActionSkins: TAction;
+    ComboBoxSearchText: TBCComboBox;
     Editor: TBCEditor;
+    LabelSearchResultCount: TsLabel;
     MenuItemExit: TMenuItem;
     MenuItemFileOpen: TMenuItem;
     MenuItemPrintPreview: TMenuItem;
     MenuItemSeparator1: TMenuItem;
     MenuItemSeparator2: TMenuItem;
+    MenuItemSkins: TMenuItem;
     MultiStringHolderFileTypes: TBCMultiStringHolder;
+    ObjectInspector: TBCObjectInspector;
     PanelLeft: TBCPanel;
     PanelProperty: TBCPanel;
-    PopupMenuFile: TPopupMenu;
-    PopupMenuDummy: TPopupMenu;
-    Splitter: TBCSplitter;
-    OpenDialog: TsOpenDialog;
-    MenuItemSkins: TMenuItem;
-    ActionSkins: TAction;
-    PanelSearch: TBCPanel;
-    ComboBoxSearchText: TBCComboBox;
-    BCSplitter1: TBCSplitter;
-    SpeedButtonFindPrevious: TBCSpeedButton;
-    SpeedButtonFindNext: TBCSpeedButton;
-    SpeedButtonDivider: TBCSpeedButton;
-    SpeedButtonOptions: TBCSpeedButton;
-    SpeedButtonClose: TBCSpeedButton;
     PanelRight: TBCPanel;
-    ActionFindNext: TAction;
-    ActionFindPrevious: TAction;
-    ActionOptions: TAction;
-    ActionClose: TAction;
-    LabelSearchResultCount: TsLabel;
+    PanelSearch: TBCPanel;
+    PopupMenuDummy: TPopupMenu;
+    PopupMenuFile: TPopupMenu;
     SpeedButtonCaseSensitive: TBCSpeedButton;
+    SpeedButtonClose: TBCSpeedButton;
+    SpeedButtonFindNext: TBCSpeedButton;
+    SpeedButtonFindPrevious: TBCSpeedButton;
     SpeedButtonInSelection: TBCSpeedButton;
-    BCSpeedButton1: TBCSpeedButton;
+    SpeedButtonOptions: TBCSpeedButton;
+    SpeedButtonSearchDivider1: TBCSpeedButton;
+    SpeedButtonSearchDivider2: TBCSpeedButton;
     SpeedButtonSearchEngine: TBCSpeedButton;
-    ActionSearchEngine: TAction;
-    ActionCaseSensitive: TAction;
-    ActionInSelection: TAction;
-    ObjectInspector: TJvInspector;
+    Splitter: TBCSplitter;
+    SplitterSearch: TBCSplitter;
+    OpenDialog: TsOpenDialog;
+    procedure ActionCaseSensitiveExecute(Sender: TObject);
+    procedure ActionCloseExecute(Sender: TObject);
     procedure ActionFileOpenExecute(Sender: TObject);
+    procedure ActionFindNextExecute(Sender: TObject);
+    procedure ActionFindPreviousExecute(Sender: TObject);
+    procedure ActionInSelectionExecute(Sender: TObject);
+    procedure ActionOptionsExecute(Sender: TObject);
     procedure ActionPreviewExecute(Sender: TObject);
+    procedure ActionSearchEngineExecute(Sender: TObject);
     procedure ActionSearchExecute(Sender: TObject);
-    procedure ApplicationEventsMessage(var Msg: tagMSG; var Handled: Boolean);
-    procedure FormCreate(Sender: TObject);
-    procedure FormShow(Sender: TObject);
-    procedure EditorCaretChanged(Sender: TObject; X, Y: Integer);
     procedure ActionSkinsExecute(Sender: TObject);
+    procedure ApplicationEventsMessage(var Msg: tagMSG; var Handled: Boolean);
+    procedure ComboBoxSearchTextChange(Sender: TObject);
+    procedure ComboBoxSearchTextKeyPress(Sender: TObject; var Key: Char);
+    procedure EditorCaretChanged(Sender: TObject; X, Y: Integer);
+    procedure FormCreate(Sender: TObject);
+    procedure FormDestroy(Sender: TObject);
+    procedure FormShow(Sender: TObject);
     procedure SelectedEncodingClick(const AIndex: Integer);
     procedure SelectedHighlighterClick(AHighlighterName: string);
     procedure SelectedHighlighterColorClick(AHighlighterColorName: string);
     procedure SelectedSearchEngineClick(ASearchEngine: TBCEditorSearchEngine);
-    procedure FormDestroy(Sender: TObject);
-    procedure ActionFindNextExecute(Sender: TObject);
-    procedure ActionFindPreviousExecute(Sender: TObject);
-    procedure ActionOptionsExecute(Sender: TObject);
-    procedure ActionCloseExecute(Sender: TObject);
-    procedure ComboBoxSearchTextChange(Sender: TObject);
-    procedure ComboBoxSearchTextKeyPress(Sender: TObject; var Key: Char);
-    procedure TitleBarItems6Click(Sender: TObject);
-    procedure TitleBarItems4Click(Sender: TObject);
-    procedure ActionSearchEngineExecute(Sender: TObject);
     procedure TitleBarItems2Click(Sender: TObject);
-    procedure ActionCaseSensitiveExecute(Sender: TObject);
-    procedure ActionInSelectionExecute(Sender: TObject);
+    procedure TitleBarItems4Click(Sender: TObject);
+    procedure TitleBarItems6Click(Sender: TObject);
   private
-    FStopWatch: TStopWatch;
-    FPopupEncodingDialog: TPopupEncodingDialog;
-    FPopupHighlighterDialog: TPopupHighlighterDialog;
-    FPopupHighlighterColorDialog: TPopupHighlighterColorDialog;
-    FHighlighterStrings: TStringList;
     FHighlighterColorStrings: TStringList;
+    FHighlighterStrings: TStringList;
+    FPopupEncodingDialog: TPopupEncodingDialog;
+    FPopupHighlighterColorDialog: TPopupHighlighterColorDialog;
+    FPopupHighlighterDialog: TPopupHighlighterDialog;
     FPopupSearchEngineDialog: TBCPopupSearchEngineDialog;
+    FStopWatch: TStopWatch;
     function GetTitleBarItemLeftBottom(AIndex: Integer): TPoint;
     procedure ClearText;
     procedure DoSearchTextChange;
@@ -274,53 +274,27 @@ begin
 end;
 
 procedure TMainForm.InitializeEditorPrint(AEditorPrint: TBCEditorPrint);
-var
-  LAlignment: TAlignment;
-
-  procedure SetHeaderFooter(AOption: Integer; AValue: string);
+begin
+  with AEditorPrint.Header do
   begin
-    case AOption of
-      0, 1:
-        with AEditorPrint.Footer do
-        begin
-          case AOption of
-            0:
-              LAlignment := taLeftJustify;
-            1:
-              LAlignment := taRightJustify;
-          end;
-          Add(AValue, nil, LAlignment, 1);
-        end;
-      2, 3:
-        with AEditorPrint.Header do
-        begin
-          case AOption of
-            2:
-              LAlignment := taLeftJustify;
-            3:
-              LAlignment := taRightJustify;
-          end;
-          Add(AValue, nil, LAlignment, 1);
-        end;
-    end;
+    Clear;
+    FrameTypes := [ftLine];
+    Add(Editor.DocumentName, nil, taLeftJustify, 1);
+    Add('$DATE$ $TIME$', nil, taRightJustify, 1);
   end;
 
-begin
-  AEditorPrint.Header.Clear;
-  AEditorPrint.Footer.Clear;
+  with AEditorPrint.Footer do
+  begin
+    Clear;
+    FrameTypes := [ftLine];
+    Add(Format('Printed by', [Application.Title]), nil, taLeftJustify, 1);
+    Add('Page: $PAGENUM$ of $PAGECOUNT$', nil, taRightJustify, 1);
+  end;
 
-  SetHeaderFooter(0, Format('Printed by', [Application.Title]));
-  SetHeaderFooter(1, 'Page: $PAGENUM$ of $PAGECOUNT$');
-  SetHeaderFooter(2, Editor.DocumentName);
-  SetHeaderFooter(3, '$DATE$ $TIME$');
-
-  AEditorPrint.Header.FrameTypes := [ftLine];
-  AEditorPrint.Footer.FrameTypes := [ftLine];
   AEditorPrint.LineNumbersInMargin := True;
   AEditorPrint.LineNumbers := True;
   AEditorPrint.Wrap := False;
   AEditorPrint.Colors := True;
-
   AEditorPrint.Editor := Editor;
   AEditorPrint.Title := Editor.DocumentName;
 end;
@@ -408,7 +382,8 @@ end;
 procedure TMainForm.FormCreate(Sender: TObject);
 begin
   inherited;
-  ObjectInspector.InspectObject := Editor;
+  ObjectInspector.InspectedObject := Editor;
+  ObjectInspector.SkinManager := SkinManager;
 
   TitleBar.Items[TITLE_BAR_CAPTION].Caption := BCEDITORDEMO_CAPTION;
   SkinManager.ExtendedBorders := True;

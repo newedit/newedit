@@ -49,23 +49,47 @@ inherited MainForm: TMainForm
     ParentDoubleBuffered = False
     TabOrder = 1
     SkinData.SkinSection = 'TRANSPARENT'
-    object ObjectInspector: TJvInspector
+    object ObjectInspector: TBCObjectInspector
       AlignWithMargins = True
       Left = 0
       Top = 5
-      Width = 334
+      Width = 335
       Height = 615
       Margins.Left = 0
       Margins.Top = 5
-      Margins.Right = 6
+      Margins.Right = 5
       Margins.Bottom = 5
-      ParentCustomHint = False
-      Style = isDotNet
       Align = alClient
-      Divider = 118
-      ItemHeight = 16
-      TabStop = True
+      DragOperations = []
+      EditDelay = 0
+      Header.AutoSizeIndex = 1
+      Header.Font.Charset = DEFAULT_CHARSET
+      Header.Font.Color = clWindowText
+      Header.Font.Height = -11
+      Header.Font.Name = 'Tahoma'
+      Header.Font.Style = []
+      Header.Options = [hoAutoResize, hoColumnResize, hoShowImages]
+      IncrementalSearch = isAll
+      Indent = 16
+      Margin = 0
       TabOrder = 0
+      TreeOptions.AutoOptions = [toAutoDropExpand, toAutoScroll, toAutoScrollOnExpand, toAutoTristateTracking, toAutoChangeScale]
+      TreeOptions.MiscOptions = [toEditable, toFullRepaintOnResize, toGridExtensions, toWheelPanning, toEditOnClick]
+      TreeOptions.PaintOptions = [toHideFocusRect, toShowButtons, toShowRoot, toShowVertGridLines, toThemeAware, toUseExplorerTheme]
+      TreeOptions.SelectionOptions = [toExtendedFocus, toFullRowSelect]
+      Columns = <
+        item
+          Options = [coAllowClick, coEnabled, coParentBidiMode, coParentColor, coResizable, coVisible, coFixed, coAllowFocus]
+          Position = 0
+          Width = 160
+          WideText = 'Property'
+        end
+        item
+          Options = [coAllowClick, coEnabled, coParentBidiMode, coParentColor, coResizable, coVisible, coAllowFocus, coEditable]
+          Position = 1
+          Width = 171
+          WideText = 'Value'
+        end>
     end
   end
   object PanelLeft: TBCPanel [3]
@@ -96,10 +120,7 @@ inherited MainForm: TMainForm
       Margins.Bottom = 0
       ActiveLine.Indicator.Visible = False
       Align = alClient
-      Caret.MultiEdit.Enabled = True
-      Caret.NonBlinking.Enabled = False
       Caret.Options = []
-      CodeFolding.Colors.Indent = clBlack
       CodeFolding.Hint.Font.Charset = DEFAULT_CHARSET
       CodeFolding.Hint.Font.Color = clWindowText
       CodeFolding.Hint.Font.Height = -11
@@ -142,12 +163,8 @@ inherited MainForm: TMainForm
       Minimap.Font.Name = 'Courier New'
       Minimap.Font.Style = []
       Minimap.Options = [moShowBookmarks]
-      Minimap.Width = 140
       OnCaretChanged = EditorCaretChanged
       ParentCtl3D = False
-      RightMargin.Position = 80
-      RightMargin.Visible = True
-      Scroll.Shadow.Visible = True
       Search.Enabled = False
       Search.InSelection.Background = clBlack
       SpecialChars.EndOfLine.Visible = True
@@ -155,7 +172,6 @@ inherited MainForm: TMainForm
       SpecialChars.Style = scsDot
       SyncEdit.ShortCut = 24650
       TabOrder = 0
-      WordWrap.Enabled = False
       WordWrap.Indicator.Glyph.Data = {
         7E030000424D7E0300000000000036000000280000000F0000000E0000000100
         2000000000004803000000000000000000000000000000000000FF00FF00FF00
@@ -187,7 +203,6 @@ inherited MainForm: TMainForm
         FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
         FF00}
       WordWrap.Indicator.MaskColor = clFuchsia
-      WordWrap.Width = wwwPage
     end
     object PanelSearch: TBCPanel
       AlignWithMargins = True
@@ -202,7 +217,7 @@ inherited MainForm: TMainForm
       TabOrder = 1
       Visible = False
       SkinData.SkinSection = 'CHECKBOX'
-      object BCSplitter1: TBCSplitter
+      object SplitterSearch: TBCSplitter
         Left = 227
         Top = 0
         Height = 21
@@ -232,7 +247,7 @@ inherited MainForm: TMainForm
         Images = ImagesDataModule.ImageListSmall
         ImageIndex = 37
       end
-      object SpeedButtonDivider: TBCSpeedButton
+      object SpeedButtonSearchDivider1: TBCSpeedButton
         AlignWithMargins = True
         Left = 275
         Top = 1
@@ -352,7 +367,7 @@ inherited MainForm: TMainForm
         Images = ImagesDataModule.ImageListSmall
         ImageIndex = 145
       end
-      object BCSpeedButton1: TBCSpeedButton
+      object SpeedButtonSearchDivider2: TBCSpeedButton
         AlignWithMargins = True
         Left = 327
         Top = 1
@@ -445,8 +460,7 @@ inherited MainForm: TMainForm
     IsDefault = False
     MenuSupport.UseExtraLine = False
     ThirdParty.ThirdEdits = ' '#13#10'TBCEditorPrintPreview'#13#10
-    ThirdParty.ThirdListViews = ' '#13#10'TJvInspector'#13#10
-    ThirdParty.ThirdVirtualTrees = 'TVirtualDrawTree'#13#10
+    ThirdParty.ThirdVirtualTrees = 'TVirtualDrawTree'#13#10'TBCObjectInspector'#13#10
     Left = 166
     Top = 26
   end
@@ -782,7 +796,8 @@ inherited MainForm: TMainForm
     Top = 114
   end
   object OpenDialog: TsOpenDialog
-    Left = 342
-    Top = 52
+    Options = [ofHideReadOnly, ofAllowMultiSelect, ofEnableSizing]
+    Left = 336
+    Top = 34
   end
 end
