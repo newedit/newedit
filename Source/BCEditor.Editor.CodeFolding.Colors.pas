@@ -49,6 +49,7 @@ begin
   FBackground := clLeftMarginBackground;
   FFoldingLine := clLeftMarginFontForeground;
   FFoldingLineHighlight := clLeftMarginFontForeground;
+  FIndent := clIndent;
   FIndentHighlight := clIndentHighlight;
 end;
 
