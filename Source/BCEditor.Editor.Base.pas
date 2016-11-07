@@ -4360,16 +4360,15 @@ begin
       FLeftMargin.OnChange := nil;
       FLeftMargin.Width := LWidth;
       FLeftMargin.OnChange := LeftMarginChanged;
+      FScrollPageWidth := GetScrollPageWidth;
       if HandleAllocated then
       begin
-        FScrollPageWidth := GetScrollPageWidth;
         if FWordWrap.Enabled then
           FResetLineNumbersCache := True;
         UpdateScrollBars;
         Invalidate;
       end;
     end;
-
     FLeftMarginWidth := GetLeftMarginWidth;
   end;
 end;
@@ -9354,7 +9353,7 @@ begin
 
       if FMinimap.Align = maRight then
       begin
-        LDrawRect.Left := ClientRect.Width - FMinimap.Width; //FLeftMarginWidth + FScrollPageWidth;
+        LDrawRect.Left := ClientRect.Width - FMinimap.GetWidth - FSearch.Map.GetWidth - 2;
         LDrawRect.Right := ClientRect.Width;
         if FSearch.Map.Align = saRight then
           Dec(LDrawRect.Right, FSearch.Map.GetWidth);
@@ -9424,7 +9423,7 @@ begin
       begin
         LDrawRect := LClipRect;
         LDrawRect.Left := FLeftMarginWidth - FLeftMargin.GetWidth - FCodeFolding.GetWidth;
-        LDrawRect.Right := FLeftMarginWidth + FScrollPageWidth;
+        LDrawRect.Right := ClientRect.Width - FMinimap.GetWidth - FSearch.Map.GetWidth - 2;
         PaintMinimapShadow(Canvas, LDrawRect);
       end;
 
