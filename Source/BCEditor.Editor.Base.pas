@@ -10402,16 +10402,10 @@ begin
 
         if FSpecialChars.EndOfLine.Style = eolPilcrow then
         begin
-          if IsTextPositionInSelection(TextCaretPosition) then
-            FPaintHelper.SetBackgroundColor(FSelection.Colors.Background)
-          else
-          if GetTextCaretY = ALine - 1 then
-            FPaintHelper.SetBackgroundColor(FActiveLine.Color)
-          else
-            FPaintHelper.SetBackgroundColor(FBackgroundColor);
           FPaintHelper.SetForegroundColor(Canvas.Pen.Color);
           FPaintHelper.SetStyle([]);
           LPilcrow := BCEDITOR_PILCROW_CHAR;
+          SetBkMode(Canvas.Handle, TRANSPARENT);
           Winapi.Windows.ExtTextOut(Canvas.Handle, LCharRect.Left, LCharRect.Top, ETO_OPAQUE or ETO_CLIPPED,
             @LCharRect, PChar(LPilcrow), 1, nil);
         end
