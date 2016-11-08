@@ -2203,6 +2203,9 @@ var
   end;
 
 begin
+  if not Assigned(Parent) then
+    Exit;
+
   if FResetLineNumbersCache or AResetCache then
   begin
     FResetLineNumbersCache := False;
@@ -3307,7 +3310,7 @@ var
   i, j, LLength: Integer;
   LCodeFoldingRange: TBCEditorCodeFoldingRange;
 begin
-  if not FCodeFolding.Visible then
+  if not Assigned(Parent) or not FCodeFolding.Visible then
     Exit;
 
   LLength := FLines.Count + 1;
@@ -4345,6 +4348,9 @@ procedure TBCBaseEditor.DoLeftMarginAutoSize;
 var
   LWidth: Integer;
 begin
+  if not Assigned(Parent) then
+    Exit;
+
   if FLeftMargin.Autosize then
   begin
     if FLeftMargin.LineNumbers.Visible then
@@ -6398,6 +6404,9 @@ end;
 
 procedure TBCBaseEditor.SearchChanged(AEvent: TBCEditorSearchChanges);
 begin
+  if not Assigned(Parent) then
+    Exit;
+
   if AEvent = scEngineUpdate then
     CaretZero;
 
