@@ -7136,7 +7136,7 @@ var
   begin
     if (FScroll.Bars in [ssBoth, ssHorizontal]) and not FWordWrap.Enabled then
     begin
-      LHorizontalScrollMax := GetHorizontalScrollMax - 1;
+      LHorizontalScrollMax := Max(GetHorizontalScrollMax - 1, 0);
 
       LScrollInfo.nMin := 0;
       LScrollInfo.nTrackPos := 0;
@@ -13930,6 +13930,7 @@ begin
     LDisplayCaretPosition := DisplayCaretPosition;
     LPoint := DisplayPositionToPixels(DisplayCaretPosition);
     LLeftMarginWidth := GetLeftMarginWidth;
+    FScrollPageWidth := GetScrollPageWidth;
     if (LPoint.X < LLeftMarginWidth) or (LPoint.X >= LLeftMarginWidth + FScrollPageWidth) then
     begin
       LScrollPosition := LPoint.X - FLeftMarginWidth + FHorizontalScrollPosition;
