@@ -10358,7 +10358,7 @@ begin
   Canvas.Pen.Style := psSolid;
   for LIndex := 0 to FSearch.Lines.Count - 1 do
   begin
-    LLine := Round((PBCEditorTextPosition(FSearch.Lines.Items[LIndex])^.Line - 1) * LHeight);
+    LLine := Round((PBCEditorSearchItem(FSearch.Lines.Items[LIndex])^.TextPosition.Line - 1) * LHeight);
     Canvas.MoveTo(AClipRect.Left, LLine);
     Canvas.LineTo(AClipRect.Right, LLine);
     Canvas.MoveTo(AClipRect.Left, LLine + 1);
@@ -10744,16 +10744,21 @@ var
       LSearchRect: TRect;
       LOldColor, LOldBackgroundColor: TColor;
       LIsTextPositionInSelection: Boolean;
+      LSearchItem: TBCEditorSearchItem;
 
       function NextItem: Boolean;
       begin
         Result := True;
         Inc(LCurrentSearchIndex);
         if LCurrentSearchIndex < FSearch.Lines.Count then
-          LTextPosition := PBCEditorTextPosition(FSearch.Lines.Items[LCurrentSearchIndex])^
+        begin
+          LSearchItem := PBCEditorSearchItem(FSearch.Lines.Items[LCurrentSearchIndex])^;
+          LSearchTextLength := LSearchItem.Length;
+        end
         else
         begin
           LCurrentSearchIndex := -1;
+          LSearchTextLength := 0;
           Result := False;
         end;
       end;
@@ -10769,22 +10774,22 @@ var
             FPaintHelper.SetForegroundColor(FSearch.Highlighter.Colors.Foreground);
           FPaintHelper.SetBackgroundColor(FSearch.Highlighter.Colors.Background);
 
-          LTextPosition := PBCEditorTextPosition(FSearch.Lines.Items[LCurrentSearchIndex])^;
-          LSearchTextLength := Length(FSearch.SearchText);
+          LSearchItem := PBCEditorSearchItem(FSearch.Lines.Items[LCurrentSearchIndex])^;
+          LSearchTextLength := LSearchItem.Length;
 
-          while LCurrentLine = LTextPosition.Line do
+          while LCurrentLine = LSearchItem.TextPosition.Line do
           begin
-            if LTokenHelper.Length - Length(LText) + LTokenHelper.CharsBefore + ATokenLength < LTextPosition.Char then
+            if LTokenHelper.Length - Length(LText) + LTokenHelper.CharsBefore + ATokenLength < LSearchItem.TextPosition.Char then
               Break;
 
             if FSearch.InSelection.Active then
             begin
-              LIsTextPositionInSelection := FSearch.InSelection.IsTextPositionInBlock(LTextPosition);
+              LIsTextPositionInSelection := FSearch.InSelection.IsTextPositionInBlock(LSearchItem.TextPosition);
               if LIsTextPositionInSelection then
-                LIsTextPositionInSelection := not IsTextPositionInSelection(LTextPosition);
+                LIsTextPositionInSelection := not IsTextPositionInSelection(LSearchItem.TextPosition);
             end
             else
-              LIsTextPositionInSelection := IsTextPositionInSelection(LTextPosition);
+              LIsTextPositionInSelection := IsTextPositionInSelection(LSearchItem.TextPosition);
 
             if not FSearch.InSelection.Active and LIsTextPositionInSelection or
               FSearch.InSelection.Active and not LIsTextPositionInSelection then
@@ -10797,7 +10802,7 @@ var
             LToken := LText;
             LSearchRect := LTextRect;
 
-            LCharCount := LTextPosition.Char - LTokenHelper.CharsBefore - 1;
+            LCharCount := LSearchItem.TextPosition.Char - LTokenHelper.CharsBefore - 1;
 
             if LAnySelection then
               Dec(LCharCount, LTokenHelper.Length - Length(LText));
@@ -10810,19 +10815,19 @@ var
             end
             else
               LCharCount := LTokenHelper.Length - Length(LText);
-            LToken := Copy(LToken, 1, Min(LSearchTextLength, LTextPosition.Char + LSearchTextLength -
+            LToken := Copy(LToken, 1, Min(LSearchTextLength, LSearchItem.TextPosition.Char + LSearchTextLength -
               LTokenHelper.CharsBefore - LCharCount - 1));
             LSearchRect.Right := LSearchRect.Left + GetTokenWidth(LToken, Length(LToken), LPaintedColumn);
 
             Winapi.Windows.ExtTextOut(Canvas.Handle, LSearchRect.Left, LSearchRect.Top, ETO_OPAQUE or ETO_CLIPPED,
               @LSearchRect, PChar(LToken), Length(LToken), nil);
 
-            LCharCount := Max(LTextPosition.Char - LTokenHelper.CharsBefore - 1, 0);
+            LCharCount := Max(LSearchItem.TextPosition.Char - LTokenHelper.CharsBefore - 1, 0);
 
-            if LTextPosition.Char + LSearchTextLength > LTokenHelper.CharsBefore + Length(LToken) + LCharCount + 1 then
+            if LSearchItem.TextPosition.Char + LSearchTextLength > LTokenHelper.CharsBefore + Length(LToken) + LCharCount + 1 then
               Break
             else
-            if LTextPosition.Char + LSearchTextLength - 1 <= LCurrentLineLength then
+            if LSearchItem.TextPosition.Char + LSearchTextLength - 1 <= LCurrentLineLength then
             begin
               if not NextItem then
                 Break;
@@ -11630,7 +11635,7 @@ begin
     LCurrentSearchIndex := 0;
     while LCurrentSearchIndex < FSearch.Lines.Count do
     begin
-      LTextPosition := PBCEditorTextPosition(FSearch.Lines.Items[LCurrentSearchIndex])^;
+      LTextPosition := PBCEditorSearchItem(FSearch.Lines.Items[LCurrentSearchIndex])^.TextPosition;
       if LTextPosition.Line + 1 >= TopLine then
         Break
       else

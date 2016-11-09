@@ -162,7 +162,7 @@ var
   i: Integer;
 begin
   for i := FLines.Count - 1 downto 0 do
-    Dispose(PBCEditorTextPosition(FLines.Items[i]));
+    Dispose(PBCEditorSearchItem(FLines.Items[i]));
   FLines.Clear;
 end;
 
