@@ -5113,7 +5113,9 @@ end;
 
 procedure TBCBaseEditor.FindAll(const ASearchText: string = '');
 var
+  LIndex, LFindAllCount, LPosition: Integer;
   LKeyword: string;
+  LPSearchItem: PBCEditorSearchItem;
 begin
   FSearch.ClearLines;
 
@@ -5125,7 +5127,26 @@ begin
   if LKeyword = '' then
     Exit;
 
-  FindWords(LKeyword, FSearch.Lines, soCaseSensitive in FSearch.Options, soWholeWordsOnly in FSearch.Options);
+  FSearchEngine.Pattern := LKeyword;
+  case FSearch.Engine of
+    seNormal:
+      begin
+        TBCEditorNormalSearch(FSearchEngine).CaseSensitive := soCaseSensitive in FSearch.Options;
+        TBCEditorNormalSearch(FSearchEngine).WholeWordsOnly := soWholeWordsOnly in FSearch.Options;
+      end;
+  end;
+
+  for LIndex := 0 to FLines.Count - 1 do
+  begin
+    LFindAllCount := FSearchEngine.FindAll(FLines[LIndex]);
+    for LPosition := 0 to LFindAllCount - 1 do
+    begin
+      New(LPSearchItem);
+      LPSearchItem^.TextPosition := GetTextPosition(FSearchEngine.Results[LPosition], LIndex);
+      LPSearchItem^.Length := FSearchEngine.Lengths[LPosition];
+      FSearch.Lines.Add(LPSearchItem)
+    end;
+  end;
 end;
 
 procedure TBCBaseEditor.FindWords(const AWord: string; AList: TList; ACaseSensitive: Boolean; AWholeWordsOnly: Boolean);
@@ -6404,19 +6425,18 @@ end;
 
 procedure TBCBaseEditor.SearchChanged(AEvent: TBCEditorSearchChanges);
 begin
-  if not Assigned(Parent) then
-    Exit;
-
-  if AEvent = scEngineUpdate then
-    CaretZero;
-
   case AEvent of
     scEngineUpdate:
-      AssignSearchEngine;
+      begin
+        CaretZero;
+        AssignSearchEngine;
+      end;
     scSearch:
       if FSearch.Enabled then
       begin
         FindAll;
+        if not Assigned(Parent) then
+          Exit;
         if soEntireScope in FSearch.Options then
           CaretZero;
         if SelectionAvailable then

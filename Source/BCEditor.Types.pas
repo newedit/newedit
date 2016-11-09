@@ -180,6 +180,12 @@ type
   end;
   PBCEditorTextPosition = ^TBCEditorTextPosition;
 
+  TBCEditorSearchItem = record
+    TextPosition: TBCEditorTextPosition;
+    Length: Integer;
+  end;
+  PBCEditorSearchItem = ^TBCEditorSearchItem;
+
   TBCEditorDisplayPosition = record
     Column: Integer;
     Row: Integer;
