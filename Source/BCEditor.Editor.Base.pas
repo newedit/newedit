@@ -10643,7 +10643,7 @@ var
     LPChar: PChar;
     LOldPenColor: TColor;
     LTextRect: TRect;
-    LX, LY, LBottom, LMaxX: Integer;
+    LLeft, LTop, LBottom, LMaxX: Integer;
     LToken: string;
     LCharCount: Integer;
     LSearchTextLength: Integer;
@@ -10690,7 +10690,7 @@ var
 
     procedure PaintSpecialCharSpaceTab;
     var
-      LX, LY: Integer;
+      LLeft, LTop: Integer;
       LRect: TRect;
       LTabWidth: Integer;
     begin
@@ -10705,34 +10705,34 @@ var
       while LRect.Right <= LTokenRect.Right do
       with Canvas do
       begin
-        LY := (LRect.Bottom - LRect.Top) shr 1;
+        LTop := (LRect.Bottom - LRect.Top) shr 1;
         { Line }
         if FSpecialChars.Style = scsDot then
         begin
-          LX := LRect.Left;
-          if Odd(LX) then
-            Inc(LX)
+          LLeft := LRect.Left;
+          if Odd(LLeft) then
+            Inc(LLeft)
           else
-            Inc(LX, 2);
-          while LX < LRect.Right - 2 do
+            Inc(LLeft, 2);
+          while LLeft < LRect.Right - 2 do
           begin
-            MoveTo(LX, LRect.Top + LY);
-            LineTo(LX + 1, LRect.Top + LY);
-            Inc(LX, 2);
+            MoveTo(LLeft, LRect.Top + LTop);
+            LineTo(LLeft + 1, LRect.Top + LTop);
+            Inc(LLeft, 2);
           end;
         end
         else
         if FSpecialChars.Style = scsSolid then
         begin
-          MoveTo(LRect.Left + 2, LRect.Top + LY);
-          LineTo(LRect.Right - 2, LRect.Top + LY);
+          MoveTo(LRect.Left + 2, LRect.Top + LTop);
+          LineTo(LRect.Right - 2, LRect.Top + LTop);
         end;
         { Arrow }
-        LX := LRect.Right - 2;
-        MoveTo(LX, LRect.Top + LY);
-        LineTo(LX - (LY shr 1), LRect.Top + LY - (LY shr 1));
-        MoveTo(LX, LRect.Top + LY);
-        LineTo(LX - (LY shr 1), LRect.Top + LY + (LY shr 1));
+        LLeft := LRect.Right - 2;
+        MoveTo(LLeft, LRect.Top + LTop);
+        LineTo(LLeft - (LTop shr 1), LRect.Top + LTop - (LTop shr 1));
+        MoveTo(LLeft, LRect.Top + LTop);
+        LineTo(LLeft - (LTop shr 1), LRect.Top + LTop + (LTop shr 1));
 
         LRect.Left := LRect.Right;
         Inc(LRect.Right, LTabWidth);
@@ -10817,7 +10817,7 @@ var
               LCharCount := LTokenHelper.Length - Length(LText);
             LToken := Copy(LToken, 1, Min(LSearchTextLength, LSearchItem.TextPosition.Char + LSearchTextLength -
               LTokenHelper.CharsBefore - LCharCount - 1));
-            LSearchRect.Right := LSearchRect.Left + GetTokenWidth(LToken, Length(LToken), LPaintedColumn);
+            LSearchRect.Right := LSearchRect.Left + GetTokenWidth(LToken, Length(LToken), LPaintedColumn) + 2;
 
             Winapi.Windows.ExtTextOut(Canvas.Handle, LSearchRect.Left, LSearchRect.Top, ETO_OPAQUE or ETO_CLIPPED,
               @LSearchRect, PChar(LToken), Length(LToken), nil);
@@ -10919,11 +10919,11 @@ var
           LBottom := Min(LTokenRect.Bottom, Canvas.ClipRect.Bottom);
 
           LMaxX := LTokenRect.Right + 1;
-          for LY := LTokenRect.Top to LBottom - 1 do
-            for LX := LMaxX to LTextRect.Right - 1 do
-              if GetPixel(Canvas.Handle, LX, LY) <> LRGBColor then
-                if LX > LMaxX then
-                  LMaxX := LX;
+          for LTop := LTokenRect.Top to LBottom - 1 do
+            for LLeft := LMaxX to LTextRect.Right - 1 do
+              if GetPixel(Canvas.Handle, LLeft, LTop) <> LRGBColor then
+                if LLeft > LMaxX then
+                  LMaxX := LLeft;
           FItalicOffset := Max(LMaxX - LTokenRect.Right + 1, 0);
 
           if LLastColumn = LCurrentLineLength + 1 then
@@ -12640,8 +12640,8 @@ begin
         DoSearchStringNotFoundDialog;
     end
     else
-    if (soShowSearchMatchNotFound in FSearch.Options) and DoSearchMatchNotFoundWraparoundDialog or
-      (soWrapAround in FSearch.Options) then
+    if (soWrapAround in FSearch.Options) or
+      (soShowSearchMatchNotFound in FSearch.Options) and DoSearchMatchNotFoundWraparoundDialog then
     begin
       CaretZero;
       Result := FindNext;
