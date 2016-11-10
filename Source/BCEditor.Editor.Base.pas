@@ -14201,13 +14201,12 @@ begin
         CodeFoldingUncollapse(LCodeFoldingRange);
     end;
   LTextCaretPosition := GetTextPosition(AChar, ALine);
-  TopLine := Max(LTextCaretPosition.Line - (ClientHeight div GetLineHeight) div 2, 1);
   SetTextCaretPosition(LTextCaretPosition);
+  TopLine := Max(LTextCaretPosition.Line - (ClientHeight div GetLineHeight) div 2, 1);
   if GetSelectionAvailable then
     Invalidate;
   FSelectionBeginPosition := LTextCaretPosition;
   FSelectionEndPosition := FSelectionBeginPosition;
-  EnsureCursorPositionVisible(True);
 end;
 
 procedure TBCBaseEditor.HookEditorLines(ALines: TBCEditorLines; AUndo, ARedo: TBCEditorUndoList);
