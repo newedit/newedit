@@ -11,10 +11,10 @@ uses
   sSkinProvider, sDialogs, Vcl.StdCtrls, System.Diagnostics, BCCommon.Dialog.Popup.Highlighter, BCEditor.Types,
   BCCommon.Dialog.Popup.Encoding, BCCommon.Dialog.Popup.Highlighter.Color, sSpeedButton, BCControl.SpeedButton,
   sComboBox, BCControl.ComboBox, sLabel, BCEditor.MacroRecorder, BCCommon.Dialog.Popup.SearchEngine,
-  VirtualTrees, BCControl.ObjectInspector;
+  VirtualTrees, BCControl.ObjectInspector, sComboBoxes;
 
 const
-  BCEDITORDEMO_CAPTION = 'TBCEditor Control Demo v1.8.2';
+  BCEDITORDEMO_CAPTION = 'TBCEditor Control Demo v1.8.3';
 
   TITLE_BAR_CAPTION = 1;
   TITLE_BAR_ENCODING = 2;

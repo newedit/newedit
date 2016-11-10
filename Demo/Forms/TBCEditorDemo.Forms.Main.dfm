@@ -75,7 +75,7 @@ inherited MainForm: TMainForm
       TabOrder = 0
       TreeOptions.AutoOptions = [toAutoDropExpand, toAutoScroll, toAutoScrollOnExpand, toAutoTristateTracking, toAutoChangeScale]
       TreeOptions.MiscOptions = [toEditable, toFullRepaintOnResize, toGridExtensions, toWheelPanning, toEditOnClick]
-      TreeOptions.PaintOptions = [toHideFocusRect, toShowButtons, toShowRoot, toShowVertGridLines, toThemeAware, toUseExplorerTheme]
+      TreeOptions.PaintOptions = [toHideFocusRect, toShowButtons, toShowRoot, toShowVertGridLines, toThemeAware]
       TreeOptions.SelectionOptions = [toExtendedFocus, toFullRowSelect]
       Columns = <
         item
