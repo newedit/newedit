@@ -313,7 +313,7 @@ end;
 
 procedure TBCEditorPrint.CalculatePages;
 var
-  LTempText, LText: string;
+  LText: string;
   i, j: Integer;
   LList: TList;
   LYPos: Integer;
@@ -335,16 +335,8 @@ begin
     TBCEditorPageLine(FPages[i]).Free;
   FPages.Clear;
   FMaxWidth := FMargins.PixelRight - FMargins.PixelLeft;
-  LTempText := '';
-  FMaxColumn := 0;
-  while TextWidth(FCanvas, LTempText) < FMaxWidth do
-  begin
-    LTempText := LTempText + 'W';
-    FMaxColumn := FMaxColumn + 1;
-  end;
-  FMaxColumn := FMaxColumn - 1;
-  LTempText := StringOfChar('W', FMaxColumn);
-  FMaxWidth := TextWidth(FCanvas, LTempText);
+  FMaxColumn := FMaxWidth div TextWidth(FCanvas, 'W') - 1;
+  FMaxWidth := TextWidth(FCanvas, StringOfChar('W', FMaxColumn)); // TODO: This does not work with non-fixed width fonts
   FPageCount := 1;
   LPageLine := TBCEditorPageLine.Create;
   LPageLine.FirstLine := 0;
@@ -362,21 +354,6 @@ begin
   end;
   for i := LStartLine to LEndLine do
   begin
-    if not FSelectedOnly then
-      LText := FLines[i]
-    else
-    begin
-      if (FSelectionMode = smColumn) or (i = FBlockBeginPosition.Line - 1) then
-        LSelectionStart := FBlockBeginPosition.Char
-      else
-        LSelectionStart := 1;
-      if (FSelectionMode = smColumn) or (i = FBlockEndPosition.Line - 1) then
-        LSelectionLength := FBlockEndPosition.Char - LSelectionStart
-      else
-        LSelectionLength := MaxInt;
-      LText := Copy(FLines[i], LSelectionStart, LSelectionLength);
-    end;
-
     if LYPos + FLineHeight > FMargins.PixelBottom then
     begin
       LYPos := FMargins.PixelTop;
@@ -386,29 +363,46 @@ begin
       FPages.Add(LPageLine);
     end;
 
-    if Wrap and (TextWidth(FCanvas, LText) > FMaxWidth) then
+    if Wrap then
     begin
-      LList := TList.Create;
-      try
-        if WrapTextEx(LText, [' ', '-', BCEDITOR_TAB_CHAR, ','], FMaxColumn, LList) then
-          CountWrapped
+      if not FSelectedOnly then
+        LText := FLines[i]
+      else
+      begin
+        if (FSelectionMode = smColumn) or (i = FBlockBeginPosition.Line - 1) then
+          LSelectionStart := FBlockBeginPosition.Char
         else
-        begin
-          if WrapTextEx(LText, [';', ')', '.'], FMaxColumn, LList) then
+          LSelectionStart := 1;
+        if (FSelectionMode = smColumn) or (i = FBlockEndPosition.Line - 1) then
+          LSelectionLength := FBlockEndPosition.Char - LSelectionStart
+        else
+          LSelectionLength := MaxInt;
+        LText := Copy(FLines[i], LSelectionStart, LSelectionLength);
+      end;
+
+      if TextWidth(FCanvas, LText) > FMaxWidth then
+      begin
+        LList := TList.Create;
+        try
+          if WrapTextEx(LText, [' ', '-', BCEDITOR_TAB_CHAR, ','], FMaxColumn, LList) then
             CountWrapped
           else
-            while Length(LText) > 0 do
-            begin
-              LTempText := Copy(LText, 1, FMaxColumn);
-              Delete(LText, 1, FMaxColumn);
-              if Length(LText) > 0 then
-                LYPos := LYPos + FLineHeight;
-            end;
+          begin
+            if WrapTextEx(LText, [';', ')', '.'], FMaxColumn, LList) then
+              CountWrapped
+            else
+              while Length(LText) > 0 do
+              begin
+                Delete(LText, 1, FMaxColumn);
+                if Length(LText) > 0 then
+                  LYPos := LYPos + FLineHeight;
+              end;
+          end;
+          for j := 0 to LList.Count - 1 do
+            TBCEditorWrapPosition(LList[j]).Free;
+        finally
+          LList.Free;
         end;
-        for j := 0 to LList.Count - 1 do
-          TBCEditorWrapPosition(LList[j]).Free;
-      finally
-        LList.Free;
       end;
     end;
 
@@ -552,6 +546,7 @@ var
 
 var
   LTempText: string;
+  LLeft: Integer;
 begin
   FPaintHelper.BeginDrawing(FCanvas.Handle);
   with FMargins do
@@ -560,11 +555,15 @@ begin
   if Highlight and Assigned(FHighlighter) and (FLines.Count > 0) then
   begin
     SaveCurrentFont;
-    FHighlighter.SetCurrentRange(FLines.Objects[FLineNumber - 1]);
+     if FLineNumber = 0 then
+      FHighlighter.ResetCurrentRange
+    else
+      FHighlighter.SetCurrentRange(FLines.Objects[FLineNumber - 1]);
     FHighlighter.SetCurrentLine(AText);
     LToken := '';
     LTokenStart := 0;
     LCount := 0;
+    LLeft := FMargins.PixelLeft;
     while not FHighlighter.GetEndOfLine do
     begin
       FHighlighter.GetToken(LToken);
@@ -614,7 +613,10 @@ begin
           end;
         end;
       if not LHandled then
-        ClippedTextOut(FMargins.PixelLeft + (LTokenPosition - LTokenStart) * FPaintHelper.CharWidth, FYPos, LToken);
+      begin
+        ClippedTextOut(LLeft, FYPos, LToken);
+        Inc(LLeft, TextWidth(FCanvas, LToken));
+      end;
       FHighlighter.Next;
     end;
     RestoreCurrentFont;
