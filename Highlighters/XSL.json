@@ -2,8 +2,8 @@
    "Highlighter": {
       "Info": {
          "General": {
-            "Version": "1.8.2",
-            "Date": "06.11.2016",
+            "Version": "1.8.3",
+            "Date": "10.11.2016",
             "Sample": [
                "<?xml version=\"1.0\"?>\r\n",
                "<xsl:stylesheet xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" version=\"1.0\">\r\n",
