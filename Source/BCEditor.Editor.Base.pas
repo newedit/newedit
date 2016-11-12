@@ -10817,7 +10817,9 @@ var
               LCharCount := LTokenHelper.Length - Length(LText);
             LToken := Copy(LToken, 1, Min(LSearchTextLength, LSearchItem.TextPosition.Char + LSearchTextLength -
               LTokenHelper.CharsBefore - LCharCount - 1));
-            LSearchRect.Right := LSearchRect.Left + GetTokenWidth(LToken, Length(LToken), LPaintedColumn) + 2;
+            LSearchRect.Right := LSearchRect.Left + GetTokenWidth(LToken, Length(LToken), LPaintedColumn);
+            if SameText(LText, LToken) then
+              Inc(LSearchRect.Right, FItalicOffset);
 
             Winapi.Windows.ExtTextOut(Canvas.Handle, LSearchRect.Left, LSearchRect.Top, ETO_OPAQUE or ETO_CLIPPED,
               @LSearchRect, PChar(LToken), Length(LToken), nil);
@@ -10909,9 +10911,6 @@ var
         Winapi.Windows.ExtTextOut(Canvas.Handle, LTextRect.Left, LTextRect.Top, ETO_OPAQUE or ETO_CLIPPED, @LTextRect,
           LPChar, LTokenLength, nil);
 
-        if not AMinimap or AMinimap and (moShowSearchResults in FMinimap.Options) then
-          PaintSearchResults;
-
         if LTokenHelper.IsItalic and (LPChar^ <> BCEDITOR_SPACE_CHAR) and (ATokenLength = Length(AToken)) then
         begin
           FItalicOffset := 0;
@@ -10931,7 +10930,10 @@ var
 
           if LAddWrappedCount then
             Inc(LTokenRect.Right, FItalicOffset);
-        end
+        end;
+
+        if not AMinimap or AMinimap and (moShowSearchResults in FMinimap.Options) then
+          PaintSearchResults;
       end;
 
       if LTokenHelper.MatchingPairUnderline then
