@@ -2870,12 +2870,12 @@ end;
 
 function TBCBaseEditor.PixelAndRowToDisplayPosition(const X, ARow: Integer; const ALineText: string = ''): TBCEditorDisplayPosition;
 var
-  LToken, LLastChar: string;
+  LToken, LChar: string;
   LFontStyles, LPreviousFontStyles: TFontStyles;
   LLineText: string;
   LHighlighterAttribute: TBCEditorHighlighterAttribute;
   LXInEditor: Integer;
-  LTextWidth: Integer;
+  LTextWidth, LTokenWidth, LTokenLength, LCharLength: Integer;
   LPToken: PChar;
   LCharsBefore: Integer;
 begin
@@ -2909,6 +2909,7 @@ begin
   while not FHighlighter.GetEndOfLine do
   begin
     FHighlighter.GetToken(LToken);
+    LTokenLength := Length(LToken);
     LHighlighterAttribute := FHighlighter.GetTokenAttribute;
     if Assigned(LHighlighterAttribute) then
       LFontStyles := LHighlighterAttribute.FontStyles;
@@ -2918,36 +2919,41 @@ begin
       LPreviousFontStyles := LFontStyles;
     end;
 
-    LTextWidth := LTextWidth + GetTokenWidth(LToken, Length(LToken), LCharsBefore);
-    if (LXInEditor > 0) and (LTextWidth > LXInEditor) then
+    LTokenWidth := GetTokenWidth(LToken, LTokenLength, LCharsBefore);
+    if (LXInEditor > 0) and (LTextWidth + LTokenWidth > LXInEditor) then
     begin
-      Inc(Result.Column, FHighlighter.GetTokenPosition + FHighlighter.GetTokenLength);
+      LPToken := PChar(LToken);
 
-      while LTextWidth > LXInEditor do
+      while LTextWidth < LXInEditor do
       begin
-        LPToken := PChar(LToken);
-        Inc(LPToken, Length(LToken) - 1);
-        LLastChar := GetLastChar(LPToken);
-        if LLastChar = '' then
+        LChar := LPToken^;
+        Inc(LPToken);
+        while (LPToken^ <> BCEDITOR_NONE_CHAR) and
+          ((LPToken^.GetUnicodeCategory in [TUnicodeCategory.ucCombiningMark, TUnicodeCategory.ucNonSpacingMark]) or
+          ((LPToken - 1)^ <> BCEDITOR_NONE_CHAR) and
+          ((LPToken - 1)^.GetUnicodeCategory = TUnicodeCategory.ucNonSpacingMark)
+          and not IsCombiningDiacriticalMark((LPToken - 1)^)) do
         begin
-          LLastChar := LToken[Length(LToken)];
-          LToken := LToken.Remove(Length(LToken) - 1);
-        end
-        else
-        begin
-          LLastChar := LPToken^ + LLastChar;
-          Delete(LToken, Length(LToken) - Length(LLastChar) + 1, Length(LToken));
+          LChar := LChar + LPToken^;
+          Inc(LPToken);
         end;
-        Dec(LTextWidth, GetTokenWidth(LLastChar, Length(LLastChar), LCharsBefore));
-        Dec(Result.Column, Length(LLastChar));
+
+        LCharLength := Length(LChar);
+        Inc(LTextWidth, GetTokenWidth(LChar, LCharLength, LCharsBefore));
+        if LTextWidth <= LXInEditor then
+          Inc(Result.Column, LCharLength);
       end;
       Exit;
+    end
+    else
+    begin
+      LTextWidth := LTextWidth + LTokenWidth;
+      Inc(Result.Column, LTokenLength);
     end;
     Inc(LCharsBefore, GetTokenCharCount(LToken, LCharsBefore));
     FHighlighter.Next;
   end;
 
-  Inc(Result.Column, Length(LLineText));
   Inc(Result.Column, (X + FHorizontalScrollPosition - FLeftMarginWidth - LTextWidth) div FPaintHelper.CharWidth);
 end;
 
@@ -8922,7 +8928,7 @@ begin
   else
   if (soTripleClickRowSelect in FSelection.Options) and (AShift = [ssLeft]) and (FLastDblClick > 0) then
   begin
-    if ((GetTickCount - FLastDblClick) < FDoubleClickTime) and (FLastRow = LSelectedRow) then
+    if (GetTickCount - FLastDblClick < FDoubleClickTime) and (FLastRow = LSelectedRow) then
     begin
       DoTripleClick;
       Invalidate;
@@ -8931,7 +8937,7 @@ begin
     FLastDblClick := 0;
   end;
 
-  if X > FLeftMarginWidth then
+  if X + 4 > FLeftMarginWidth then
   begin
     if (AButton = mbLeft) or (AButton = mbRight) then
       LTextCaretPosition := PixelsToTextPosition(X, Y);
@@ -9004,7 +9010,7 @@ begin
       end;
     end;
 
-  if X <= FLeftMarginWidth then
+  if X + 4 < FLeftMarginWidth then
     DoOnLeftMarginClick(AButton, AShift, X, Y);
 
   if FMatchingPair.Enabled then
@@ -12428,6 +12434,8 @@ var
 begin
   Winapi.Windows.GetCursorPos(LCursorPoint);
   LCursorPoint := ScreenToClient(LCursorPoint);
+
+  Inc(LCursorPoint.X, 4);
 
   LWidth := 0;
   if FMinimap.Align = maLeft then
