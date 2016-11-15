@@ -391,12 +391,12 @@ begin
             if WrapTextEx(LText, [';', ')', '.'], FMaxColumn, LList) then
               CountWrapped
             else
-              while Length(LText) > 0 do
-              begin
-                Delete(LText, 1, FMaxColumn);
-                if Length(LText) > 0 then
-                  LYPos := LYPos + FLineHeight;
-              end;
+            while Length(LText) > 0 do
+            begin
+              Delete(LText, 1, FMaxColumn);
+              if Length(LText) > 0 then
+                LYPos := LYPos + FLineHeight;
+            end;
           end;
           for j := 0 to LList.Count - 1 do
             TBCEditorWrapPosition(LList[j]).Free;
@@ -570,6 +570,9 @@ begin
       LTokenPosition := FHighlighter.GetTokenPosition;
       LHighlighterAttribute := FHighlighter.GetTokenAttribute;
 
+      FCanvas.Font.Color := FFontColor;
+      FCanvas.Brush.Color := FDefaultBackground;
+
       if Assigned(LHighlighterAttribute) then
       begin
         FCanvas.Font.Style := LHighlighterAttribute.FontStyles;
@@ -583,24 +586,16 @@ begin
           if LColor = clNone then
             LColor := FDefaultBackground;
           FCanvas.Brush.Color := LColor;
-        end
-        else
-        begin
-          FCanvas.Font.Color := FFontColor;
-          FCanvas.Brush.Color := FDefaultBackground;
         end;
-      end
-      else
-      begin
-        FCanvas.Font.Color := FFontColor;
-        FCanvas.Brush.Color := FDefaultBackground;
       end;
+
       LHandled := False;
       if Assigned(AList) then
         if LCount < AList.Count then
         begin
           if LTokenPosition >= TBCEditorWrapPosition(AList[LCount]).Index then
           begin
+            LLeft := FMargins.PixelLeft;
             LCount := LCount + 1;
             LTokenStart := LTokenPosition;
             FYPos := FYPos + FLineHeight;
