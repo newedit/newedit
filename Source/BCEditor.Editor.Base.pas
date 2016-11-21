@@ -9648,7 +9648,7 @@ begin
   if FCodeFolding.Visible and FCodeFolding.Hint.Indicator.Visible and Assigned(AFoldRange) and
     AFoldRange.Collapsed and not AFoldRange.ParentCollapsed then
   begin
-    LDisplayPosition.Row := ALine;
+    LDisplayPosition.Row := ALine + 1;
     LDisplayPosition.Column := ATokenPosition + ATokenLength + 2;
     if FSpecialChars.Visible and (ALine <> FLines.Count) and (ALine <> FLineNumbersCount) then
       Inc(LDisplayPosition.Column);
