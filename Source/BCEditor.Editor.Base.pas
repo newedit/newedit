@@ -8640,17 +8640,14 @@ var
 
   procedure UpdateMarks(AMarkList: TBCEditorMarkList);
   var
-    LIndex: Integer;
+    LMarkIndex: Integer;
     LMark: TBCEditorMark;
   begin
-    for LIndex := 0 to AMarkList.Count - 1 do
+    for LMarkIndex := 0 to AMarkList.Count - 1 do
     begin
-      LMark := Marks[LIndex];
-      if LMark.Line >= LIndex + ACount then
+      LMark := AMarkList[LMarkIndex];
+      if LMark.Line >= LIndex then
         LMark.Line := LMark.Line - ACount
-      else
-      if LMark.Line > LIndex then
-        LMark.Line := LIndex;
     end;
   end;
 
@@ -8679,7 +8676,7 @@ begin
 
   CreateLineNumbersCache(True);
   CodeFoldingResetCaches;
-  RefreshFind;
+  SearchAll;
 
   Invalidate;
 end;
@@ -8693,10 +8690,10 @@ var
     LIndex: Integer;
     LMark: TBCEditorMark;
   begin
-    for LIndex := 0 to Marks.Count - 1 do
+    for LIndex := 0 to AMarkList.Count - 1 do
     begin
-      LMark := Marks[LIndex];
-      if LMark.Line >= AIndex + 1 then
+      LMark := AMarkList[LIndex];
+      if LMark.Line >= AIndex then
         LMark.Line := LMark.Line + ACount;
     end;
   end;
@@ -8723,7 +8720,7 @@ begin
 
   CreateLineNumbersCache(True);
   CodeFoldingResetCaches;
-  RefreshFind;
+  SearchAll;
 
   DoLeftMarginAutoSize;
 end;
