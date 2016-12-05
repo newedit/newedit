@@ -2978,13 +2978,17 @@ function TBCBaseEditor.PreviousWordPosition(const ATextPosition: TBCEditorTextPo
 var
   LLine: string;
   LChar: Integer;
+  LLength: Integer;
 begin
   Result := ATextPosition;
 
   if (Result.Line >= 0) and (Result.Line < FLines.Count) then
   begin
     LLine := FLines[Result.Line];
-    Result.Char := Min(Result.Char, Length(LLine) + 1);
+    LLength := Length(LLine);
+    if Result.Char > LLength then
+      Inc(LLength);
+    Result.Char := Min(Result.Char, LLength + 1);
 
     if Result.Char <= 1 then
     begin
