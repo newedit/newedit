@@ -2791,60 +2791,46 @@ end;
 
 function TBCBaseEditor.NextWordPosition(const ATextPosition: TBCEditorTextPosition): TBCEditorTextPosition;
 var
-  LLength: Integer;
   LLine: string;
-
-  function StringScan(const ALine: string; AStart: Integer; ACharMethod: TBCEditorCharMethod): Integer;
-  var
-    LPChar: PChar;
-  begin
-    if (AStart > 0) and (AStart <= Length(ALine)) then
-    begin
-      LPChar := PChar(@ALine[AStart]);
-      repeat
-        if ACharMethod(LPChar^) then
-          Exit(AStart);
-        Inc(LPChar);
-        Inc(AStart);
-      until LPChar^ = BCEDITOR_NONE_CHAR;
-    end;
-    Result := 0;
-  end;
-
+  LLength: Integer;
 begin
   Result := ATextPosition;
 
   if (Result.Line >= 0) and (Result.Line < FLines.Count) then
   begin
     LLine := FLines[Result.Line];
-
     LLength := Length(LLine);
-    if Result.Char >= LLength then
+
+    if Result.Char > LLength then
     begin
-      if Result.Line >= FLines.Count - 1 then
-      begin
-        if not GetSelectionAvailable then
-        begin
-          Result.Line := 0;
-          Result.Char := 1;
-        end;
-      end
-      else
+      if Result.Line < FLines.Count then
       begin
         Inc(Result.Line);
-        LLine := FLines[Result.Line];
         Result.Char := 1;
-        Result := NextWordPosition(Result);
-      end;
+        LLine := FLines[Result.Line];
+        if (LLine = '') or IsWordBreakChar(LLine[Result.Char]) then
+          Result := NextWordPosition(Result);
+      end
+      else
+      if not GetSelectionAvailable then
+        Result.Line := 1
     end
     else
     begin
-      if not IsWordBreakChar(LLine[Result.Char]) then
-        Result.Char := StringScan(LLine, Result.Char, IsWordBreakChar);
-      if Result.Char > 0 then
-        Result.Char := StringScan(LLine, Result.Char, IsWordChar);
-      if Result.Char = 0 then
-        Result.Char := LLength + 1;
+      while (Result.Char <= LLength) and not IsWordBreakChar(LLine[Result.Char]) do
+        Inc(Result.Char);
+
+      if (Result.Char > LLength) and (Result.Line < FLines.Count) then
+      begin
+        Inc(Result.Line);
+        Result.Char := 1;
+        LLine := FLines[Result.Line];
+        if (LLine = '') or IsWordBreakChar(LLine[Result.Char]) then
+          Result := NextWordPosition(Result);
+      end
+      else
+      while (Result.Char <= LLength) and IsWordBreakChar(LLine[Result.Char]) do
+        Inc(Result.Char);
     end;
   end;
 end;
@@ -2974,29 +2960,24 @@ begin
   Result := PreviousWordPosition(TextCaretPosition);
 end;
 
-function TBCBaseEditor.PreviousWordPosition(const ATextPosition: TBCEditorTextPosition; APreviousLine: Boolean = False): TBCEditorTextPosition;
+function TBCBaseEditor.PreviousWordPosition(const ATextPosition: TBCEditorTextPosition): TBCEditorTextPosition;
 var
   LLine: string;
-  LChar: Integer;
-  LLength: Integer;
 begin
   Result := ATextPosition;
 
   if (Result.Line >= 0) and (Result.Line < FLines.Count) then
   begin
     LLine := FLines[Result.Line];
-    LLength := Length(LLine);
-    if Result.Char > LLength then
-      Inc(LLength);
-    Result.Char := Min(Result.Char, LLength + 1);
+    Result.Char := Min(Result.Char, Length(LLine)) - 1;
 
     if Result.Char <= 1 then
     begin
       if Result.Line > 0 then
       begin
         Dec(Result.Line);
-        Result.Char := Length(FLines[Result.Line]) + 1;
-        Result := PreviousWordPosition(Result, True);
+        Result.Char := Length(FLines[Result.Line]);
+        Result := PreviousWordPosition(Result);
       end
       else
       if not GetSelectionAvailable then
@@ -3004,30 +2985,23 @@ begin
     end
     else
     begin
-      if Result.Char > 1 then
-      begin
-        LChar := Result.Char;
-        if not APreviousLine then
-          Dec(LChar);
-        if not IsWordBreakChar(LLine[LChar]) then
-          Dec(Result.Char);
-      end;
+      while (Result.Char > 0) and IsWordBreakChar(LLine[Result.Char]) do
+        Dec(Result.Char);
 
-      if IsWordBreakChar(LLine[Result.Char]) then
+      if (Result.Char = 0) and (Result.Line > 0) then
       begin
-        while (Result.Char > 0) and IsWordBreakChar(LLine[Result.Char]) do
-          Dec(Result.Char);
+        Dec(Result.Line);
+        Result.Char := Length(FLines[Result.Line]);
+        Result := PreviousWordPosition(Result);
       end
       else
       begin
         while (Result.Char > 0) and not IsWordBreakChar(LLine[Result.Char]) do
           Dec(Result.Char);
-        while (Result.Char > 0) and IsWordBreakChar(LLine[Result.Char]) do
-          Dec(Result.Char);
-      end;
 
-      if Result.Char > 0 then
-        Inc(Result.Char);
+        if Result.Char > 0 then
+          Inc(Result.Char)
+      end;
     end;
   end;
 end;
