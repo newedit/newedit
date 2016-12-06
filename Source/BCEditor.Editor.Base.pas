@@ -2784,11 +2784,6 @@ begin
     Result := 0;
 end;
 
-function TBCBaseEditor.NextWordPosition: TBCEditorTextPosition;
-begin
-  Result := NextWordPosition(TextCaretPosition);
-end;
-
 function TBCBaseEditor.NextWordPosition(const ATextPosition: TBCEditorTextPosition): TBCEditorTextPosition;
 var
   LLine: string;
@@ -2812,17 +2807,8 @@ begin
 
     if Result.Char > LLength then
     begin
-      if Result.Line < FLines.Count - 1 then
-      begin
-        if NextWord(Result) then
-          Result := NextWordPosition(Result);
-      end
-      else
-      if not GetSelectionAvailable then
-      begin
-        Result.Line := 0;
-        Result.Char := 1;
-      end;
+      if NextWord(Result) then
+        Result := NextWordPosition(Result);
     end
     else
     begin
@@ -2841,6 +2827,12 @@ begin
       if Result.Char > LLength then
         Result := NextWordPosition(Result);
     end;
+  end
+  else
+  if not GetSelectionAvailable then
+  begin
+    Result.Line := 0;
+    Result.Char := 1;
   end;
 end;
 
