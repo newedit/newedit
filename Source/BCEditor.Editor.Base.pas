@@ -2793,6 +2793,15 @@ function TBCBaseEditor.NextWordPosition(const ATextPosition: TBCEditorTextPositi
 var
   LLine: string;
   LLength: Integer;
+
+  function NextWord(var ATextPosition: TBCEditorTextPosition): Boolean;
+  begin
+    Inc(ATextPosition.Line);
+    ATextPosition.Char := 1;
+    LLine := FLines[ATextPosition.Line];
+    Result := (LLine = '') or IsWordBreakChar(LLine[ATextPosition.Char]);
+  end;
+
 begin
   Result := ATextPosition;
 
@@ -2803,17 +2812,17 @@ begin
 
     if Result.Char > LLength then
     begin
-      if Result.Line < FLines.Count then
+      if Result.Line < FLines.Count - 1 then
       begin
-        Inc(Result.Line);
-        Result.Char := 1;
-        LLine := FLines[Result.Line];
-        if (LLine = '') or IsWordBreakChar(LLine[Result.Char]) then
+        if NextWord(Result) then
           Result := NextWordPosition(Result);
       end
       else
       if not GetSelectionAvailable then
-        Result.Line := 1
+      begin
+        Result.Line := 0;
+        Result.Char := 1;
+      end;
     end
     else
     begin
@@ -2822,15 +2831,15 @@ begin
 
       if (Result.Char > LLength) and (Result.Line < FLines.Count) then
       begin
-        Inc(Result.Line);
-        Result.Char := 1;
-        LLine := FLines[Result.Line];
-        if (LLine = '') or IsWordBreakChar(LLine[Result.Char]) then
+        if NextWord(Result) then
           Result := NextWordPosition(Result);
       end
       else
       while (Result.Char <= LLength) and IsWordBreakChar(LLine[Result.Char]) do
         Inc(Result.Char);
+
+      if Result.Char > LLength then
+        Result := NextWordPosition(Result);
     end;
   end;
 end;
