@@ -132,6 +132,7 @@ contains
   BCEditor.Print.PrinterInfo in '..\Source\BCEditor.Print.PrinterInfo.pas',
   BCEditor.Print.Types in '..\Source\BCEditor.Print.Types.pas',
   BCEditor.Search in '..\Source\BCEditor.Search.pas',
+	BCEditor.Search.Normal in '..\Source\BCEditor.Search.Normal.pas',
   BCEditor.Search.RegularExpressions in '..\Source\BCEditor.Search.RegularExpressions.pas',
   BCEditor.Search.Wildcard in '..\Source\BCEditor.Search.Wildcard.pas',
   BCEditor.StyleHooks in '..\Source\BCEditor.StyleHooks.pas',

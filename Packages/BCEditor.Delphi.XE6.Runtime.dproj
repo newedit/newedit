@@ -218,6 +218,7 @@
         <DCCReference Include="..\Source\BCEditor.Print.PrinterInfo.pas"/>
         <DCCReference Include="..\Source\BCEditor.Print.Types.pas"/>
         <DCCReference Include="..\Source\BCEditor.Search.pas"/>
+				<DCCReference Include="..\Source\BCEditor.Search.Normal.pas"/>
         <DCCReference Include="..\Source\BCEditor.Search.RegularExpressions.pas"/>
         <DCCReference Include="..\Source\BCEditor.Search.Wildcard.pas"/>
         <DCCReference Include="..\Source\BCEditor.StyleHooks.pas"/>

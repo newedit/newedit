@@ -410,6 +410,9 @@
         <DelphiCompile Include="..\Source\BCEditor.Search.pas">
             <BuildOrder>83</BuildOrder>
         </DelphiCompile>
+				<DelphiCompile Include="..\Source\BCEditor.Search.Normal.pas">
+            <BuildOrder>83</BuildOrder>
+        </DelphiCompile>
         <DelphiCompile Include="..\Source\BCEditor.Search.RegularExpressions.pas">
             <BuildOrder>84</BuildOrder>
         </DelphiCompile>

@@ -106,6 +106,7 @@ contains
   BCEditor.Editor.Undo in '..\Source\BCEditor.Editor.Undo.pas',
   BCEditor.Editor.Undo.Item in '..\Source\BCEditor.Editor.Undo.Item.pas',
   BCEditor.Editor.Undo.List in '..\Source\BCEditor.Editor.Undo.List.pas',
+	BCEditor.Editor.UnknownChars in '..\Source\BCEditor.Editor.UnknownChars.pas',
   BCEditor.Editor.Utils in '..\Source\BCEditor.Editor.Utils.pas',
   BCEditor.Editor.WordWrap in '..\Source\BCEditor.Editor.WordWrap.pas',
   BCEditor.Editor.WordWrap.Colors in '..\Source\BCEditor.Editor.WordWrap.Colors.pas',
@@ -131,13 +132,12 @@ contains
   BCEditor.Print.PrinterInfo in '..\Source\BCEditor.Print.PrinterInfo.pas',
   BCEditor.Print.Types in '..\Source\BCEditor.Print.Types.pas',
   BCEditor.Search in '..\Source\BCEditor.Search.pas',
+	BCEditor.Search.Normal in '..\Source\BCEditor.Search.Normal.pas',
   BCEditor.Search.RegularExpressions in '..\Source\BCEditor.Search.RegularExpressions.pas',
   BCEditor.Search.Wildcard in '..\Source\BCEditor.Search.Wildcard.pas',
   BCEditor.StyleHooks in '..\Source\BCEditor.StyleHooks.pas',
   BCEditor.PaintHelper in '..\Source\BCEditor.PaintHelper.pas',
   BCEditor.Types in '..\Source\BCEditor.Types.pas',
-  BCEditor.Utils in '..\Source\BCEditor.Utils.pas',
-  BCEditor.Editor.UnknownChars in '..\Source\BCEditor.Editor.UnknownChars.pas',
-  BCEditor.Search.Normal in '..\Source\BCEditor.Search.Normal.pas';
+  BCEditor.Utils in '..\Source\BCEditor.Utils.pas';
 
 end.
