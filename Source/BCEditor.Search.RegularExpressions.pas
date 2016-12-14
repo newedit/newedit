@@ -117,9 +117,6 @@ end;
 procedure TBCEditorRegexSearch.SetPattern(const AValue: string);
 begin
   FPattern := AValue;
-  { Convert line breaks into Delphi string line breaks for PCRE regex }
-  FPattern := StringReplace(FPattern, '\r\n', '\n', [rfReplaceAll]);
-  FPattern := StringReplace(FPattern, '\n', '\r\n', [rfReplaceAll]);
 end;
 
 end.
