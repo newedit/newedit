@@ -2,8 +2,8 @@
    "Colors": {
       "Info": {
          "General": {
-            "Version": "1.8.3",
-            "Date": "10.11.2016"
+            "Version": "1.9.0",
+            "Date": "07.12.2016"
          },
          "Author": {
             "Name": "Lasse Rautiainen",
@@ -50,14 +50,14 @@
             "SearchHighlighterBackground": "clBlack",
             "SearchHighlighterForeground": "clWhite",
             "SearchInSelectionBackground": "$00FCFDCD",
-            "SearchMapActiveLine": "clHighlight",
+            "SearchMapActiveLine": "$00FF9933",
             "SearchMapBackground": "$00F4F4F4",
             "SearchMapForeground": "clBlack",
-            "SelectionBackground": "clHighlight",
-            "SelectionForeground": "clHighlightText",
+            "SelectionBackground": "$00FF9933",
+            "SelectionForeground": "clWhite",
             "SyncEditBackground": "$00FCFDCD",
             "SyncEditEditBorder": "clBlack",
-            "SyncEditWordBorder": "clHighlight",
+            "SyncEditWordBorder": "$00FF9933",
             "WordWrapIndicatorArrow": "clBlack",
             "WordWrapIndicatorLines": "clBlue"
          },
