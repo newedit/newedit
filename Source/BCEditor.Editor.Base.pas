@@ -264,7 +264,6 @@ type
     function PreviousWordPosition: TBCEditorTextPosition; overload;
     function RescanHighlighterRangesFrom(const AIndex: Integer): Integer;
     function RowColumnToCharIndex(const ATextPosition: TBCEditorTextPosition): Integer;
-    //function SearchText(const ASearchText: string): Integer;
     function ShortCutPressed: Boolean;
     function StringWordEnd(const ALine: string; AStart: Integer): Integer;
     function StringWordStart(const ALine: string; AStart: Integer): Integer;
@@ -348,7 +347,6 @@ type
     procedure MoveLineUp;
     procedure MultiCaretTimerHandler(ASender: TObject);
     procedure OpenLink(const AURI: string; ARangeType: TBCEditorRangeType);
-    //procedure PreviousSelectedWordPosition;
     procedure RemoveDuplicateMultiCarets;
     procedure RightMarginChanged(ASender: TObject);
     procedure ScrollChanged(ASender: TObject);
@@ -447,7 +445,6 @@ type
     procedure ChainLinesInserted(ASender: TObject; const AIndex: Integer; const ACount: Integer);
     procedure ChainLinesPutted(ASender: TObject; const AIndex: Integer; const ACount: Integer);
     procedure ChainUndoRedoAdded(ASender: TObject);
-    //procedure ChangeScale(ANumerator, ADenominator: Integer{$if CompilerVersion >= 31}; AIsDPIChange: Boolean{$ifend}); override;
     procedure CreateParams(var AParams: TCreateParams); override;
     procedure CreateWnd; override;
     procedure DblClick; override;
@@ -2787,6 +2784,11 @@ begin
   end
   else
     Result := 0;
+end;
+
+function TBCBaseEditor.NextWordPosition: TBCEditorTextPosition;
+begin
+  Result := NextWordPosition(TextCaretPosition);
 end;
 
 function TBCBaseEditor.NextWordPosition(const ATextPosition: TBCEditorTextPosition): TBCEditorTextPosition;
@@ -5633,34 +5635,6 @@ begin
   ShellExecute(0, nil, PChar(LURI), nil, nil, SW_SHOWNORMAL);
 end;
 
-(*procedure TBCBaseEditor.PreviousSelectedWordPosition;
-var
-  LSelectedText: string;
-  LPreviousTextCaretPosition, LTextCaretPosition: TBCEditorTextPosition;
-  LLength: Integer;
-begin
-  if not GetSelectionAvailable then
-    Exit;
-  LSelectedText := SelectedText;
-  LLength := Length(LSelectedText);
-
-  LTextCaretPosition := PreviousWordPosition;
-  Dec(LTextCaretPosition.Char, LLength);
-  while LSelectedText <> GetWordAtTextPosition(LTextCaretPosition) do
-  begin
-    LPreviousTextCaretPosition := LTextCaretPosition;
-    LTextCaretPosition := PreviousWordPosition(LTextCaretPosition);
-    if (LTextCaretPosition.Line = LPreviousTextCaretPosition.Line) and
-      (LTextCaretPosition.Char = LPreviousTextCaretPosition.Char) then
-      Exit;
-    Dec(LTextCaretPosition.Char, LLength);
-  end;
-
-  TextCaretPosition := LTextCaretPosition;
-  SelectionBeginPosition := LTextCaretPosition;
-  SelectionEndPosition := GetTextPosition(LTextCaretPosition.Char + Length(LSelectedText), LTextCaretPosition.Line);
-end;  *)
-
 procedure TBCBaseEditor.SetLineWithRightTrim(const ALine: Integer; const ALineText: string);
 begin
   if eoTrimTrailingSpaces in Options then
@@ -7749,19 +7723,6 @@ begin
     LNotifyEvent(ASender);
   LUndoList.OnAddedUndo(ASender);
 end;
-
-(*procedure TBCBaseEditor.ChangeScale(ANumerator, ADenominator: Integer{$if CompilerVersion >= 31}; AIsDPIChange: Boolean{$endif});
-begin
-  inherited ChangeScale(ANumerator, ADenominator{$if CompilerVersion >= 31}, AIsDPIChange{$endif});
-
-  if ANumerator <> ADenominator then
-  begin
-    FCodeFolding.Width := MulDiv(FCodeFolding.Width, ANumerator, ADenominator);
-    if Odd(FCodeFolding.Width) then
-      FCodeFolding.Width := FCodeFolding.Width - 1;
-    FCodeFolding.Padding := MulDiv(FCodeFolding.Padding, ANumerator, ADenominator);
-  end;
-end;   *)
 
 procedure TBCBaseEditor.CreateParams(var AParams: TCreateParams);
 const
