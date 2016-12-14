@@ -33,6 +33,8 @@ type
   public
     constructor Create;
     destructor Destroy; override;
+    function GetNextSearchItemIndex(const ATextPosition: TBCEditorTextPosition): Integer;
+    function GetPreviousSearchItemIndex(const ATextPosition: TBCEditorTextPosition): Integer;
     procedure Assign(ASource: TPersistent); override;
     procedure ClearLines;
     procedure SetOption(const AOption: TBCEditorSearchOption; const AEnabled: Boolean);
@@ -164,6 +166,139 @@ begin
   for i := FLines.Count - 1 downto 0 do
     Dispose(PBCEditorSearchItem(FLines.Items[i]));
   FLines.Clear;
+end;
+
+function TBCEditorSearch.GetPreviousSearchItemIndex(const ATextPosition: TBCEditorTextPosition): Integer;
+var
+  LLow, LHigh, LMiddle: Integer;
+  LSearchItem: PBCEditorSearchItem;
+
+  function IsTextPositionBetweenSearchItems: Boolean;
+  var
+    LNextSearchItem: PBCEditorSearchItem;
+  begin
+    LNextSearchItem := PBCEditorSearchItem(FLines.Items[LMiddle + 1]);
+
+    Result :=
+      ( (LSearchItem^.EndTextPosition.Line < ATextPosition.Line) or
+        (LSearchItem^.EndTextPosition.Line = ATextPosition.Line) and (LSearchItem^.EndTextPosition.Char <= ATextPosition.Char) )
+      and
+      ( (LNextSearchItem^.EndTextPosition.Line > ATextPosition.Line) or
+        (LNextSearchItem^.EndTextPosition.Line = ATextPosition.Line) and (LNextSearchItem^.EndTextPosition.Char > ATextPosition.Char) )
+  end;
+
+  function IsSearchItemGreaterThanTextPosition: Boolean;
+  begin
+    Result := (LSearchItem^.EndTextPosition.Line > ATextPosition.Line) or
+      (LSearchItem^.EndTextPosition.Line = ATextPosition.Line) and (LSearchItem^.EndTextPosition.Char > ATextPosition.Char)
+  end;
+
+  function IsSearchItemLowerThanTextPosition: Boolean;
+  begin
+    Result := (LSearchItem^.EndTextPosition.Line < ATextPosition.Line) or
+      (LSearchItem^.EndTextPosition.Line = ATextPosition.Line) and (LSearchItem^.EndTextPosition.Char <= ATextPosition.Char)
+  end;
+
+begin
+  Result := -1;
+
+  if FLines.Count = 0 then
+    Exit;
+
+  LSearchItem := PBCEditorSearchItem(FLines.Items[0]);
+  if IsSearchItemGreaterThanTextPosition then
+    Exit;
+
+  LHigh := FLines.Count - 1;
+
+  LSearchItem := PBCEditorSearchItem(FLines.Items[LHigh]);
+  if IsSearchItemLowerThanTextPosition then
+    Exit(LHigh);
+
+  LLow := 0;
+  Dec(LHigh);
+
+  while LLow <= LHigh do
+  begin
+    LMiddle := (LLow + LHigh) div 2;
+
+    LSearchItem := PBCEditorSearchItem(FLines.Items[LMiddle]);
+
+    if IsTextPositionBetweenSearchItems then
+      Exit(LMiddle)
+    else
+    if IsSearchItemGreaterThanTextPosition then
+      LHigh := LMiddle - 1
+    else
+    if IsSearchItemLowerThanTextPosition then
+      LLow := LMiddle + 1
+  end;
+end;
+
+function TBCEditorSearch.GetNextSearchItemIndex(const ATextPosition: TBCEditorTextPosition): Integer;
+var
+  LLow, LHigh, LMiddle: Integer;
+  LSearchItem: PBCEditorSearchItem;
+
+  function IsTextPositionBetweenSearchItems: Boolean;
+  var
+    LPreviousSearchItem: PBCEditorSearchItem;
+  begin
+    LPreviousSearchItem := PBCEditorSearchItem(FLines.Items[LMiddle - 1]);
+
+    Result :=
+      ( (LPreviousSearchItem^.BeginTextPosition.Line < ATextPosition.Line) or
+        (LPreviousSearchItem^.BeginTextPosition.Line = ATextPosition.Line) and (LPreviousSearchItem^.BeginTextPosition.Char < ATextPosition.Char) )
+      and
+      ( (LSearchItem^.BeginTextPosition.Line > ATextPosition.Line) or
+        (LSearchItem^.BeginTextPosition.Line = ATextPosition.Line) and (LSearchItem^.BeginTextPosition.Char >= ATextPosition.Char) );
+  end;
+
+  function IsSearchItemGreaterThanTextPosition: Boolean;
+  begin
+    Result := (LSearchItem^.BeginTextPosition.Line > ATextPosition.Line) or
+      (LSearchItem^.BeginTextPosition.Line = ATextPosition.Line) and (LSearchItem^.BeginTextPosition.Char >= ATextPosition.Char)
+  end;
+
+  function IsSearchItemLowerThanTextPosition: Boolean;
+  begin
+    Result := (LSearchItem^.BeginTextPosition.Line < ATextPosition.Line) or
+      (LSearchItem^.BeginTextPosition.Line = ATextPosition.Line) and (LSearchItem^.BeginTextPosition.Char < ATextPosition.Char)
+  end;
+
+begin
+  Result := -1;
+
+  if FLines.Count = 0 then
+    Exit;
+
+  LSearchItem := PBCEditorSearchItem(FLines.Items[0]);
+  if IsSearchItemGreaterThanTextPosition then
+    Exit(0);
+
+  LHigh := FLines.Count - 1;
+
+  LSearchItem := PBCEditorSearchItem(FLines.Items[LHigh]);
+  if IsSearchItemLowerThanTextPosition then
+    Exit;
+
+  LLow := 1;
+
+  while LLow <= LHigh do
+  begin
+    LMiddle := (LLow + LHigh) div 2;
+
+    LSearchItem := PBCEditorSearchItem(FLines.Items[LMiddle]);
+
+    if IsTextPositionBetweenSearchItems then
+      Exit(LMiddle)
+    else
+    if IsSearchItemGreaterThanTextPosition then
+      LHigh := LMiddle - 1
+    else
+    if IsSearchItemLowerThanTextPosition then
+      LLow := LMiddle + 1
+  end;
 end;
 
 end.

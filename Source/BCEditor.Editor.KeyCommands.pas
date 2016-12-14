@@ -141,7 +141,7 @@ type
 
   TBCEditorHookedCommandEvent = procedure(ASender: TObject; AAfterProcessing: Boolean; var AHandled: Boolean;
     var ACommand: TBCEditorCommand; var AChar: Char; Data: Pointer; AHandlerData: Pointer) of object;
-  TBCEditorProcessCommandEvent = procedure(ASender: TObject; var ACommand: TBCEditorCommand; var AChar: Char;
+  TBCEditorProcessCommandEvent = procedure(ASender: TObject; var ACommand: TBCEditorCommand; const AChar: Char;
     AData: Pointer) of object;
 
   TBCEditorHookedCommandHandler = class(TObject)

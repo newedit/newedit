@@ -7,7 +7,7 @@ uses
   BCEditor.Editor.CodeFolding.Hint;
 
 const
-  BCEDITOR_CODE_FOLDING_DEFAULT_OPTIONS = [cfoHighlightIndentGuides, cfoHighlightMatchingPair, cfoShowIndentGuides,
+  BCEDITOR_CODE_FOLDING_DEFAULT_OPTIONS = [cfoAutoPadding, cfoAutoWidth, cfoHighlightIndentGuides, cfoHighlightMatchingPair, cfoShowIndentGuides,
     cfoShowTreeLine, cfoUncollapseByHintClick];
 
 type

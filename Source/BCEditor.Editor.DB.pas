@@ -29,7 +29,7 @@ type
     function GetReadOnly: Boolean; override;
     procedure DoChange; override;
     procedure Loaded; override;
-    procedure SetReadOnly(AValue: Boolean); override;
+    procedure SetReadOnly(const AValue: Boolean); override;
     property DataField: string read GetDataField write SetDataField;
     property DataSource: TDataSource read GetDataSource write SetDataSource;
     property Field: TField read GetField;
@@ -332,7 +332,7 @@ begin
   end;
 end;
 
-procedure TBCCustomDBEditor.SetReadOnly(AValue: Boolean);
+procedure TBCCustomDBEditor.SetReadOnly(const AValue: Boolean);
 begin
   FDataLink.ReadOnly := AValue;
 end;

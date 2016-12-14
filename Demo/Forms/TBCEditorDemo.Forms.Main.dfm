@@ -32,6 +32,10 @@ inherited MainForm: TMainForm
       item
         Width = 50
       end>
+    ParentFont = True
+    ParentShowHint = False
+    ShowHint = True
+    UseSystemFont = False
   end
   object PanelProperty: TBCPanel [2]
     Left = 760
@@ -172,7 +176,7 @@ inherited MainForm: TMainForm
       SpecialChars.Style = scsDot
       SyncEdit.ShortCut = 24650
       TabOrder = 0
-      WordWrap.Indicator.Glyph.Data = {
+      WordWrap.Indicator.Bitmap.Data = {
         7E030000424D7E0300000000000036000000280000000F0000000E0000000100
         2000000000004803000000000000000000000000000000000000FF00FF00FF00
         FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00FF00
@@ -436,31 +440,27 @@ inherited MainForm: TMainForm
         SkinData.SkinSection = 'CHECKBOX'
         object LabelSearchResultCount: TsLabel
           AlignWithMargins = True
-          Left = 362
+          Left = 363
           Top = 0
-          Width = 4
+          Width = 3
           Height = 21
           Margins.Left = 0
           Margins.Top = 0
           Margins.Bottom = 0
           Align = alRight
-          ParentFont = False
           Layout = tlCenter
-          Font.Charset = DEFAULT_CHARSET
-          Font.Color = clWindowText
-          Font.Height = -13
-          Font.Name = 'Tahoma'
-          Font.Style = []
         end
       end
     end
   end
   inherited SkinManager: TBCSkinManager
     Effects.AllowGlowing = False
-    IsDefault = False
+    IsDefault = True
     MenuSupport.UseExtraLine = False
+    Options.ChangeSysColors = True
+    SkinInfo = 'N/A'
     ThirdParty.ThirdEdits = ' '#13#10'TBCEditorPrintPreview'#13#10
-    ThirdParty.ThirdVirtualTrees = 'TVirtualDrawTree'#13#10'TBCObjectInspector'#13#10
+    ThirdParty.ThirdVirtualTrees = 'TBCObjectInspector'#13#10
     Left = 166
     Top = 26
   end
@@ -474,12 +474,15 @@ inherited MainForm: TMainForm
         FontData.Font.Height = -11
         FontData.Font.Name = 'Tahoma'
         FontData.Font.Style = []
-        Height = 22
+        FontData.UseSysFontName = False
+        FontData.UseSysSize = False
+        FontData.UseSysStyle = False
+        Height = 20
+        Width = 45
         Index = 0
         Name = 'TitleBarItemFile'
         ShowHint = True
         Style = bsMenu
-        Width = 48
       end
       item
         Align = tbaCenterInSpace
@@ -489,12 +492,15 @@ inherited MainForm: TMainForm
         FontData.Font.Height = -11
         FontData.Font.Name = 'Tahoma'
         FontData.Font.Style = []
-        Height = 21
+        FontData.UseSysFontName = False
+        FontData.UseSysSize = False
+        FontData.UseSysStyle = False
+        Height = 19
+        Width = 146
         Index = 1
         Name = 'TitleBarItemCaption'
         ShowHint = False
         Style = bsInfo
-        Width = 161
       end
       item
         Align = tbaRight
@@ -505,12 +511,15 @@ inherited MainForm: TMainForm
         FontData.Font.Height = -11
         FontData.Font.Name = 'Tahoma'
         FontData.Font.Style = []
-        Height = 22
+        FontData.UseSysFontName = False
+        FontData.UseSysSize = False
+        FontData.UseSysStyle = False
+        Height = 20
+        Width = 53
         Index = 2
         Name = 'TitleBarItemEncoding'
         ShowHint = False
         Style = bsMenu
-        Width = 56
         OnClick = TitleBarItems2Click
       end
       item
@@ -520,11 +529,14 @@ inherited MainForm: TMainForm
         FontData.Font.Height = -11
         FontData.Font.Name = 'Tahoma'
         FontData.Font.Style = []
+        FontData.UseSysFontName = False
+        FontData.UseSysSize = False
+        FontData.UseSysStyle = False
+        Width = 6
         Index = 3
         Name = 'TitleBarItemSpacing1'
         ShowHint = False
         Style = bsSpacing
-        Width = 6
       end
       item
         Align = tbaRight
@@ -535,12 +547,15 @@ inherited MainForm: TMainForm
         FontData.Font.Height = -11
         FontData.Font.Name = 'Tahoma'
         FontData.Font.Style = []
-        Height = 22
+        FontData.UseSysFontName = False
+        FontData.UseSysSize = False
+        FontData.UseSysStyle = False
+        Height = 20
+        Width = 94
         Index = 4
         Name = 'TitleBarItemHighlighter'
         ShowHint = False
         Style = bsMenu
-        Width = 101
         OnClick = TitleBarItems4Click
       end
       item
@@ -550,11 +565,14 @@ inherited MainForm: TMainForm
         FontData.Font.Height = -11
         FontData.Font.Name = 'Tahoma'
         FontData.Font.Style = []
+        FontData.UseSysFontName = False
+        FontData.UseSysSize = False
+        FontData.UseSysStyle = False
+        Width = 6
         Index = 5
         Name = 'TitleBarItemSpacing2'
         ShowHint = False
         Style = bsSpacing
-        Width = 6
       end
       item
         Align = tbaRight
@@ -565,12 +583,15 @@ inherited MainForm: TMainForm
         FontData.Font.Height = -11
         FontData.Font.Name = 'Tahoma'
         FontData.Font.Style = []
-        Height = 22
+        FontData.UseSysFontName = False
+        FontData.UseSysSize = False
+        FontData.UseSysStyle = False
+        Height = 20
+        Width = 64
         Index = 6
         Name = 'TitleBarItemColors'
         ShowHint = False
         Style = bsMenu
-        Width = 68
         OnClick = TitleBarItems6Click
       end
       item
@@ -580,11 +601,14 @@ inherited MainForm: TMainForm
         FontData.Font.Height = -11
         FontData.Font.Name = 'Tahoma'
         FontData.Font.Style = []
+        FontData.UseSysFontName = False
+        FontData.UseSysSize = False
+        FontData.UseSysStyle = False
+        Width = 2
         Index = 7
         Name = 'TitleBarItemSpacing3'
         ShowHint = False
         Style = bsSpacing
-        Width = 2
       end>
     Left = 88
     Top = 22

@@ -11,10 +11,10 @@ uses
   sSkinProvider, sDialogs, Vcl.StdCtrls, System.Diagnostics, BCCommon.Dialog.Popup.Highlighter, BCEditor.Types,
   BCCommon.Dialog.Popup.Encoding, BCCommon.Dialog.Popup.Highlighter.Color, sSpeedButton, BCControl.SpeedButton,
   sComboBox, BCControl.ComboBox, sLabel, BCEditor.MacroRecorder, BCCommon.Dialog.Popup.SearchEngine,
-  VirtualTrees, BCControl.ObjectInspector, sComboBoxes;
+  VirtualTrees, BCControl.ObjectInspector;
 
 const
-  BCEDITORDEMO_CAPTION = 'TBCEditor Control Demo v1.8.3';
+  BCEDITORDEMO_CAPTION = 'TBCEditor Control Demo';
 
   TITLE_BAR_CAPTION = 1;
   TITLE_BAR_ENCODING = 2;
@@ -45,6 +45,7 @@ type
     MenuItemSkins: TMenuItem;
     MultiStringHolderFileTypes: TBCMultiStringHolder;
     ObjectInspector: TBCObjectInspector;
+    OpenDialog: TsOpenDialog;
     PanelLeft: TBCPanel;
     PanelProperty: TBCPanel;
     PanelRight: TBCPanel;
@@ -62,7 +63,6 @@ type
     SpeedButtonSearchEngine: TBCSpeedButton;
     Splitter: TBCSplitter;
     SplitterSearch: TBCSplitter;
-    OpenDialog: TsOpenDialog;
     procedure ActionCaseSensitiveExecute(Sender: TObject);
     procedure ActionCloseExecute(Sender: TObject);
     procedure ActionFileOpenExecute(Sender: TObject);
@@ -115,7 +115,7 @@ implementation
 
 uses
   BCCommon.Form.Print.Preview, BCEditor.Print.Types, BCCommon.Dialog.SkinSelect, BCCommon.FileUtils, BCCommon.Utils,
-  BCCommon.Dialog.Options.Search, BCCommon.Encoding, acPopupController, sVclUtils;
+  BCCommon.Dialog.Options.Search, BCCommon.Encoding, BCEditor.Consts, acPopupController, sVclUtils;
 
 procedure TMainForm.ActionSkinsExecute(Sender: TObject);
 begin
@@ -136,6 +136,7 @@ begin
     InfoText := 'Modified'
   else
     InfoText := '';
+
   if StatusBar.Panels[2].Text <> InfoText then
     StatusBar.Panels[2].Text := InfoText;
   GetKeyboardState(KeyState);
@@ -152,12 +153,13 @@ begin
   if Assigned(Editor) then
     Editor.Search.SearchText := ComboBoxSearchText.Text;
   SetMatchesFound;
+  StatusBar.Panels[3].Text := Editor.SearchStatus
 end;
 
 procedure TMainForm.ComboBoxSearchTextChange(Sender: TObject);
 begin
   inherited;
-  if soSearchOnTyping in Editor.Search.Options then
+  if (soSearchOnTyping in Editor.Search.Options) or (ComboBoxSearchText.Text = '') then
     DoSearchTextChange;
 end;
 
@@ -371,7 +373,7 @@ begin
     FStopWatch.Reset;
     FStopWatch.Start;
     LFileName := OpenDialog.Files[0];
-    TitleBar.Items[TITLE_BAR_CAPTION].Caption := Format('%s - %s', [BCEDITORDEMO_CAPTION, LFileName]);
+    TitleBar.Items[TITLE_BAR_CAPTION].Caption := Format('%s %s - %s', [BCEDITORDEMO_CAPTION, BCEDITOR_VERSION, LFileName]);
     Editor.LoadFromFile(LFileName);
     TitleBar.Items[TITLE_BAR_ENCODING].Caption := EncodingToText(Editor.Encoding);
     FStopWatch.Stop;
@@ -382,10 +384,13 @@ end;
 procedure TMainForm.FormCreate(Sender: TObject);
 begin
   inherited;
+
+  ObjectInspector.AddUnlistedProperties(['Ctl3D', 'CustomHint', 'Hint', 'HelpContext', 'HelpKeyword', 'HelpType',
+    'ImeMode', 'ImeName', 'ParentColor', 'ParentCtl3D', 'ParentCustomHint', 'ParentFont', 'ParentShowHint', 'ShowHint']);
   ObjectInspector.InspectedObject := Editor;
   ObjectInspector.SkinManager := SkinManager;
 
-  TitleBar.Items[TITLE_BAR_CAPTION].Caption := BCEDITORDEMO_CAPTION;
+  TitleBar.Items[TITLE_BAR_CAPTION].Caption := BCEDITORDEMO_CAPTION + ' ' + BCEDITOR_VERSION;
   SkinManager.ExtendedBorders := True;
   { IDE can lose these properties }
   PopupMenuFile.Images := ImagesDataModule.ImageList;
@@ -479,7 +484,7 @@ begin
   end;
   TitleBar.Items[TITLE_BAR_HIGHLIGHTER].Caption := Editor.Highlighter.Name;
   Editor.Lines.Text := Editor.Highlighter.Info.General.Sample;
-  Editor.CaretZero;
+  Editor.MoveCaretToBOF;
   StatusBar.Panels[3].Text := '';
   Caption := BCEDITORDEMO_CAPTION;
   ClearText;

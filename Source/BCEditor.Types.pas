@@ -10,7 +10,7 @@ type
   TBCEditorArrayOfString = array of string;
   TBCEditorArrayOfSingle = array of Single;
 
-  TBCEditorCharMethod = function(AChar: Char): Boolean of object;
+  TBCEditorCharMethod = function(const AChar: Char): Boolean of object;
 
   TBCEditorCaretStyle = (csVerticalLine, csThinVerticalLine, csHorizontalLine, csThinHorizontalLine, csHalfBlock, csBlock);
 
@@ -108,7 +108,6 @@ type
   TBCEditorSearchChangeEvent = procedure(Event: TBCEditorSearchChanges) of object;
 
   TBCEditorSearchOption = (
-    soBackwards,
     soBeepIfStringNotFound,
     soCaseSensitive,
     soEntireScope,
@@ -181,8 +180,8 @@ type
   PBCEditorTextPosition = ^TBCEditorTextPosition;
 
   TBCEditorSearchItem = record
-    TextPosition: TBCEditorTextPosition;
-    Length: Integer;
+    BeginTextPosition: TBCEditorTextPosition;
+    EndTextPosition: TBCEditorTextPosition;
   end;
   PBCEditorSearchItem = ^TBCEditorSearchItem;
 
@@ -340,6 +339,8 @@ type
   TBCEditorCodeFoldingChangeEvent = procedure(Event: TBCEditorCodeFoldingChanges) of object;
 
   TBCEditorCodeFoldingOption = (
+    cfoAutoPadding,
+    cfoAutoWidth,
     cfoFoldMultilineComments,
     cfoHighlightFoldingLine,
     cfoHighlightIndentGuides,

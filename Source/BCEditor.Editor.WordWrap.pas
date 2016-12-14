@@ -107,7 +107,7 @@ begin
     Canvas.LineTo(7, 12);
   end;
   FIndicator.MaskColor := clFuchsia;
-  FIndicator.Glyph.Handle := FBitmap.Handle;
+  FIndicator.Bitmap.Handle := FBitmap.Handle;
 end;
 
 procedure TBCEditorWordWrap.SetOnChange(AValue: TNotifyEvent);

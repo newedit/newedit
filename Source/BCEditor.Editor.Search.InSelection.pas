@@ -17,7 +17,6 @@ type
     procedure SetActive(AValue: Boolean);
   public
     constructor Create;
-    function IsTextPositionInBlock(ATextPosition: TBCEditorTextPosition): Boolean;
     procedure Assign(ASource: TPersistent); override;
     property SelectionBeginPosition: TBCEditorTextPosition read FSelectionBeginPosition write FSelectionBeginPosition;
     property SelectionEndPosition: TBCEditorTextPosition read FSelectionEndPosition write FSelectionEndPosition;
@@ -65,15 +64,6 @@ begin
     FActive := AValue;
     DoChange;
   end;
-end;
-
-function TBCEditorSearchInSelection.IsTextPositionInBlock(ATextPosition: TBCEditorTextPosition): Boolean;
-begin
-  Result := ((ATextPosition.Line > FSelectionBeginPosition.Line) or
-    (ATextPosition.Line = FSelectionBeginPosition.Line) and (ATextPosition.Char >= FSelectionBeginPosition.Char))
-    and
-    ((ATextPosition.Line < FSelectionEndPosition.Line) or
-    (ATextPosition.Line = FSelectionEndPosition.Line) and (ATextPosition.Char < FSelectionEndPosition.Char));
 end;
 
 end.
