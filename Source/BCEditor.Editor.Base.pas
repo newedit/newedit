@@ -39,7 +39,6 @@ type
     FChainedEditor: TBCBaseEditor;
     FCodeFolding: TBCEditorCodeFolding;
     FCodeFoldingHintForm: TBCEditorCodeFoldingHintForm;
-    FCodeFoldingLock: Boolean;
     FCodeFoldingRangeFromLine: array of TBCEditorCodeFoldingRange;
     FCodeFoldingRangeToLine: array of TBCEditorCodeFoldingRange;
     FCodeFoldingTreeLine: array of Boolean;
@@ -158,6 +157,7 @@ type
     FReadOnly: Boolean;
     FRedoList: TBCEditorUndoList;
     FReplace: TBCEditorReplace;
+    FReplaceLock: Boolean;
     FRescanCodeFolding: Boolean;
     FResetLineNumbersCache: Boolean;
     FRightMargin: TBCEditorRightMargin;
@@ -531,8 +531,8 @@ type
     function DisplayToTextPosition(const ADisplayPosition: TBCEditorDisplayPosition): TBCEditorTextPosition;
     function GetColorsFileName(const AFileName: string): string;
     function GetHighlighterFileName(const AFileName: string): string;
-    function FindPrevious: Boolean;
-    function FindNext: Boolean;
+    function FindPrevious(const AHandleNotFound: Boolean = True): Boolean;
+    function FindNext(const AHandleNotFound: Boolean = True): Boolean;
     function GetBookmark(const AIndex: Integer; var ATextPosition: TBCEditorTextPosition): Boolean;
     function GetPositionOfMouse(out ATextPosition: TBCEditorTextPosition): Boolean;
     function GetWordAtPixels(const X, Y: Integer): string;
@@ -815,7 +815,7 @@ begin
   FResetLineNumbersCache := True;
   FSelectedCaseText := '';
   FURIOpener := False;
-  FCodeFoldingLock := False;
+  FReplaceLock := False;
   FMultiCaretPosition.Row := -1;
 
   { Code folding }
@@ -5007,16 +5007,27 @@ var
   LSearchText: string;
   LPSearchItem: PBCEditorSearchItem;
   LBeginTextPosition, LEndTextPosition: TBCEditorTextPosition;
+  LSelectionBeginPosition, LSelectionEndPosition:  TBCEditorTextPosition;
+  LSelectedOnly: Boolean;
 
   function IsLineInSearch: Boolean;
   begin
-    Result := not FSearch.InSelection.Active or FSearch.InSelection.Active and
-      (FSearch.InSelection.SelectionBeginPosition.Line <= LLine) and (FSearch.InSelection.SelectionEndPosition.Line >= LLine)
+    Result := not FSearch.InSelection.Active
+      or
+      LSelectedOnly and IsTextPositionInSelection(LSelectionBeginPosition) and IsTextPositionInSelection(LSelectionEndPosition)
+      or
+      FSearch.InSelection.Active and
+      (FSearch.InSelection.SelectionBeginPosition.Line <= LLine) and
+      (FSearch.InSelection.SelectionEndPosition.Line >= LLine)
   end;
 
   function CanAddResult: Boolean;
   begin
-    Result :=  not FSearch.InSelection.Active or FSearch.InSelection.Active and
+    Result := not FSearch.InSelection.Active
+      or
+      LSelectedOnly and IsTextPositionInSelection(LSelectionBeginPosition) and IsTextPositionInSelection(LSelectionEndPosition)
+      or
+      FSearch.InSelection.Active and
       ((FSearch.InSelection.SelectionBeginPosition.Line < LLine) and (FSearch.InSelection.SelectionEndPosition.Line > LLine) or
       IsTextPositionInSearchBlock(LBeginTextPosition) and IsTextPositionInSearchBlock(LEndTextPosition));
   end;
@@ -5035,9 +5046,21 @@ begin
   if LSearchText = '' then
     Exit;
 
+  LSelectedOnly := False;
   FSearchEngine.Pattern := LSearchText;
-  FSearchEngine.CaseSensitive := soCaseSensitive in FSearch.Options;
-  FSearchEngine.WholeWordsOnly := soWholeWordsOnly in FSearch.Options;
+  if ASearchText <> '' then
+  begin
+    FSearchEngine.CaseSensitive := roCaseSensitive in FReplace.Options;
+    FSearchEngine.WholeWordsOnly := roWholeWordsOnly in FReplace.Options;
+    LSelectionBeginPosition := SelectionBeginPosition;
+    LSelectionEndPosition := SelectionEndPosition;
+    LSelectedOnly := roSelectedOnly in FReplace.Options;
+  end
+  else
+  begin
+    FSearchEngine.CaseSensitive := soCaseSensitive in FSearch.Options;
+    FSearchEngine.WholeWordsOnly := soWholeWordsOnly in FSearch.Options;
+  end;
 
   case FSearch.Engine of
     seNormal:
@@ -5267,7 +5290,7 @@ end;
 
 procedure TBCBaseEditor.InitCodeFolding;
 begin
-  if FCodeFoldingLock then
+  if FReplaceLock then
     Exit;
   ClearCodeFolding;
   if Visible then
@@ -6370,8 +6393,7 @@ begin
           MoveCaretToBOF;
         if SelectionAvailable then
           TextCaretPosition := SelectionBeginPosition;
-        if Assigned(FSearchEngine)then
-          FindNext;
+        FindNext;
       end;
     scInSelectionActive:
       begin
@@ -8619,7 +8641,8 @@ begin
 
   CreateLineNumbersCache(True);
   CodeFoldingResetCaches;
-  SearchAll;
+  if not FReplaceLock then
+    SearchAll;
 
   Invalidate;
 end;
@@ -8675,7 +8698,8 @@ begin
   if FWordWrap.Enabled then
     FResetLineNumbersCache := True;
 
-  SearchAll;
+  if not FReplaceLock then
+    SearchAll;
 
   if Assigned(Parent) then
     if Assigned(FHighlighter) and (FLines.Count > 0) then
@@ -12591,7 +12615,7 @@ begin
 {$WARN SYMBOL_PLATFORM ON}
 end;
 
-function TBCBaseEditor.FindPrevious: Boolean;
+function TBCBaseEditor.FindPrevious(const AHandleNotFound: Boolean = True): Boolean;
 var
   LItemIndex: Integer;
   LSearchItem: PBCEditorSearchItem;
@@ -12601,6 +12625,9 @@ begin
   LItemIndex := FSearch.GetPreviousSearchItemIndex(TextCaretPosition);
   if LItemIndex = -1 then
   begin
+    if not AHandleNotFound then
+      Exit;
+
     if soBeepIfStringNotFound in FSearch.Options then
       Beep;
     if GetSearchResultCount = 0 then
@@ -12628,7 +12655,7 @@ begin
   end;
 end;
 
-function TBCBaseEditor.FindNext: Boolean;
+function TBCBaseEditor.FindNext(const AHandleNotFound: Boolean = True): Boolean;
 var
   LItemIndex: Integer;
   LSearchItem: PBCEditorSearchItem;
@@ -12638,6 +12665,9 @@ begin
   LItemIndex := FSearch.GetNextSearchItemIndex(TextCaretPosition);
   if LItemIndex = -1 then
   begin
+    if not AHandleNotFound then
+      Exit;
+
     if (soBeepIfStringNotFound in FSearch.Options) and not (soWrapAround in FSearch.Options) then
       Beep;
 
@@ -12745,8 +12775,125 @@ begin
 end;
 
 function TBCBaseEditor.ReplaceText(const ASearchText: string; const AReplaceText: string): Integer;
+var
+  LPaintLocked: Boolean;
+  LIsPrompt, LIsReplaceAll, LIsDeleteLine: Boolean;
+  LFound: Boolean;
+  LActionReplace: TBCEditorReplaceAction;
+  LTextPosition: TBCEditorTextPosition;
+  LItemIndex: Integer;
+  LSearchItem: PBCEditorSearchItem;
+
+  procedure LockPainting;
+  begin
+    if not LPaintLocked and LIsReplaceAll and not LIsPrompt then
+    begin
+      IncPaintLock;
+      LPaintLocked := True;
+    end;
+  end;
+
+  procedure ReplaceSelectedText;
+  begin
+    if LIsDeleteLine then
+    begin
+      SelectedText := '';
+      ExecuteCommand(ecDeleteLine, 'Y', nil);
+    end
+    else
+      SelectedText := AReplaceText;
+  end;
+
 begin
-  // TODO: Refactor
+  if not Assigned(FSearchEngine) then
+    raise EBCEditorBaseException.Create(SBCEditorSearchEngineNotAssigned);
+
+  Result := 0;
+  if Length(ASearchText) = 0 then
+    Exit;
+
+  LIsPrompt := roPrompt in FReplace.Options;
+  LIsReplaceAll := roReplaceAll in FReplace.Options;
+  LIsDeleteLine := eraDeleteLine = FReplace.Action;
+
+  ClearCodeFolding;
+  FReplaceLock := True;
+
+  SearchAll(ASearchText);
+  Result := FSearch.Lines.Count - 1;
+
+  BeginUndoBlock;
+  try
+    if roEntireScope in FReplace.Options then
+    begin
+      if roBackwards in FReplace.Options then
+        MoveCaretToEOF
+      else
+        MoveCaretToBOF;
+    end;
+    if SelectionAvailable then
+      TextCaretPosition := SelectionBeginPosition;
+
+    LPaintLocked := False;
+    LockPainting;
+
+    LActionReplace := raReplace;
+    LFound := True;
+    while LFound do
+    begin
+      if roBackwards in FReplace.Options then
+        LFound := FindPrevious(False)
+      else
+        LFound := FindNext(False);
+
+      if not LFound then
+        Exit;
+
+      if LIsPrompt and Assigned(FOnReplaceText) then
+      begin
+        LTextPosition := TextCaretPosition;
+        LActionReplace := DoOnReplaceText(ASearchText, AReplaceText, LTextPosition.Line, LTextPosition.Char, LIsDeleteLine);
+        if LActionReplace = raCancel then
+          Exit;
+      end;
+
+      if LActionReplace = raSkip then
+      begin
+        Dec(Result);
+        Continue
+      end
+      else
+      if (roReplaceAll in FReplace.Options) or (LActionReplace = raReplaceAll) then
+      begin
+        LockPainting;
+        for LItemIndex := FSearch.Lines.Count - 1 downto 0 do
+        begin
+          LSearchItem := PBCEditorSearchItem(FSearch.Lines.Items[LItemIndex]);
+
+          SelectionBeginPosition := LSearchItem.BeginTextPosition;
+          SelectionEndPosition := LSearchItem.EndTextPosition;
+
+          ReplaceSelectedText;
+        end;
+        Exit;
+      end;
+
+      ReplaceSelectedText;
+
+      if (LActionReplace = raReplace) and not LIsPrompt then
+        Exit;
+    end;
+  finally
+    FSearch.ClearLines;
+    EndUndoBlock;
+    FReplaceLock := False;
+    InitCodeFolding;
+    if LPaintLocked then
+      DecPaintLock;
+
+    if CanFocus then
+      SetFocus;
+  end;
 end;
 
 function TBCBaseEditor.SearchStatus: string;
@@ -13289,7 +13436,7 @@ end;
 
 procedure TBCBaseEditor.ClearCodeFolding;
 begin
-  if FCodeFoldingLock then
+  if FReplaceLock then
     Exit;
   FAllCodeFoldingRanges.ClearAll;
   FResetLineNumbersCache := True;
