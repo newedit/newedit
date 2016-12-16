@@ -12866,6 +12866,10 @@ begin
       if (roReplaceAll in FReplace.Options) or (LActionReplace = raReplaceAll) then
       begin
         LockPainting;
+
+        if LIsPrompt then
+          SearchAll(ASearchText);
+
         for LItemIndex := FSearch.Lines.Count - 1 downto 0 do
         begin
           LSearchItem := PBCEditorSearchItem(FSearch.Lines.Items[LItemIndex]);
