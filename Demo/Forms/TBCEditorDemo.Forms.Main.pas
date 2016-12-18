@@ -493,9 +493,7 @@ begin
     CodeFolding.Visible := Highlighter.CodeFoldingRangeCount > 0;
   end;
   TitleBar.Items[TITLE_BAR_HIGHLIGHTER].Caption := Editor.Highlighter.Name;
-  //Editor.Lines.Text := Editor.Highlighter.Info.General.Sample;
-  Editor.Lines.Text := 'ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890';
-  Editor.WordWrap.Enabled := True;
+  Editor.Lines.Text := Editor.Highlighter.Info.General.Sample;
   Editor.MoveCaretToBOF;
   StatusBar.Panels[3].Text := '';
   Caption := BCEDITORDEMO_CAPTION;
