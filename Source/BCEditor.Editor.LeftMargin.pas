@@ -111,7 +111,7 @@ begin
   begin
     Self.FAutosize := FAutosize;
     Self.FBookmarks.Assign(FBookmarks);
-    Self.FMarks.Assign(FBookmarks);
+    Self.FMarks.Assign(FMarks);
     Self.FColors.Assign(FColors);
     Self.FBorder.Assign(FBorder);
     Self.FCursor := FCursor;
