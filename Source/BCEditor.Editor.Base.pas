@@ -12634,9 +12634,13 @@ begin
   begin
     LSearchItem := PBCEditorSearchItem(FSearch.Lines.Items[LItemIndex]);
 
+    if LSearchItem.BeginTextPosition.Line < FTopLine then
+      GotoLineAndCenter(LSearchItem.BeginTextPosition.Line, LSearchItem.BeginTextPosition.Char)
+    else
+      TextCaretPosition := LSearchItem.BeginTextPosition;
+
     SelectionBeginPosition := LSearchItem.BeginTextPosition;
     SelectionEndPosition := LSearchItem.EndTextPosition;
-    TextCaretPosition := LSearchItem.BeginTextPosition;
 
     Result := True;
   end;
@@ -12675,9 +12679,13 @@ begin
   begin
     LSearchItem := PBCEditorSearchItem(FSearch.Lines.Items[LItemIndex]);
 
+    if LSearchItem.BeginTextPosition.Line >= FTopLine + FVisibleLines - 1 then
+      GotoLineAndCenter(LSearchItem.EndTextPosition.Line, LSearchItem.EndTextPosition.Char)
+    else
+      TextCaretPosition := LSearchItem.EndTextPosition;
+
     SelectionBeginPosition := LSearchItem.BeginTextPosition;
     SelectionEndPosition := LSearchItem.EndTextPosition;
-    TextCaretPosition := LSearchItem.EndTextPosition;
 
     Result := True;
   end;
