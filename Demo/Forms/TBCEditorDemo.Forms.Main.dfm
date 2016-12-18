@@ -477,6 +477,7 @@ inherited MainForm: TMainForm
         FontData.UseSysFontName = False
         FontData.UseSysSize = False
         FontData.UseSysStyle = False
+        Cursor = crDefault
         Height = 20
         Width = 45
         Index = 0
@@ -495,6 +496,7 @@ inherited MainForm: TMainForm
         FontData.UseSysFontName = False
         FontData.UseSysSize = False
         FontData.UseSysStyle = False
+        Cursor = crDefault
         Height = 19
         Width = 146
         Index = 1
@@ -514,6 +516,7 @@ inherited MainForm: TMainForm
         FontData.UseSysFontName = False
         FontData.UseSysSize = False
         FontData.UseSysStyle = False
+        Cursor = crDefault
         Height = 20
         Width = 53
         Index = 2
@@ -532,6 +535,7 @@ inherited MainForm: TMainForm
         FontData.UseSysFontName = False
         FontData.UseSysSize = False
         FontData.UseSysStyle = False
+        Cursor = crDefault
         Width = 6
         Index = 3
         Name = 'TitleBarItemSpacing1'
@@ -550,6 +554,7 @@ inherited MainForm: TMainForm
         FontData.UseSysFontName = False
         FontData.UseSysSize = False
         FontData.UseSysStyle = False
+        Cursor = crDefault
         Height = 20
         Width = 94
         Index = 4
@@ -568,6 +573,7 @@ inherited MainForm: TMainForm
         FontData.UseSysFontName = False
         FontData.UseSysSize = False
         FontData.UseSysStyle = False
+        Cursor = crDefault
         Width = 6
         Index = 5
         Name = 'TitleBarItemSpacing2'
@@ -586,6 +592,7 @@ inherited MainForm: TMainForm
         FontData.UseSysFontName = False
         FontData.UseSysSize = False
         FontData.UseSysStyle = False
+        Cursor = crDefault
         Height = 20
         Width = 64
         Index = 6
@@ -604,6 +611,7 @@ inherited MainForm: TMainForm
         FontData.UseSysFontName = False
         FontData.UseSysSize = False
         FontData.UseSysStyle = False
+        Cursor = crDefault
         Width = 2
         Index = 7
         Name = 'TitleBarItemSpacing3'

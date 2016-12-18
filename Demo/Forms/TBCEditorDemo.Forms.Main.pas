@@ -84,7 +84,6 @@ type
     procedure SelectedEncodingClick(const AIndex: Integer);
     procedure SelectedHighlighterClick(AHighlighterName: string);
     procedure SelectedHighlighterColorClick(AHighlighterColorName: string);
-    procedure SelectedSearchEngineClick(ASearchEngine: TBCEditorSearchEngine);
     procedure TitleBarItems2Click(Sender: TObject);
     procedure TitleBarItems4Click(Sender: TObject);
     procedure TitleBarItems6Click(Sender: TObject);
@@ -102,6 +101,7 @@ type
     procedure InitializeEditorPrint(AEditorPrint: TBCEditorPrint);
     procedure LockFormPaint;
     procedure PrintPreview;
+    procedure SelectedSearchEngineClick(const ASearchEngine: TBCEditorSearchEngine);
     procedure SetMatchesFound;
     procedure UnlockFormPaint;
   end;
@@ -116,6 +116,13 @@ implementation
 uses
   BCCommon.Form.Print.Preview, BCEditor.Print.Types, BCCommon.Dialog.SkinSelect, BCCommon.FileUtils, BCCommon.Utils,
   BCCommon.Dialog.Options.Search, BCCommon.Encoding, BCEditor.Consts, acPopupController, sVclUtils;
+
+const
+  INFOTEXT_MODIFIED = 'Modified';
+  KEYSTATE_INSERT = 0;
+  KEYSTATE_INSERT_TEXT = 'Insert';
+  KEYSTATE_OVERWRITE = 1;
+  KEYSTATE_OVERWRITE_TEXT = 'Overwrite';
 
 procedure TMainForm.ActionSkinsExecute(Sender: TObject);
 begin
@@ -133,19 +140,22 @@ begin
   else
     Editor.Margins.Bottom := 5;
   if Editor.Modified then
-    InfoText := 'Modified'
+    InfoText := INFOTEXT_MODIFIED
   else
     InfoText := '';
 
+  GetKeyboardState(KeyState);
+  case KeyState[VK_INSERT] of
+    KEYSTATE_INSERT:
+      if StatusBar.Panels[1].Text <> KEYSTATE_INSERT_TEXT then
+       StatusBar.Panels[1].Text := KEYSTATE_INSERT_TEXT;
+    KEYSTATE_OVERWRITE:
+      if StatusBar.Panels[1].Text <> KEYSTATE_OVERWRITE_TEXT then
+        StatusBar.Panels[1].Text := KEYSTATE_OVERWRITE_TEXT;
+  end;
+
   if StatusBar.Panels[2].Text <> InfoText then
     StatusBar.Panels[2].Text := InfoText;
-  GetKeyboardState(KeyState);
-  if KeyState[VK_INSERT] = 0 then
-    if StatusBar.Panels[1].Text <> 'Insert' then
-      StatusBar.Panels[1].Text := 'Insert';
-  if KeyState[VK_INSERT] = 1 then
-    if StatusBar.Panels[1].Text <> 'Overwrite' then
-      StatusBar.Panels[1].Text := 'Overwrite';
 end;
 
 procedure TMainForm.DoSearchTextChange;
@@ -451,7 +461,7 @@ begin
   UnlockFormPaint;
 end;
 
-procedure TMainForm.SelectedSearchEngineClick(ASearchEngine: TBCEditorSearchEngine);
+procedure TMainForm.SelectedSearchEngineClick(const ASearchEngine: TBCEditorSearchEngine);
 begin
   Editor.Search.Engine := ASearchEngine;
 end;
@@ -483,7 +493,9 @@ begin
     CodeFolding.Visible := Highlighter.CodeFoldingRangeCount > 0;
   end;
   TitleBar.Items[TITLE_BAR_HIGHLIGHTER].Caption := Editor.Highlighter.Name;
-  Editor.Lines.Text := Editor.Highlighter.Info.General.Sample;
+  //Editor.Lines.Text := Editor.Highlighter.Info.General.Sample;
+  Editor.Lines.Text := 'ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890';
+  Editor.WordWrap.Enabled := True;
   Editor.MoveCaretToBOF;
   StatusBar.Panels[3].Text := '';
   Caption := BCEDITORDEMO_CAPTION;
