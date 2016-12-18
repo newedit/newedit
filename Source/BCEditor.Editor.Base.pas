@@ -5062,78 +5062,50 @@ begin
     FSearchEngine.WholeWordsOnly := soWholeWordsOnly in FSearch.Options;
   end;
 
-  case FSearch.Engine of
-    seNormal:
+  LResultIndex := 0;
+  LSearchAllCount := FSearchEngine.SearchAll(FLines);
+  if LSearchAllCount > 0 then
+  begin
+    LLine := 0;
+    LCurrentLineLength := FLines.StringLength(LLine) + Length(sLineBreak);
+    LTextPosition := 0;
+    while (LLine < FLines.Count) and (LResultIndex < LSearchAllCount) do
+    if IsLineInSearch then
+    begin
+      while (LLine < FLines.Count) and (LResultIndex < LSearchAllCount) and
+        (FSearchEngine.Results[LResultIndex] <= LTextPosition + LCurrentLineLength) do
       begin
-        for LLine := 0 to FLines.Count - 1 do
-        if IsLineInSearch then
+        LSearchLength := FSearchEngine.Lengths[LResultIndex];
+
+        LBeginTextPosition.Char := FSearchEngine.Results[LResultIndex] - LTextPosition;
+        LBeginTextPosition.Line := LLine;
+        LEndTextPosition.Char := LBeginTextPosition.Char + LSearchLength;
+        LEndTextPosition.Line := LLine;
+
+        LLength := LCurrentLineLength;
+        LTempLine := LLine;
+        while LEndTextPosition.Char > LLength do
         begin
-          LSearchAllCount := FSearchEngine.SearchAll(FLines[LLine]);
-          for LResultIndex := 0 to LSearchAllCount - 1 do
-          begin
-            LBeginTextPosition.Char := FSearchEngine.Results[LResultIndex];
-            LBeginTextPosition.Line := LLine;
-            LEndTextPosition := LBeginTextPosition;
-            Inc(LEndTextPosition.Char, FSearchEngine.Lengths[LResultIndex]);
-
-            if CanAddResult then
-            begin
-              New(LPSearchItem);
-              LPSearchItem^.BeginTextPosition := LBeginTextPosition;
-              LPSearchItem^.EndTextPosition := LEndTextPosition;
-              FSearch.Lines.Add(LPSearchItem)
-            end;
-          end;
+          Dec(LEndTextPosition.Char, LLength);
+          Inc(LTempLine);
+          LLength := FLines.StringLength(LTempLine) + Length(sLineBreak);
+          LEndTextPosition.Line := LTempLine;
         end;
-      end;
-    seRegularExpression, seWildcard:
-      begin
-        LResultIndex := 0;
-        LSearchAllCount := FSearchEngine.SearchAll(FLines.Text);
-        if LSearchAllCount > 0 then
+
+        if CanAddResult then
         begin
-          LLine := 0;
-          LCurrentLineLength := FLines.StringLength(LLine) + Length(sLineBreak);
-          LTextPosition := 0;
-          while (LLine < FLines.Count) and (LResultIndex < LSearchAllCount) do
-          if IsLineInSearch then
-          begin
-            while (LLine < FLines.Count) and (LResultIndex < LSearchAllCount) and
-              (FSearchEngine.Results[LResultIndex] <= LTextPosition + LCurrentLineLength) do
-            begin
-              LSearchLength := FSearchEngine.Lengths[LResultIndex];
-
-              LBeginTextPosition.Char := FSearchEngine.Results[LResultIndex] - LTextPosition;
-              LBeginTextPosition.Line := LLine;
-              LEndTextPosition.Char := LBeginTextPosition.Char + LSearchLength;
-              LEndTextPosition.Line := LLine;
-
-              LLength := LCurrentLineLength;
-              LTempLine := LLine;
-              while LEndTextPosition.Char > LLength do
-              begin
-                Dec(LEndTextPosition.Char, LLength);
-                Inc(LTempLine);
-                LLength := FLines.StringLength(LTempLine) + Length(sLineBreak);
-                LEndTextPosition.Line := LTempLine;
-              end;
-
-              if CanAddResult then
-              begin
-                New(LPSearchItem);
-                LPSearchItem^.BeginTextPosition := LBeginTextPosition;
-                LPSearchItem^.EndTextPosition := LEndTextPosition;
-                FSearch.Lines.Add(LPSearchItem);
-              end;
-
-              Inc(LResultIndex);
-            end;
-            Inc(LTextPosition, LCurrentLineLength);
-            Inc(LLine);
-            LCurrentLineLength := FLines.StringLength(LLine) + Length(sLineBreak);
-          end;
+          New(LPSearchItem);
+          LPSearchItem^.BeginTextPosition := LBeginTextPosition;
+          LPSearchItem^.EndTextPosition := LEndTextPosition;
+          FSearch.Lines.Add(LPSearchItem);
         end;
+
+        Inc(LResultIndex);
       end;
+      Inc(LTextPosition, LCurrentLineLength);
+      Inc(LLine);
+      LCurrentLineLength := FLines.StringLength(LLine) + Length(sLineBreak);
+    end;
   end;
 end;
 
@@ -11016,13 +10988,11 @@ var
       end;
       { Selected part of the token }
       LTokenLength := Min(LLineSelectionEnd, LLastColumn) - LFirstColumn - LTokenLength;
-      //SetDrawingColors(True);
       LTokenRect.Right := LTokenRect.Left + GetTokenWidth(LText, LTokenLength, LTokenHelper.ExpandedCharsBefore);
       LSelectedRect := LTokenRect;
       LSelectedTokenLength := LTokenLength;
       LSelectedText := LText;
       LTokenRect.Left := LTokenRect.Right;
-      //PaintToken(LText, LTokenLength);
       if LSecondUnselectedPartOfToken then
       begin
         Delete(LText, 1, LTokenLength);
@@ -11039,7 +11009,7 @@ var
       PaintToken(LText, LTokenLength);
     end;
 
-    if not AMinimap or AMinimap and (moShowSearchResults in FMinimap.Options) then
+    if (not LSelected or LIsPartOfTokenSelected) and not AMinimap or AMinimap and (moShowSearchResults in FMinimap.Options) then
     begin
       LSearchTokenRect.Right := LTokenRect.Right;
       PaintSearchResults(LTokenHelper.Text, LSearchTokenRect);

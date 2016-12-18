@@ -3,7 +3,7 @@ unit BCEditor.Search.RegularExpressions;
 interface
 
 uses
-  System.Classes, System.RegularExpressions, BCEditor.Search;
+  System.Classes, System.RegularExpressions, BCEditor.Search, BCEditor.Lines;
 
 type
   TBCEditorRegexSearch = class(TBCEditorSearchBase)
@@ -22,7 +22,7 @@ type
   public
     constructor Create;
     destructor Destroy; override;
-    function SearchAll(const AInput: string): Integer; override;
+    function SearchAll(const ALines: TBCEditorLines): Integer; override;
     procedure Clear; override;
   end;
 
@@ -58,7 +58,7 @@ begin
     Include(FOptions, roIgnoreCase);
 end;
 
-function TBCEditorRegexSearch.SearchAll(const AInput: string): Integer;
+function TBCEditorRegexSearch.SearchAll(const ALines: TBCEditorLines): Integer;
 
   procedure AddResult(const APos, ALength: Integer);
   begin
@@ -75,7 +75,7 @@ begin
   Status := '';
   try
     LRegex := TRegEx.Create(FPattern, FOptions);
-    LMatch := LRegex.Match(AInput);
+    LMatch := LRegex.Match(ALines.Text);
     while LMatch.Success do
     begin
       AddResult(LMatch.Index, LMatch.Length);

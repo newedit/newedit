@@ -3,7 +3,7 @@ unit BCEditor.Search.Normal;
 interface
 
 uses
-  System.Classes, System.SysUtils, BCEditor.Search;
+  System.Classes, System.SysUtils, BCEditor.Search, BCEditor.Lines;
 
 type
   TBCEditorNormalSearch = class(TBCEditorSearchBase)
@@ -34,7 +34,7 @@ type
     constructor Create;
     destructor Destroy; override;
 
-    function SearchAll(const AText: string): Integer; override;
+    function SearchAll(const ALines: TBCEditorLines): Integer; override;
     function FindFirst(const AText: string): Integer;
     function Next: Integer;
     procedure Clear; override;
@@ -204,13 +204,13 @@ begin
   FResults.Count := 0;
 end;
 
-function TBCEditorNormalSearch.SearchAll(const AText: string): Integer;
+function TBCEditorNormalSearch.SearchAll(const ALines: TBCEditorLines): Integer;
 var
   Found: Integer;
 begin
   Status := '';
   Clear;
-  Found := FindFirst(AText);
+  Found := FindFirst(ALines.Text);
   while Found > 0 do
   begin
     FResults.Add(Pointer(Found));

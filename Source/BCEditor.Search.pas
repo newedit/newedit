@@ -3,7 +3,7 @@ unit BCEditor.Search;
 interface
 
 uses
-  System.Classes;
+  System.Classes, BCEditor.Lines;
 
 type
   TBCEditorSearchBase = class
@@ -21,7 +21,7 @@ type
     procedure SetPattern(const AValue: string); virtual; abstract;
   public
     constructor Create;
-    function SearchAll(const AText: string): Integer; virtual; abstract;
+    function SearchAll(const ALines: TBCEditorLines): Integer; virtual; abstract;
     procedure Clear; virtual; abstract;
     property CaseSensitive: Boolean read FCaseSensitive write SetCaseSensitive default False;
     property Lengths[AIndex: Integer]: Integer read GetLength;
