@@ -177,10 +177,16 @@ begin
 end;
 
 procedure TBCEditorNormalSearch.SetPattern(const AValue: string);
+var
+  LValue: string;
 begin
-  if FPattern <> AValue then
+  LValue := AValue;
+
+  LValue := StringReplace(LValue, '\n', sLineBreak, [rfReplaceAll]);
+
+  if FPattern <> LValue then
   begin
-    FCasedPattern := AValue;
+    FCasedPattern := LValue;
     if CaseSensitive then
       FPattern := FCasedPattern
     else
