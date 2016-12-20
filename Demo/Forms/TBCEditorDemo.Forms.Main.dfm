@@ -253,7 +253,7 @@ inherited MainForm: TMainForm
       end
       object SpeedButtonSearchDivider1: TBCSpeedButton
         AlignWithMargins = True
-        Left = 275
+        Left = 296
         Top = 1
         Width = 10
         Height = 19
@@ -268,7 +268,7 @@ inherited MainForm: TMainForm
         ImageIndex = 3
       end
       object SpeedButtonOptions: TBCSpeedButton
-        Left = 337
+        Left = 358
         Top = 0
         Width = 21
         Height = 21
@@ -344,7 +344,7 @@ inherited MainForm: TMainForm
         Images = ImagesDataModule.ImageListSmall
       end
       object SpeedButtonCaseSensitive: TBCSpeedButton
-        Left = 285
+        Left = 306
         Top = 0
         Width = 21
         Height = 21
@@ -358,7 +358,7 @@ inherited MainForm: TMainForm
         ImageIndex = 144
       end
       object SpeedButtonInSelection: TBCSpeedButton
-        Left = 306
+        Left = 327
         Top = 0
         Width = 21
         Height = 21
@@ -373,7 +373,7 @@ inherited MainForm: TMainForm
       end
       object SpeedButtonSearchDivider2: TBCSpeedButton
         AlignWithMargins = True
-        Left = 327
+        Left = 348
         Top = 1
         Width = 10
         Height = 19
@@ -404,6 +404,18 @@ inherited MainForm: TMainForm
         Images = ImagesDataModule.ImageListSmall
         ImageIndex = 143
       end
+      object SpeedButtonFindAll: TBCSpeedButton
+        Left = 275
+        Top = 0
+        Width = 21
+        Height = 21
+        Action = ActionFindAll
+        Align = alLeft
+        Flat = True
+        SkinData.SkinSection = 'TOOLBUTTON'
+        Images = ImagesDataModule.ImageListSmall
+        ImageIndex = 151
+      end
       object ComboBoxSearchText: TBCComboBox
         Left = 27
         Top = 0
@@ -429,9 +441,9 @@ inherited MainForm: TMainForm
         UseMouseWheel = False
       end
       object PanelRight: TBCPanel
-        Left = 358
+        Left = 379
         Top = 0
-        Width = 369
+        Width = 348
         Height = 21
         Align = alClient
         BevelOuter = bvNone
@@ -440,7 +452,7 @@ inherited MainForm: TMainForm
         SkinData.SkinSection = 'CHECKBOX'
         object LabelSearchResultCount: TsLabel
           AlignWithMargins = True
-          Left = 363
+          Left = 342
           Top = 0
           Width = 3
           Height = 21
@@ -630,6 +642,11 @@ inherited MainForm: TMainForm
       Caption = 'Skins...'
       ImageIndex = 76
       OnExecute = ActionSkinsExecute
+    end
+    object ActionFindAll: TAction
+      Hint = 'Find all'
+      ImageIndex = 151
+      OnExecute = ActionFindAllExecute
     end
     object ActionFindNext: TAction
       Hint = 'Find next'

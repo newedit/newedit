@@ -63,6 +63,8 @@ type
     SpeedButtonSearchEngine: TBCSpeedButton;
     Splitter: TBCSplitter;
     SplitterSearch: TBCSplitter;
+    SpeedButtonFindAll: TBCSpeedButton;
+    ActionFindAll: TAction;
     procedure ActionCaseSensitiveExecute(Sender: TObject);
     procedure ActionCloseExecute(Sender: TObject);
     procedure ActionFileOpenExecute(Sender: TObject);
@@ -87,6 +89,7 @@ type
     procedure TitleBarItems2Click(Sender: TObject);
     procedure TitleBarItems4Click(Sender: TObject);
     procedure TitleBarItems6Click(Sender: TObject);
+    procedure ActionFindAllExecute(Sender: TObject);
   private
     FHighlighterColorStrings: TStringList;
     FHighlighterStrings: TStringList;
@@ -309,6 +312,12 @@ begin
   AEditorPrint.Colors := True;
   AEditorPrint.Editor := Editor;
   AEditorPrint.Title := Editor.DocumentName;
+end;
+
+procedure TMainForm.ActionFindAllExecute(Sender: TObject);
+begin
+  inherited;
+  Editor.FindAll;
 end;
 
 procedure TMainForm.ActionFindNextExecute(Sender: TObject);
