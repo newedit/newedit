@@ -474,9 +474,6 @@ inherited MainForm: TMainForm
         FontData.Font.Height = -11
         FontData.Font.Name = 'Tahoma'
         FontData.Font.Style = []
-        FontData.UseSysFontName = False
-        FontData.UseSysSize = False
-        FontData.UseSysStyle = False
         Cursor = crDefault
         Height = 20
         Width = 45
@@ -493,9 +490,6 @@ inherited MainForm: TMainForm
         FontData.Font.Height = -11
         FontData.Font.Name = 'Tahoma'
         FontData.Font.Style = []
-        FontData.UseSysFontName = False
-        FontData.UseSysSize = False
-        FontData.UseSysStyle = False
         Cursor = crDefault
         Height = 19
         Width = 146
@@ -513,9 +507,6 @@ inherited MainForm: TMainForm
         FontData.Font.Height = -11
         FontData.Font.Name = 'Tahoma'
         FontData.Font.Style = []
-        FontData.UseSysFontName = False
-        FontData.UseSysSize = False
-        FontData.UseSysStyle = False
         Cursor = crDefault
         Height = 20
         Width = 53
@@ -532,9 +523,6 @@ inherited MainForm: TMainForm
         FontData.Font.Height = -11
         FontData.Font.Name = 'Tahoma'
         FontData.Font.Style = []
-        FontData.UseSysFontName = False
-        FontData.UseSysSize = False
-        FontData.UseSysStyle = False
         Cursor = crDefault
         Width = 6
         Index = 3
@@ -551,9 +539,6 @@ inherited MainForm: TMainForm
         FontData.Font.Height = -11
         FontData.Font.Name = 'Tahoma'
         FontData.Font.Style = []
-        FontData.UseSysFontName = False
-        FontData.UseSysSize = False
-        FontData.UseSysStyle = False
         Cursor = crDefault
         Height = 20
         Width = 94
@@ -570,9 +555,6 @@ inherited MainForm: TMainForm
         FontData.Font.Height = -11
         FontData.Font.Name = 'Tahoma'
         FontData.Font.Style = []
-        FontData.UseSysFontName = False
-        FontData.UseSysSize = False
-        FontData.UseSysStyle = False
         Cursor = crDefault
         Width = 6
         Index = 5
@@ -589,9 +571,6 @@ inherited MainForm: TMainForm
         FontData.Font.Height = -11
         FontData.Font.Name = 'Tahoma'
         FontData.Font.Style = []
-        FontData.UseSysFontName = False
-        FontData.UseSysSize = False
-        FontData.UseSysStyle = False
         Cursor = crDefault
         Height = 20
         Width = 64
@@ -608,9 +587,6 @@ inherited MainForm: TMainForm
         FontData.Font.Height = -11
         FontData.Font.Name = 'Tahoma'
         FontData.Font.Style = []
-        FontData.UseSysFontName = False
-        FontData.UseSysSize = False
-        FontData.UseSysStyle = False
         Cursor = crDefault
         Width = 2
         Index = 7
