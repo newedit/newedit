@@ -6078,19 +6078,21 @@ var
   var
     LIndex, LCount: Integer;
     LCodeFoldingRegion: TBCEditorCodeFoldingRegion;
+    LChar: Char;
   begin
     Result := False;
     if LOpenTokenSkipFoldRangeList.Count <> 0 then
       Exit;
     LCount := Highlighter.CodeFoldingRangeCount - 1;
+    LChar := UpCase(LPText^);
+    LPBookmarkText := LPText;
     for LIndex := 1 to LCount do { First (0) is the default range }
     begin
       LCodeFoldingRegion := Highlighter.CodeFoldingRegions[LIndex];
 
-      if UpCase(LPText^) = PChar(LCodeFoldingRegion.OpenToken)^ then { If first character match }
+      if LChar = PChar(LCodeFoldingRegion.OpenToken)^ then { If first character match }
       begin
         LPKeyWord := PChar(LCodeFoldingRegion.OpenToken);
-        LPBookmarkText := LPText;
         { Check if open keyword found }
         while (LPText^ <> BCEDITOR_NONE_CHAR) and (LPKeyWord^ <> BCEDITOR_NONE_CHAR) and
           (UpCase(LPText^) = LPKeyWord^) do
@@ -6113,18 +6115,20 @@ var
   var
     LIndex, LCount: Integer;
     LCodeFoldingRegion: TBCEditorCodeFoldingRegion;
+    LChar: Char;
   begin
     if LOpenTokenSkipFoldRangeList.Count <> 0 then
       Exit;
     LCount := Highlighter.CodeFoldingRangeCount - 1;
+    LChar := UpCase(LPText^);
+    LPBookmarkText := LPText;
     for LIndex := 1 to LCount do { First (0) is the default range }
     begin
       LCodeFoldingRegion := Highlighter.CodeFoldingRegions[LIndex];
 
-      if UpCase(LPText^) = PChar(LCodeFoldingRegion.CloseToken)^ then { If first character match }
+      if LChar = PChar(LCodeFoldingRegion.CloseToken)^ then { If first character match }
       begin
         LPKeyWord := PChar(LCodeFoldingRegion.CloseToken);
-        LPBookmarkText := LPText;
         { Check if close keyword found }
         while (LPText^ <> BCEDITOR_NONE_CHAR) and (LPKeyWord^ <> BCEDITOR_NONE_CHAR) and
           (UpCase(LPText^) = LPKeyWord^) do
