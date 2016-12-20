@@ -587,6 +587,7 @@ type
     procedure ExecuteCommand(ACommand: TBCEditorCommand; AChar: Char; AData: Pointer); virtual;
     procedure ExportToHTML(const AFileName: string; const ACharSet: string = ''; AEncoding: System.SysUtils.TEncoding = nil); overload;
     procedure ExportToHTML(AStream: TStream; const ACharSet: string = ''; AEncoding: System.SysUtils.TEncoding = nil); overload;
+    procedure FindAll;
     procedure FoldAll(const AFromLineNumber: Integer = -1; const AToLineNumber: Integer = -1);
     procedure FoldAllByLevel(const AFromLevel: Integer; const AToLevel: Integer);
     procedure GotoBookmark(const AIndex: Integer);
@@ -13463,6 +13464,17 @@ procedure TBCBaseEditor.ClearUndo;
 begin
   FUndoList.Clear;
   FRedoList.Clear;
+end;
+
+procedure TBCBaseEditor.FindAll;
+var
+  LIndex: Integer;
+begin
+  for LIndex := 0 to FSearch.Lines.Count - 1 do
+    AddCaret(TextToDisplayPosition(PBCEditorSearchItem(FSearch.Lines.Items[LIndex])^.EndTextPosition));
+  FSelectionEndPosition := FSelectionBeginPosition;
+  Invalidate;
+  SetFocus;
 end;
 
 procedure TBCBaseEditor.FoldAll(const AFromLineNumber: Integer = -1; const AToLineNumber: Integer = -1);
