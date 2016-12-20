@@ -5733,7 +5733,7 @@ var
   begin
     Result := False;
     if ASkipRegionItem.SkipIfNextCharIsNot <> BCEDITOR_NONE_CHAR then
-      Result := (APText + 1)^ = ASkipRegionItem.SkipIfNextCharIsNot;
+      Result := APText^ = ASkipRegionItem.SkipIfNextCharIsNot;
   end;
 
   function SkipRegionsClose: Boolean;
@@ -5781,7 +5781,7 @@ var
         begin
           LSkipRegionItem := LCurrentCodeFoldingRegion.SkipRegions[LIndex];
           if (LPText^ = PChar(LSkipRegionItem.OpenToken)^) and not OddCountOfStringEscapeChars(LPText) and
-            not IsNextSkipChar(LPText, LSkipRegionItem) then
+            not IsNextSkipChar(LPText + Length(LSkipRegionItem.OpenToken), LSkipRegionItem) then
           begin
             LPKeyWord := PChar(LSkipRegionItem.OpenToken);
             LPBookmarkText := LPText;
