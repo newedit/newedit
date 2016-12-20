@@ -21,7 +21,7 @@
          },
          "SubRules": {
             "Range": [
-						  {
+               {
                   "Type": "LineComment",
                   "Attributes": {
                      "Element": "Comment"
@@ -405,7 +405,7 @@
                {
                   "OpenToken": "--",
                   "RegionType": "SingleLine",
-									"NextCharIsNot": "["
+                  "NextCharIsNot": "["
                }
             ],
             "FoldRegion": [
@@ -413,15 +413,15 @@
                   "OpenToken": "{",
                   "CloseToken": "}"
                },
-							 {
+               {
                   "OpenToken": "[[",
                   "CloseToken": "]]"
                },
-							 {
+               {
                   "OpenToken": "--[[",
                   "CloseToken": "]]"
                },
-							 {
+               {
                   "OpenToken": "--[=",
                   "CloseToken": "=]"
                },
