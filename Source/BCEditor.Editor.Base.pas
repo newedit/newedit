@@ -6840,12 +6840,19 @@ end;
 procedure TBCBaseEditor.SizeOrFontChanged(const AFontChanged: Boolean);
 var
   LOldTextCaretPosition: TBCEditorTextPosition;
+  LScrollPageWidth, LVisibleLines: Integer;
 begin
-  if Visible and CanFocus and HandleAllocated and (FPaintHelper.CharWidth <> 0) then
+  if Visible and HandleAllocated and (FPaintHelper.CharWidth <> 0) then
   begin
     FPaintHelper.SetBaseFont(Font);
-    FScrollPageWidth := GetScrollPageWidth;
-    FVisibleLines := ClientHeight div GetLineHeight;
+    LScrollPageWidth := GetScrollPageWidth;
+    LVisibleLines := ClientHeight div GetLineHeight;
+
+    if (LScrollPageWidth = FScrollPageWidth) and (LVisibleLines = FVisibleLines) then
+      Exit;
+
+    FScrollPageWidth := LScrollPageWidth;
+    FVisibleLines := LVisibleLines;
 
     if FMinimap.Visible then
     begin
