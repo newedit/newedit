@@ -37,6 +37,7 @@ type
     FDragBeginTextCaretPosition: TBCEditorTextPosition;
     FChainedEditor: TBCBaseEditor;
     FCodeFolding: TBCEditorCodeFolding;
+    FCodeFoldingDelayTimer: TTimer;
     FCodeFoldingHintForm: TBCEditorCodeFoldingHintForm;
     FCodeFoldingRangeFromLine: array of TBCEditorCodeFoldingRange;
     FCodeFoldingRangeToLine: array of TBCEditorCodeFoldingRange;
@@ -345,6 +346,7 @@ type
     procedure MoveLineDown;
     procedure MoveLineUp;
     procedure MultiCaretTimerHandler(ASender: TObject);
+    procedure OnCodeFoldingDelayTimer(ASender: TObject);
     procedure OpenLink(const AURI: string; ARangeType: TBCEditorRangeType);
     procedure RemoveDuplicateMultiCarets;
     procedure RightMarginChanged(ASender: TObject);
@@ -823,6 +825,8 @@ begin
   FAllCodeFoldingRanges := TBCEditorAllCodeFoldingRanges.Create;
   FCodeFolding := TBCEditorCodeFolding.Create;
   FCodeFolding.OnChange := CodeFoldingOnChange;
+  FCodeFoldingDelayTimer := TTimer.Create(Self);
+  FCodeFoldingDelayTimer.OnTimer := OnCodeFoldingDelayTimer;
   { Directory }
   FDirectories := TBCEditorDirectories.Create;
   { Matching pair }
@@ -987,6 +991,7 @@ begin
 {$endif}
   ClearCodeFolding;
   FCodeFolding.Free;
+  FCodeFoldingDelayTimer.Free;
   FDirectories.Free;
   FAllCodeFoldingRanges.Free;
   FHighlighter.Free;
@@ -5621,6 +5626,14 @@ begin
   Invalidate;
 end;
 
+procedure TBCBaseEditor.OnCodeFoldingDelayTimer(ASender: TObject);
+begin
+  FCodeFoldingDelayTimer.Enabled := False;
+
+  if FRescanCodeFolding then
+    RescanCodeFoldingRanges;
+end;
+
 procedure TBCBaseEditor.OpenLink(const AURI: string; ARangeType: TBCEditorRangeType);
 var
   LURI: string;
@@ -8148,7 +8161,7 @@ begin
     if FRescanCodeFolding or ((ACommand = ecChar) or (ACommand = ecBackspace) or (ACommand = ecDeleteChar) or
       (ACommand = ecLineBreak)) and IsKeywordAtCaretPositionOrAfter(TextCaretPosition) or (ACommand = ecUndo) or
       (ACommand = ecRedo) then
-      RescanCodeFoldingRanges;
+      FRescanCodeFolding := True;
   end;
 
   if FMatchingPair.Enabled and not FSyncEdit.Active then
@@ -8171,7 +8184,7 @@ begin
 
   if FCodeFolding.Visible then
     if ((ACommand = ecChar) or (ACommand = ecLineBreak)) and IsPreviousFoldTokenEndPreviousLine(LTextCaretPosition.Line) then
-      RescanCodeFoldingRanges;
+      FRescanCodeFolding := True;
 end;
 
 procedure TBCBaseEditor.DoOnLeftMarginClick(AButton: TMouseButton; AShift: TShiftState; X, Y: Integer);
@@ -8501,6 +8514,14 @@ begin
         Exit;
       end;
     end;
+  end;
+
+  if FCodeFolding.Visible then
+  begin
+    FCodeFoldingDelayTimer.Enabled := False;
+    if FCodeFoldingDelayTimer.Interval <> FCodeFolding.DelayInterval then
+      FCodeFoldingDelayTimer.Interval := FCodeFolding.DelayInterval;
+    FCodeFoldingDelayTimer.Enabled := True;
   end;
 end;
 
