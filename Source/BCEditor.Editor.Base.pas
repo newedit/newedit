@@ -1237,13 +1237,18 @@ end;
 procedure TBCBaseEditor.DrawCaret;
 var
   LIndex: Integer;
+  LDisplayPosition: TBCEditorDisplayPosition;
 begin
   if GetSelectionLength > 0 then
     Exit;
 
   if Assigned(FMultiCarets) and (FMultiCarets.Count > 0) then
-    for LIndex := 0 to FMultiCarets.Count - 1 do
-      PaintCaretBlock(PBCEditorDisplayPosition(FMultiCarets[LIndex])^)
+  for LIndex := 0 to FMultiCarets.Count - 1 do
+  begin
+    LDisplayPosition := PBCEditorDisplayPosition(FMultiCarets[LIndex])^;
+    if (LDisplayPosition.Row >= FTopLine) and (LDisplayPosition.Row <= FTopLine + FVisibleLines) then
+      PaintCaretBlock(LDisplayPosition);
+  end
   else
     PaintCaretBlock(GetDisplayCaretPosition);
 end;
@@ -13477,6 +13482,9 @@ procedure TBCBaseEditor.FindAll;
 var
   LIndex: Integer;
 begin
+  if not FCaret.MultiEdit.Enabled then
+    Exit;
+
   for LIndex := 0 to FSearch.Lines.Count - 1 do
     AddCaret(TextToDisplayPosition(PBCEditorSearchItem(FSearch.Lines.Items[LIndex])^.EndTextPosition));
   FSelectionEndPosition := FSelectionBeginPosition;
