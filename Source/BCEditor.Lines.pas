@@ -35,14 +35,19 @@ const
   CNULLRANGE = TBCEditorLinesRange(-1);
 
 type
+  TBCEditorLines = class;
+
   PEditorStringRecordList = ^TBCEditorStringRecordList;
   TBCEditorStringRecordList = array [0 .. CMAXSTRINGS - 1] of TBCEditorStringRecord;
 
   TStringListChangeEvent = procedure(ASender: TObject; const AIndex: Integer; const ACount: Integer) of object;
 
+  TBCEditorStringListSortCompare = function(AList: TBCEditorLines; AIndex1, AIndex2: Integer): Integer;
+
   TBCEditorLines = class(TStrings)
   strict private
     FCapacity: Integer;
+    FCaseSensitive: Boolean;
     FColumns: Boolean;
     FCount: Integer;
     FIndexOfLongestLine: Integer;
@@ -59,6 +64,7 @@ type
     FOnInserted: TStringListChangeEvent;
     FOnPutted: TStringListChangeEvent;
     FOwner: TObject;
+    FSortOrder: TBCEditorSortOrder;
     FStreaming: Boolean;
     FTabWidth: Integer;
     FUpdateCount: Integer;
@@ -67,10 +73,13 @@ type
     function GetExpandedString(AIndex: Integer): string;
     function GetExpandedStringLength(AIndex: Integer): Integer;
     function GetRange(AIndex: Integer): TBCEditorLinesRange;
+    procedure ExchangeItems(AIndex1, AIndex2: Integer);
     procedure Grow;
     procedure PutAttributes(AIndex: Integer; const AValue: PBCEditorLineAttribute);
     procedure PutRange(AIndex: Integer; ARange: TBCEditorLinesRange);
+    procedure QuickSort(ALeft, ARight: Integer; ACompare: TBCEditorStringListSortCompare);
   protected
+    function CompareStrings(const S1, S2: string): Integer; override;
     function Get(AIndex: Integer): string; override;
     function GetCapacity: Integer; override;
     function GetCount: Integer; override;
@@ -89,7 +98,9 @@ type
     function Add(const AValue: string): Integer; override;
     function GetLengthOfLongestLine: Integer;
     function GetLineText(ALine: Integer): string;
+    function GetTextLength: Integer;
     procedure Clear; override;
+    procedure CustomSort(const ABeginLine: Integer; const AEndLine: Integer; ACompare: TBCEditorStringListSortCompare); virtual;
     procedure Delete(AIndex: Integer); override;
     procedure DeleteLines(const AIndex: Integer; ACount: Integer);
     procedure Insert(AIndex: Integer; const AValue: string); override;
@@ -100,9 +111,10 @@ type
     procedure SaveToStream(AStream: TStream; AEncoding: TEncoding = nil); override;
     procedure TrimTrailingSpaces(AIndex: Integer);
     procedure LoadFromBuffer(var ABuffer: TBytes; AEncoding: TEncoding = nil);
-    function GetTextLength: Integer;
+    procedure Sort(const ABeginLine: Integer = -1; const AEndLine: Integer = -1); virtual;
     procedure LoadFromStrings(var AStrings: TStringList);
     property Attributes[AIndex: Integer]: PBCEditorLineAttribute read GetAttributes write PutAttributes;
+    property CaseSensitive: Boolean read FCaseSensitive write FCaseSensitive default False;
     property Columns: Boolean read FColumns write SetColumns;
     property Count: Integer read FCount;
     property ExpandedStrings[AIndex: Integer]: string read GetExpandedString;
@@ -119,6 +131,7 @@ type
     property OnPutted: TStringListChangeEvent read FOnPutted write FOnPutted;
     property Owner: TObject read FOwner write FOwner;
     property Ranges[AIndex: Integer]: TBCEditorLinesRange read GetRange write PutRange;
+    property SortOrder: TBCEditorSortOrder read FSortOrder write FSortOrder;
     property Strings[AIndex: Integer]: string read Get write Put; default;
     property Streaming: Boolean read FStreaming;
     property TabWidth: Integer read FTabWidth write SetTabWidth;
@@ -143,6 +156,7 @@ constructor TBCEditorLines.Create;
 begin
   inherited Create;
 
+  FCaseSensitive := False;
   FCount := 0;
   FOwner := AOwner;
   FUpdateCount := 0;
@@ -177,6 +191,20 @@ begin
   InsertItem(Result, AValue);
   if Assigned(OnInserted) and (FUpdateCount = 0) then
     OnInserted(Self, Result, 1);
+end;
+
+function TBCEditorLines.CompareStrings(const S1, S2: string): Integer;
+begin
+  if SortOrder = soRandom then
+    Exit(Random(2) - 1);
+
+  if CaseSensitive then
+    Result := CompareStr(S1, S2)
+  else
+    Result := CompareText(S1, S2);
+
+  if SortOrder = soDesc then
+    Result := -1 * Result;
 end;
 
 function TBCEditorLines.GetLengthOfLongestLine: Integer;
@@ -579,9 +607,99 @@ begin
   FStreaming := False;
 end;
 
+function StringListCompareStrings(AList: TBCEditorLines; AIndex1, AIndex2: Integer): Integer;
+begin
+  Result := AList.CompareStrings(AList.List[AIndex1].Value, AList.List[AIndex2].Value);
+end;
+
+procedure TBCEditorLines.Sort(const ABeginLine: Integer = -1; const AEndLine: Integer = -1);
+begin
+  CustomSort(ABeginLine, AEndLine, StringListCompareStrings);
+end;
+
+procedure TBCEditorLines.CustomSort(const ABeginLine: Integer; const AEndLine: Integer;
+  ACompare: TBCEditorStringListSortCompare);
+var
+  LBeginLine, LEndLine: Integer;
+begin
+  LBeginLine := ABeginLine;
+  LEndLine := AEndLine;
+  if LBeginLine = -1 then
+    LBeginLine := 0;
+  if LEndLine = -1 then
+    LEndLine := FCount - 1;
+  if FCount > 1 then
+    QuickSort(LBeginLine, LEndLine, ACompare);
+end;
+
+procedure TBCEditorLines.ExchangeItems(AIndex1, AIndex2: Integer);
+var
+  Item1, Item2: PBCEditorStringRecord;
+  LAttribute: PBCEditorLineAttribute;
+  LFlags: TBCEditorStringFlags;
+  LExpandedLength: Integer;
+  LRange: TBCEditorLinesRange;
+  LValue: Pointer;
+begin
+  Item1 := @FList[AIndex1];
+  Item2 := @FList[AIndex2];
+
+  LAttribute := Pointer(Item1^.Attribute);
+  Pointer(Item1^.Attribute) := Pointer(Item2^.Attribute);
+  Pointer(Item2^.Attribute) := LAttribute;
+
+  LFlags := Item1^.Flags;
+  Item1^.Flags := Item2^.Flags;
+  Item2^.Flags := LFlags;
+
+  LExpandedLength := Item1^.ExpandedLength;
+  Item1^.ExpandedLength := Item2^.ExpandedLength;
+  Item2^.ExpandedLength := LExpandedLength;
+
+  LRange := Pointer(Item1^.Range);
+  Pointer(Item1^.Range) := Pointer(Item2^.Range);
+  Pointer(Item2^.Range) := LRange;
+
+  LValue := Pointer(Item1^.Value);
+  Pointer(Item1^.Value) := Pointer(Item2^.Value);
+  Pointer(Item2^.Value) := LValue;
+end;
+
+procedure TBCEditorLines.QuickSort(ALeft, ARight: Integer; ACompare: TBCEditorStringListSortCompare);
+var
+  LLeft, LRight, LMiddle: Integer;
+begin
+  repeat
+    LLeft := ALeft;
+    LRight := ARight;
+    LMiddle := (ALeft + ARight) shr 1;
+    repeat
+      while ACompare(Self, LLeft, LMiddle) < 0 do
+        Inc(LLeft);
+      while ACompare(Self, LRight, LMiddle) > 0 do
+        Dec(LRight);
+      if LLeft <= LRight then
+      begin
+        if LLeft <> LRight then
+          ExchangeItems(LLeft, LRight);
+        if LMiddle = LLeft then
+          LMiddle := LRight
+        else
+        if LMiddle = LRight then
+          LMiddle := LLeft;
+        Inc(LLeft);
+        Dec(LRight);
+      end;
+    until LLeft > LRight;
+    if ALeft < LRight then
+      QuickSort(ALeft, LRight, ACompare);
+    ALeft := LLeft;
+  until LLeft >= ARight;
+end;
+
 procedure TBCEditorLines.LoadFromStrings(var AStrings: TStringList);
 var
-  i: integer;
+  i: Integer;
 begin
   FStreaming := True;
 

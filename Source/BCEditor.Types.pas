@@ -325,7 +325,7 @@ type
 
   TBCEditorKeyCharType = (ctFoldOpen, ctFoldClose, ctSkipOpen, ctSkipClose);
 
-  TBCEditorSortOrder = (soToggle, soAsc, soDesc);
+  TBCEditorSortOrder = (soAsc, soDesc, soRandom);
 
   TBCEditorChangeReason = (crInsert, crPaste, crDragDropInsert, crDelete, crLineBreak, crIndent, crUnindent,
     crCaret, crSelection, crNothing, crGroupBreak);
@@ -369,7 +369,6 @@ type
   end;
   PBCEditorQuadColor = ^TBCEditorQuadColor;
 
-
   TBCEditorCodeFoldingHintIndicatorPadding = class(TPadding)
   protected
     class procedure InitDefaults(Margins: TMargins); override;
@@ -382,9 +381,12 @@ type
 
 implementation
 
+{ TBCEditorCodeFoldingHintIndicatorPadding }
+
 class procedure TBCEditorCodeFoldingHintIndicatorPadding.InitDefaults(Margins: TMargins);
 begin
-  with Margins do begin
+  with Margins do
+  begin
     Left := 0;
     Right := 0;
     Top := 1;

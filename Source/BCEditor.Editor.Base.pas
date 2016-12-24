@@ -629,7 +629,7 @@ type
     procedure SetMark(const AIndex: Integer; const ATextPosition: TBCEditorTextPosition; const AImageIndex: Integer;
       const AColor: TColor = clNone);
     procedure SetOption(const AOption: TBCEditorOption; const AEnabled: Boolean);
-    procedure Sort(const ASortOrder: TBCEditorSortOrder = soToggle);
+    procedure Sort(const ASortOrder: TBCEditorSortOrder = soAsc; const ACaseSensitive: Boolean = False);
     procedure ToggleBookmark(const AIndex: Integer = -1);
     procedure ToggleSelectedCase(const ACase: TBCEditorCase = cNone);
     procedure UnfoldAll(const AFromLineNumber: Integer = -1; const AToLineNumber: Integer = -1);
@@ -14726,59 +14726,25 @@ begin
     Exclude(FOptions, AOption);
 end;
 
-procedure TBCBaseEditor.Sort(const ASortOrder: TBCEditorSortOrder = soToggle);
+procedure TBCBaseEditor.Sort(const ASortOrder: TBCEditorSortOrder = soAsc; const ACaseSensitive: Boolean = False);
 var
-  LIndex, LLastLength: Integer;
-  LText: string;
-  LStringList: TStringList;
-  LOldSelectionBeginPosition, LOldSelectionEndPosition: TBCEditorTextPosition;
+  LBeginLine, LEndLine: Integer;
 begin
-  LStringList := TStringList.Create;
-  try
-    if GetSelectionAvailable then
-      LStringList.Text := SelectedText
-    else
-      LStringList.Text := Text;
-    LStringList.Sort;
-    LText := '';
-    if (ASortOrder = soDesc) or (ASortOrder = soToggle) and (FLastSortOrder = soAsc) then
-    begin
-      FLastSortOrder := soDesc;
-      for LIndex := LStringList.Count - 1 downto 0 do
-      begin
-        LText := LText + LStringList.Strings[LIndex];
-        if LIndex <> 0 then
-          LText := LText + SLineBreak;
-      end;
-    end
-    else
-    begin
-      FLastSortOrder := soAsc;
-      LText := LStringList.Text;
-    end;
-    LText := TrimRight(LText);
-    LStringList.Text := LText;
-
-    if GetSelectionAvailable then
-    begin
-      LOldSelectionBeginPosition := GetSelectionBeginPosition;
-      LOldSelectionEndPosition := GetSelectionEndPosition;
-      SelectedText := LText;
-      FSelectionBeginPosition := LOldSelectionBeginPosition;
-      if LStringList.Count > 1 then
-      begin
-        LLastLength := Length(LStringList.Strings[LStringList.Count - 1]) + 1;
-        LOldSelectionEndPosition.Char := LLastLength;
-      end;
-      FSelectionEndPosition := LOldSelectionEndPosition;
-    end
-    else
-      Text := LText;
-  finally
-    LStringList.Free;
-    if FCodeFolding.Visible then
-      RescanCodeFoldingRanges;
+  FLines.CaseSensitive := ACaseSensitive;
+  FLines.SortOrder := ASortOrder;
+  if ASortOrder = soRandom then
+    Randomize;
+  LBeginLine := -1;
+  LEndLine := -1;
+  if GetSelectionAvailable then
+  begin
+    LBeginLine := GetSelectionBeginPosition.Line;
+    LEndLine := GetSelectionEndPosition.Line;
   end;
+  FLines.Sort(LBeginLine, LEndLine);
+  Invalidate;
+  if FCodeFolding.Visible then
+    RescanCodeFoldingRanges;
 end;
 
 procedure TBCBaseEditor.ToggleBookmark(const AIndex: Integer = -1);
