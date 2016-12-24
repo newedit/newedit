@@ -14803,6 +14803,7 @@ end;
 procedure TBCBaseEditor.ToggleSelectedCase(const ACase: TBCEditorCase = cNone);
 var
   LSelectionStart, LSelectionEnd: TBCEditorTextPosition;
+  LCommand: TBCEditorCommand;
 begin
   if AnsiUpperCase(SelectedText) <> AnsiUpperCase(FSelectedCaseText) then
   begin
@@ -14818,26 +14819,28 @@ begin
   case FSelectedCaseCycle of
     cUpper: { UPPERCASE }
       if FSelection.ActiveMode = smColumn then
-        CommandProcessor(ecUpperCaseBlock, BCEDITOR_NONE_CHAR, nil)
+        LCommand := ecUpperCaseBlock
       else
-        CommandProcessor(ecUpperCase, BCEDITOR_NONE_CHAR, nil);
+        LCommand := ecUpperCase;
     cLower: { lowercase }
       if FSelection.ActiveMode = smColumn then
-        CommandProcessor(ecLowerCaseBlock, BCEDITOR_NONE_CHAR, nil)
+        LCommand := ecLowerCaseBlock
       else
-        CommandProcessor(ecLowerCase, BCEDITOR_NONE_CHAR, nil);
+        LCommand := ecLowerCase;
     cAlternating: { aLtErNaTiNg cAsE }
       if FSelection.ActiveMode = smColumn then
-        CommandProcessor(ecAlternatingCaseBlock, BCEDITOR_NONE_CHAR, nil)
+        LCommand := ecAlternatingCaseBlock
       else
-        CommandProcessor(ecAlternatingCase, BCEDITOR_NONE_CHAR, nil);
+        LCommand := ecAlternatingCase;
     cSentence: { Sentence case }
-      CommandProcessor(ecSentenceCase, BCEDITOR_NONE_CHAR, nil);
+      LCommand := ecSentenceCase;
     cTitle: { Title Case }
-      CommandProcessor(ecTitleCase, BCEDITOR_NONE_CHAR, nil);
+      LCommand := ecTitleCase;
     cOriginal: { Original text }
       SelectedText := FSelectedCaseText;
   end;
+  if FSelectedCaseCycle <> cOriginal then
+    CommandProcessor(LCommand, BCEDITOR_NONE_CHAR, nil);
   SelectionBeginPosition := LSelectionStart;
   SelectionEndPosition := LSelectionEnd;
   EndUpdate;
