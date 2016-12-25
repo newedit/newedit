@@ -2121,17 +2121,17 @@ var
   var
     LToken: string;
     LHighlighterAttribute: TBCEditorHighlighterAttribute;
-    LLength, LMaxLength, LTokenWidth, LWidth, LMaxWidth: Integer;
-    LCharsBefore: Integer;
+    LLength, LTokenWidth, LWidth, LMaxWidth: Integer;
+    LCharsBefore, LAllCharsBefore: Integer;
     LPToken, LPStart: PChar;
     LEndOfTokenWidth, LCharWidth: Integer;
-    LLastChar, LEndOfToken: string;
+    LLastChar: string;
+    LTokenLength: Integer;
   begin
     if not Visible then
       Exit;
 
-    LMaxLength := 0;
-    LMaxWidth := Max(WordWrapWidth, FPaintHelper.CharWidth + 2);
+    LMaxWidth := WordWrapWidth;
     if LCurrentLine = 1 then
       FHighlighter.ResetCurrentRange
     else
@@ -2139,44 +2139,47 @@ var
     FHighlighter.SetCurrentLine(FLines[LCurrentLine - 1]);
     LWidth := 0;
     LLength := 0;
-    LCharsBefore := 0;
+    LAllCharsBefore := 0;
     while not FHighlighter.GetEndOfLine do
     begin
       FHighlighter.GetToken(LToken);
       LHighlighterAttribute := FHighlighter.GetTokenAttribute;
       if Assigned(LHighlighterAttribute) then
         FPaintHelper.SetStyle(LHighlighterAttribute.FontStyles);
-      LTokenWidth := GetTokenWidth(LToken, Length(LToken), LCharsBefore);
+      LTokenWidth := GetTokenWidth(LToken, Length(LToken), LAllCharsBefore);
+      Inc(LWidth, LTokenWidth);
+      LPToken := PChar(LToken);
 
-      if LTokenWidth >= LMaxWidth then
+      if LTokenWidth > LMaxWidth then
       begin
         if LLength > 0 then
         begin
           FWordWrapLineLengths[LCacheLength] := LLength;
+          LWidth := 0;
           AddLineNumberIntoCache;
           LLength := 0;
         end;
 
-        while LTokenWidth >= LMaxWidth do
+        while (LPToken^ <> BCEDITOR_NONE_CHAR) and (LTokenWidth > LMaxWidth) do
         begin
-          LPToken := PChar(LToken);
           LPStart := LPToken;
-          Inc(LPToken, Length(LToken) - 1);
+          LTokenLength := Length(LPToken);
+          if LTokenLength = 1 then
+            Break;
+          Inc(LPToken, LTokenLength - 1);
           LLastChar := GetLastChar(LPToken);
           if LLastChar = '' then
             LLastChar := LPToken^;
-          LCharsBefore := LCharsBefore + Length(LToken) - Length(LLastChar);
+          LCharsBefore := LAllCharsBefore + LTokenLength - Length(LLastChar);
           LEndOfTokenWidth := 0;
-          LEndOfToken := '';
-          while (LPToken^ <> BCEDITOR_NONE_CHAR) and (LTokenWidth >= LMaxWidth) do
+
+          while (LPToken^ <> BCEDITOR_NONE_CHAR) and (LPToken - LPStart > 1) and (LTokenWidth > LMaxWidth) do
           begin
             LCharWidth := GetTokenWidth(LLastChar, Length(LLastChar), LCharsBefore);
             Dec(LTokenWidth, LCharWidth);
-            if LTokenWidth >= LMaxWidth then
-              Dec(LCharsBefore, Length(LLastChar));
+            Dec(LCharsBefore, Length(LLastChar));
             Inc(LEndOfTokenWidth, LCharWidth);
-            LEndOfToken := LLastChar + LEndOfToken;
-            if LTokenWidth >= LMaxWidth then
+            if LTokenWidth > LMaxWidth then
             begin
               Dec(LPToken);
               LLastChar := GetLastChar(LPToken);
@@ -2184,31 +2187,26 @@ var
                 LLastChar := LPToken^;
             end
           end;
+
           FWordWrapLineLengths[LCacheLength] := LPToken - LPStart;
-          if FWordWrapLineLengths[LCacheLength] > LMaxLength then
-            LMaxLength := FWordWrapLineLengths[LCacheLength];
-          LToken := LEndOfToken;
+
           AddLineNumberIntoCache;
           LWidth := 0;
           LTokenWidth := LEndOfTokenWidth;
         end;
       end;
-
-      Inc(LWidth, LTokenWidth);
       if LWidth > LMaxWidth then
       begin
         FWordWrapLineLengths[LCacheLength] := LLength;
-        if LLength > LMaxLength then
-          LMaxLength := LLength;
         AddLineNumberIntoCache;
         LWidth := LTokenWidth;
         LLength := 0;
       end;
-      Inc(LLength, Length(LToken));
-      Inc(LCharsBefore, GetTokenCharCount(LToken, LCharsBefore));
+      Inc(LLength, Length(LPToken));
+      Inc(LAllCharsBefore, GetTokenCharCount(LToken, LAllCharsBefore));
       FHighlighter.Next;
     end;
-    FWordWrapLineLengths[LCacheLength] := LMaxWidth div FPaintHelper.CharWidth;
+    FWordWrapLineLengths[LCacheLength] := LLength;
     AddLineNumberIntoCache;
   end;
 
@@ -3828,7 +3826,7 @@ var
   LSpaceBuffer: string;
   LBlockStartPosition: TBCEditorTextPosition;
   LHelper: string;
-  LVisibleChars: Integer;
+  LDisplayLine: Integer;
 begin
   LTextCaretPosition := TextCaretPosition;
 
@@ -3928,9 +3926,10 @@ begin
 
     if FWordWrap.Enabled then
     begin
-      LVisibleChars := GetVisibleChars(LTextCaretPosition.Line + 1);
-      if LTextCaretPosition.Char > LVisibleChars then
-        CreateLineNumbersCache(True);
+      LDisplayLine := LTextCaretPosition.Line + 1;
+      if LDisplayLine < Length(FWordWrapLineLengths) then
+        if LTextCaretPosition.Char > FWordWrapLineLengths[LDisplayLine] then
+          CreateLineNumbersCache(True);
     end;
 
     TextCaretPosition := LTextCaretPosition;
@@ -6859,14 +6858,16 @@ procedure TBCBaseEditor.SizeOrFontChanged(const AFontChanged: Boolean);
 var
   LOldTextCaretPosition: TBCEditorTextPosition;
   LScrollPageWidth, LVisibleLines: Integer;
+  LWidthChanged: Boolean;
 begin
   if Visible and HandleAllocated and (FPaintHelper.CharWidth <> 0) then
   begin
     FPaintHelper.SetBaseFont(Font);
     LScrollPageWidth := GetScrollPageWidth;
     LVisibleLines := ClientHeight div GetLineHeight;
+    LWidthChanged := LScrollPageWidth <> FScrollPageWidth;
 
-    if (LScrollPageWidth = FScrollPageWidth) and (LVisibleLines = FVisibleLines) then
+    if not LWidthChanged and (LVisibleLines = FVisibleLines) then
       Exit;
 
     FScrollPageWidth := LScrollPageWidth;
@@ -6881,7 +6882,7 @@ begin
       FPaintHelper.SetBaseFont(Font);
     end;
 
-    if FWordWrap.Enabled then
+    if FWordWrap.Enabled and LWidthChanged then
     begin
       LOldTextCaretPosition := TextCaretPosition;
       CreateLineNumbersCache(True);
@@ -7602,6 +7603,7 @@ var
 begin
   if not Visible then
     Exit;
+  FScrollPageWidth := GetScrollPageWidth;
   LOldTextCaretPosition := TextCaretPosition;
   CreateLineNumbersCache(True);
   TextCaretPosition := LOldTextCaretPosition;
@@ -13139,7 +13141,6 @@ begin
       while (Result.Row < LWordWrapLineLength) and (Result.Column - 1 > GetWrapLineLength(Result.Row)) do
       begin
         LIsWrapped := True;
-
         if FWordWrapLineLengths[Result.Row] <> 0 then
           Dec(Result.Column, FWordWrapLineLengths[Result.Row])
         else
@@ -14816,6 +14817,7 @@ begin
   BeginUpdate;
   LSelectionStart := SelectionBeginPosition;
   LSelectionEnd := SelectionEndPosition;
+  LCommand := ecNone;
   case FSelectedCaseCycle of
     cUpper: { UPPERCASE }
       if FSelection.ActiveMode = smColumn then
@@ -15027,7 +15029,7 @@ begin
         RefreshEditScrolls(SkinData, FScrollWnd);
     end;
   end;
-{$ELSE}
+{$else}
   inherited;
 {$endif}
 end;

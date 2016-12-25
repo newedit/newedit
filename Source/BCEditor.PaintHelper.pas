@@ -17,6 +17,7 @@ type
     Style: TFontStyles;
     Handle: HFont;
     CharWidth: Integer;
+    CharFixedWidth: Integer;
     CharHeight: Integer;
     FixedSize: Boolean;
   end;
@@ -63,6 +64,7 @@ type
     FUsingFontHandles: Boolean;
     function GetBaseFont: TFont;
   protected
+    function GetCharFixedWidth: Integer;
     function GetCharWidth: Integer;
     function GetCharHeight: Integer;
     function GetFixedSizeFont: Boolean;
@@ -96,6 +98,7 @@ type
   strict private
     FBackgroundColor: TColor;
     FCharHeight: Integer;
+    FCharFixedWidth: Integer;
     FCharWidth: Integer;
     FCalcExtentBaseStyle: TFontStyles;
     FColor: TColor;
@@ -121,6 +124,7 @@ type
     procedure SetStyle(const AValue: TFontStyles);
     property BackgroundColor: TColor read FBackgroundColor;
     property CharHeight: Integer read FCharHeight;
+    property CharFixedWidth: Integer read FCharFixedWidth;
     property CharWidth: Integer read FCharWidth;
     property Color: TColor read FColor;
     property FixedSizeFont: Boolean read FFixedSizeFont;
@@ -330,6 +334,11 @@ begin
   Result := FPSharedFontsInfo^.BaseFont;
 end;
 
+function TBCEditorFontStock.GetCharFixedWidth: Integer;
+begin
+  Result := FPCurrentFontData^.CharFixedWidth;
+end;
+
 function TBCEditorFontStock.GetCharWidth: Integer;
 begin
   Result := FPCurrentFontData^.CharWidth;
@@ -472,6 +481,7 @@ begin
     Handle := FCurrentFont;
     CalculateFontMetrics(LHandle, @CharHeight, @CharWidth);
     FixedSize := LSize1.cx = LSize2.cx;
+    CharFixedWidth := LSize1.cx;
   end;
 
   SelectObject(LHandle, LOldFont);
@@ -551,6 +561,7 @@ begin
     begin
       SetBaseFont(AValue);
       Style := FCalcExtentBaseStyle;
+      FCharFixedWidth := GetCharFixedWidth;
       FCharWidth := GetCharWidth;
       FCharHeight := GetCharHeight;
       FFixedSizeFont := GetFixedSizeFont;
