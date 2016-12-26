@@ -81,17 +81,17 @@ end;
 
 procedure TBCEditorUndoList.Assign(ASource: TPersistent);
 var
-  i: Integer;
+  LIndex: Integer;
   LUndoItem: TBCEditorUndoItem;
 begin
   if Assigned(ASource) and (ASource is TBCEditorUndoList) then
   with ASource as TBCEditorUndoList do
   begin
     Self.Clear;
-    for i := 0 to (ASource as TBCEditorUndoList).FItems.Count - 1 do
+    for LIndex := 0 to (ASource as TBCEditorUndoList).FItems.Count - 1 do
     begin
       LUndoItem := TBCEditorUndoItem.Create;
-      LUndoItem.Assign(FItems[i]);
+      LUndoItem.Assign(FItems[LIndex]);
       Self.FItems.Add(LUndoItem);
     end;
     Self.FInsideUndoBlock := FInsideUndoBlock;
@@ -157,11 +157,11 @@ end;
 
 procedure TBCEditorUndoList.Clear;
 var
-  i: Integer;
+  LIndex: Integer;
 begin
   FBlockCount := 0;
-  for i := 0 to FItems.Count - 1 do
-    TBCEditorUndoItem(FItems[i]).Free;
+  for LIndex := 0 to FItems.Count - 1 do
+    TBCEditorUndoItem(FItems[LIndex]).Free;
   FItems.Clear;
   FChangeCount := 0;
 end;
@@ -191,24 +191,24 @@ end;
 
 function TBCEditorUndoList.PeekItem: TBCEditorUndoItem;
 var
-  i: Integer;
+  LIndex: Integer;
 begin
   Result := nil;
-  i := FItems.Count - 1;
-  if i >= 0 then
-    Result := FItems[i];
+  LIndex := FItems.Count - 1;
+  if LIndex >= 0 then
+    Result := FItems[LIndex];
 end;
 
 function TBCEditorUndoList.PopItem: TBCEditorUndoItem;
 var
-  i: Integer;
+  LIndex: Integer;
 begin
   Result := nil;
-  i := FItems.Count - 1;
-  if i >= 0 then
+  LIndex := FItems.Count - 1;
+  if LIndex >= 0 then
   begin
-    Result := FItems[i];
-    FItems.Delete(i);
+    Result := FItems[LIndex];
+    FItems.Delete(LIndex);
     if Result.ChangeReason in BCEDITOR_MODIFYING_CHANGE_REASONS then
       Dec(FChangeCount);
   end;

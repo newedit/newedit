@@ -169,14 +169,14 @@ end;
 
 destructor TBCEditorLines.Destroy;
 var
-  i: Integer;
+  LIndex: Integer;
 begin
   FOnChange := nil;
   FOnChanging := nil;
   if FCount > 0 then
   begin
-    for i := 0 to FCount - 1 do
-      Dispose(FList^[i].Attribute);
+    for LIndex := 0 to FCount - 1 do
+      Dispose(FList^[LIndex].Attribute);
     Finalize(FList^[0], FCount);
   end;
   FCount := 0;
@@ -247,12 +247,12 @@ end;
 
 procedure TBCEditorLines.Clear;
 var
-  i: Integer;
+  LIndex: Integer;
 begin
   if FCount <> 0 then
   begin
-    for i := 0 to FCount - 1 do
-      Dispose(FList^[i].Attribute);
+    for LIndex := 0 to FCount - 1 do
+      Dispose(FList^[LIndex].Attribute);
     Finalize(FList^[0], FCount);
     FCount := 0;
     SetCapacity(0);
@@ -507,7 +507,7 @@ end;
 
 procedure TBCEditorLines.InsertLines(AIndex, ACount: Integer; AStrings: TStrings = nil);
 var
-  i: Integer;
+  LIndex: Integer;
   LLine: Integer;
 begin
   if (AIndex < 0) or (AIndex > FCount) then
@@ -519,14 +519,14 @@ begin
       SetCapacity(FCount + ACount);
       if AIndex < FCount then
         System.Move(FList^[AIndex], FList^[AIndex + ACount], (FCount - AIndex) * CSTRINGRECORDSIZE);
-      i := 0;
+      LIndex := 0;
       for LLine := AIndex to AIndex + ACount - 1 do
       with FList^[LLine] do
       begin
         Pointer(Value) := nil;
         if Assigned(AStrings) then
-          Value := AStrings[i];
-        Inc(i);
+          Value := AStrings[LIndex];
+        Inc(LIndex);
         Range := CNULLRANGE;
         ExpandedLength := -1;
         Flags := [sfExpandedLengthUnknown];
@@ -579,7 +579,7 @@ end;
 
 procedure TBCEditorLines.LoadFromBuffer(var ABuffer: TBytes; AEncoding: TEncoding = nil);
 var
-  i: Integer;
+  LIndex: Integer;
   LSize: Integer;
   LStrBuffer: string;
   LPStrBuffer: PChar;
@@ -592,7 +592,7 @@ begin
     LStrBuffer := AEncoding.GetString(ABuffer, LSize, Length(ABuffer) - LSize);
     SetLength(ABuffer, 0);
     LPStrBuffer := PChar(LStrBuffer);
-    for i := 1 to Length(LStrBuffer) do
+    for LIndex := 1 to Length(LStrBuffer) do
     begin
       if LPStrBuffer^ = BCEDITOR_NONE_CHAR then
         LPStrBuffer^ := BCEDITOR_SUBSTITUTE_CHAR;
@@ -699,7 +699,7 @@ end;
 
 procedure TBCEditorLines.LoadFromStrings(var AStrings: TStringList);
 var
-  i: Integer;
+  LIndex: Integer;
 begin
   FStreaming := True;
 
@@ -713,12 +713,12 @@ begin
     if FCount > 0 then
     begin
       SetCapacity(AStrings.Capacity);
-      for i := 0 to FCount-1 do
+      for LIndex := 0 to FCount - 1 do
       begin
-        with FList^[i] do
+        with FList^[LIndex] do
         begin
           Pointer(Value) := nil;
-          Value := AStrings[i];
+          Value := AStrings[LIndex];
           Range := CNULLRANGE;
           ExpandedLength := -1;
           Flags := [sfExpandedLengthUnknown];
@@ -856,14 +856,14 @@ end;
 
 procedure TBCEditorLines.SetTabWidth(AValue: Integer);
 var
-  i: Integer;
+  LIndex: Integer;
 begin
   if FTabWidth <> AValue then
   begin
     FTabWidth := AValue;
     FIndexOfLongestLine := -1;
-    for i := 0 to FCount - 1 do
-      with FList^[i] do
+    for LIndex := 0 to FCount - 1 do
+      with FList^[LIndex] do
       begin
         ExpandedLength := -1;
         Exclude(Flags, sfHasNoTabs);

@@ -64,7 +64,7 @@ type
     destructor Destroy; override;
     function Add(const AOpenToken: string; const ACloseToken: string): TBCEditorCodeFoldingRegionItem;
     property CloseToken: string read FCloseToken write FCloseToken;
-    function Contains(const AOpenToken, ACloseToken: string): Boolean;
+    function Contains(const AOpenToken: string; const ACloseToken: string): Boolean;
     property EscapeChar: Char read FEscapeChar write FEscapeChar default BCEDITOR_NONE_CHAR;
     property Items[AIndex: Integer]: TBCEditorCodeFoldingRegionItem read GetItem; default;
     property OpenToken: string read FOpenToken write FOpenToken;
@@ -114,6 +114,7 @@ end;
 constructor TBCEditorCodeFoldingRegion.Create(AItemClass: TCollectionItemClass);
 begin
   inherited Create(AItemClass);
+
   FSkipRegions := TBCEditorSkipRegions.Create(TBCEditorSkipRegionItem);
   FEscapeChar := BCEDITOR_NONE_CHAR;
   FStringEscapeChar := BCEDITOR_NONE_CHAR;
@@ -126,14 +127,18 @@ begin
   inherited;
 end;
 
-function TBCEditorCodeFoldingRegion.Contains(const AOpenToken, ACloseToken: string): Boolean;
+function TBCEditorCodeFoldingRegion.Contains(const AOpenToken: string; const ACloseToken: string): Boolean;
 var
-  i: Integer;
+  LIndex: Integer;
+  LItem: TBCEditorCodeFoldingRegionItem;
 begin
   Result := False;
-  for i := 0 to Count - 1 do
-    if (Items[i].OpenToken = AOpenToken) and (Items[i].CloseToken = ACloseToken) then
+  for LIndex := 0 to Count - 1 do
+  begin
+    LItem := Items[LIndex];
+    if (LItem.OpenToken = AOpenToken) and (LItem.CloseToken = ACloseToken) then
       Exit(True);
+  end;
 end;
 
 function TBCEditorCodeFoldingRegion.GetItem(AIndex: Integer): TBCEditorCodeFoldingRegionItem;

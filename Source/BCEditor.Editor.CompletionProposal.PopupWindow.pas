@@ -102,6 +102,7 @@ end;
 procedure TBCEditorCompletionProposalPopupWindow.Hide;
 begin
   RemoveKeyHandlers;
+
   inherited Hide;
 end;
 
@@ -268,25 +269,26 @@ end;
 
 function TBCEditorCompletionProposalPopupWindow.CanResize(var AWidth, AHeight: Integer): Boolean;
 var
-  NewVisibleLines: Integer;
+  LVisibleLines: Integer;
 begin
   Result := True;
 
   if FItemHeight <> 0 then
   begin
-    NewVisibleLines := AHeight div FItemHeight;
-    if NewVisibleLines < 1 then
-      NewVisibleLines := 1;
+    LVisibleLines := AHeight div FItemHeight;
+    if LVisibleLines < 1 then
+      LVisibleLines := 1;
   end
   else
-    NewVisibleLines := 0;
+    LVisibleLines := 0;
 
-  FCompletionProposal.VisibleLines := NewVisibleLines;
+  FCompletionProposal.VisibleLines := LVisibleLines;
 end;
 
 procedure TBCEditorCompletionProposalPopupWindow.Resize;
 begin
   inherited;
+
   if FItemHeight <> 0 then
     FCompletionProposal.VisibleLines := ClientHeight div FItemHeight;
 
@@ -295,7 +297,7 @@ end;
 
 procedure TBCEditorCompletionProposalPopupWindow.Paint;
 var
-  i, j: Integer;
+  LIndex, LColumnIndex: Integer;
   LColumnWidth, LItemIndex: Integer;
 begin
   FBitmapBuffer.Width := ClientWidth;
@@ -304,16 +306,16 @@ begin
   begin
     Canvas.Brush.Color := FCompletionProposal.Colors.Background;
     Winapi.Windows.ExtTextOut(Canvas.Handle, 0, 0, ETO_OPAQUE, ClientRect, '', 0, nil);
-    for i := 0 to Min(FCompletionProposal.VisibleLines, Length(FItemIndexArray) - 1) do
+    for LIndex := 0 to Min(FCompletionProposal.VisibleLines, Length(FItemIndexArray) - 1) do
     begin
-      if i + TopLine >= Length(FItemIndexArray) then
+      if LIndex + TopLine >= Length(FItemIndexArray) then
         Break;
 
-      if i + TopLine = FSelectedLine then
+      if LIndex + TopLine = FSelectedLine then
       begin
         Canvas.Brush.Color := FCompletionProposal.Colors.SelectedBackground;
         Canvas.Pen.Color := FCompletionProposal.Colors.SelectedBackground;
-        Canvas.Rectangle(0, FItemHeight * i, ClientWidth, FItemHeight * (i + 1));
+        Canvas.Rectangle(0, FItemHeight * LIndex, ClientWidth, FItemHeight * (LIndex + 1));
         Canvas.Font.Color := FCompletionProposal.Colors.SelectedText;
       end
       else
@@ -323,12 +325,12 @@ begin
         Canvas.Font.Color := FCompletionProposal.Colors.Foreground;
       end;
       LColumnWidth := 0;
-      for j := 0 to FCompletionProposal.Columns.Count - 1 do
+      for LColumnIndex := 0 to FCompletionProposal.Columns.Count - 1 do
       begin
-        LItemIndex := FItemIndexArray[TopLine + i];
-        if LItemIndex < FCompletionProposal.Columns[j].ItemList.Count then
-          Canvas.TextOut(FMargin + LColumnWidth, FItemHeight * i, FCompletionProposal.Columns[j].ItemList[LItemIndex]);
-        LColumnWidth := LColumnWidth + FCompletionProposal.Columns[j].Width;
+        LItemIndex := FItemIndexArray[TopLine + LIndex];
+        if LItemIndex < FCompletionProposal.Columns[LColumnIndex].ItemList.Count then
+          Canvas.TextOut(FMargin + LColumnWidth, FItemHeight * LIndex, FCompletionProposal.Columns[LColumnIndex].ItemList[LItemIndex]);
+        LColumnWidth := LColumnWidth + FCompletionProposal.Columns[LColumnIndex].Width;
       end;
     end;
   end;
@@ -360,23 +362,23 @@ procedure TBCEditorCompletionProposalPopupWindow.SetCurrentString(const AValue: 
 
   procedure RecalcList;
   var
-    i, j, k: Integer;
+    LIndex, LIndex2, LItemsCount: Integer;
   begin
-    k := 0;
-    j := GetItems.Count;
+    LIndex2 := 0;
+    LItemsCount := GetItems.Count;
     SetLength(FItemIndexArray, 0);
-    SetLength(FItemIndexArray, j);
-    for i := 0 to j - 1 do
-      if MatchItem(i) then
+    SetLength(FItemIndexArray, LItemsCount);
+    for LIndex := 0 to LItemsCount - 1 do
+      if MatchItem(LIndex) then
       begin
-        FItemIndexArray[k] := i;
-        Inc(k);
+        FItemIndexArray[LIndex2] := LIndex;
+        Inc(LIndex2);
       end;
-    SetLength(FItemIndexArray, k);
+    SetLength(FItemIndexArray, LIndex2);
   end;
 
 var
-  i: Integer;
+  LIndex: Integer;
 begin
   FCurrentString := AValue;
 
@@ -388,12 +390,12 @@ begin
   end
   else
   begin
-    i := 0;
-    while (i < Items.Count) and (not MatchItem(i)) do
-      inc(i);
+    LIndex := 0;
+    while (LIndex < Items.Count) and (not MatchItem(LIndex)) do
+      Inc(LIndex);
 
-    if i < Items.Count then
-      TopLine := i
+    if LIndex < Items.Count then
+      TopLine := LIndex
     else
       TopLine := 0;
   end;
@@ -474,7 +476,7 @@ var
 
   procedure CalculateColumnWidths;
   var
-    i, j: Integer;
+    LColumnIndex, LIndex: Integer;
     LMaxWidth, LTempWidth, LAutoWidthCount, LWidthSum: Integer;
     LItems: TStrings;
     LProposalColumn: TBCEditorProposalColumn;
@@ -489,16 +491,16 @@ var
 
     LAutoWidthCount := 0;
     LWidthSum := 0;
-    for i := 0 to FCompletionProposal.Columns.Count - 1 do
+    for LColumnIndex := 0 to FCompletionProposal.Columns.Count - 1 do
     begin
-      LProposalColumn := FCompletionProposal.Columns[i];
+      LProposalColumn := FCompletionProposal.Columns[LColumnIndex];
       if LProposalColumn.AutoWidth then
       begin
         LItems := LProposalColumn.ItemList;
         LMaxWidth := 0;
-        for j := 0 to LItems.Count - 1 do
+        for LIndex := 0 to LItems.Count - 1 do
         begin
-          LTempWidth := TextWidth(FBitmapBuffer.Canvas, LItems[j]);
+          LTempWidth := TextWidth(FBitmapBuffer.Canvas, LItems[LIndex]);
           if LTempWidth > LMaxWidth then
             LMaxWidth := LTempWidth;
         end;
@@ -510,22 +512,22 @@ var
 
     LMaxWidth := (Width - LWidthSum - GetSystemMetrics(SM_CYHSCROLL)) div LAutoWidthCount;
     if LMaxWidth > 0 then
-    for i := 0 to FCompletionProposal.Columns.Count - 1 do
+    for LColumnIndex := 0 to FCompletionProposal.Columns.Count - 1 do
     begin
-      LProposalColumn := FCompletionProposal.Columns[i];
+      LProposalColumn := FCompletionProposal.Columns[LColumnIndex];
       if LProposalColumn.AutoWidth then
         LProposalColumn.Width := LProposalColumn.Width + LMaxWidth;
     end;
   end;
 
 var
-  i, j: Integer;
+  LIndex, LCount: Integer;
 begin
-  j := GetItems.Count;
+  LCount := GetItems.Count;
   SetLength(FItemIndexArray, 0);
-  SetLength(FItemIndexArray, j);
-  for i := 0 to j - 1 do
-    FItemIndexArray[i] := i;
+  SetLength(FItemIndexArray, LCount);
+  for LIndex := 0 to LCount - 1 do
+    FItemIndexArray[LIndex] := LIndex;
 
   if Length(FItemIndexArray) > 0 then
   begin
@@ -602,7 +604,7 @@ end;
 
 function TBCEditorCompletionProposalPopupWindow.GetCurrentInput: string;
 var
-  i: Integer;
+  LIndex: Integer;
   LLineText: string;
   LEditor: TBCBaseEditor;
   LTextCaretPosition: TBCEditorTextPosition;
@@ -613,14 +615,14 @@ begin
   LTextCaretPosition := LEditor.TextCaretPosition;
 
   LLineText := LEditor.Lines[LTextCaretPosition.Line];
-  i := LTextCaretPosition.Char - 1;
-  if i <= Length(LLineText) then
+  LIndex := LTextCaretPosition.Char - 1;
+  if LIndex <= Length(LLineText) then
   begin
     FAdjustCompletionStart := False;
-    while (i > 0) and (LLineText[i] > BCEDITOR_SPACE_CHAR) and not LEditor.IsWordBreakChar(LLineText[i]) do
-      Dec(i);
+    while (LIndex > 0) and (LLineText[LIndex] > BCEDITOR_SPACE_CHAR) and not LEditor.IsWordBreakChar(LLineText[LIndex]) do
+      Dec(LIndex);
 
-    FCompletionStart := i + 1;
+    FCompletionStart := LIndex + 1;
     Result := Copy(LLineText, FCompletionStart, LTextCaretPosition.Char - FCompletionStart);
   end
   else

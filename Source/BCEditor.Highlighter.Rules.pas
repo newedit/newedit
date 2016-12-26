@@ -215,7 +215,7 @@ end;
 
 procedure TBCEditorParser.AddTokenNode(const AString: string; AToken: TBCEditorToken; ABreakType: TBCEditorBreakType);
 var
-  i: Integer;
+  LIndex: Integer;
   LLength: Integer;
   TokenNode: TBCEditorTokenNode;
   TokenNodeList: TBCEditorTokenNodeList;
@@ -223,12 +223,12 @@ begin
   TokenNodeList := HeadNode.NextNodes;
   TokenNode := nil;
   LLength := Length(AString);
-  for i := 1 to LLength do
+  for LIndex := 1 to LLength do
   begin
-    TokenNode := TokenNodeList.FindNode(AString[i]);
+    TokenNode := TokenNodeList.FindNode(AString[LIndex]);
     if not Assigned(TokenNode) then
     begin
-      TokenNode := TBCEditorTokenNode.Create(AString[i]);
+      TokenNode := TBCEditorTokenNode.Create(AString[LIndex]);
       TokenNodeList.AddNode(TokenNode);
     end;
     TokenNodeList := TokenNode.NextNodes;
@@ -294,17 +294,15 @@ begin
 
       ARun := PreviousPosition;
 
-      if not Assigned(FindTokenNode)
-      or not Assigned(FindTokenNode.Token)
-      or ((FindTokenNode.Token.Attribute.EscapeChar <> BCEDITOR_NONE_CHAR)
-      and (StartPosition > 0) and (APLine[StartPosition - 1] = FindTokenNode.Token.Attribute.EscapeChar)) then
+      if not Assigned(FindTokenNode) or not Assigned(FindTokenNode.Token) or
+        ((FindTokenNode.Token.Attribute.EscapeChar <> BCEDITOR_NONE_CHAR) and
+        (StartPosition > 0) and (APLine[StartPosition - 1] = FindTokenNode.Token.Attribute.EscapeChar)) then
         Continue;
 
       if APLine[ARun] <> BCEDITOR_NONE_CHAR then
         Inc(ARun);
 
-      if (FindTokenNode.BreakType = btAny)
-      or (CharInSet(APLine[ARun], ACurrentRange.Delimiters)) then
+      if (FindTokenNode.BreakType = btAny) or (CharInSet(APLine[ARun], ACurrentRange.Delimiters)) then
       begin
         AToken := FindTokenNode.Token;
         Exit(True);
@@ -448,16 +446,17 @@ end;
 
 function TBCEditorRange.FindToken(const AString: string): TBCEditorToken;
 var
-  i: Integer;
+  LIndex: Integer;
+  LToken: TBCEditorToken;
 begin
   Result := nil;
 
-  for i := 0 to FTokens.Count - 1 do
-    if TBCEditorToken(FTokens.Items[i]).Symbol = AString then
-    begin
-      Result := TBCEditorToken(FTokens.Items[i]);
-      Break;
-    end;
+  for LIndex := 0 to FTokens.Count - 1 do
+  begin
+    LToken := TBCEditorToken(FTokens.Items[LIndex]);
+    if LToken.Symbol = AString then
+      Exit(LToken);
+  end;
 end;
 
 procedure TBCEditorRange.AddRange(NewRange: TBCEditorRange);
@@ -524,11 +523,11 @@ end;
 
 procedure TBCEditorRange.SetDelimiters(ADelimiters: TBCEditorCharSet);
 var
-  i: Integer;
+  LIndex: Integer;
 begin
   Delimiters := ADelimiters;
-  for i := 0 to RangeCount - 1 do
-    Ranges[i].SetDelimiters(ADelimiters);
+  for LIndex := 0 to RangeCount - 1 do
+    Ranges[LIndex].SetDelimiters(ADelimiters);
 end;
 
 procedure TBCEditorRange.SetAlternativeCloseArrayCount(const AValue: Integer);
@@ -731,38 +730,38 @@ end;
 
 procedure TBCEditorRange.Reset;
 var
-  i: Integer;
+  LIndex: Integer;
   LAnsiChar: AnsiChar;
 begin
   if not FPrepared then
     Exit;
-  for i := 0 to 255 do
+
+  for LIndex := 0 to 255 do
   begin
-    LAnsiChar := AnsiChar(i);
+    LAnsiChar := AnsiChar(LIndex);
     if Assigned(SymbolList[LAnsiChar]) and (SymbolList[LAnsiChar] <> FDefaultTermSymbol) and (SymbolList[LAnsiChar] <> FDefaultSymbols) then
-    begin
       FSymbolList[LAnsiChar].Free;
-      FSymbolList[LAnsiChar] := nil;
-    end
-    else
-      FSymbolList[LAnsiChar] := nil;
+    FSymbolList[LAnsiChar] := nil;
   end;
+
   FDefaultToken.Free;
   FDefaultToken := nil;
   FDefaultTermSymbol.Free;
   FDefaultTermSymbol := nil;
   FDefaultSymbols.Free;
   FDefaultSymbols := nil;
+
   if Assigned(FRanges) then
-  for i := 0 to FRanges.Count - 1 do
-    TBCEditorRange(FRanges[i]).Reset;
+  for LIndex := 0 to FRanges.Count - 1 do
+    TBCEditorRange(FRanges[LIndex]).Reset;
+
   ClearList(FTokens);
   FPrepared := False;
 end;
 
 procedure TBCEditorRange.Clear;
 var
-  i: Integer;
+  LIndex: Integer;
 begin
   OpenToken.Clear;
   CloseToken.Clear;
@@ -770,9 +769,11 @@ begin
   CloseOnEndOfLine := False;
   CloseParent := False;
   Reset;
+
   if Assigned(FRanges) then
-  for i := 0 to FRanges.Count - 1 do
-    TBCEditorRange(FRanges[i]).Clear;
+  for LIndex := 0 to FRanges.Count - 1 do
+    TBCEditorRange(FRanges[LIndex]).Clear;
+
   ClearList(FRanges);
   ClearList(FTokens);
   ClearList(FKeyList);

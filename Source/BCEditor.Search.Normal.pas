@@ -38,7 +38,6 @@ type
     function FindFirst(const AText: string): Integer;
     function Next: Integer;
     procedure Clear; override;
-    procedure FixResults(AFirst, ADelta: Integer);
     property Count: Integer read FCount write FCount;
     property Finished: Boolean read GetFinished;
     property Pattern read FCasedPattern;
@@ -72,27 +71,10 @@ begin
   Result := FResults.Count;
 end;
 
-procedure TBCEditorNormalSearch.FixResults(AFirst, ADelta: Integer);
-var
-  i: Integer;
-begin
-  if (ADelta <> 0) and (FResults.Count > 0) then
-  begin
-    i := FResults.Count - 1;
-    while i >= 0 do
-    begin
-      if Integer(FResults[i]) <= AFirst then
-        Break;
-      FResults[i] := pointer(Integer(FResults[i]) - ADelta);
-      Dec(i);
-    end;
-  end;
-end;
-
 procedure TBCEditorNormalSearch.InitShiftTable;
 var
   LAnsiChar: AnsiChar;
-  i: Integer;
+  LIndex: Integer;
 begin
   FPatternLength := Length(FPattern);
   if FPatternLength = 0 then
@@ -101,12 +83,12 @@ begin
   FLookAt := 1;
   for LAnsiChar := Low(AnsiChar) to High(AnsiChar) do
     FShift[LAnsiChar] := FPatternLengthSuccessor;
-  for i := 1 to FPatternLength do
-    FShift[AnsiChar(FPattern[i])] := FPatternLengthSuccessor - i;
+  for LIndex := 1 to FPatternLength do
+    FShift[AnsiChar(FPattern[LIndex])] := FPatternLengthSuccessor - LIndex;
   while FLookAt < FPatternLength do
   begin
     if FPattern[FPatternLength] = FPattern[FPatternLength - FLookAt] then
-      break;
+      Break;
     Inc(FLookAt);
   end;
   FShiftInitialized := True;
@@ -135,7 +117,7 @@ end;
 
 function TBCEditorNormalSearch.Next: Integer;
 var
-  i: Integer;
+  LIndex: Integer;
   LPValue: PChar;
 begin
   Result := 0;
@@ -147,10 +129,10 @@ begin
     else
     begin
       LPValue := FRun - FPatternLength + 1;
-      i := 1;
-      while FPattern[i] = LPValue^ do
+      LIndex := 1;
+      while FPattern[LIndex] = LPValue^ do
       begin
-        if i = FPatternLength then
+        if LIndex = FPatternLength then
         begin
           if WholeWordsOnly then
             if not TestWholeWord then
@@ -159,7 +141,7 @@ begin
           Result := FRun - FOrigin - FPatternLength + 2;
           Exit;
         end;
-        Inc(i);
+        Inc(LIndex);
         Inc(LPValue);
       end;
       Inc(FRun, FLookAt);

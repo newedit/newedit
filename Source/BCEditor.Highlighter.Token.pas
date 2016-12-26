@@ -74,7 +74,7 @@ type
     FNextNodes: TBCEditorTokenNodeList;
     FToken: TBCEditorToken;
   public
-    constructor Create(AChar: Char; AToken: TBCEditorToken; ABreakType: TBCEditorBreakType); overload; // virtual;
+    constructor Create(AChar: Char; AToken: TBCEditorToken; ABreakType: TBCEditorBreakType); overload;
     constructor Create(AChar: Char); overload;
     destructor Destroy; override;
 
@@ -94,8 +94,8 @@ type
     function FindNode(AChar: Char): TBCEditorTokenNode;
     function GetCount: Integer;
     function GetNode(AIndex: Integer): TBCEditorTokenNode;
-    procedure AddNode(Node: TBCEditorTokenNode);
-    procedure SetNode(AIndex: Integer; Value: TBCEditorTokenNode);
+    procedure AddNode(ANode: TBCEditorTokenNode);
+    procedure SetNode(AIndex: Integer; AValue: TBCEditorTokenNode);
     property Count: Integer read GetCount;
     property Nodes[Aindex: Integer]: TBCEditorTokenNode read GetNode write SetNode;
   end;
@@ -274,22 +274,23 @@ begin
   inherited;
 end;
 
-procedure TBCEditorTokenNodeList.AddNode(Node: TBCEditorTokenNode);
+procedure TBCEditorTokenNodeList.AddNode(ANode: TBCEditorTokenNode);
 begin
-  FNodeList.Add(Node);
+  FNodeList.Add(ANode);
 end;
 
 function TBCEditorTokenNodeList.FindNode(AChar: Char): TBCEditorTokenNode;
 var
-  i: Integer;
+  LIndex: Integer;
+  LTokenNode: TBCEditorTokenNode;
 begin
-  for i := 0 to FNodeList.Count - 1 do
-  begin
-    Result := TBCEditorTokenNode(FNodeList.List[i]);
-    if Result.Char = AChar then
-      exit;
-  end;
   Result := nil;
+  for LIndex := 0 to FNodeList.Count - 1 do
+  begin
+    LTokenNode := TBCEditorTokenNode(FNodeList.List[LIndex]);
+    if LTokenNode.Char = AChar then
+      Exit(LTokenNode);
+  end;
 end;
 
 function TBCEditorTokenNodeList.GetCount: Integer;
@@ -302,11 +303,11 @@ begin
   Result := TBCEditorTokenNode(FNodeList[AIndex]);
 end;
 
-procedure TBCEditorTokenNodeList.SetNode(AIndex: Integer; Value: TBCEditorTokenNode);
+procedure TBCEditorTokenNodeList.SetNode(AIndex: Integer; AValue: TBCEditorTokenNode);
 begin
   if AIndex < FNodeList.Count then
     TBCEditorTokenNode(FNodeList[AIndex]).Free;
-  FNodeList[AIndex] := Value;
+  FNodeList[AIndex] := AValue;
 end;
 
 end.

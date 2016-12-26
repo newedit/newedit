@@ -97,32 +97,32 @@ end;
 
 procedure ClearList(var AList: TList);
 var
-  i: Integer;
+  LIndex: Integer;
 begin
   if not Assigned(AList) then
     Exit;
-  for i := 0 to AList.Count - 1 do
-    if Assigned(AList[i]) then
+  for LIndex := 0 to AList.Count - 1 do
+    if Assigned(AList[LIndex]) then
     begin
-      TObject(AList[i]).Free;
-      AList[i] := nil;
+      TObject(AList[LIndex]).Free;
+      AList[LIndex] := nil;
     end;
   AList.Clear;
 end;
 
 function DeleteWhitespace(const AText: string): string;
 var
-  i, j: Integer;
+  LIndex, LIndex2: Integer;
 begin
   SetLength(Result, Length(AText));
-  j := 0;
-  for i := 1 to Length(AText) do
-    if not AText[i].IsWhiteSpace then
+  LIndex2 := 0;
+  for LIndex := 1 to Length(AText) do
+    if not AText[LIndex].IsWhiteSpace then
     begin
-      Inc(j);
-      Result[j] := AText[i];
+      Inc(LIndex2);
+      Result[LIndex2] := AText[LIndex];
     end;
-  SetLength(Result, j);
+  SetLength(Result, LIndex2);
 end;
 
 function MessageDialog(const AMessage: string; ADlgType: TMsgDlgType; AButtons: TMsgDlgButtons): Integer;
