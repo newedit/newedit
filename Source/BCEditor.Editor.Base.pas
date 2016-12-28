@@ -224,7 +224,6 @@ type
       var ATokenType: TBCEditorRangeType; var AStart: Integer; var AHighlighterAttribute: TBCEditorHighlighterAttribute): Boolean;
     function GetHookedCommandHandlersCount: Integer;
     function GetHorizontalScrollMax: Integer;
-    function GetLastChar(APToken: PChar): string;
     function GetLeadingExpandedLength(const AStr: string; const ABorder: Integer = 0): Integer;
     function GetLeftMarginWidth: Integer;
     function GetLineHeight: Integer;
@@ -2119,13 +2118,11 @@ var
 
   procedure AddWrappedLineNumberIntoCache;
   var
-    LToken: string;
+    LTokenText, LNextTokenText, LFirstPartOfToken, LChar: string;
     LHighlighterAttribute: TBCEditorHighlighterAttribute;
     LLength, LTokenWidth, LWidth, LMaxWidth: Integer;
-    LCharsBefore, LAllCharsBefore: Integer;
-    LPToken, LPStart: PChar;
-    LEndOfTokenWidth, LCharWidth: Integer;
-    LLastChar: string;
+    LCharsBefore: Integer;
+    LPToken: PChar;
     LTokenLength: Integer;
   begin
     if not Visible then
@@ -2139,75 +2136,71 @@ var
     FHighlighter.SetCurrentLine(FLines[LCurrentLine - 1]);
     LWidth := 0;
     LLength := 0;
-    LAllCharsBefore := 0;
+    LCharsBefore := 0;
     while not FHighlighter.GetEndOfLine do
     begin
-      FHighlighter.GetToken(LToken);
+      if LNextTokenText = '' then
+        FHighlighter.GetToken(LTokenText)
+      else
+        LTokenText := LNextTokenText;
+      LNextTokenText := '';
+      LTokenLength := Length(LTokenText);
       LHighlighterAttribute := FHighlighter.GetTokenAttribute;
       if Assigned(LHighlighterAttribute) then
         FPaintHelper.SetStyle(LHighlighterAttribute.FontStyles);
-      LTokenWidth := GetTokenWidth(LToken, Length(LToken), LAllCharsBefore);
-      Inc(LWidth, LTokenWidth);
-      LPToken := PChar(LToken);
+      LTokenWidth := GetTokenWidth(LTokenText, LTokenLength, LCharsBefore);
 
-      if LTokenWidth > LMaxWidth then
+      if LWidth + LTokenWidth > LMaxWidth then
       begin
-        if LLength > 0 then
+        LTokenWidth := 0;
+        LPToken := PChar(LTokenText);
+        LFirstPartOfToken := '';
+        while (LPToken^ <> BCEDITOR_NONE_CHAR) and (LWidth + LTokenWidth <= LMaxWidth) do
         begin
-          FWordWrapLineLengths[LCacheLength] := LLength;
-          LWidth := 0;
-          AddLineNumberIntoCache;
-          LLength := 0;
-        end;
-
-        while (LPToken^ <> BCEDITOR_NONE_CHAR) and (LTokenWidth > LMaxWidth) do
-        begin
-          LPStart := LPToken;
-          LTokenLength := Length(LPToken);
-          if LTokenLength = 1 then
-            Break;
-          Inc(LPToken, LTokenLength - 1);
-          LLastChar := GetLastChar(LPToken);
-          if LLastChar = '' then
-            LLastChar := LPToken^;
-          LCharsBefore := LAllCharsBefore + LTokenLength - Length(LLastChar);
-          LEndOfTokenWidth := 0;
-
-          while (LPToken^ <> BCEDITOR_NONE_CHAR) and (LPToken - LPStart > 1) and (LTokenWidth > LMaxWidth) do
+          LChar := LPToken^;
+          while True do
           begin
-            LCharWidth := GetTokenWidth(LLastChar, Length(LLastChar), LCharsBefore);
-            Dec(LTokenWidth, LCharWidth);
-            Dec(LCharsBefore, Length(LLastChar));
-            Inc(LEndOfTokenWidth, LCharWidth);
-            if LTokenWidth > LMaxWidth then
-            begin
-              Dec(LPToken);
-              LLastChar := GetLastChar(LPToken);
-              if LLastChar = '' then
-                LLastChar := LPToken^;
-            end
+            Inc(LPToken);
+            if (LPToken^ <> BCEDITOR_NONE_CHAR) and
+              ((LPToken^.GetUnicodeCategory in [TUnicodeCategory.ucCombiningMark, TUnicodeCategory.ucNonSpacingMark]) or
+              ((LPToken - 1)^ <> BCEDITOR_NONE_CHAR) and
+              ((LPToken - 1)^.GetUnicodeCategory = TUnicodeCategory.ucNonSpacingMark)
+              and not IsCombiningDiacriticalMark((LPToken - 1)^)) then
+              LChar := LChar + LPToken^
+            else
+              Break;
           end;
-
-          FWordWrapLineLengths[LCacheLength] := LPToken - LPStart;
-
-          AddLineNumberIntoCache;
-          LWidth := 0;
-          LTokenWidth := LEndOfTokenWidth;
+          LTokenWidth := GetTokenWidth(LFirstPartOfToken + LChar, Length(LFirstPartOfToken + LChar), LCharsBefore);
+          if LWidth + LTokenWidth < LMaxWidth then
+            LFirstPartOfToken := LFirstPartOfToken + LChar;
         end;
-      end;
-      if LWidth > LMaxWidth then
-      begin
+        if (LLength = 0) and (LFirstPartOfToken = '') then
+          LFirstPartOfToken := LPToken^;
+        Inc(LLength, Length(LFirstPartOfToken));
         FWordWrapLineLengths[LCacheLength] := LLength;
+
         AddLineNumberIntoCache;
-        LWidth := LTokenWidth;
+
+        Inc(LCharsBefore, GetTokenCharCount(LFirstPartOfToken, LCharsBefore));
         LLength := 0;
+        LWidth := 0;
+        LNextTokenText := Copy(LTokenText, Length(LFirstPartOfToken) + 1, Length(LTokenText));
+
+        if LNextTokenText = '' then
+          FHighlighter.Next;
+        Continue;
       end;
-      Inc(LLength, Length(LPToken));
-      Inc(LAllCharsBefore, GetTokenCharCount(LToken, LAllCharsBefore));
+
+      Inc(LCharsBefore, GetTokenCharCount(LTokenText, LCharsBefore));
+      Inc(LLength, Length(LTokenText));
+      Inc(LWidth, LTokenWidth);
       FHighlighter.Next;
     end;
-    FWordWrapLineLengths[LCacheLength] := LLength;
-    AddLineNumberIntoCache;
+    if LLength > 0 then
+    begin
+      FWordWrapLineLengths[LCacheLength] := LLength;
+      AddLineNumberIntoCache;
+    end;
   end;
 
 begin
@@ -2294,7 +2287,7 @@ var
   LLineText, LToken: string;
   LHighlighterAttribute: TBCEditorHighlighterAttribute;
   LFontStyles, LPreviousFontStyles: TFontStyles;
-  LTokenLength, LLength: Integer;
+  LTokenLength, LLength, LWordWrapLineLength: Integer;
   LCharsBefore: Integer;
   LRow: Integer;
   LCharCount: Integer;
@@ -2320,6 +2313,7 @@ begin
   FHighlighter.SetCurrentLine(LLineText);
 
   LLength := 0;
+  LWordWrapLineLength := 0;
   LCharsBefore := 0;
   LFontStyles := [];
   LPreviousFontStyles := [];
@@ -2339,15 +2333,24 @@ begin
     LTokenLength := FHighlighter.GetTokenLength;
 
     if FWordWrap.Enabled then
-      if LRow < ADisplayPosition.Row then
-        if LLength + LTokenLength >= FWordWrapLineLengths[LRow] then
+      if LRow <= ADisplayPosition.Row then
+        if LLength + LTokenLength > {LWordWrapLineLength +} FWordWrapLineLengths[LRow] then
         begin
           LCharCount := 0;
-          while LLength + LCharCount < FWordWrapLineLengths[LRow] do
+          while LLength + LCharCount < {LWordWrapLineLength +} FWordWrapLineLengths[LRow] do
             Inc(LCharCount);
-          Delete(LToken, 1, LCharCount);
+          LToken := Copy(LToken, LWordWrapLineLength + 1, LCharCount);
+          Inc(LWordWrapLineLength, FWordWrapLineLengths[LRow]);
           LTokenLength := Length(LToken);
-          Inc(LRow);
+
+          if LRow < ADisplayPosition.Row then
+          begin
+            Inc(LRow);
+            //Inc(LLength, LTokenLength);
+            LLength := 0;
+            Inc(LCharsBefore, GetTokenCharCount(LToken, LCharsBefore));
+            Continue;
+          end;
         end;
 
     if LRow = ADisplayPosition.Row then
@@ -2363,8 +2366,8 @@ begin
     end;
 
     Inc(LLength, LTokenLength);
-
     Inc(LCharsBefore, GetTokenCharCount(LToken, LCharsBefore));
+
     FHighlighter.Next;
   end;
 
@@ -2889,23 +2892,9 @@ begin
   Result := PixelAndRowToDisplayPosition(X, GetSelectedRow(Y));
 end;
 
-function TBCBaseEditor.GetLastChar(APToken: PChar): string;
-begin
-  Result := '';
-  while (APToken^ <> BCEDITOR_NONE_CHAR) and
-    ((APToken^.GetUnicodeCategory in [TUnicodeCategory.ucCombiningMark, TUnicodeCategory.ucNonSpacingMark]) or
-    ((APToken - 1)^ <> BCEDITOR_NONE_CHAR) and
-    ((APToken - 1)^.GetUnicodeCategory = TUnicodeCategory.ucNonSpacingMark) and
-    not IsCombiningDiacriticalMark((APToken - 1)^)) do
-  begin
-    Result := APToken^ + Result;
-    Dec(APToken);
-  end;
-end;
-
 function TBCBaseEditor.PixelAndRowToDisplayPosition(const X, ARow: Integer; const ALineText: string = ''): TBCEditorDisplayPosition;
 var
-  LToken, LChar: string;
+  LToken, LNextTokenText, LChar: string;
   LFontStyles, LPreviousFontStyles: TFontStyles;
   LLineText: string;
   LHighlighterAttribute: TBCEditorHighlighterAttribute;
@@ -2914,7 +2903,7 @@ var
   LPToken: PChar;
   LCharsBefore: Integer;
   LRow: Integer;
-  LLength, LCharCount: Integer;
+  LLength: Integer;
 begin
   Result.Row := ARow;
   Result.Column := 1;
@@ -2931,10 +2920,10 @@ begin
   else
     LLineText := ALineText;
 
-  if LRow = 1 then
+  if LRow = 0 then
     FHighlighter.ResetCurrentRange
   else
-    FHighlighter.SetCurrentRange(FLines.Ranges[LRow - 2]);
+    FHighlighter.SetCurrentRange(FLines.Ranges[LRow - 1]);
   FHighlighter.SetCurrentLine(LLineText);
 
   LFontStyles := [];
@@ -2950,7 +2939,12 @@ begin
   FPaintHelper.SetStyle(LPreviousFontStyles);
   while not FHighlighter.GetEndOfLine do
   begin
-    FHighlighter.GetToken(LToken);
+    if LNextTokenText = '' then
+      FHighlighter.GetToken(LToken)
+    else
+      LToken := LNextTokenText;
+    LNextTokenText := '';
+
     LTokenLength := Length(LToken);
     LHighlighterAttribute := FHighlighter.GetTokenAttribute;
     if Assigned(LHighlighterAttribute) then
@@ -2963,14 +2957,17 @@ begin
 
     if FWordWrap.Enabled then
       if LRow < ARow then
-        if LLength + LTokenLength >= FWordWrapLineLengths[LRow] then
+        if LLength + LTokenLength > FWordWrapLineLengths[LRow] then
         begin
-          LCharCount := 0;
-          while LLength + LCharCount < FWordWrapLineLengths[LRow] do
-            Inc(LCharCount);
-          Delete(LToken, 1, LCharCount);
-          LTokenLength := Length(LToken);
+          LNextTokenText := Copy(LToken, FWordWrapLineLengths[LRow] - LLength + 1, LTokenLength);
+          LTokenLength := FWordWrapLineLengths[LRow] - LLength;
+          LToken := Copy(LToken, 1, LTokenLength);
+
           Inc(LRow);
+          LLength := 0;
+          LTextWidth := 0;
+          Inc(LCharsBefore, GetTokenCharCount(LToken, LCharsBefore));
+          Continue;
         end;
 
     if LRow = ARow then
@@ -2983,19 +2980,22 @@ begin
         while LTextWidth < LXInEditor do
         begin
           LChar := LPToken^;
-          Inc(LPToken);
-          while (LPToken^ <> BCEDITOR_NONE_CHAR) and
-            ((LPToken^.GetUnicodeCategory in [TUnicodeCategory.ucCombiningMark, TUnicodeCategory.ucNonSpacingMark]) or
-            ((LPToken - 1)^ <> BCEDITOR_NONE_CHAR) and
-            ((LPToken - 1)^.GetUnicodeCategory = TUnicodeCategory.ucNonSpacingMark)
-            and not IsCombiningDiacriticalMark((LPToken - 1)^)) do
+          while True do
           begin
-            LChar := LChar + LPToken^;
             Inc(LPToken);
+            if (LPToken^ <> BCEDITOR_NONE_CHAR) and
+              ((LPToken^.GetUnicodeCategory in [TUnicodeCategory.ucCombiningMark, TUnicodeCategory.ucNonSpacingMark]) or
+              ((LPToken - 1)^ <> BCEDITOR_NONE_CHAR) and
+              ((LPToken - 1)^.GetUnicodeCategory = TUnicodeCategory.ucNonSpacingMark)
+              and not IsCombiningDiacriticalMark((LPToken - 1)^)) then
+              LChar := LChar + LPToken^
+            else
+              Break;
           end;
 
           LCharLength := Length(LChar);
           Inc(LTextWidth, GetTokenWidth(LChar, LCharLength, LCharsBefore));
+          Inc(LCharsBefore, LCharLength);
           if LTextWidth <= LXInEditor then
             Inc(Result.Column, LCharLength);
         end;
@@ -3009,8 +3009,8 @@ begin
     end;
 
     Inc(LLength, LTokenLength);
-
     Inc(LCharsBefore, GetTokenCharCount(LToken, LCharsBefore));
+
     FHighlighter.Next;
   end;
 
@@ -11276,7 +11276,7 @@ var
     LCurrentRow: Integer;
     LFoldRange: TBCEditorCodeFoldingRange;
     LHighlighterAttribute: TBCEditorHighlighterAttribute;
-    LTokenText: string;
+    LTokenText, LNextTokenText: string;
     LTokenPosition, LTokenLength: Integer;
     LFontStyles: TFontStyles;
     LKeyword, LWordAtSelection, LSelectedText: string;
@@ -11286,7 +11286,6 @@ var
     LIsCustomBackgroundColor: Boolean;
     LTextPosition: TBCEditorTextPosition;
     LTextCaretY: Integer;
-    LTokenAdded: Boolean;
     LLinePosition: Integer;
 
     function GetWordAtSelection(var ASelectedText: string): string;
@@ -11504,6 +11503,7 @@ var
 
       LTokenPosition := 0;
       LTokenLength := 0;
+      LNextTokenText := '';
       LExpandedCharsBefore := 0;
       LCurrentRow := LCurrentLine + 1;
       LTextCaretY := GetTextCaretY;
@@ -11615,11 +11615,9 @@ var
         LTokenRect := LLineRect;
         LLineEndRect := LLineRect;
         LLineEndRect.Left := -100;
-
         LTokenHelper.Length := 0;
         LTokenHelper.EmptySpace := esNone;
         LAddWrappedCount := False;
-        LTokenAdded := False;
         LLinePosition := 0;
 
         if FWordWrap.Enabled then
@@ -11628,8 +11626,12 @@ var
         while not FHighlighter.GetEndOfLine do
         begin
           LTokenPosition := FHighlighter.GetTokenPosition;
-          FHighlighter.GetToken(LTokenText);
-          LTokenLength := FHighlighter.GetTokenLength;
+          if LNextTokenText = '' then
+            FHighlighter.GetToken(LTokenText)
+          else
+            LTokenText := LNextTokenText;
+          LNextTokenText := '';
+          LTokenLength := Length(LTokenText); // FHighlighter.GetTokenLength;
 
           if (LTokenPosition + LTokenLength >= LFirstColumn) or (LTokenLength = 0) then
           begin
@@ -11651,33 +11653,17 @@ var
 
             if FWordWrap.Enabled then
             begin
-              if not LTokenAdded and (LTokenLength > FWordWrapLineLengths[LDisplayLine]) then
-              begin
-                LTokenText := Copy(LTokenText, LFirstColumn, FWordWrapLineLengths[LDisplayLine]);
-                LTokenLength := Length(LTokenText);
-                Inc(LTokenPosition, LFirstColumn - 1);
-
-                if (LFirstColumn < FHighlighter.GetTokenLength) and (LTokenLength = FWordWrapLineLengths[LDisplayLine]) then
-                begin
-                  PrepareToken;
-                  Inc(LFirstColumn, FWordWrapLineLengths[LDisplayLine]);
-                  LAddWrappedCount := True;
-                  Break;
-                end
-                else
-                  LFirstColumn := 1;
-              end
-              else
               if LLinePosition + LTokenLength > LLastColumn then
               begin
-                if LFirstColumn > 1 then
-                  PrepareToken;
+                LNextTokenText := Copy(LTokenText, LLastColumn - LLinePosition + 1, LTokenLength);
+                LTokenText := Copy(LTokenText, 1, LLastColumn - LLinePosition);
+                LTokenLength := Length(LTokenText);
+                Inc(LTokenPosition, LTokenLength);
+                PrepareToken;
                 LFirstColumn := 1;
                 LAddWrappedCount := True;
                 Break;
               end;
-
-              LTokenAdded := True;
             end
             else
             if LTokenPosition > LLastColumn then
@@ -12665,7 +12651,8 @@ begin
     end;
     while (LPLine^ <> BCEDITOR_NONE_CHAR) and
       ((LPLine^.GetUnicodeCategory in [TUnicodeCategory.ucCombiningMark, TUnicodeCategory.ucNonSpacingMark]) or
-      ((LPLine - 1)^ <> BCEDITOR_NONE_CHAR) and ((LPLine - 1)^.GetUnicodeCategory = TUnicodeCategory.ucNonSpacingMark)
+      ((LPLine - 1)^ <> BCEDITOR_NONE_CHAR) and
+      ((LPLine - 1)^.GetUnicodeCategory = TUnicodeCategory.ucNonSpacingMark)
       and not IsCombiningDiacriticalMark((LPLine - 1)^)) do
     begin
       Inc(LResultChar);
