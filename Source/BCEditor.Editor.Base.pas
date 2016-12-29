@@ -2284,13 +2284,12 @@ function TBCBaseEditor.DisplayPositionToPixels(const ADisplayPosition: TBCEditor
   const ALineText: string = ''): TPoint;
 var
   LPositionY: Integer;
-  LLineText, LToken: string;
+  LLineText, LToken, LNextTokenText: string;
   LHighlighterAttribute: TBCEditorHighlighterAttribute;
   LFontStyles, LPreviousFontStyles: TFontStyles;
-  LTokenLength, LLength, LWordWrapLineLength: Integer;
+  LTokenLength, LLength: Integer;
   LCharsBefore: Integer;
-  LRow: Integer;
-  LCharCount: Integer;
+  LRow, LCurrentRow: Integer;
 begin
   LRow := ADisplayPosition.Row;
   LPositionY := LRow - FTopLine;
@@ -2312,15 +2311,27 @@ begin
 
   FHighlighter.SetCurrentLine(LLineText);
 
+  LCurrentRow := ADisplayPosition.Row;
+
+  if FWordWrap.Enabled then
+    while (LCurrentRow > 1) and (GetDisplayTextLineNumber(LCurrentRow - 1) = LRow) do
+    begin
+      Dec(LCurrentRow);
+      //Dec(LRow);
+    end;
+
   LLength := 0;
-  LWordWrapLineLength := 0;
   LCharsBefore := 0;
   LFontStyles := [];
   LPreviousFontStyles := [];
 
   while not FHighlighter.GetEndOfLine do
   begin
-    FHighlighter.GetToken(LToken);
+    if LNextTokenText = '' then
+      FHighlighter.GetToken(LToken)
+    else
+      LToken := LNextTokenText;
+    LNextTokenText := '';
     LHighlighterAttribute := FHighlighter.GetTokenAttribute;
     if Assigned(LHighlighterAttribute) then
       LFontStyles := LHighlighterAttribute.FontStyles;
@@ -2330,30 +2341,23 @@ begin
       LPreviousFontStyles := LFontStyles;
     end;
 
-    LTokenLength := FHighlighter.GetTokenLength;
+    LTokenLength := Length(LToken);
 
     if FWordWrap.Enabled then
-      if LRow <= ADisplayPosition.Row then
-        if LLength + LTokenLength > {LWordWrapLineLength +} FWordWrapLineLengths[LRow] then
+      if LCurrentRow < ADisplayPosition.Row then
+        if LLength + LTokenLength > FWordWrapLineLengths[LCurrentRow] then
         begin
-          LCharCount := 0;
-          while LLength + LCharCount < {LWordWrapLineLength +} FWordWrapLineLengths[LRow] do
-            Inc(LCharCount);
-          LToken := Copy(LToken, LWordWrapLineLength + 1, LCharCount);
-          Inc(LWordWrapLineLength, FWordWrapLineLengths[LRow]);
-          LTokenLength := Length(LToken);
+          LNextTokenText := Copy(LToken, FWordWrapLineLengths[LCurrentRow] - LLength + 1, LTokenLength);
+          LTokenLength := FWordWrapLineLengths[LCurrentRow] - LLength;
+          LToken := Copy(LToken, 1, LTokenLength);
 
-          if LRow < ADisplayPosition.Row then
-          begin
-            Inc(LRow);
-            //Inc(LLength, LTokenLength);
-            LLength := 0;
-            Inc(LCharsBefore, GetTokenCharCount(LToken, LCharsBefore));
-            Continue;
-          end;
+          Inc(LCurrentRow);
+          LLength := 0;
+          Inc(LCharsBefore, GetTokenCharCount(LToken, LCharsBefore));
+          Continue;
         end;
 
-    if LRow = ADisplayPosition.Row then
+    if LCurrentRow = ADisplayPosition.Row then
     begin
       if LLength + LTokenLength >= ADisplayPosition.Column then
       begin
@@ -2902,7 +2906,7 @@ var
   LTextWidth, LTokenWidth, LTokenLength, LCharLength: Integer;
   LPToken: PChar;
   LCharsBefore: Integer;
-  LRow: Integer;
+  LRow, LCurrentRow: Integer;
   LLength: Integer;
 begin
   Result.Row := ARow;
@@ -2925,6 +2929,15 @@ begin
   else
     FHighlighter.SetCurrentRange(FLines.Ranges[LRow - 2]);
   FHighlighter.SetCurrentLine(LLineText);
+
+  LCurrentRow := ARow;
+
+  if FWordWrap.Enabled then
+    while (LCurrentRow > 1) and (GetDisplayTextLineNumber(LCurrentRow - 1) = LRow) do
+    begin
+      Dec(LCurrentRow);
+      //Dec(LRow);
+    end;
 
   LFontStyles := [];
   LPreviousFontStyles := [];
@@ -2956,21 +2969,21 @@ begin
     end;
 
     if FWordWrap.Enabled then
-      if LRow < ARow then
-        if LLength + LTokenLength > FWordWrapLineLengths[LRow] then
+      if LCurrentRow < ARow then
+        if LLength + LTokenLength > FWordWrapLineLengths[LCurrentRow] then
         begin
-          LNextTokenText := Copy(LToken, FWordWrapLineLengths[LRow] - LLength + 1, LTokenLength);
-          LTokenLength := FWordWrapLineLengths[LRow] - LLength;
+          LNextTokenText := Copy(LToken, FWordWrapLineLengths[LCurrentRow] - LLength + 1, LTokenLength);
+          LTokenLength := FWordWrapLineLengths[LCurrentRow] - LLength;
           LToken := Copy(LToken, 1, LTokenLength);
 
-          Inc(LRow);
+          Inc(LCurrentRow);
           LLength := 0;
           LTextWidth := 0;
           Inc(LCharsBefore, GetTokenCharCount(LToken, LCharsBefore));
           Continue;
         end;
 
-    if LRow = ARow then
+    if LCurrentRow = ARow then
     begin
       LTokenWidth := GetTokenWidth(LToken, LTokenLength, LCharsBefore);
       if (LXInEditor > 0) and (LTextWidth + LTokenWidth > LXInEditor) then
