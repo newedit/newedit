@@ -12095,8 +12095,6 @@ var
               FLines.Count - LBeginTextPosition.Line));
             FLines[LBeginTextPosition.Line] := LTempString;
           end;
-
-          TextCaretPosition := LBeginTextPosition;
         end;
       smColumn:
         begin
@@ -12126,7 +12124,6 @@ var
             Delete(LTempString, LDeletePosition, LDeletePositionEnd - LDeletePosition);
             FLines[LCurrentLine] := LTempString;
           end;
-          TextCaretPosition := GetTextPosition(LBeginTextPosition.Char, FSelectionEndPosition.Line);
         end;
     end;
   end;
