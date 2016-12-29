@@ -2920,10 +2920,10 @@ begin
   else
     LLineText := ALineText;
 
-  if LRow = 0 then
+  if LRow = 1 then
     FHighlighter.ResetCurrentRange
   else
-    FHighlighter.SetCurrentRange(FLines.Ranges[LRow - 1]);
+    FHighlighter.SetCurrentRange(FLines.Ranges[LRow - 2]);
   FHighlighter.SetCurrentLine(LLineText);
 
   LFontStyles := [];
@@ -11631,7 +11631,7 @@ var
           else
             LTokenText := LNextTokenText;
           LNextTokenText := '';
-          LTokenLength := Length(LTokenText); // FHighlighter.GetTokenLength;
+          LTokenLength := Length(LTokenText);
 
           if (LTokenPosition + LTokenLength >= LFirstColumn) or (LTokenLength = 0) then
           begin
