@@ -2196,7 +2196,7 @@ var
       Inc(LWidth, LTokenWidth);
       FHighlighter.Next;
     end;
-    if LLength > 0 then
+    //if LLength > 0 then
     begin
       FWordWrapLineLengths[LCacheLength] := LLength;
       AddLineNumberIntoCache;
@@ -5508,7 +5508,7 @@ begin
   LDestinationPosition := LTextCaretPosition;
 
   LCurrentLineLength := FLines.StringLength(LTextCaretPosition.Line);
-  LChangeY := not (soPastEndOfLine in FScroll.Options);
+  LChangeY := not (soPastEndOfLine in FScroll.Options) or FWordWrap.Enabled;
 
   if LChangeY and (X = -1) and (LTextCaretPosition.Char = 1) and (LTextCaretPosition.Line > 1) then
     with LDestinationPosition do
@@ -5521,6 +5521,8 @@ begin
     (LTextCaretPosition.Line < FLines.Count) then
     with LDestinationPosition do
     begin
+      if LDestinationPosition.Line + 1 >= FLines.Count then
+        Exit;
       Line := LDestinationPosition.Line + 1;
       Char := 1;
     end
