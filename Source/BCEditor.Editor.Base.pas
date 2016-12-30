@@ -2315,10 +2315,7 @@ begin
 
   if FWordWrap.Enabled then
     while (LCurrentRow > 1) and (GetDisplayTextLineNumber(LCurrentRow - 1) = LRow) do
-    begin
       Dec(LCurrentRow);
-      //Dec(LRow);
-    end;
 
   LLength := 0;
   LCharsBefore := 0;
@@ -2934,10 +2931,7 @@ begin
 
   if FWordWrap.Enabled then
     while (LCurrentRow > 1) and (GetDisplayTextLineNumber(LCurrentRow - 1) = LRow) do
-    begin
       Dec(LCurrentRow);
-      //Dec(LRow);
-    end;
 
   LFontStyles := [];
   LPreviousFontStyles := [];
@@ -11290,7 +11284,7 @@ var
     LFoldRange: TBCEditorCodeFoldingRange;
     LHighlighterAttribute: TBCEditorHighlighterAttribute;
     LTokenText, LNextTokenText: string;
-    LTokenPosition, LTokenLength: Integer;
+    LTokenPosition, LWordWrapTokenPosition, LTokenLength: Integer;
     LFontStyles: TFontStyles;
     LKeyword, LWordAtSelection, LSelectedText: string;
     LMatchingPairUnderline: Boolean;
@@ -11607,6 +11601,7 @@ var
         FHighlighter.SetCurrentRange(FLines.Ranges[LCurrentLine - 1]);
 
       FHighlighter.SetCurrentLine(LCurrentLineText);
+      LWordWrapTokenPosition := 0;
 
       while LCurrentRow = LCurrentLine + 1 do
       begin
@@ -11639,10 +11634,17 @@ var
         while not FHighlighter.GetEndOfLine do
         begin
           LTokenPosition := FHighlighter.GetTokenPosition;
+
           if LNextTokenText = '' then
-            FHighlighter.GetToken(LTokenText)
+          begin
+            FHighlighter.GetToken(LTokenText);
+            LWordWrapTokenPosition := 0;
+          end
           else
+          begin
             LTokenText := LNextTokenText;
+            Inc(LTokenPosition, LWordWrapTokenPosition);
+          end;
           LNextTokenText := '';
           LTokenLength := Length(LTokenText);
 
@@ -11671,7 +11673,7 @@ var
                 LNextTokenText := Copy(LTokenText, LLastColumn - LLinePosition + 1, LTokenLength);
                 LTokenText := Copy(LTokenText, 1, LLastColumn - LLinePosition);
                 LTokenLength := Length(LTokenText);
-                Inc(LTokenPosition, LTokenLength);
+                Inc(LWordWrapTokenPosition, LTokenLength);
                 PrepareToken;
                 LFirstColumn := 1;
                 LAddWrappedCount := True;
@@ -11711,6 +11713,7 @@ var
           Inc(LLineRect.Bottom, GetLineHeight);
         Inc(LDisplayLine);
         LCurrentRow := GetDisplayTextLineNumber(LDisplayLine);
+
         if LWrappedRowCount > FVisibleLines then
           Break;
       end;
