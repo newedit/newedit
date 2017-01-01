@@ -631,6 +631,7 @@ begin
             LRegionItem.SkipIfFoundAfterOpenTokenArray[LIndex2] := LSkipIfFoundAfterOpenTokenArray.Items[LIndex2].Value;
         end;
 
+        LRegionItem.BreakCharFollows := LMemberObject.B['BreakCharFollows'];
         LRegionItem.BreakIfNotFoundBeforeNextRegion := LMemberObject['BreakIfNotFoundBeforeNextRegion'].Value;
         LRegionItem.OpenTokenEnd := LMemberObject['OpenTokenEnd'].Value;
         LRegionItem.ShowGuideLine := StrToBoolDef(LMemberObject['ShowGuideLine'].Value, True);
@@ -662,6 +663,9 @@ begin
 
     if LCodeFoldingObject.Contains('EscapeChar') then
       ACodeFoldingRegion.EscapeChar := LCodeFoldingObject['EscapeChar'].Value[1];
+
+    if LCodeFoldingObject.Contains('FoldTags') then
+      ACodeFoldingRegion.FoldTags := LCodeFoldingObject.B['FoldTags'];
 
     if LCodeFoldingObject.Contains('StringEscapeChar') then
       ACodeFoldingRegion.StringEscapeChar := LCodeFoldingObject['StringEscapeChar'].Value[1];

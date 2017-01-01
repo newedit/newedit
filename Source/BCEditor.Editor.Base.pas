@@ -2196,11 +2196,8 @@ var
       Inc(LWidth, LTokenWidth);
       FHighlighter.Next;
     end;
-    //if LLength > 0 then
-    begin
-      FWordWrapLineLengths[LCacheLength] := LLength;
-      AddLineNumberIntoCache;
-    end;
+    FWordWrapLineLengths[LCacheLength] := LLength;
+    AddLineNumberIntoCache;
   end;
 
 begin
@@ -3222,7 +3219,6 @@ end;
 procedure TBCBaseEditor.CodeFoldingLinesDeleted(const AFirstLine: Integer; const ACount: Integer);
 var
   LIndex: Integer;
-  LStartTextPosition, LEndTextPosition: TBCEditorTextPosition;
   LCodeFoldingRange: TBCEditorCodeFoldingRange;
 begin
   if ACount > 0 then
@@ -3231,13 +3227,7 @@ begin
     begin
       LCodeFoldingRange := CodeFoldingRangeForLine(LIndex);
       if Assigned(LCodeFoldingRange) then
-      begin
-        LStartTextPosition.Line := LCodeFoldingRange.FromLine;
-        LStartTextPosition.Char := 1;
-        LEndTextPosition.Line := LCodeFoldingRange.FromLine;
-        LEndTextPosition.Char := Length(FLines[LCodeFoldingRange.FromLine]);
         FAllCodeFoldingRanges.Delete(LCodeFoldingRange);
-      end;
     end;
     UpdateFoldRanges(AFirstLine, -ACount);
     LeftMarginChanged(Self);
@@ -3246,7 +3236,7 @@ end;
 
 procedure TBCBaseEditor.CodeFoldingResetCaches;
 var
-  i, j, LLength: Integer;
+  LIndex, LIndexRange, LLength: Integer;
   LCodeFoldingRange: TBCEditorCodeFoldingRange;
 begin
   if not Assigned(Parent) or not FCodeFolding.Visible then
@@ -3259,9 +3249,9 @@ begin
   SetLength(FCodeFoldingRangeFromLine, LLength);
   SetLength(FCodeFoldingRangeToLine, 0);
   SetLength(FCodeFoldingRangeToLine, LLength);
-  for i := FAllCodeFoldingRanges.AllCount - 1 downto 0 do
+  for LIndex := FAllCodeFoldingRanges.AllCount - 1 downto 0 do
   begin
-    LCodeFoldingRange := FAllCodeFoldingRanges[i];
+    LCodeFoldingRange := FAllCodeFoldingRanges[LIndex];
     if Assigned(LCodeFoldingRange) then
       if (not LCodeFoldingRange.ParentCollapsed) and ((LCodeFoldingRange.FromLine <> LCodeFoldingRange.ToLine) or
         LCodeFoldingRange.RegionItem.TokenEndIsPreviousLine and (LCodeFoldingRange.FromLine = LCodeFoldingRange.ToLine))
@@ -3272,8 +3262,8 @@ begin
 
           if LCodeFoldingRange.Collapsable then
           begin
-            for j := LCodeFoldingRange.FromLine + 1 to LCodeFoldingRange.ToLine - 1 do
-              FCodeFoldingTreeLine[j] := True;
+            for LIndexRange := LCodeFoldingRange.FromLine + 1 to LCodeFoldingRange.ToLine - 1 do
+              FCodeFoldingTreeLine[LIndexRange] := True;
 
             FCodeFoldingRangeToLine[LCodeFoldingRange.ToLine] := LCodeFoldingRange;
           end;
@@ -5758,7 +5748,7 @@ const
 var
   LLine, LFoldCount: Integer;
   LPText: PChar;
-  LBeginningOfLine, LIsOneCharFolds: Boolean;
+  LBeginningOfLine: Boolean;
   LPKeyWord, LPBookmarkText, LPBookmarkText2: PChar;
   LLastFoldRange: TBCEditorCodeFoldingRange;
   LOpenTokenSkipFoldRangeList: TList;
@@ -5929,7 +5919,7 @@ var
       Exit;
 
     if LOpenTokenFoldRangeList.Count > 0 then
-      if (not IsValidChar(LPText - 1) or LIsOneCharFolds) and
+      if //(not IsValidChar(LPText - 1) or LOneCharFoldsFound) and
         CharInSet(UpCase(LPText^), FHighlighter.FoldCloseKeyChars) then
       begin
         LIndexDecrease := 1;
@@ -6014,7 +6004,7 @@ var
   begin
     if LOpenTokenSkipFoldRangeList.Count <> 0 then
       Exit;
-    if (not IsValidChar(LPText - 1) or LIsOneCharFolds) and CharInSet(UpCase(LPText^), FHighlighter.FoldOpenKeyChars) then
+    if {(not IsValidChar(LPText - 1) or LOneCharFoldsFound) and} CharInSet(UpCase(LPText^), FHighlighter.FoldOpenKeyChars) then
     begin
       LCodeFoldingRange := nil;
       if LOpenTokenFoldRangeList.Count > 0 then
@@ -6026,8 +6016,7 @@ var
       for i := 0 to j do
       begin
         LRegionItem := LCurrentCodeFoldingRegion[i];
-        if (LRegionItem.OpenTokenBeginningOfLine and LBeginningOfLine) or (not LRegionItem.OpenTokenBeginningOfLine)
-        then
+        if (LRegionItem.OpenTokenBeginningOfLine and LBeginningOfLine) or (not LRegionItem.OpenTokenBeginningOfLine) then
         begin
           { Check if extra token found }
           if Assigned(LCodeFoldingRange) then
@@ -6086,7 +6075,7 @@ var
 
             if LPKeyWord^ = BCEDITOR_NONE_CHAR then
             begin
-              if ((LRegionItem.OpenTokenLength = 1) or IsWholeWord(LPBookmarkText - 1, LPText)) and
+              if (not LRegionItem.BreakCharFollows or LRegionItem.BreakCharFollows and IsWholeWord(LPBookmarkText - 1, LPText)) and
                 not EscapeChar(LPBookmarkText - 1) then { Not interested in partial hits }
               begin
                 { Check if special rule found }
@@ -6160,17 +6149,16 @@ var
 
   function MultiHighlighterOpen: Boolean;
   var
-    LIndex, LCount: Integer;
+    LIndex: Integer;
     LCodeFoldingRegion: TBCEditorCodeFoldingRegion;
     LChar: Char;
   begin
     Result := False;
     if LOpenTokenSkipFoldRangeList.Count <> 0 then
       Exit;
-    LCount := Highlighter.CodeFoldingRangeCount - 1;
     LChar := UpCase(LPText^);
     LPBookmarkText := LPText;
-    for LIndex := 1 to LCount do { First (0) is the default range }
+    for LIndex := 1 to Highlighter.CodeFoldingRangeCount - 1 do { First (0) is the default range }
     begin
       LCodeFoldingRegion := Highlighter.CodeFoldingRegions[LIndex];
 
@@ -6197,16 +6185,15 @@ var
 
   procedure MultiHighlighterClose;
   var
-    LIndex, LCount: Integer;
+    LIndex: Integer;
     LCodeFoldingRegion: TBCEditorCodeFoldingRegion;
     LChar: Char;
   begin
     if LOpenTokenSkipFoldRangeList.Count <> 0 then
       Exit;
-    LCount := Highlighter.CodeFoldingRangeCount - 1;
     LChar := UpCase(LPText^);
     LPBookmarkText := LPText;
-    for LIndex := 1 to LCount do { First (0) is the default range }
+    for LIndex := 1 to Highlighter.CodeFoldingRangeCount - 1 do { First (0) is the default range }
     begin
       LCodeFoldingRegion := Highlighter.CodeFoldingRegions[LIndex];
 
@@ -6235,10 +6222,71 @@ var
     end;
   end;
 
+  function TagFolds: Boolean;
+  var
+    LIndex: Integer;
+    LCodeFoldingRegion: TBCEditorCodeFoldingRegion;
+  begin
+    Result := False;
+    for LIndex := 0 to Highlighter.CodeFoldingRangeCount - 1 do
+    begin
+      LCodeFoldingRegion := Highlighter.CodeFoldingRegions[LIndex];
+      if LCodeFoldingRegion.FoldTags then
+        Exit(True);
+    end;
+  end;
+
+  procedure AddTagFolds;
+  var
+    LPText: PChar;
+    LToken: string;
+    LAdded: Boolean;
+    LOpenToken, LCloseToken: string;
+    LRegionItem: TBCEditorCodeFoldingRegionItem;
+  begin
+    LPText := PChar(FLines.Text);
+    LAdded := False;
+    while LPText^ <> BCEDITOR_NONE_CHAR do
+    begin
+      if LPText^ = '<' then
+      begin
+        Inc(LPText);
+        if not CharInSet(LPText^, ['?', '!', '/']) then
+        begin
+          LToken := '';
+          while (LPText^ <> BCEDITOR_NONE_CHAR) and not CharInSet(LPText^, ['<', '/', ' ', '>']) do
+          begin
+            LToken := LToken + UpCase(LPText^);
+            Inc(LPText);
+          end;
+
+          LOpenToken := '<' + LToken + LPText^;
+          LCloseToken := '</' + LToken;
+
+          if LPText^ = ' ' then
+          while (LPText^ <> BCEDITOR_NONE_CHAR) and (LPText^ <> '>') do
+            Inc(LPText);
+
+          if (LPText^ = '>') and ((LPText - 1)^ <> '/') then
+            if not FHighlighter.CodeFoldingRegions[0].Contains(LOpenToken, LCloseToken) then { First (0) is the default range }
+            begin
+              LRegionItem := FHighlighter.CodeFoldingRegions[0].Add(LOpenToken, LCloseToken);
+              LRegionItem.BreakCharFollows := False;
+              LAdded := True;
+            end;
+        end;
+      end;
+      Inc(LPText);
+    end;
+    if LAdded then
+    begin
+      FHighlighter.AddKeyChar(ctFoldOpen, '<');
+      FHighlighter.AddKeyChar(ctFoldClose, '<');
+    end;
+  end;
+
 var
-  i, j, LPreviousLine: Integer;
-  LRegion: TBCEditorCodeFoldingRegion;
-  LRegionItem: TBCEditorCodeFoldingRegionItem;
+  LIndex, LPreviousLine: Integer;
   LCodeFoldingRange: TBCEditorCodeFoldingRange;
 begin
   if not Assigned(FLineNumbersCache) then
@@ -6248,21 +6296,9 @@ begin
   LOpenTokenFoldRangeList := TList.Create;
   LCodeFoldingRangeIndexList := TList.Create;
   try
-    LIsOneCharFolds := False;
-    { Check, if one char folds }
-    for i := 0 to Highlighter.CodeFoldingRangeCount - 1 do
-    begin
-      LRegion := Highlighter.CodeFoldingRegions[i];
-      for j := 0 to LRegion.Count - 1 do
-      begin
-        LRegionItem := LRegion.Items[j];
-        if (LRegionItem.OpenTokenLength = 1) and (LRegionItem.CloseTokenLength = 1) then
-        begin
-          LIsOneCharFolds := True;
-          Break;
-        end;
-      end;
-    end;
+    if TagFolds then
+      AddTagFolds;
+
     { Go through the text line by line, character by character }
     LPreviousLine := -1;
 
@@ -6271,9 +6307,9 @@ begin
     if Highlighter.CodeFoldingRangeCount > 0 then
       LCurrentCodeFoldingRegion := Highlighter.CodeFoldingRegions[DEFAULT_CODE_FOLDING_RANGE_INDEX];
 
-    for i := 1 to Length(FLineNumbersCache) - 1 do
+    for LIndex := 1 to Length(FLineNumbersCache) - 1 do
     begin
-      LLine := FLineNumbersCache[i];
+      LLine := FLineNumbersCache[LIndex];
       LCodeFoldingRange := nil;
       if LLine < Length(FCodeFoldingRangeFromLine) then
         LCodeFoldingRange := FCodeFoldingRangeFromLine[LLine];
@@ -8701,7 +8737,7 @@ begin
   UpdateMarks(FMarkList);
 
   if FCodeFolding.Visible then
-    CodeFoldingLinesDeleted(LIndex + 1, ACount);
+    CodeFoldingLinesDeleted(LIndex, ACount);
 
   if Assigned(FOnLinesDeleted) then
     FOnLinesDeleted(Self, LIndex, ACount);
@@ -14417,7 +14453,6 @@ begin
   FWordWrap.Enabled := False;
   ClearCodeFolding;
   ClearBookmarks;
-
   { Read file into buffer }
   SetLength(LBuffer, AStream.Size);
   AStream.ReadBuffer(Pointer(LBuffer)^, Length(LBuffer));
