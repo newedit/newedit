@@ -513,6 +513,7 @@ var
   LTopLine: Integer;
   LCaretPosition: TBCEditorTextPosition;
 begin
+  Clear;
   LEditor := FEditor as TBCBaseEditor;
   if Assigned(LEditor) then
   begin
