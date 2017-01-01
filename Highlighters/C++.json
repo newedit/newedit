@@ -2,8 +2,8 @@
    "Highlighter": {
       "Info": {
          "General": {
-            "Version": "1.8.3",
-            "Date": "10.11.2016",
+            "Version": "1.9.0",
+            "Date": "01.01.2017",
             "Sample": [
                "// Hello World in C++\r\n",
                "\r\n",
@@ -358,7 +358,10 @@
             "FoldRegion": [
                {
                   "OpenToken": "{",
-                  "CloseToken": "}"
+                  "CloseToken": "}",
+                  "Properties": {
+                     "BreakCharFollows": false
+                  }
                }
             ]
          }

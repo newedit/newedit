@@ -2,7 +2,7 @@
    "Highlighter": {
       "Info": {
          "General": {
-            "Version": "1.8.3",
+            "Version": "1.9.0",
             "Date": "22.11.2016",
             "Sample": [
                "MIME-Version: 1.0\r\n",
@@ -63,10 +63,10 @@
                   "Attributes": {
                      "Element": "ReservedWord"
                   },
-									"Delimiters": " :",
+                  "Delimiters": " :",
                   "Properties": {
                      "CloseOnEndOfLine": true,
-										 "CloseOnTerm": true
+                     "CloseOnTerm": true
                   },
                   "TokenRange": {
                      "Open": "Content-"
@@ -78,7 +78,7 @@
                   "Type": "ReservedWord",
                   "Words": [
                      "boundary",
-										 "MIME-Version",
+                     "MIME-Version",
                      "Subject"
                   ],
                   "Attributes": {
