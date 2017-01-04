@@ -37,12 +37,12 @@ USE_VCL_STYLES | Use VCL styles. A set of graphical details that define the look
 
 <h3>Demo</h3>
 
-TBCEditor Control Demo v. 1.9.0.
+TBCEditor Control Demo v. 2.0.0 (dev).
 
   * <a href="http://www.bonecode.com/downloads/BCEditorComponentDemo32.zip">32-bit Windows</a>
   * <a href="http://www.bonecode.com/downloads/BCEditorComponentDemo64.zip">64-bit Windows</a>
 
-The latest update: 03.01.2017 17:11, UTC+02:00
+The latest update: 05.01.2017 01:51, UTC+02:00
 
 Demo source build requires 
 
