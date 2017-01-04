@@ -11701,7 +11701,7 @@ var
           LNextTokenText := '';
           LTokenLength := Length(LTokenText);
 
-          if (LTokenPosition + LTokenLength >= LFirstColumn) or (LTokenLength = 0) then
+          if (LTokenPosition + LTokenLength > LFirstColumn) or (LTokenLength = 0) then
           begin
             LIsSyncEditBlock := False;
             if FSyncEdit.BlockSelected then
@@ -12385,36 +12385,41 @@ var
     LLine, LBeginLine: Integer;
     LInsertedLines: Integer;
   begin
-    if Length(AValue) = 0 then
-      Exit;
+    try
+      if Length(AValue) = 0 then
+      begin
+        LTextCaretPosition := LBeginTextPosition;
+        Exit;
+      end;
 
-    if GetSelectionAvailable then
-      LTextCaretPosition := LBeginTextPosition
-    else
-      LTextCaretPosition := ATextCaretPosition;
+      if GetSelectionAvailable then
+        LTextCaretPosition := LBeginTextPosition
+      else
+        LTextCaretPosition := ATextCaretPosition;
 
-    LBeginLine := LTextCaretPosition.Line;
-    case APasteMode of
-      smNormal:
-        LInsertedLines := InsertNormal;
-      smColumn:
-        LInsertedLines := InsertColumn;
-    else
-      LInsertedLines := 0;
+      LBeginLine := LTextCaretPosition.Line;
+      case APasteMode of
+        smNormal:
+          LInsertedLines := InsertNormal;
+        smColumn:
+          LInsertedLines := InsertColumn;
+      else
+        LInsertedLines := 0;
+      end;
+
+      if LInsertedLines > 0 then
+        if eoTrimTrailingSpaces in Options then
+          for LLine := LBeginLine to LBeginLine + LInsertedLines do
+            DoTrimTrailingSpaces(LLine);
+
+      if FWordWrap.Enabled then
+        CreateLineNumbersCache(True);
+    finally
+      { Force caret reset }
+      TextCaretPosition := LTextCaretPosition;
+      SelectionBeginPosition := ATextCaretPosition;
+      SelectionEndPosition := ATextCaretPosition;
     end;
-
-    if LInsertedLines > 0 then
-      if eoTrimTrailingSpaces in Options then
-        for LLine := LBeginLine to LBeginLine + LInsertedLines do
-          DoTrimTrailingSpaces(LLine);
-
-    if FWordWrap.Enabled then
-      CreateLineNumbersCache(True);
-
-    { Force caret reset }
-    TextCaretPosition := LTextCaretPosition;
-    SelectionBeginPosition := ATextCaretPosition;
-    SelectionEndPosition := ATextCaretPosition;
   end;
 
 begin
