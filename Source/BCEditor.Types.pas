@@ -261,6 +261,7 @@ type
 
   TBCEditorTokenHelper = record
     Background: TColor;
+    Border: TColor;
     CharsBefore: Integer;
     EmptySpace: TBCEditorEmptySpace;
     ExpandedCharsBefore: Integer;

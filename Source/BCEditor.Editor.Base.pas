@@ -10621,7 +10621,7 @@ procedure TBCBaseEditor.PaintTextLines(AClipRect: TRect; const AFirstLine, ALast
 var
   LAnySelection: Boolean;
   LDisplayLine, LCurrentLine: Integer;
-  LForegroundColor, LBackgroundColor: TColor;
+  LForegroundColor, LBackgroundColor, LBorderColor: TColor;
   LIsSelectionInsideLine: Boolean;
   LIsLineSelected, LIsCurrentLine, LIsSyncEditBlock, LIsSearchInSelectionBlock: Boolean;
   LLineRect, LTokenRect: TRect;
@@ -11051,6 +11051,18 @@ var
         end;
       end;
 
+      if LTokenHelper.Border <> clNone then
+      begin
+        LOldPenColor := Canvas.Pen.Color;
+        Canvas.Pen.Color := LTokenHelper.Border;
+        Canvas.MoveTo(LTextRect.Left, LTextRect.Bottom - 1);
+        Canvas.LineTo(LTokenRect.Right + FItalicOffset - 1, LTextRect.Bottom - 1);
+        Canvas.LineTo(LTokenRect.Right + FItalicOffset - 1, LTextRect.Top);
+        Canvas.LineTo(LTextRect.Left, LTextRect.Top);
+        Canvas.LineTo(LTextRect.Left, LTextRect.Bottom - 1);
+        Canvas.Pen.Color := LOldPenColor;
+      end;
+
       if LTokenHelper.MatchingPairUnderline then
       begin
         LOldPenColor := Canvas.Pen.Color;
@@ -11216,7 +11228,7 @@ var
   end;
 
   procedure PrepareTokenHelper(const AToken: string; ACharsBefore, ATokenLength: Integer;
-    AForeground, ABackground: TColor; AFontStyle: TFontStyles; AMatchingPairUnderline: Boolean;
+    AForeground, ABackground, ABorder: TColor; AFontStyle: TFontStyles; AMatchingPairUnderline: Boolean;
     ACustomBackgroundColor: Boolean);
   var
     LCanAppend: Boolean;
@@ -11296,6 +11308,7 @@ var
       LTokenHelper.ExpandedCharsBefore := LExpandedCharsBefore;
       LTokenHelper.Foreground := AForeground;
       LTokenHelper.Background := ABackground;
+      LTokenHelper.Border := ABorder;
       LTokenHelper.FontStyle := AFontStyle;
       LTokenHelper.IsItalic := not AMinimap and (fsItalic in AFontStyle);
       LTokenHelper.MatchingPairUnderline := AMatchingPairUnderline;
@@ -11355,6 +11368,7 @@ var
     var
       LPToken, LPWord: PChar;
     begin
+      LBorderColor := clNone;
       LHighlighterAttribute := FHighlighter.GetTokenAttribute;
       if not (csDesigning in ComponentState) and Assigned(LHighlighterAttribute) then
       begin
@@ -11440,6 +11454,7 @@ var
             if FSearch.Highlighter.Colors.Foreground <> clNone then
               LForegroundColor := FSearch.Highlighter.Colors.Foreground;
             LBackgroundColor := FSearch.Highlighter.Colors.Background;
+            LBorderColor := FSearch.Highlighter.Colors.Border;
           end;
         end;
 
@@ -11449,12 +11464,12 @@ var
           LBackgroundColor := LMarkColor;
         end;
 
-        PrepareTokenHelper(LTokenText, LTokenPosition, LTokenLength, LForegroundColor, LBackgroundColor, LFontStyles,
-          LMatchingPairUnderline, LIsCustomBackgroundColor)
+        PrepareTokenHelper(LTokenText, LTokenPosition, LTokenLength, LForegroundColor, LBackgroundColor, LBorderColor,
+          LFontStyles, LMatchingPairUnderline, LIsCustomBackgroundColor)
       end
       else
-        PrepareTokenHelper(LTokenText, LTokenPosition, LTokenLength, LForegroundColor, LBackgroundColor, Font.Style,
-          False, False);
+        PrepareTokenHelper(LTokenText, LTokenPosition, LTokenLength, LForegroundColor, LBackgroundColor, LBorderColor,
+          Font.Style, False, False);
     end;
 
     procedure SetSelectionVariables;
