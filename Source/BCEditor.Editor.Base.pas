@@ -11582,6 +11582,11 @@ var
           Dec(LLine);
           Inc(LWrappedRowCount);
         end;
+        if LFirstColumn > 1 then
+        begin
+          LCurrentLineText := Copy(LCurrentLineText, LFirstColumn, LCurrentLineLength);
+          LFirstColumn := 1;
+        end;
       end
       else
         LLastColumn := GetVisibleChars(LCurrentLine + 1, LCurrentLineText);
@@ -11701,7 +11706,7 @@ var
           LNextTokenText := '';
           LTokenLength := Length(LTokenText);
 
-          if (LTokenPosition + LTokenLength > LFirstColumn) or (LTokenLength = 0) then
+          if (LTokenPosition + LTokenLength >= LFirstColumn) or (LTokenLength = 0) then
           begin
             LIsSyncEditBlock := False;
             if FSyncEdit.BlockSelected then
