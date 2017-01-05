@@ -2,8 +2,8 @@
    "Highlighter": {
       "Info": {
          "General": {
-            "Version": "1.9.0",
-            "Date": "01.01.2017",
+            "Version": "2.0.0",
+            "Date": "05.01.2017",
             "Sample": [
                "REGBS   EQU     $1000     ; location of on-board peripherals\r\n",
                "PAO     EQU     0         ; port A offset from REGBS\r\n",
