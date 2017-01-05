@@ -259,6 +259,8 @@ type
     esTab
   );
 
+  TBCEditorTokenAdditionalFeature = (tafNone, tafUnderline, tafWaveLine);
+
   TBCEditorTokenHelper = record
     Background: TColor;
     Border: TColor;
@@ -269,7 +271,7 @@ type
     Foreground: TColor;
     IsItalic: Boolean;
     Length: Integer;
-    MatchingPairUnderline: Boolean;
+    TokenAdditionalFeature: TBCEditorTokenAdditionalFeature;
     Text: string;
   end;
 
