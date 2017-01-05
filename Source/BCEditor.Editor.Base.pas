@@ -5919,8 +5919,7 @@ var
       Exit;
 
     if LOpenTokenFoldRangeList.Count > 0 then
-      if //(not IsValidChar(LPText - 1) or LOneCharFoldsFound) and
-        CharInSet(UpCase(LPText^), FHighlighter.FoldCloseKeyChars) then
+      if CharInSet(UpCase(LPText^), FHighlighter.FoldCloseKeyChars) then
       begin
         LIndexDecrease := 1;
         {$if defined(VER250)}
@@ -5945,7 +5944,8 @@ var
           end;
           if LPKeyWord^ = BCEDITOR_NONE_CHAR then { If found, pop skip region from the stack }
           begin
-            if (LCodeFoldingRange.RegionItem.CloseTokenLength = 1) or IsWholeWord(LPBookmarkText - 1, LPText) then { Not interested in partial hits }
+            if not LCodeFoldingRange.RegionItem.BreakCharFollows or
+              LCodeFoldingRange.RegionItem.BreakCharFollows and IsWholeWord(LPBookmarkText - 1, LPText) then
             begin
               LOpenTokenFoldRangeList.Remove(LCodeFoldingRange);
               Dec(LFoldCount);
@@ -6260,7 +6260,7 @@ var
           end;
 
           LOpenToken := '<' + LToken + LPText^;
-          LCloseToken := '</' + LToken;
+          LCloseToken := '</' + LToken + '>';
 
           if LPText^ = ' ' then
           while (LPText^ <> BCEDITOR_NONE_CHAR) and (LPText^ <> '>') do
@@ -6349,7 +6349,7 @@ begin
             Inc(LPText);
 
           { Skip rest of the word }
-          while (LPText^ <> BCEDITOR_NONE_CHAR) and (LPText^.IsLower or LPText^.IsUpper or LPText^.IsNumber) do
+          while (LPText^ <> BCEDITOR_NONE_CHAR) and (LPText^.IsLower or LPText^.IsUpper or LPText^.IsNumber) do 
             Inc(LPText);
 
           LBeginningOfLine := False; { Not in the beginning of the line anymore }
@@ -8736,7 +8736,7 @@ begin
   UpdateMarks(FMarkList);
 
   if FCodeFolding.Visible then
-    CodeFoldingLinesDeleted(LIndex, ACount);
+    CodeFoldingLinesDeleted(LIndex + 1, ACount);
 
   if Assigned(FOnLinesDeleted) then
     FOnLinesDeleted(Self, LIndex, ACount);
