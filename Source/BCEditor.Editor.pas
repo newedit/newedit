@@ -44,7 +44,6 @@ type
     property Height;
     property ImeMode;
     property ImeName;
-    property InsertMode;
     property KeyCommands;
     property LeftMargin;
     property Lines;
@@ -120,6 +119,7 @@ type
     property Tabs;
     property TabStop;
     property Tag;
+    property TextEntryMode;
     property Undo;
     property UnknownChars;
     property WantReturns;

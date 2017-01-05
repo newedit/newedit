@@ -61,7 +61,6 @@ type
     FHighlighter: TBCEditorHighlighter;
     FHookedCommandHandlers: TObjectList;
     FHorizontalScrollPosition: Integer;
-    FInsertMode: Boolean;
     FInternalBookmarkImage: TBCEditorInternalImage;
     FInternalNullImage: TBCEditorInternalImage;
     FIsScrolling: Boolean;
@@ -187,6 +186,7 @@ type
     FStateFlags: TBCEditorStateFlags;
     FSyncEdit: TBCEditorSyncEdit;
     FTabs: TBCEditorTabs;
+    FTextEntryMode: TBCEditorTextEntryMode;
     FTopLine: Integer;
     FUndo: TBCEditorUndo;
     FUndoList: TBCEditorUndoList;
@@ -363,7 +363,6 @@ type
     procedure SetEncoding(const AValue: TEncoding);
     procedure SetForegroundColor(const AValue: TColor);
     procedure SetHorizontalScrollPosition(const AValue: Integer);
-    procedure SetInsertMode(const AValue: Boolean);
     procedure SetKeyCommands(const AValue: TBCEditorKeyCommands);
     procedure SetLeftMargin(const AValue: TBCEditorLeftMargin);
     procedure SetLines(AValue: TBCEditorLines);
@@ -387,6 +386,7 @@ type
     procedure SetTextCaretPosition(const AValue: TBCEditorTextPosition);
     procedure SetTextCaretX(const AValue: Integer);
     procedure SetTextCaretY(const AValue: Integer);
+    procedure SetTextEntryMode(const AValue: TBCEditorTextEntryMode);
     procedure SetTopLine(const AValue: Integer);
     procedure SetUndo(const AValue: TBCEditorUndo);
     procedure SetUnknownChars(const AValue: TBCEditorUnknownChars);
@@ -663,7 +663,6 @@ type
     property Font;
     property ForegroundColor: TColor read FForegroundColor write SetForegroundColor default clWindowText;
     property Highlighter: TBCEditorHighlighter read FHighlighter;
-    property InsertMode: Boolean read FInsertMode write SetInsertMode default True;
     property IsScrolling: Boolean read FIsScrolling;
     property KeyCommands: TBCEditorKeyCommands read FKeyCommands write SetKeyCommands stored False;
     property LeftMargin: TBCEditorLeftMargin read FLeftMargin write SetLeftMargin;
@@ -733,6 +732,7 @@ type
     property TabStop default True;
     property Text: string read GetText write SetText;
     property TextBetween[const ATextBeginPosition: TBCEditorTextPosition; const ATextEndPosition: TBCEditorTextPosition]: string read GetTextBetween write SetTextBetween;
+    property TextEntryMode: TBCEditorTextEntryMode read FTextEntryMode write SetTextEntryMode default temInsert;
     property TopLine: Integer read FTopLine write SetTopLine;
     property Undo: TBCEditorUndo read FUndo write SetUndo;
     property UndoList: TBCEditorUndoList read FUndoList;
@@ -893,7 +893,7 @@ begin
   FTabs := TBCEditorTabs.Create;
   FTabs.OnChange := TabsChanged;
   { Text }
-  FInsertMode := True;
+  FTextEntryMode := temInsert;
   FKeyboardHandler := TBCEditorKeyboardHandler.Create;
   FKeyCommands := TBCEditorKeyCommands.Create(Self);
   SetDefaultKeyCommands;
@@ -3908,20 +3908,20 @@ begin
     if LLength < LTextCaretPosition.Char - 1 then
     begin
       if toTabsToSpaces in FTabs.Options then
-        LSpaceBuffer := StringOfChar(BCEDITOR_SPACE_CHAR, LTextCaretPosition.Char - LLength - Ord(FInsertMode))
+        LSpaceBuffer := StringOfChar(BCEDITOR_SPACE_CHAR, LTextCaretPosition.Char - LLength - Ord(FTextEntryMode))
       else
       if AllWhiteUpToTextPosition(LTextCaretPosition, LLineText, LLength) then
-        LSpaceBuffer := StringOfChar(BCEDITOR_TAB_CHAR, (LTextCaretPosition.Char - LLength - Ord(FInsertMode))
-          div FTabs.Width) + StringOfChar(BCEDITOR_SPACE_CHAR, (LTextCaretPosition.Char - LLength - Ord(FInsertMode))
+        LSpaceBuffer := StringOfChar(BCEDITOR_TAB_CHAR, (LTextCaretPosition.Char - LLength - Ord(FTextEntryMode))
+          div FTabs.Width) + StringOfChar(BCEDITOR_SPACE_CHAR, (LTextCaretPosition.Char - LLength - Ord(FTextEntryMode))
           mod FTabs.Width)
       else
-        LSpaceBuffer := StringOfChar(BCEDITOR_SPACE_CHAR, LTextCaretPosition.Char - LLength - Ord(FInsertMode));
+        LSpaceBuffer := StringOfChar(BCEDITOR_SPACE_CHAR, LTextCaretPosition.Char - LLength - Ord(FTextEntryMode));
       LSpaceCount1 := Length(LSpaceBuffer);
     end;
 
     LBlockStartPosition := LTextCaretPosition;
 
-    if FInsertMode then
+    if FTextEntryMode = temInsert then
     begin
       if LSpaceCount1 > 0 then
         LLineText := LLineText + LSpaceBuffer + AChar
@@ -4255,7 +4255,7 @@ begin
 
       LBlockStartPosition := LTextCaretPosition;
 
-      if not FInsertMode then
+      if FTextEntryMode = temOverwrite then
       begin
         LHelper := Copy(LLineText, LTextCaretPosition.Char, LLength);
         Delete(LLineText, LTextCaretPosition.Char, LLength);
@@ -4264,7 +4264,7 @@ begin
       Insert(S, LLineText, LTextCaretPosition.Char);
       DisplayCaretX := DisplayCaretX + Length(S);
       SetLineWithRightTrim(GetTextCaretY, LLineText);
-      if FInsertMode then
+      if FTextEntryMode = temInsert then
         LHelper := '';
       FUndoList.AddChange(crInsert, LTextCaretPosition, LBlockStartPosition, TextCaretPosition, LHelper, smNormal);
     finally
@@ -4874,7 +4874,7 @@ begin
       LTabText := LTabText + StringOfChar(BCEDITOR_TAB_CHAR, LCharCount mod FTabs.Width);
     end;
 
-    if InsertMode then
+    if FTextEntryMode = temInsert then
     begin
       Insert(LTabText, LTextLine, LTextCaretPosition.Char);
       FLines[LTextCaretPosition.Line] := LTextLine;
@@ -4884,7 +4884,7 @@ begin
     try
       if LChangeScrollPastEndOfLine then
         FScroll.SetOption(soPastEndOfLine, True);
-      if not InsertMode then
+      if FTextEntryMode = temOverwrite then
         LTabText := StringReplace(LTabText, BCEDITOR_TAB_CHAR, StringOfChar(BCEDITOR_SPACE_CHAR, FTabs.Width),
           [rfReplaceAll]);
       SetTextCaretX(LTextCaretPosition.Char + Length(LTabText));
@@ -4896,7 +4896,7 @@ begin
 
     if FSelection.ActiveMode <> smColumn then
     begin
-      if InsertMode then
+      if FTextEntryMode = temInsert then
         FUndoList.AddChange(crInsert, LTextCaretPosition, LTextCaretPosition, TextCaretPosition, '',
           FSelection.ActiveMode)
       else
@@ -4978,7 +4978,7 @@ begin
   begin
     LBackgroundColor := FCaret.NonBlinking.Colors.Background;
     LForegroundColor := FCaret.NonBlinking.Colors.Foreground;
-    if InsertMode then
+    if FTextEntryMode = temInsert then
       LCaretStyle := FCaret.Styles.Insert
     else
       LCaretStyle := FCaret.Styles.Overwrite;
@@ -6584,11 +6584,11 @@ begin
   end;
 end;
 
-procedure TBCBaseEditor.SetInsertMode(const AValue: Boolean);
+procedure TBCBaseEditor.SetTextEntryMode(const AValue: TBCEditorTextEntryMode);
 begin
-  if FInsertMode <> AValue then
+  if FTextEntryMode <> AValue then
   begin
-    FInsertMode := AValue;
+    FTextEntryMode := AValue;
     if not (csDesigning in ComponentState) then
       ResetCaret;
   end;
@@ -11983,7 +11983,7 @@ var
   LCaretStyle: TBCEditorCaretStyle;
   LWidth, LHeight: Integer;
 begin
-  if InsertMode then
+  if FTextEntryMode = temInsert then
     LCaretStyle := FCaret.Styles.Insert
   else
     LCaretStyle := FCaret.Styles.Overwrite;
@@ -14305,11 +14305,14 @@ begin
           Update;
         end;
       ecInsertMode:
-        InsertMode := True;
+        FTextEntryMode := temInsert;
       ecOverwriteMode:
-        InsertMode := False;
+        FTextEntryMode := temOverwrite;
       ecToggleMode:
-        InsertMode := not InsertMode;
+        if FTextEntryMode = temInsert then
+          FTextEntryMode := temOverwrite
+        else
+          FTextEntryMode := temInsert;
       ecBlockIndent:
         if not ReadOnly then
           DoBlockIndent;
@@ -15049,7 +15052,7 @@ begin
         LCaretDisplayPosition.Column := FWordWrapLineLengths[LCaretDisplayPosition.Row] + 1;
     end;
 
-    if InsertMode then
+    if FTextEntryMode = temInsert then
       LCaretStyle := FCaret.Styles.Insert
     else
       LCaretStyle := FCaret.Styles.Overwrite;

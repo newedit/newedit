@@ -68,6 +68,8 @@ type
   );
   TBCEditorCaretMultiEditOptions = set of TBCEditorCaretMultiEditOption;
 
+  TBCEditorTextEntryMode = (temInsert, temOverwrite);
+
   TBCEditorScrollOption = (
     soHalfPage, { When scrolling with page-up and page-down commands, only scroll a half page at a time }
     soHintFollows, { The scroll hint follows the mouse when scrolling vertically }
