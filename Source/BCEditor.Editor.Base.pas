@@ -3017,8 +3017,8 @@ begin
 
     FHighlighter.Next;
   end;
-
-  Inc(Result.Column, (X + FHorizontalScrollPosition - FLeftMarginWidth - LTextWidth) div FPaintHelper.CharWidth);
+  if not FWordWrap.Enabled then
+    Inc(Result.Column, (X + FHorizontalScrollPosition - FLeftMarginWidth - LTextWidth) div FPaintHelper.CharWidth);
 end;
 
 function TBCBaseEditor.PixelsToTextPosition(const X, Y: Integer): TBCEditorTextPosition;
