@@ -4910,48 +4910,48 @@ end;
 
 procedure TBCBaseEditor.DoToggleBookmark;
 var
-  i, LIndex: Integer;
+  LIndex, LMarkIndex: Integer;
   LMark: TBCEditorMark;
   LTextCaretPosition: TBCEditorTextPosition;
 begin
   LTextCaretPosition := TextCaretPosition;
-  LIndex := 0;
-  for i := 0 to FBookmarkList.Count - 1 do
+  LMarkIndex := 0;
+  for LIndex := 0 to FBookmarkList.Count - 1 do
   begin
-    LMark := FBookmarkList.Items[i];
+    LMark := FBookmarkList.Items[LIndex];
     if LMark.Line = LTextCaretPosition.Line then
     begin
       DeleteBookmark(LMark);
       Exit;
     end;
-    if LMark.Index > LIndex then
-      LIndex := LMark.Index;
+    if LMark.Index > LMarkIndex then
+      LMarkIndex := LMark.Index;
   end;
-  LIndex := Max(BCEDITOR_BOOKMARK_IMAGE_COUNT, LIndex + 1);
-  SetBookmark(LIndex, LTextCaretPosition);
+  LMarkIndex := Max(BCEDITOR_BOOKMARK_IMAGE_COUNT, LMarkIndex + 1);
+  SetBookmark(LMarkIndex, LTextCaretPosition);
 end;
 
 procedure TBCBaseEditor.DoToggleMark;
 var
-  i, LIndex: Integer;
+  LIndex, LMarkIndex: Integer;
   LMark: TBCEditorMark;
   LTextCaretPosition: TBCEditorTextPosition;
 begin
   LTextCaretPosition := TextCaretPosition;
-  LIndex := 0;
-  for i := 0 to FMarkList.Count - 1 do
+  LMarkIndex := 0;
+  for LIndex := 0 to FMarkList.Count - 1 do
   begin
-    LMark := FMarkList.Items[i];
+    LMark := FMarkList.Items[LIndex];
     if LMark.Line = LTextCaretPosition.Line then
     begin
       DeleteMark(LMark);
       Exit;
     end;
-    if LMark.Index > LIndex then
-      LIndex := LMark.Index;
+    if LMark.Index > LMarkIndex then
+      LMarkIndex := LMark.Index;
   end;
-  LIndex := LIndex + 1;
-  SetMark(LIndex, LTextCaretPosition, FLeftMargin.Marks.DefaultImageIndex);
+  Inc(LMarkIndex);
+  SetMark(LMarkIndex, LTextCaretPosition, FLeftMargin.Marks.DefaultImageIndex);
 end;
 
 procedure TBCBaseEditor.PaintCaretBlock(ADisplayCaretPosition: TBCEditorDisplayPosition);
@@ -5996,7 +5996,7 @@ var
 
   procedure RegionItemsOpen;
   var
-    i, j, k: Integer;
+    LIndex, LArrayIndex: Integer;
     LSkipIfFoundAfterOpenToken: Boolean;
     LRegionItem: TBCEditorCodeFoldingRegionItem;
     LCodeFoldingRange: TBCEditorCodeFoldingRange;
@@ -6004,7 +6004,7 @@ var
   begin
     if LOpenTokenSkipFoldRangeList.Count <> 0 then
       Exit;
-    if {(not IsValidChar(LPText - 1) or LOneCharFoldsFound) and} CharInSet(UpCase(LPText^), FHighlighter.FoldOpenKeyChars) then
+    if CharInSet(UpCase(LPText^), FHighlighter.FoldOpenKeyChars) then
     begin
       LCodeFoldingRange := nil;
       if LOpenTokenFoldRangeList.Count > 0 then
@@ -6012,10 +6012,9 @@ var
       if Assigned(LCodeFoldingRange) and LCodeFoldingRange.RegionItem.NoSubs then
         Exit;
 
-      j := LCurrentCodeFoldingRegion.Count - 1;
-      for i := 0 to j do
+      for LIndex := 0 to LCurrentCodeFoldingRegion.Count - 1 do
       begin
-        LRegionItem := LCurrentCodeFoldingRegion[i];
+        LRegionItem := LCurrentCodeFoldingRegion[LIndex];
         if (LRegionItem.OpenTokenBeginningOfLine and LBeginningOfLine) or (not LRegionItem.OpenTokenBeginningOfLine) then
         begin
           { Check if extra token found }
@@ -6084,9 +6083,9 @@ var
                 begin
                   while LPText^ <> BCEDITOR_NONE_CHAR do
                   begin
-                    for k := 0 to LRegionItem.SkipIfFoundAfterOpenTokenArrayCount - 1 do
+                    for LArrayIndex := 0 to LRegionItem.SkipIfFoundAfterOpenTokenArrayCount - 1 do
                     begin
-                      LPKeyWord := PChar(LRegionItem.SkipIfFoundAfterOpenTokenArray[k]);
+                      LPKeyWord := PChar(LRegionItem.SkipIfFoundAfterOpenTokenArray[LArrayIndex]);
                       LPBookmarkText2 := LPText;
                       if UpCase(LPText^) = LPKeyWord^ then { If first character match }
                       begin
@@ -8005,8 +8004,8 @@ var
   LLine: PChar;
   LFullStringToDelete: string;
   LStringToDelete: TBCEditorArrayOfString;
-  LIndex: Integer;
-  LLength, LCaretPositionX, LDeleteIndex, j, LDeletionLength, LFirstIndent, LLastIndent, LLastLine: Integer;
+  LIndex, LStringToDeleteIndex: Integer;
+  LLength, LCaretPositionX, LDeleteIndex, LDeletionLength, LFirstIndent, LLastIndent, LLastLine: Integer;
   LLineText: string;
   LOldSelectionMode: TBCEditorSelectionMode;
   LSomethingToDelete: Boolean;
@@ -8051,7 +8050,7 @@ begin
       LLastLine := LBlockEndPosition.Line;
 
     LSomethingToDelete := False;
-    j := 0;
+    LStringToDeleteIndex := 0;
     SetLength(LStringToDelete, LLastLine - LBlockBeginPosition.Line + 1);
     for LIndex := LBlockBeginPosition.Line to LLastLine do
     begin
@@ -8059,8 +8058,8 @@ begin
       if FSelection.ActiveMode = smColumn then
         Inc(LLine, MinIntValue([LBlockBeginPosition.Char - 1, LBlockEndPosition.Char - 1, Length(Lines[LIndex])]));
       LDeletionLength := GetDeletionLength;
-      LStringToDelete[j] := Copy(LLine, 1, LDeletionLength);
-      Inc(j);
+      LStringToDelete[LStringToDeleteIndex] := Copy(LLine, 1, LDeletionLength);
+      Inc(LStringToDeleteIndex);
       if (LOldCaretPosition.Line = LIndex) and (LCaretPositionX <> 1) then
         LCaretPositionX := LCaretPositionX - LDeletionLength;
     end;
@@ -8076,11 +8075,11 @@ begin
         LDeleteIndex := 1
       else
         LDeleteIndex := Min(LBlockBeginPosition.Char, LBlockEndPosition.Char);
-      j := 0;
+      LStringToDeleteIndex := 0;
       for LIndex := LBlockBeginPosition.Line to LLastLine do
       begin
-        LLength := Length(LStringToDelete[j]);
-        Inc(j);
+        LLength := Length(LStringToDelete[LStringToDeleteIndex]);
+        Inc(LStringToDeleteIndex);
         if LFirstIndent = -1 then
           LFirstIndent := LLength;
         LLineText := FLines[LIndex];
@@ -10694,7 +10693,7 @@ var
     end;
   end;
 
-  procedure SetDrawingColors(ASelected: Boolean);
+  procedure SetDrawingColors(const ASelected: Boolean);
   var
     LColor: TColor;
   begin
@@ -10870,6 +10869,7 @@ var
     LLeft, LTop, LBottom, LMaxX: Integer;
     LTokenLength: Integer;
     LLastColumn: Integer;
+    LStep: Integer;
 
     procedure PaintSubstituteChars;
     var
@@ -11063,19 +11063,29 @@ var
         Canvas.Pen.Color := LOldPenColor;
       end;
 
-      case LTokenHelper.TokenAdditionalFeature of
-        tafUnderline:
-          begin
-            LOldPenColor := Canvas.Pen.Color;
-            Canvas.Pen.Color := FMatchingPair.Colors.Underline;
-            Canvas.MoveTo(LTextRect.Left, LTextRect.Bottom - 1);
-            Canvas.LineTo(LTextRect.Right, LTextRect.Bottom - 1);
-            Canvas.Pen.Color := LOldPenColor;
-          end;
-        tafWaveLine:
-          begin
-             // TODO
-          end;
+      if LTokenHelper.TokenAdditionalFeature <> tafNone then
+      begin
+        LOldPenColor := Canvas.Pen.Color;
+        Canvas.Pen.Color := LTokenHelper.TokenAdditionalFeatureColor;
+        case LTokenHelper.TokenAdditionalFeature of
+          tafUnderline:
+            begin
+              Canvas.MoveTo(LTextRect.Left, LTextRect.Bottom - 1);
+              Canvas.LineTo(LTextRect.Right, LTextRect.Bottom - 1);
+            end;
+          tafWaveLine:
+            begin
+              LStep := 0;
+              while LStep < LTextRect.Right - 4 do
+              begin
+                Canvas.MoveTo(LTextRect.Left + LStep, LTextRect.Bottom - 3);
+                Canvas.LineTo(LTextRect.Left + LStep + 2, LTextRect.Bottom - 1);
+                Canvas.LineTo(LTextRect.Left + LStep + 4, LTextRect.Bottom - 3);
+                Inc(LStep, 4);
+              end;
+            end;
+        end;
+        Canvas.Pen.Color := LOldPenColor;
       end;
     end;
 
@@ -11085,7 +11095,7 @@ var
       LLineEndRect := LTokenRect;
   end;
 
-  procedure PaintHighlightToken(AFillToEndOfLine: Boolean);
+  procedure PaintHighlightToken(const AFillToEndOfLine: Boolean);
   var
     LIsPartOfTokenSelected: Boolean;
     LFirstColumn, LLastColumn: Integer;
@@ -11236,6 +11246,7 @@ var
   procedure PrepareTokenHelper(const AToken: string; const ACharsBefore, ATokenLength: Integer;
     const AForeground, ABackground: TColor; const ABorder: TColor; const AFontStyle: TFontStyles;
     const ATokenAdditionalFeature: TBCEditorTokenAdditionalFeature;
+    const ATokenAdditionalFeatureColor: TColor;
     const ACustomBackgroundColor: Boolean);
   var
     LCanAppend: Boolean;
@@ -11322,6 +11333,7 @@ var
       LTokenHelper.FontStyle := AFontStyle;
       LTokenHelper.IsItalic := not AMinimap and (fsItalic in AFontStyle);
       LTokenHelper.TokenAdditionalFeature := ATokenAdditionalFeature;
+      LTokenHelper.TokenAdditionalFeatureColor := ATokenAdditionalFeatureColor;
     end;
 
     LPToken := PChar(AToken);
@@ -11349,6 +11361,7 @@ var
     LFontStyles: TFontStyles;
     LKeyword, LWordAtSelection, LSelectedText: string;
     LTokenAdditionalFeature: TBCEditorTokenAdditionalFeature;
+    LTokenAdditionalFeatureColor: TColor;
     LOpenTokenEndPos, LOpenTokenEndLen: Integer;
     LElement: string;
     LIsCustomBackgroundColor: Boolean;
@@ -11389,12 +11402,13 @@ var
           LBackgroundColor := LHighlighterAttribute.Background;
         LFontStyles := LHighlighterAttribute.FontStyles;
 
-        if Assigned(FOnCustomTokenAttribute) then
-          FOnCustomTokenAttribute(Self, LTokenText, LCurrentLine, LTokenPosition, LForegroundColor,
-            LBackgroundColor, LFontStyles);
-
         LIsCustomBackgroundColor := False;
         LTokenAdditionalFeature := tafNone;
+        LTokenAdditionalFeatureColor := clNone;
+
+        if Assigned(FOnCustomTokenAttribute) then
+          FOnCustomTokenAttribute(Self, LTokenText, LCurrentLine, LTokenPosition, LForegroundColor,
+            LBackgroundColor, LFontStyles, LTokenAdditionalFeature, LTokenAdditionalFeatureColor);
 
         if FMatchingPair.Enabled and not FSyncEdit.Active and (FCurrentMatchingPair <> trNotFound) then
           if (LCurrentLine = FCurrentMatchingPairMatch.OpenTokenPos.Line) and
@@ -11412,7 +11426,10 @@ var
                 LBackgroundColor := FMatchingPair.Colors.Matched;
               end;
               if mpoUnderline in FMatchingPair.Options then
+              begin
                 LTokenAdditionalFeature := tafUnderline;
+                LTokenAdditionalFeatureColor := FMatchingPair.Colors.Underline;
+              end;
             end
             else
             if mpoHighlightUnmatched in FMatchingPair.Options then
@@ -11425,7 +11442,10 @@ var
                 LBackgroundColor := FMatchingPair.Colors.Unmatched;
               end;
               if mpoUnderline in FMatchingPair.Options then
+              begin
                 LTokenAdditionalFeature := tafUnderline;
+                LTokenAdditionalFeatureColor := FMatchingPair.Colors.Underline;
+              end;
             end;
           end;
 
@@ -11477,11 +11497,11 @@ var
         end;
 
         PrepareTokenHelper(LTokenText, LTokenPosition, LTokenLength, LForegroundColor, LBackgroundColor, LBorderColor,
-          LFontStyles, LTokenAdditionalFeature, LIsCustomBackgroundColor)
+          LFontStyles, LTokenAdditionalFeature, LTokenAdditionalFeatureColor, LIsCustomBackgroundColor)
       end
       else
         PrepareTokenHelper(LTokenText, LTokenPosition, LTokenLength, LForegroundColor, LBackgroundColor, LBorderColor,
-          Font.Style, tafNone, False);
+          Font.Style, tafNone, clNone, False);
     end;
 
     procedure SetSelectionVariables;
