@@ -13,8 +13,10 @@ type
     FCommonData: TsScrollWndData;
     FScrollWnd: TacScrollWnd;
 {$endif}
+    FResizing: Boolean;
     procedure WMEraseBkgnd(var AMessage: TMessage); message WM_ERASEBKGND;
     procedure WMMouseActivate(var AMessage: TWMMouseActivate); message WM_MOUSEACTIVATE;
+    procedure WMNCHitTest(var Msg: TWMNCHitTest); message WM_NCHITTEST;
 {$if defined(USE_VCL_STYLES)}
     procedure WMNCPaint(var AMessage: TWMNCPaint); message WM_NCPAINT;
 {$endif}
@@ -29,6 +31,7 @@ type
     procedure CreateWnd; override;
     procedure WndProc(var AMessage: TMessage); override;
     property ActiveControl: TWinControl read FActiveControl;
+    property Resizing: Boolean read FResizing;
 {$if defined(USE_ALPHASKINS)}
     property SkinData: TsScrollWndData read FCommonData write FCommonData;
 {$endif}
@@ -91,6 +94,7 @@ procedure TBCEditorPopupWindow.Hide;
 begin
   SetWindowPos(Handle, 0, 0, 0, 0, 0, SWP_NOZORDER or SWP_NOMOVE or SWP_NOSIZE or SWP_NOACTIVATE or SWP_HIDEWINDOW);
   Visible := False;
+  FResizing := False;
 end;
 
 procedure TBCEditorPopupWindow.CreateParams(var Params: TCreateParams);
@@ -179,6 +183,15 @@ begin
     end;
 {$endif}
   inherited;
+end;
+
+procedure TBCEditorPopupWindow.WMNCHitTest(var Msg: TWMNCHitTest);
+begin
+  inherited;
+
+  FResizing := Msg.Result in [HTRIGHT, HTBOTTOM, HTBOTTOMRIGHT];
+  if not FResizing then
+    Msg.Result := HTCLIENT;
 end;
 
 end.

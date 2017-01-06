@@ -23,6 +23,7 @@ type
     FCaseSensitive: Boolean;
     FCompletionProposal: TBCEditorCompletionProposal;
     FCompletionStart: Integer;
+    FResizable: Boolean;
     FSelectedLine: Integer;
     FCurrentString: string;
     FFiltered: Boolean;
@@ -115,6 +116,7 @@ begin
     begin
       Self.FCaseSensitive := cpoCaseSensitive in Options;
       Self.FFiltered := cpoFiltered in Options;
+      Self.FResizable := cpoResizeable in Options;
       Self.FBitmapBuffer.Canvas.Font.Assign(Font);
       Self.FItemHeight := TextHeight(FBitmapBuffer.Canvas, 'X');
       Self.FFormWidth := Width;
@@ -523,6 +525,8 @@ var
 var
   LIndex, LCount: Integer;
 begin
+  if FResizable then
+    SetWindowLong(Handle, GWL_STYLE, GetWindowLong(Handle, GWL_STYLE) or WS_SIZEBOX);
   LCount := GetItems.Count;
   SetLength(FItemIndexArray, 0);
   SetLength(FItemIndexArray, LCount);
@@ -695,12 +699,7 @@ begin
     SB_PAGEUP:
       TopLine := Max(0, TopLine - FCompletionProposal.VisibleLines);
     SB_THUMBPOSITION, SB_THUMBTRACK:
-      //begin  TODO
-        //if GetItems.Count > BCEDITOR_MAX_SCROLL_RANGE then
-        //  TopLine := MulDiv(FCompletionProposal.VisibleLines + GetItems.Count - 1, AMessage.Pos, BCEDITOR_MAX_SCROLL_RANGE)
-        //else
       TopLine := AMessage.Pos;
-      //end;
   end;
   Invalidate;
 end;

@@ -102,16 +102,19 @@ procedure TBCEditorMethodList.Remove(AHandler: TMethod);
 var
   LIndex: Integer;
 begin
-  LIndex := FData.Count - 2;
-  while LIndex >= 0 do
+  if Assigned(FData) then
   begin
-    if (FData.List[LIndex] = AHandler.Data) and (FData.List[LIndex + 1] = AHandler.Code) then
+    LIndex := FData.Count - 2;
+    while LIndex >= 0 do
     begin
-      FData.Delete(LIndex);
-      FData.Delete(LIndex);
-      Exit;
+      if (FData.List[LIndex] = AHandler.Data) and (FData.List[LIndex + 1] = AHandler.Code) then
+      begin
+        FData.Delete(LIndex);
+        FData.Delete(LIndex);
+        Exit;
+      end;
+      Dec(LIndex, 2);
     end;
-    Dec(LIndex, 2);
   end;
 end;
 

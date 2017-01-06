@@ -161,7 +161,8 @@ type
     cpoAutoInvoke,
     cpoCaseSensitive,
     cpoFiltered,
-    cpoParseItemsFromText
+    cpoParseItemsFromText,
+    cpoResizeable
   );
   TBCEditorCompletionProposalOptions = set of TBCEditorCompletionProposalOption;
 

@@ -467,7 +467,7 @@ type
     procedure DragCanceled; override;
     procedure DragOver(ASource: TObject; X, Y: Integer; AState: TDragState; var AAccept: Boolean); override;
     procedure FreeHintForm(var AForm: TBCEditorCodeFoldingHintForm);
-    procedure FreeCompletionProposalPopupWindow;
+    procedure FreeCompletionProposalPopupWindow(const AForceFree: Boolean = False);
     procedure HideCaret;
     procedure IncPaintLock;
     procedure KeyDown(var AKey: Word; AShift: TShiftState); override;
@@ -997,7 +997,7 @@ begin
   FHighlighter := nil;
   if Assigned(FChainedEditor) or (FLines <> FOriginalLines) then
     RemoveChainedEditor;
-  FreeCompletionProposalPopupWindow;
+  FreeCompletionProposalPopupWindow(True);
   { Do not use FreeAndNil, it first nils and then frees causing problems with code accessing FHookedCommandHandlers
     while destruction }
   FHookedCommandHandlers.Free;
@@ -8492,13 +8492,21 @@ begin
   UpdateMouseCursor;
 end;
 
-procedure TBCBaseEditor.FreeCompletionProposalPopupWindow;
+procedure TBCBaseEditor.FreeCompletionProposalPopupWindow(const AForceFree: Boolean = False);
 begin
   if Assigned(FCompletionProposalPopupWindow) then
   begin
-    FCompletionProposalPopupWindow.Hide;
-    FCompletionProposalPopupWindow.Free;
-    FCompletionProposalPopupWindow := nil;
+    if not AForceFree and FCompletionProposalPopupWindow.Resizing then
+    begin
+      FCompletionProposalPopupWindow.Invalidate;
+      SetFocus
+    end
+    else
+    begin
+      FCompletionProposalPopupWindow.Hide;
+      FCompletionProposalPopupWindow.Free;
+      FCompletionProposalPopupWindow := nil;
+    end;
   end;
 end;
 
