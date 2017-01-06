@@ -37,11 +37,11 @@ type
   TBCEditorCustomLineColorsEvent = procedure(ASender: TObject; ALine: Integer; var AUseColors: Boolean;
     var AForeground: TColor; var ABackground: TColor) of object;
 
-  TBCEditorTokenAdditionalFeature = (tafNone, tafDoubleUnderline, tafUnderline, tafWaveLine);
+  TBCEditorTokenAddon = (taNone, taDoubleUnderline, taUnderline, taWaveLine);
 
   TBCEditorCustomTokenAttributeEvent = procedure(ASender: TObject; const AText: string; const ALine: Integer;
     const APosition: Integer; var AForegroundColor: TColor; var ABackgroundColor: TColor; var AStyles: TFontStyles;
-    var ATokenAdditionalFeature: TBCEditorTokenAdditionalFeature; var ATokenAdditionalFeatureColor: TColor) of object;
+    var ATokenAddon: TBCEditorTokenAddon; var ATokenAddonColor: TColor) of object;
 
   TBCEditorCreateFileStreamEvent = procedure(ASender: TObject; const AFileName: string; var AStream: TStream) of object;
 
@@ -274,8 +274,8 @@ type
     Foreground: TColor;
     IsItalic: Boolean;
     Length: Integer;
-    TokenAdditionalFeature: TBCEditorTokenAdditionalFeature;
-    TokenAdditionalFeatureColor: TColor;
+    TokenAddon: TBCEditorTokenAddon;
+    TokenAddonColor: TColor;
     Text: string;
   end;
 

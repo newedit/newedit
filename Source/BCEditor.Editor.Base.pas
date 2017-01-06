@@ -11063,14 +11063,14 @@ var
         Canvas.Pen.Color := LOldPenColor;
       end;
 
-      if LTokenHelper.TokenAdditionalFeature <> tafNone then
+      if LTokenHelper.TokenAddon <> taNone then
       begin
         LOldPenColor := Canvas.Pen.Color;
-        Canvas.Pen.Color := LTokenHelper.TokenAdditionalFeatureColor;
-        case LTokenHelper.TokenAdditionalFeature of
-          tafDoubleUnderline, tafUnderline:
+        Canvas.Pen.Color := LTokenHelper.TokenAddonColor;
+        case LTokenHelper.TokenAddon of
+          taDoubleUnderline, taUnderline:
             begin
-              if LTokenHelper.TokenAdditionalFeature = tafDoubleUnderline then
+              if LTokenHelper.TokenAddon = taDoubleUnderline then
               begin
                 Canvas.MoveTo(LTextRect.Left, LTextRect.Bottom - 3);
                 Canvas.LineTo(LTokenRect.Right, LTextRect.Bottom - 3);
@@ -11078,7 +11078,7 @@ var
               Canvas.MoveTo(LTextRect.Left, LTextRect.Bottom - 1);
               Canvas.LineTo(LTokenRect.Right, LTextRect.Bottom - 1);
             end;
-          tafWaveLine:
+          taWaveLine:
             begin
               LStep := 0;
               while LStep < LTokenRect.Right - 4 do
@@ -11250,8 +11250,8 @@ var
 
   procedure PrepareTokenHelper(const AToken: string; const ACharsBefore, ATokenLength: Integer;
     const AForeground, ABackground: TColor; const ABorder: TColor; const AFontStyle: TFontStyles;
-    const ATokenAdditionalFeature: TBCEditorTokenAdditionalFeature;
-    const ATokenAdditionalFeatureColor: TColor;
+    const ATokenAddon: TBCEditorTokenAddon;
+    const ATokenAddonColor: TColor;
     const ACustomBackgroundColor: Boolean);
   var
     LCanAppend: Boolean;
@@ -11300,7 +11300,7 @@ var
     begin
       LCanAppend := (LTokenHelper.Length < BCEDITOR_TOKEN_MAX_LENGTH) and
         ((LTokenHelper.FontStyle = AFontStyle) or ((LEmptySpace <> esNone) and not (fsUnderline in AFontStyle) and
-        not (fsUnderline in LTokenHelper.FontStyle))) and (LTokenHelper.TokenAdditionalFeature = ATokenAdditionalFeature)
+        not (fsUnderline in LTokenHelper.FontStyle))) and (LTokenHelper.TokenAddon = ATokenAddon)
         and ((LTokenHelper.Background = LBackground) and (LTokenHelper.Foreground = LForeground)) and
         (LEmptySpace = LTokenHelper.EmptySpace) and LAppendAnsiChars and LAppendTabs;
 
@@ -11337,8 +11337,8 @@ var
       LTokenHelper.Border := ABorder;
       LTokenHelper.FontStyle := AFontStyle;
       LTokenHelper.IsItalic := not AMinimap and (fsItalic in AFontStyle);
-      LTokenHelper.TokenAdditionalFeature := ATokenAdditionalFeature;
-      LTokenHelper.TokenAdditionalFeatureColor := ATokenAdditionalFeatureColor;
+      LTokenHelper.TokenAddon := ATokenAddon;
+      LTokenHelper.TokenAddonColor := ATokenAddonColor;
     end;
 
     LPToken := PChar(AToken);
@@ -11365,8 +11365,8 @@ var
     LTokenPosition, LWordWrapTokenPosition, LTokenLength: Integer;
     LFontStyles: TFontStyles;
     LKeyword, LWordAtSelection, LSelectedText: string;
-    LTokenAdditionalFeature: TBCEditorTokenAdditionalFeature;
-    LTokenAdditionalFeatureColor: TColor;
+    LTokenAddon: TBCEditorTokenAddon;
+    LTokenAddonColor: TColor;
     LOpenTokenEndPos, LOpenTokenEndLen: Integer;
     LElement: string;
     LIsCustomBackgroundColor: Boolean;
@@ -11408,12 +11408,12 @@ var
         LFontStyles := LHighlighterAttribute.FontStyles;
 
         LIsCustomBackgroundColor := False;
-        LTokenAdditionalFeature := tafNone;
-        LTokenAdditionalFeatureColor := clNone;
+        LTokenAddon := taNone;
+        LTokenAddonColor := clNone;
 
         if Assigned(FOnCustomTokenAttribute) then
           FOnCustomTokenAttribute(Self, LTokenText, LCurrentLine, LTokenPosition, LForegroundColor,
-            LBackgroundColor, LFontStyles, LTokenAdditionalFeature, LTokenAdditionalFeatureColor);
+            LBackgroundColor, LFontStyles, LTokenAddon, LTokenAddonColor);
 
         if FMatchingPair.Enabled and not FSyncEdit.Active and (FCurrentMatchingPair <> trNotFound) then
           if (LCurrentLine = FCurrentMatchingPairMatch.OpenTokenPos.Line) and
@@ -11432,8 +11432,8 @@ var
               end;
               if mpoUnderline in FMatchingPair.Options then
               begin
-                LTokenAdditionalFeature := tafUnderline;
-                LTokenAdditionalFeatureColor := FMatchingPair.Colors.Underline;
+                LTokenAddon := taUnderline;
+                LTokenAddonColor := FMatchingPair.Colors.Underline;
               end;
             end
             else
@@ -11448,8 +11448,8 @@ var
               end;
               if mpoUnderline in FMatchingPair.Options then
               begin
-                LTokenAdditionalFeature := tafUnderline;
-                LTokenAdditionalFeatureColor := FMatchingPair.Colors.Underline;
+                LTokenAddon := taUnderline;
+                LTokenAddonColor := FMatchingPair.Colors.Underline;
               end;
             end;
           end;
@@ -11502,11 +11502,11 @@ var
         end;
 
         PrepareTokenHelper(LTokenText, LTokenPosition, LTokenLength, LForegroundColor, LBackgroundColor, LBorderColor,
-          LFontStyles, LTokenAdditionalFeature, LTokenAdditionalFeatureColor, LIsCustomBackgroundColor)
+          LFontStyles, LTokenAddon, LTokenAddonColor, LIsCustomBackgroundColor)
       end
       else
         PrepareTokenHelper(LTokenText, LTokenPosition, LTokenLength, LForegroundColor, LBackgroundColor, LBorderColor,
-          Font.Style, tafNone, clNone, False);
+          Font.Style, taNone, clNone, False);
     end;
 
     procedure SetSelectionVariables;
