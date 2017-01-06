@@ -37,7 +37,7 @@ type
   TBCEditorCustomLineColorsEvent = procedure(ASender: TObject; ALine: Integer; var AUseColors: Boolean;
     var AForeground: TColor; var ABackground: TColor) of object;
 
-  TBCEditorTokenAdditionalFeature = (tafNone, tafUnderline, tafWaveLine);
+  TBCEditorTokenAdditionalFeature = (tafNone, tafDoubleUnderline, tafUnderline, tafWaveLine);
 
   TBCEditorCustomTokenAttributeEvent = procedure(ASender: TObject; const AText: string; const ALine: Integer;
     const APosition: Integer; var AForegroundColor: TColor; var ABackgroundColor: TColor; var AStyles: TFontStyles;

@@ -6850,8 +6850,8 @@ begin
   if LDisplayLineCount = 0 then
     LDisplayLineCount := 1;
 
-  if (soPastEndOfFileMarker in FScroll.Options) and (not (sfInSelection in FStateFlags) or (sfInSelection in FStateFlags)
-    and (LValue = FTopLine)) then
+  if (soPastEndOfFileMarker in FScroll.Options) and
+    (not (sfInSelection in FStateFlags) or (sfInSelection in FStateFlags) and (LValue = FTopLine)) then
     LValue := Min(LValue, LDisplayLineCount)
   else
     LValue := Min(LValue, LDisplayLineCount - FVisibleLines + 1);
@@ -11068,15 +11068,20 @@ var
         LOldPenColor := Canvas.Pen.Color;
         Canvas.Pen.Color := LTokenHelper.TokenAdditionalFeatureColor;
         case LTokenHelper.TokenAdditionalFeature of
-          tafUnderline:
+          tafDoubleUnderline, tafUnderline:
             begin
+              if LTokenHelper.TokenAdditionalFeature = tafDoubleUnderline then
+              begin
+                Canvas.MoveTo(LTextRect.Left, LTextRect.Bottom - 3);
+                Canvas.LineTo(LTokenRect.Right, LTextRect.Bottom - 3);
+              end;
               Canvas.MoveTo(LTextRect.Left, LTextRect.Bottom - 1);
-              Canvas.LineTo(LTextRect.Right, LTextRect.Bottom - 1);
+              Canvas.LineTo(LTokenRect.Right, LTextRect.Bottom - 1);
             end;
           tafWaveLine:
             begin
               LStep := 0;
-              while LStep < LTextRect.Right - 4 do
+              while LStep < LTokenRect.Right - 4 do
               begin
                 Canvas.MoveTo(LTextRect.Left + LStep, LTextRect.Bottom - 3);
                 Canvas.LineTo(LTextRect.Left + LStep + 2, LTextRect.Bottom - 1);
