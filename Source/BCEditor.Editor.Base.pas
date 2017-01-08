@@ -48,6 +48,7 @@ type
 {$endif}
     FCompletionProposal: TBCEditorCompletionProposal;
     FCompletionProposalPopupWindow: TBCEditorCompletionProposalPopupWindow;
+    FCompletionProposalResizeCursor: TCursor;
     FCompletionProposalTimer: TTimer;
     FCurrentMatchingPair: TBCEditorMatchingTokenResult;
     FCurrentMatchingPairMatch: TBCEditorMatchingPairMatch;
@@ -215,6 +216,7 @@ type
     function GetCharAtCursor: Char;
     function GetCharWidth: Integer;
     function GetCommentAtTextPosition(const ATextPosition: TBCEditorTextPosition): string;
+    function GetCompletionProposalCursor(const APoint: TPoint): TCursor;
     function GetDisplayCaretPosition: TBCEditorDisplayPosition;
     function GetDisplayLineNumber(const ADisplayLineNumber: Integer): Integer;
     function GetDisplayPosition(const AColumn: Integer; const ARow: Integer): TBCEditorDisplayPosition;
@@ -467,7 +469,7 @@ type
     procedure DragCanceled; override;
     procedure DragOver(ASource: TObject; X, Y: Integer; AState: TDragState; var AAccept: Boolean); override;
     procedure FreeHintForm(var AForm: TBCEditorCodeFoldingHintForm);
-    procedure FreeCompletionProposalPopupWindow(const AForceFree: Boolean = False);
+    procedure FreeCompletionProposalPopupWindow;
     procedure HideCaret;
     procedure IncPaintLock;
     procedure KeyDown(var AKey: Word; AShift: TShiftState); override;
@@ -997,7 +999,7 @@ begin
   FHighlighter := nil;
   if Assigned(FChainedEditor) or (FLines <> FOriginalLines) then
     RemoveChainedEditor;
-  FreeCompletionProposalPopupWindow(True);
+  FreeCompletionProposalPopupWindow;
   { Do not use FreeAndNil, it first nils and then frees causing problems with code accessing FHookedCommandHandlers
     while destruction }
   FHookedCommandHandlers.Free;
@@ -1328,6 +1330,34 @@ begin
         Result := Copy(LTextLine, LTextPosition.Char, LStop - LTextPosition.Char);
     end;
   end;
+end;
+
+function TBCBaseEditor.GetCompletionProposalCursor(const APoint: TPoint): TCursor;
+var
+  LPoint: TPoint;
+  LRightSide, LBottomSide: Boolean;
+begin
+  with FCompletionProposalPopupWindow do
+  begin
+    LPoint.X := Left + Width;
+    LPoint.Y := Top + Height;
+  end;
+
+  LPoint := ScreenToClient(LPoint);
+
+  LRightSide := (APoint.X > LPoint.X) and (APoint.X < LPoint.X + 7);
+  LBottomSide := (APoint.Y > LPoint.Y) and (APoint.Y < LPoint.Y + 7);
+
+  if LRightSide and LBottomSide then
+    Result := crSizeNWSE
+  else
+  if LRightSide then
+    Result := crSizeWE
+  else
+  if LBottomSide then
+    Result := crSizeNS
+  else
+    Result := crDefault;
 end;
 
 function TBCBaseEditor.GetCharWidth: Integer;
@@ -8492,21 +8522,13 @@ begin
   UpdateMouseCursor;
 end;
 
-procedure TBCBaseEditor.FreeCompletionProposalPopupWindow(const AForceFree: Boolean = False);
+procedure TBCBaseEditor.FreeCompletionProposalPopupWindow;
 begin
   if Assigned(FCompletionProposalPopupWindow) then
   begin
-    if not AForceFree and FCompletionProposalPopupWindow.Resizing then
-    begin
-      FCompletionProposalPopupWindow.Invalidate;
-      SetFocus
-    end
-    else
-    begin
-      FCompletionProposalPopupWindow.Hide;
-      FCompletionProposalPopupWindow.Free;
-      FCompletionProposalPopupWindow := nil;
-    end;
+    FCompletionProposalPopupWindow.Hide;
+    FCompletionProposalPopupWindow.Free;
+    FCompletionProposalPopupWindow := nil;
   end;
 end;
 
@@ -8808,8 +8830,6 @@ begin
   CreateLineNumbersCache(True);
   CodeFoldingResetCaches;
   SearchAll;
-
-  DoLeftMarginAutoSize;
 end;
 
 procedure TBCBaseEditor.LinesPutted(ASender: TObject; const AIndex: Integer; const ACount: Integer);
@@ -9159,6 +9179,9 @@ begin
     if Assigned(FMultiCarets) and (FMultiCarets.Count > 0) then
       Exit;
   end;
+
+  if Assigned(FCompletionProposalPopupWindow) and FCompletionProposalPopupWindow.Visible and (cpoResizeable in FCompletionProposal.Options) then
+    FCompletionProposalResizeCursor := GetCompletionProposalCursor(Point(X, Y));
 
   if FMouseMoveScrolling then
   begin
@@ -12657,6 +12680,9 @@ begin
     (LCursorPoint.X > ClientRect.Width - FSearch.Map.GetWidth) or (FSearch.Map.Align = saLeft) and
     (LCursorPoint.X <= FSearch.Map.GetWidth)) then
     SetCursor(Screen.Cursors[FSearch.Map.Cursor])
+  else
+  if Assigned(FCompletionProposalPopupWindow) and FCompletionProposalPopupWindow.Visible and (cpoResizeable in FCompletionProposal.Options) then
+    SetCursor(Screen.Cursors[FCompletionProposalResizeCursor])
   else
   begin
     LSelectionAvailable := GetSelectionAvailable;

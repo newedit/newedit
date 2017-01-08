@@ -23,7 +23,6 @@ type
     FCaseSensitive: Boolean;
     FCompletionProposal: TBCEditorCompletionProposal;
     FCompletionStart: Integer;
-    FResizable: Boolean;
     FSelectedLine: Integer;
     FCurrentString: string;
     FFiltered: Boolean;
@@ -116,7 +115,6 @@ begin
     begin
       Self.FCaseSensitive := cpoCaseSensitive in Options;
       Self.FFiltered := cpoFiltered in Options;
-      Self.FResizable := cpoResizeable in Options;
       Self.FBitmapBuffer.Canvas.Font.Assign(Font);
       Self.FItemHeight := TextHeight(FBitmapBuffer.Canvas, 'X');
       Self.FFormWidth := Width;
@@ -525,8 +523,6 @@ var
 var
   LIndex, LCount: Integer;
 begin
-  if FResizable then
-    SetWindowLong(Handle, GWL_STYLE, GetWindowLong(Handle, GWL_STYLE) or WS_SIZEBOX);
   LCount := GetItems.Count;
   SetLength(FItemIndexArray, 0);
   SetLength(FItemIndexArray, LCount);
