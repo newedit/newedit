@@ -5972,6 +5972,7 @@ var
             Inc(LPText);
             Inc(LPKeyWord);
           end;
+
           if LPKeyWord^ = BCEDITOR_NONE_CHAR then { If found, pop skip region from the stack }
           begin
             if not LCodeFoldingRange.RegionItem.BreakCharFollows or
@@ -6268,7 +6269,7 @@ var
   procedure AddTagFolds;
   var
     LPText: PChar;
-    LToken: string;
+    LTokenName, LTokenAttributes: string;
     LAdded: Boolean;
     LOpenToken, LCloseToken: string;
     LRegionItem: TBCEditorCodeFoldingRegionItem;
@@ -6282,21 +6283,24 @@ var
         Inc(LPText);
         if not CharInSet(LPText^, ['?', '!', '/']) then
         begin
-          LToken := '';
-          while (LPText^ <> BCEDITOR_NONE_CHAR) and not CharInSet(LPText^, ['<', '/', ' ', '>']) do
+          LTokenName := '';
+          while (LPText^ <> BCEDITOR_NONE_CHAR) and not CharInSet(LPText^, [' ', '>']) do
           begin
-            LToken := LToken + UpCase(LPText^);
+            LTokenName := LTokenName + UpCase(LPText^);
+            Inc(LPText);
+          end;
+          LTokenAttributes := '';
+          if LPText^ = ' ' then
+          while (LPText^ <> BCEDITOR_NONE_CHAR) and not CharInSet(LPText^, ['/', '>']) do
+          begin
+            LTokenAttributes := LTokenAttributes + UpCase(LPText^);
             Inc(LPText);
           end;
 
-          LOpenToken := '<' + LToken + LPText^;
-          LCloseToken := '</' + LToken + '>';
+          LOpenToken := '<' + LTokenName + LTokenAttributes + LPText^;
+          LCloseToken := '</' + LTokenName + '>';
 
-          if LPText^ = ' ' then
-          while (LPText^ <> BCEDITOR_NONE_CHAR) and (LPText^ <> '>') do
-            Inc(LPText);
-
-          if (LPText^ = '>') and ((LPText - 1)^ <> '/') then
+          if (LPText^ = '>') and (LPText^ <> '/') then
             if not FHighlighter.CodeFoldingRegions[0].Contains(LOpenToken, LCloseToken) then { First (0) is the default range }
             begin
               LRegionItem := FHighlighter.CodeFoldingRegions[0].Add(LOpenToken, LCloseToken);
