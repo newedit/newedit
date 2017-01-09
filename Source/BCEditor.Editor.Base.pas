@@ -2505,9 +2505,6 @@ begin
     Result := Result * FPaintHelper.FontStock.CharWidth + (ALength - 1) * FPaintHelper.FontStock.CharWidth * FTabs.Width;
   end
   else
-  if FPaintHelper.FixedSizeFont and (Word(AToken[1]) < 256) then
-    Exit(FPaintHelper.FontStock.CharWidth * ALength)
-  else
   begin
     GetTextExtentPoint32(FPaintHelper.StockBitmap.Canvas.Handle, AToken, ALength, LSize);
     Result := LSize.cx;
@@ -11292,7 +11289,7 @@ var
     LCanAppend: Boolean;
     LEmptySpace: TBCEditorEmptySpace;
     LPToken: PChar;
-    LAppendAnsiChars, LAppendTabs: Boolean;
+    LAppendAnsiChars, LAppendTabs, LAppendUnicode: Boolean;
     LForeground, LBackground: TColor;
   begin
     LForeground := AForeground;
@@ -11329,6 +11326,7 @@ var
     end;
 
     LAppendAnsiChars := (LTokenHelper.Length > 0) and (Ord(LTokenHelper.Text[1]) < 256) and (Ord(LPToken^) < 256);
+    LAppendUnicode := LPToken^.GetUnicodeCategory in [TUnicodeCategory.ucCombiningMark, TUnicodeCategory.ucNonSpacingMark];
     LAppendTabs := not (toColumns in FTabs.Options) or (toColumns in FTabs.Options) and (LEmptySpace <> esTab);
 
     if LTokenHelper.Length > 0 then
@@ -11337,7 +11335,7 @@ var
         ((LTokenHelper.FontStyle = AFontStyle) or ((LEmptySpace <> esNone) and not (fsUnderline in AFontStyle) and
         not (fsUnderline in LTokenHelper.FontStyle))) and (LTokenHelper.TokenAddon = ATokenAddon)
         and ((LTokenHelper.Background = LBackground) and (LTokenHelper.Foreground = LForeground)) and
-        (LEmptySpace = LTokenHelper.EmptySpace) and LAppendAnsiChars and LAppendTabs;
+        (LEmptySpace = LTokenHelper.EmptySpace) and (LAppendAnsiChars or LAppendUnicode) and LAppendTabs;
 
       if not LCanAppend then
       begin
