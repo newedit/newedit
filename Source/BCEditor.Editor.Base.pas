@@ -11348,7 +11348,7 @@ var
 
     LTokenHelper.EmptySpace := LEmptySpace;
 
-    if FUnknownCharHigh > 0 then
+    if FUnknownChars.Enabled and (FUnknownCharHigh > 0) then
     while LPToken^ <> BCEDITOR_NONE_CHAR do
     begin
       if Ord(LPToken^) > FUnknownCharHigh then
