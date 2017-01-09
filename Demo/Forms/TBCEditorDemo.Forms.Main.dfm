@@ -140,6 +140,7 @@ inherited MainForm: TMainForm
       CompletionProposal.Font.Height = -11
       CompletionProposal.Font.Name = 'Courier New'
       CompletionProposal.Font.Style = []
+      CompletionProposal.Options = [cpoFiltered, cpoParseItemsFromText, cpoResizeable]
       CompletionProposal.ShortCut = 16416
       CompletionProposal.Trigger.Chars = '.'
       CompletionProposal.Trigger.Enabled = False
@@ -486,9 +487,8 @@ inherited MainForm: TMainForm
         FontData.Font.Height = -11
         FontData.Font.Name = 'Tahoma'
         FontData.Font.Style = []
-        Cursor = crDefault
-        Height = 20
-        Width = 45
+        Height = 22
+        Width = 48
         Index = 0
         Name = 'TitleBarItemFile'
         ShowHint = True
@@ -502,9 +502,8 @@ inherited MainForm: TMainForm
         FontData.Font.Height = -11
         FontData.Font.Name = 'Tahoma'
         FontData.Font.Style = []
-        Cursor = crDefault
-        Height = 19
-        Width = 146
+        Height = 21
+        Width = 161
         Index = 1
         Name = 'TitleBarItemCaption'
         ShowHint = False
@@ -519,9 +518,8 @@ inherited MainForm: TMainForm
         FontData.Font.Height = -11
         FontData.Font.Name = 'Tahoma'
         FontData.Font.Style = []
-        Cursor = crDefault
-        Height = 20
-        Width = 53
+        Height = 22
+        Width = 56
         Index = 2
         Name = 'TitleBarItemEncoding'
         ShowHint = False
@@ -535,7 +533,6 @@ inherited MainForm: TMainForm
         FontData.Font.Height = -11
         FontData.Font.Name = 'Tahoma'
         FontData.Font.Style = []
-        Cursor = crDefault
         Width = 6
         Index = 3
         Name = 'TitleBarItemSpacing1'
@@ -551,9 +548,8 @@ inherited MainForm: TMainForm
         FontData.Font.Height = -11
         FontData.Font.Name = 'Tahoma'
         FontData.Font.Style = []
-        Cursor = crDefault
-        Height = 20
-        Width = 94
+        Height = 22
+        Width = 101
         Index = 4
         Name = 'TitleBarItemHighlighter'
         ShowHint = False
@@ -567,7 +563,6 @@ inherited MainForm: TMainForm
         FontData.Font.Height = -11
         FontData.Font.Name = 'Tahoma'
         FontData.Font.Style = []
-        Cursor = crDefault
         Width = 6
         Index = 5
         Name = 'TitleBarItemSpacing2'
@@ -583,9 +578,8 @@ inherited MainForm: TMainForm
         FontData.Font.Height = -11
         FontData.Font.Name = 'Tahoma'
         FontData.Font.Style = []
-        Cursor = crDefault
-        Height = 20
-        Width = 64
+        Height = 22
+        Width = 68
         Index = 6
         Name = 'TitleBarItemColors'
         ShowHint = False
@@ -599,7 +593,6 @@ inherited MainForm: TMainForm
         FontData.Font.Height = -11
         FontData.Font.Name = 'Tahoma'
         FontData.Font.Style = []
-        Cursor = crDefault
         Width = 2
         Index = 7
         Name = 'TitleBarItemSpacing3'

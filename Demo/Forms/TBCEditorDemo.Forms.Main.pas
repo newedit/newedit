@@ -102,11 +102,9 @@ type
     procedure ClearText;
     procedure DoSearchTextChange;
     procedure InitializeEditorPrint(AEditorPrint: TBCEditorPrint);
-    procedure LockFormPaint;
     procedure PrintPreview;
     procedure SelectedSearchEngineClick(const ASearchEngine: TBCEditorSearchEngine);
     procedure SetMatchesFound;
-    procedure UnlockFormPaint;
   end;
 
 var
@@ -223,9 +221,9 @@ begin
   FPopupEncodingDialog.Left := LPoint.X;
   FPopupEncodingDialog.Top := LPoint.Y;
 
-  LockFormPaint;
+  SkinProvider.SkinData.BeginUpdate;
   FPopupEncodingDialog.Execute(TitleBar.Items[TITLE_BAR_ENCODING].Caption);
-  UnlockFormPaint;
+  SkinProvider.SkinData.EndUpdate;
 end;
 
 procedure TMainForm.TitleBarItems4Click(Sender: TObject);
@@ -244,9 +242,9 @@ begin
   FPopupHighlighterDialog.Left := LPoint.X;
   FPopupHighlighterDialog.Top := LPoint.Y;
 
-  LockFormPaint;
+  SkinProvider.SkinData.BeginUpdate;
   FPopupHighlighterDialog.Execute(FHighlighterStrings, TitleBar.Items[TITLE_BAR_HIGHLIGHTER].Caption);
-  UnlockFormPaint;
+  SkinProvider.SkinData.EndUpdate;
 end;
 
 procedure TMainForm.TitleBarItems6Click(Sender: TObject);
@@ -265,9 +263,9 @@ begin
   FPopupHighlighterColorDialog.Left := LPoint.X;
   FPopupHighlighterColorDialog.Top := LPoint.Y;
 
-  LockFormPaint;
+  SkinProvider.SkinData.BeginUpdate;
   FPopupHighlighterColorDialog.Execute(FHighlighterColorStrings, TitleBar.Items[TITLE_BAR_COLORS].Caption);
-  UnlockFormPaint;
+  SkinProvider.SkinData.EndUpdate;
 end;
 
 procedure TMainForm.ClearText;
@@ -418,6 +416,8 @@ begin
   FHighlighterStrings := GetHighlighters;
   FHighlighterColorStrings := GetHighlighterColors;
 
+  Editor.Encoding := TEncoding.ANSI;
+
   SelectedHighlighterClick('Object Pascal');
   SelectedHighlighterColorClick('Default');
 end;
@@ -465,9 +465,9 @@ begin
     FPopupSearchEngineDialog.PopupParent := Self;
     FPopupSearchEngineDialog.OnSelectSearchEngine := SelectedSearchEngineClick;
   end;
-  LockFormPaint;
+  SkinProvider.SkinData.BeginUpdate;
   FPopupSearchEngineDialog.Execute(Editor.Search.Engine);
-  UnlockFormPaint;
+  SkinProvider.SkinData.EndUpdate;
 end;
 
 procedure TMainForm.SelectedSearchEngineClick(const ASearchEngine: TBCEditorSearchEngine);
@@ -517,18 +517,6 @@ begin
     Invalidate;
   end;
   TitleBar.Items[TITLE_BAR_COLORS].Caption := Editor.Highlighter.Colors.Name;
-end;
-
-procedure TMainForm.LockFormPaint;
-begin
-  SkinProvider.SkinData.BeginUpdate;
-  SkinProvider.Form.Perform(WM_SETREDRAW, 0, 0);
-end;
-
-procedure TMainForm.UnlockFormPaint;
-begin
-  SkinProvider.SkinData.EndUpdate;
-  SkinProvider.Form.Perform(WM_SETREDRAW, 1, 0);
 end;
 
 end.
