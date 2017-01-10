@@ -66,6 +66,7 @@ type
     FInternalNullImage: TBCEditorInternalImage;
     FIsScrolling: Boolean;
     FItalicOffset: Byte;
+    FItalicOffsetCache: array [AnsiChar] of Byte;
     FKeyboardHandler: TBCEditorKeyboardHandler;
     FKeyCommands: TBCEditorKeyCommands;
     FLastDblClick: Cardinal;
@@ -2504,6 +2505,9 @@ begin
       Result := FTabs.Width;
     Result := Result * FPaintHelper.FontStock.CharWidth + (ALength - 1) * FPaintHelper.FontStock.CharWidth * FTabs.Width;
   end
+  {else
+  if FPaintHelper.FixedSizeFont and (Word(AToken[1]) < 256) then
+    Exit(FPaintHelper.FontStock.CharWidth * ALength)  }
   else
   begin
     GetTextExtentPoint32(FPaintHelper.StockBitmap.Canvas.Handle, AToken, ALength, LSize);
@@ -6999,6 +7003,8 @@ begin
     LVisibleLines := ClientHeight div GetLineHeight;
     LWidthChanged := LScrollPageWidth <> FScrollPageWidth;
 
+    FillChar(FItalicOffsetCache, SizeOf(FItalicOffsetCache), 0);
+
     if not LWidthChanged and (LVisibleLines = FVisibleLines) then
       Exit;
 
@@ -10902,6 +10908,8 @@ var
     LTokenLength: Integer;
     LLastColumn: Integer;
     LStep: Integer;
+    LLastChar: Char;
+    LAnsiChar: AnsiChar;
 
     procedure PaintSubstituteChars;
     var
@@ -11063,17 +11071,30 @@ var
 
         if LTokenHelper.IsItalic and (LPChar^ <> BCEDITOR_SPACE_CHAR) and (ATokenLength = Length(AToken)) then
         begin
-          FItalicOffset := 0;
+          LLastChar := AToken[ATokenLength];
+          LAnsiChar := BCEDITOR_NONE_CHAR;
+          if Word(LLastChar) < 256 then
+            LAnsiChar := AnsiChar(LLastChar);
 
-          LBottom := Min(LTokenRect.Bottom, Canvas.ClipRect.Bottom);
+          if FItalicOffsetCache[LAnsiChar] <> 0 then
+            FItalicOffset := FItalicOffsetCache[LAnsiChar]
+          else
+          begin
+            FItalicOffset := 0;
 
-          LMaxX := LTokenRect.Right + 1;
-          for LTop := LTokenRect.Top to LBottom - 1 do
-            for LLeft := LMaxX to LTextRect.Right - 1 do
-              if GetPixel(Canvas.Handle, LLeft, LTop) <> LRGBColor then
-                if LLeft > LMaxX then
-                  LMaxX := LLeft;
-          FItalicOffset := Max(LMaxX - LTokenRect.Right + 1, 0);
+            LBottom := Min(LTokenRect.Bottom, Canvas.ClipRect.Bottom);
+
+            LMaxX := LTokenRect.Right + 1;
+            for LTop := LTokenRect.Top to LBottom - 1 do
+              for LLeft := LMaxX to LTextRect.Right - 1 do
+                if GetPixel(Canvas.Handle, LLeft, LTop) <> LRGBColor then
+                  if LLeft > LMaxX then
+                    LMaxX := LLeft;
+            FItalicOffset := Max(LMaxX - LTokenRect.Right + 1, 0);
+
+            if LAnsiChar <> BCEDITOR_NONE_CHAR then
+              FItalicOffsetCache[LAnsiChar] := FItalicOffset;
+          end;
 
           if LLastColumn = LCurrentLineLength + 1 then
             Inc(LTokenRect.Right, FItalicOffset);
