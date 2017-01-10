@@ -11023,10 +11023,10 @@ var
         if FMinimap.Align = maLeft then
           LTextRect.Right := Min(LTextRect.Right, FMinimap.Width);
 
-      if LTokenHelper.IsItalic and (LPChar^ <> BCEDITOR_SPACE_CHAR) and (ATokenLength = Length(AToken)) then
+      if not AMinimap and LTokenHelper.IsItalic and (LPChar^ <> BCEDITOR_SPACE_CHAR) and (ATokenLength = Length(AToken)) then
         Inc(LTextRect.Right, FPaintHelper.CharWidth);
 
-      if (FItalicOffset <> 0) and (not LTokenHelper.IsItalic or (LPChar^ = BCEDITOR_SPACE_CHAR)) then
+      if not AMinimap and (FItalicOffset <> 0) and (not LTokenHelper.IsItalic or (LPChar^ = BCEDITOR_SPACE_CHAR)) then
       begin
         Inc(LTextRect.Left, FItalicOffset);
         Inc(LTextRect.Right, FItalicOffset);
@@ -11069,7 +11069,7 @@ var
         Winapi.Windows.ExtTextOut(Canvas.Handle, LTextRect.Left, LTextRect.Top, ETO_OPAQUE or ETO_CLIPPED, @LTextRect,
           LPChar, LTokenLength, nil);
 
-        if LTokenHelper.IsItalic and (LPChar^ <> BCEDITOR_SPACE_CHAR) and (ATokenLength = Length(AToken)) then
+        if not AMinimap and LTokenHelper.IsItalic and (LPChar^ <> BCEDITOR_SPACE_CHAR) and (ATokenLength = Length(AToken)) then
         begin
           LLastChar := AToken[ATokenLength];
           LAnsiChar := BCEDITOR_NONE_CHAR;
@@ -11346,17 +11346,23 @@ var
         LForeground := FSpecialChars.Color;
     end;
 
-    LAppendAnsiChars := (LTokenHelper.Length > 0) and (Ord(LTokenHelper.Text[1]) < 256) and (Ord(LPToken^) < 256);
-    LAppendUnicode := LPToken^.GetUnicodeCategory in [TUnicodeCategory.ucCombiningMark, TUnicodeCategory.ucNonSpacingMark];
-    LAppendTabs := not (toColumns in FTabs.Options) or (toColumns in FTabs.Options) and (LEmptySpace <> esTab);
-
     if LTokenHelper.Length > 0 then
     begin
       LCanAppend := (LTokenHelper.Length < BCEDITOR_TOKEN_MAX_LENGTH) and
-        ((LTokenHelper.FontStyle = AFontStyle) or ((LEmptySpace <> esNone) and not (fsUnderline in AFontStyle) and
-        not (fsUnderline in LTokenHelper.FontStyle))) and (LTokenHelper.TokenAddon = ATokenAddon)
-        and ((LTokenHelper.Background = LBackground) and (LTokenHelper.Foreground = LForeground)) and
-        (LEmptySpace = LTokenHelper.EmptySpace) and (LAppendAnsiChars or LAppendUnicode) and LAppendTabs;
+        (LTokenHelper.Background = LBackground) and (LTokenHelper.Foreground = LForeground);
+      if AMinimap then
+        LCanAppend := LCanAppend and (LTokenHelper.FontStyle = AFontStyle)
+      else
+      begin
+        LAppendAnsiChars := (LTokenHelper.Length > 0) and (Ord(LTokenHelper.Text[1]) < 256) and (Ord(LPToken^) < 256);
+        LAppendUnicode := LPToken^.GetUnicodeCategory in [TUnicodeCategory.ucCombiningMark, TUnicodeCategory.ucNonSpacingMark];
+        LAppendTabs := not (toColumns in FTabs.Options) or (toColumns in FTabs.Options) and (LEmptySpace <> esTab);
+
+        LCanAppend := LCanAppend and
+          ((LTokenHelper.FontStyle = AFontStyle) or ((LEmptySpace <> esNone) and not (fsUnderline in AFontStyle) and
+          not (fsUnderline in LTokenHelper.FontStyle))) and (LTokenHelper.TokenAddon = ATokenAddon) and
+          (LEmptySpace = LTokenHelper.EmptySpace) and (LAppendAnsiChars or LAppendUnicode) and LAppendTabs;
+      end;
 
       if not LCanAppend then
       begin
