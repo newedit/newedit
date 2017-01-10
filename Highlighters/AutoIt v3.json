@@ -627,7 +627,7 @@
                   "CloseToken": "#COMMENTS-END",
 									"Properties": {
                      "NoSubs": true,
-										 "BeginChar": "#"
+										 "BeginWithBreakChar": true
 									}
                },
 							 {
@@ -635,14 +635,14 @@
                   "CloseToken": "#CE",
 									"Properties": {
                      "NoSubs": true,
-										 "BeginChar": "#"
+										 "BeginWithBreakChar": true
 									}
                },
 							 {
                   "OpenToken": "#REGION",
                   "CloseToken": "#ENDREGION",
 									"Properties": {
-                     "BeginChar": "#"
+                     "BeginWithBreakChar": true
 									}
                },
                {

@@ -703,7 +703,7 @@
                   "Properties": {
                      "OpenTokenEnd": "}",
                      "ShowGuideLine": false,
-										 "BeginChar": "$"
+										 "BeginWithBreakChar": true
                   }
                }
             ]

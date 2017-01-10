@@ -2590,12 +2590,14 @@ function TBCBaseEditor.IsKeywordAtCaretPosition(const APOpenKeyWord: PBoolean = 
   const AHighlightAfterToken: Boolean = True): Boolean;
 var
   LIndex1, LIndex2: Integer;
-  LWordAtCursor, LWordAtOneBeforeCursor: string;
+  //LWordAtCursor, LWordAtOneBeforeCursor: string;
   LFoldRegion: TBCEditorCodeFoldingRegion;
   LFoldRegionItem: TBCEditorCodeFoldingRegionItem;
-  LTextPosition: TBCEditorTextPosition;
+  LCaretPosition: TBCEditorTextPosition;
+  LLineText: string;
+  LPLine: PChar;
 
-  function CheckToken(const AKeyword: string; const ABeginChar: Char): Boolean;
+  function CheckToken(const AKeyword: string; const ABeginWithBreakChar: Boolean): Boolean;
   var
     LPWordAtCursor: PChar;
 
@@ -2613,19 +2615,11 @@ var
   begin
     Result := False;
 
-    if LWordAtCursor <> '' then
-    begin
-      LPWordAtCursor := PChar(ABeginChar + LWordAtCursor);
-      if AreKeywordsSame(PChar(AKeyword)) then
-        Result := True
-    end
-    else
-    if AHighlightAfterToken and (LWordAtOneBeforeCursor <> '') then
-    begin
-      LPWordAtCursor := PChar(ABeginChar + LWordAtOneBeforeCursor);
-      if AreKeywordsSame(PChar(AKeyword)) then
-        Result := True;
-    end;
+    LPWordAtCursor := LPLine;
+    if ABeginWithBreakChar then
+      Dec(LPWordAtCursor);
+    if AreKeywordsSame(PChar(AKeyword)) then
+      Result := True;
 
     if Result then
       if Assigned(APOpenKeyWord) then
@@ -2643,33 +2637,44 @@ begin
 
   if Assigned(FHighlighter) then
   begin
-    LTextPosition := TextCaretPosition;
-    LWordAtCursor := GetWordAtTextPosition(LTextPosition);
-    LWordAtOneBeforeCursor := '';
-    if AHighlightAfterToken then
+    LCaretPosition := TextCaretPosition;
+
+    LLineText := FLines.GetLineText(LCaretPosition.Line);
+
+    if Trim(LLineText) = '' then
+      Exit;
+
+    LPLine := PChar(LLineText);
+
+    Inc(LPLine, LCaretPosition.Char - 2);
+    if not IsWordBreakChar(LPLine^) then
     begin
-      Dec(LTextPosition.Char);
-      LWordAtOneBeforeCursor := GetWordAtTextPosition(LTextPosition);
-    end;
-    if (LWordAtCursor <> '') or (LWordAtOneBeforeCursor <> '') then
-      for LIndex1 := 0 to Length(FHighlighter.CodeFoldingRegions) - 1 do
+      while not IsWordBreakChar(LPLine^) and (LCaretPosition.Char > 0) do
       begin
-        LFoldRegion := FHighlighter.CodeFoldingRegions[LIndex1];
-
-        for LIndex2 := 0 to LFoldRegion.Count - 1 do
-        begin
-          LFoldRegionItem := LFoldRegion.Items[LIndex2];
-          if CheckToken(LFoldRegionItem.OpenToken, LFoldRegionItem.BeginChar) then
-            Exit(True);
-
-          if LFoldRegionItem.OpenTokenCanBeFollowedBy <> '' then
-            if CheckToken(LFoldRegionItem.OpenTokenCanBeFollowedBy, LFoldRegionItem.BeginChar) then
-              Exit(True);
-
-          if CheckToken(LFoldRegionItem.CloseToken, LFoldRegionItem.BeginChar) then
-            Exit(True);
-        end;
+        Dec(LPLine);
+        Dec(LCaretPosition.Char);
       end;
+      Inc(LPLine);
+    end;
+
+    for LIndex1 := 0 to Length(FHighlighter.CodeFoldingRegions) - 1 do
+    begin
+      LFoldRegion := FHighlighter.CodeFoldingRegions[LIndex1];
+
+      for LIndex2 := 0 to LFoldRegion.Count - 1 do
+      begin
+        LFoldRegionItem := LFoldRegion.Items[LIndex2];
+        if CheckToken(LFoldRegionItem.OpenToken, LFoldRegionItem.BeginWithBreakChar) then
+          Exit(True);
+
+        if LFoldRegionItem.OpenTokenCanBeFollowedBy <> '' then
+          if CheckToken(LFoldRegionItem.OpenTokenCanBeFollowedBy, LFoldRegionItem.BeginWithBreakChar) then
+            Exit(True);
+
+        if CheckToken(LFoldRegionItem.CloseToken, LFoldRegionItem.BeginWithBreakChar) then
+          Exit(True);
+      end;
+    end;
   end;
 end;
 
@@ -2738,7 +2743,7 @@ begin
       begin
         LFoldRegionItem := LFoldRegion.Items[LIndex2];
         LPText := LPLine;
-        if LFoldRegionItem.BeginChar <> '' then
+        if LFoldRegionItem.BeginWithBreakChar then
           Dec(LPText);
         while LPText^ <> BCEDITOR_NONE_CHAR do
         begin

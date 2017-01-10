@@ -577,7 +577,6 @@ var
   LOpenToken, LCloseToken: string;
   LSkipIfFoundAfterOpenTokenArray: TJsonArray;
   LFoldRegionArray: TJsonArray;
-  LBeginChar: string;
 begin
   if ACodeFoldingObject.Contains('FoldRegion') then
   begin
@@ -624,9 +623,7 @@ begin
         LRegionItem.OpenTokenCanBeFollowedBy := LMemberObject['OpenTokenCanBeFollowedBy'].Value;
         LRegionItem.TokenEndIsPreviousLine := LMemberObject.B['TokenEndIsPreviousLine'];
         LRegionItem.NoSubs := LMemberObject.B['NoSubs'];
-        LBeginChar := LMemberObject['BeginChar'].Value;
-        if LBeginChar <> '' then
-          LRegionItem.BeginChar := LBeginChar[1];
+        LRegionItem.BeginWithBreakChar := LMemberObject.B['BeginWithBreakChar'];
 
         LSkipIfFoundAfterOpenTokenArray := LMemberObject['SkipIfFoundAfterOpenToken'].ArrayValue;
         if LSkipIfFoundAfterOpenTokenArray.Count > 0 then
