@@ -10,6 +10,7 @@ type
 
   TBCEditorCodeFoldingRegionItem = class(TCollectionItem)
   strict private
+    FBeginChar: Char;
     FBreakCharFollows: Boolean;
     FBreakIfNotFoundBeforeNextRegion: string;
     FCloseAtNextToken: Boolean;
@@ -32,6 +33,7 @@ type
     procedure SetSkipIfFoundAfterOpenTokenArrayCount(const AValue: Integer);
   public
     constructor Create(ACollection: TCollection); override;
+    property BeginChar: Char read FBeginChar write FBeginChar;
     property BreakCharFollows: Boolean read FBreakCharFollows write FBreakCharFollows default True;
     property BreakIfNotFoundBeforeNextRegion: string read FBreakIfNotFoundBeforeNextRegion write FBreakIfNotFoundBeforeNextRegion;
     property CloseAtNextToken: Boolean read FCloseAtNextToken write FCloseAtNextToken;

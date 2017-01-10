@@ -2595,7 +2595,7 @@ var
   LFoldRegionItem: TBCEditorCodeFoldingRegionItem;
   LTextPosition: TBCEditorTextPosition;
 
-  function CheckToken(AKeyword: string): Boolean;
+  function CheckToken(const AKeyword: string; const ABeginChar: Char): Boolean;
   var
     LPWordAtCursor: PChar;
 
@@ -2615,14 +2615,14 @@ var
 
     if LWordAtCursor <> '' then
     begin
-      LPWordAtCursor := PChar(LWordAtCursor);
+      LPWordAtCursor := PChar(ABeginChar + LWordAtCursor);
       if AreKeywordsSame(PChar(AKeyword)) then
         Result := True
     end
     else
     if AHighlightAfterToken and (LWordAtOneBeforeCursor <> '') then
     begin
-      LPWordAtCursor := PChar(LWordAtOneBeforeCursor);
+      LPWordAtCursor := PChar(ABeginChar + LWordAtOneBeforeCursor);
       if AreKeywordsSame(PChar(AKeyword)) then
         Result := True;
     end;
@@ -2659,14 +2659,14 @@ begin
         for LIndex2 := 0 to LFoldRegion.Count - 1 do
         begin
           LFoldRegionItem := LFoldRegion.Items[LIndex2];
-          if CheckToken(LFoldRegionItem.OpenToken) then
+          if CheckToken(LFoldRegionItem.OpenToken, LFoldRegionItem.BeginChar) then
             Exit(True);
 
           if LFoldRegionItem.OpenTokenCanBeFollowedBy <> '' then
-            if CheckToken(LFoldRegionItem.OpenTokenCanBeFollowedBy) then
+            if CheckToken(LFoldRegionItem.OpenTokenCanBeFollowedBy, LFoldRegionItem.BeginChar) then
               Exit(True);
 
-          if CheckToken(LFoldRegionItem.CloseToken) then
+          if CheckToken(LFoldRegionItem.CloseToken, LFoldRegionItem.BeginChar) then
             Exit(True);
         end;
       end;
@@ -2738,6 +2738,8 @@ begin
       begin
         LFoldRegionItem := LFoldRegion.Items[LIndex2];
         LPText := LPLine;
+        if LFoldRegionItem.BeginChar <> '' then
+          Dec(LPText);
         while LPText^ <> BCEDITOR_NONE_CHAR do
         begin
           SkipEmptySpace;
@@ -11023,17 +11025,20 @@ var
         if FMinimap.Align = maLeft then
           LTextRect.Right := Min(LTextRect.Right, FMinimap.Width);
 
-      if not AMinimap and LTokenHelper.IsItalic and (LPChar^ <> BCEDITOR_SPACE_CHAR) and (ATokenLength = Length(AToken)) then
-        Inc(LTextRect.Right, FPaintHelper.CharWidth);
-
-      if not AMinimap and (FItalicOffset <> 0) and (not LTokenHelper.IsItalic or (LPChar^ = BCEDITOR_SPACE_CHAR)) then
+      if not AMinimap then
       begin
-        Inc(LTextRect.Left, FItalicOffset);
-        Inc(LTextRect.Right, FItalicOffset);
-        if not LTokenHelper.IsItalic then
-          Dec(LTextRect.Left);
-        if LPChar^ = BCEDITOR_SPACE_CHAR then
-          FItalicOffset := 0;
+        if LTokenHelper.IsItalic and (LPChar^ <> BCEDITOR_SPACE_CHAR) and (ATokenLength = Length(AToken)) then
+          Inc(LTextRect.Right, FPaintHelper.CharWidth);
+
+        if (FItalicOffset <> 0) and (not LTokenHelper.IsItalic or (LPChar^ = BCEDITOR_SPACE_CHAR)) then
+        begin
+          Inc(LTextRect.Left, FItalicOffset);
+          Inc(LTextRect.Right, FItalicOffset);
+          if not LTokenHelper.IsItalic then
+            Dec(LTextRect.Left);
+          if LPChar^ = BCEDITOR_SPACE_CHAR then
+            FItalicOffset := 0;
+        end;
       end;
 
       if LTokenHelper.EmptySpace = esSubstitute then
