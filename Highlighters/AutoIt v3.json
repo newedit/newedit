@@ -3,7 +3,7 @@
       "Info": {
          "General": {
             "Version": "2.0.0",
-            "Date": "05.01.2017",
+            "Date": "10.01.2017",
             "Sample": [
                "MsgBox(64, \"Tutorial\", \"Hello World!\")"
             ]
@@ -29,6 +29,26 @@
                   },
                   "TokenRange": {
                      "Open": ";"
+                  }
+               },
+							 {
+                  "Type": "BlockComment",
+                  "Attributes": {
+                     "Element": "Comment"
+                  },
+                  "TokenRange": {
+                     "Open": "#COMMENTS-START",
+										 "Close": "#COMMENTS-END"
+                  }
+               },
+							 {
+                  "Type": "BlockComment",
+                  "Attributes": {
+                     "Element": "Comment"
+                  },
+                  "TokenRange": {
+                     "Open": "#CS",
+										 "Close": "#CE"
                   }
                },
                {
@@ -602,6 +622,29 @@
       "Ranges": [
          {
             "FoldRegion": [
+						   {
+                  "OpenToken": "#COMMENTS-START",
+                  "CloseToken": "#COMMENTS-END",
+									"Properties": {
+                     "NoSubs": true,
+										 "BeginChar": "#"
+									}
+               },
+							 {
+                  "OpenToken": "#CS",
+                  "CloseToken": "#CE",
+									"Properties": {
+                     "NoSubs": true,
+										 "BeginChar": "#"
+									}
+               },
+							 {
+                  "OpenToken": "#REGION",
+                  "CloseToken": "#ENDREGION",
+									"Properties": {
+                     "BeginChar": "#"
+									}
+               },
                {
                   "OpenToken": "FUNC",
                   "CloseToken": "ENDFUNC"
