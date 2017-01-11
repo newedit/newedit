@@ -21,6 +21,7 @@ type
     FOpenIsClose: Boolean;
     FOpenToken: string;
     FOpenTokenBeginningOfLine: Boolean;
+    FOpenTokenBreaksLine: Boolean;
     FOpenTokenCanBeFollowedBy: string;
     FOpenTokenEnd: string;
     FOpenTokenLength: Integer;
@@ -44,6 +45,7 @@ type
     property OpenIsClose: Boolean read FOpenIsClose write FOpenIsClose default False;
     property OpenToken: string read FOpenToken write FOpenToken;
     property OpenTokenBeginningOfLine: Boolean read FOpenTokenBeginningOfLine write FOpenTokenBeginningOfLine default False;
+    property OpenTokenBreaksLine: Boolean read FOpenTokenBreaksLine write FOpenTokenBreaksLine default False;
     property OpenTokenCanBeFollowedBy: string read FOpenTokenCanBeFollowedBy write FOpenTokenCanBeFollowedBy;
     property OpenTokenEnd: string read FOpenTokenEnd write FOpenTokenEnd;
     property OpenTokenLength: Integer read FOpenTokenLength write FOpenTokenLength;
@@ -94,6 +96,7 @@ begin
   FNoSubs := False;
   FOpenIsClose := False;
   FOpenTokenBeginningOfLine := False;
+  FOpenTokenBreaksLine := False;
   FSharedClose := False;
 end;
 

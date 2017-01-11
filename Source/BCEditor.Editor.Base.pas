@@ -6033,7 +6033,7 @@ var
       end;
   end;
 
-  procedure RegionItemsOpen;
+  function RegionItemsOpen: Boolean;
   var
     LIndex, LArrayIndex: Integer;
     LSkipIfFoundAfterOpenToken: Boolean;
@@ -6041,6 +6041,8 @@ var
     LCodeFoldingRange: TBCEditorCodeFoldingRange;
     LPTempText, LPTempKeyWord: PChar;
   begin
+    Result := False;
+
     if LOpenTokenSkipFoldRangeList.Count <> 0 then
       Exit;
     if CharInSet(UpCase(LPText^), FHighlighter.FoldOpenKeyChars) then
@@ -6172,6 +6174,7 @@ var
                 LOpenTokenFoldRangeList.Add(LCodeFoldingRange);
                 Inc(LFoldCount);
                 Dec(LPText); { The end of the while loop will increase }
+                Result := LRegionItem.OpenTokenBreaksLine;
                 Break;
               end
               else
@@ -6384,7 +6387,8 @@ begin
           if LOpenTokenSkipFoldRangeList.Count = 0 then
           begin
             RegionItemsClose;
-            RegionItemsOpen;
+            if RegionItemsOpen then
+              Break; { OpenTokenBreaksLine region item option breaks }
           end;
 
           if LPText^ <> BCEDITOR_NONE_CHAR then
