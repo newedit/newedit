@@ -621,13 +621,21 @@
    "CodeFolding": {
       "Ranges": [
          {
+				    "SkipRegion": [
+               {
+                  "OpenToken": "\"",
+                  "CloseToken": "\"",
+                  "RegionType": "SingleLineString"
+               }
+						],
             "FoldRegion": [
 						   {
                   "OpenToken": "#COMMENTS-START",
                   "CloseToken": "#COMMENTS-END",
 									"Properties": {
                      "NoSubs": true,
-										 "BeginWithBreakChar": true
+										 "BeginWithBreakChar": true,
+										 "OpenTokenBreaksLine": true
 									}
                },
 							 {
@@ -635,14 +643,16 @@
                   "CloseToken": "#CE",
 									"Properties": {
                      "NoSubs": true,
-										 "BeginWithBreakChar": true
+										 "BeginWithBreakChar": true,
+										 "OpenTokenBreaksLine": true
 									}
                },
 							 {
                   "OpenToken": "#REGION",
                   "CloseToken": "#ENDREGION",
 									"Properties": {
-                     "BeginWithBreakChar": true
+                     "BeginWithBreakChar": true,
+										 "OpenTokenBreaksLine": true
 									}
                },
                {
