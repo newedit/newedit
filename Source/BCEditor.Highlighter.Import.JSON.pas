@@ -633,7 +633,8 @@ begin
             LRegionItem.SkipIfFoundAfterOpenTokenArray[LIndex2] := LSkipIfFoundAfterOpenTokenArray.Items[LIndex2].Value;
         end;
 
-        LRegionItem.BreakCharFollows := LMemberObject.B['BreakCharFollows'];
+        if LMemberObject.Contains('BreakCharFollows') then
+          LRegionItem.BreakCharFollows := LMemberObject.B['BreakCharFollows'];
         LRegionItem.BreakIfNotFoundBeforeNextRegion := LMemberObject['BreakIfNotFoundBeforeNextRegion'].Value;
         LRegionItem.OpenTokenEnd := LMemberObject['OpenTokenEnd'].Value;
         LRegionItem.ShowGuideLine := StrToBoolDef(LMemberObject['ShowGuideLine'].Value, True);

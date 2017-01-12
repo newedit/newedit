@@ -98,6 +98,7 @@ begin
   FOpenTokenBeginningOfLine := False;
   FOpenTokenBreaksLine := False;
   FSharedClose := False;
+  FBreakCharFollows := True;
 end;
 
 procedure TBCEditorCodeFoldingRegionItem.SetSkipIfFoundAfterOpenTokenArrayCount(const AValue: Integer);
