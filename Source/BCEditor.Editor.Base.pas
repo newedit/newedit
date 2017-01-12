@@ -8683,9 +8683,12 @@ begin
     ShortCutToKey(FCompletionProposal.ShortCut, LShortCutKey, LShortCutShift);
     if ExecuteCompletionProposal then
       Exit;
-    ShortCutToKey(FCompletionProposal.SecondaryShortCut, LShortCutKey, LShortCutShift);
-    if ExecuteCompletionProposal then
-      Exit;
+    if FCompletionProposal.SecondaryShortCut <> 0 then
+    begin
+      ShortCutToKey(FCompletionProposal.SecondaryShortCut, LShortCutKey, LShortCutShift);
+      if ExecuteCompletionProposal then
+        Exit;
+    end;
   end;
 
   if FCodeFolding.Visible then
