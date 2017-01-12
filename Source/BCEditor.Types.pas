@@ -14,7 +14,9 @@ type
 
   TBCEditorCaretStyle = (csVerticalLine, csThinVerticalLine, csHorizontalLine, csThinHorizontalLine, csHalfBlock, csBlock);
 
-  TBCEditorCompletionProposalEvent = procedure(Sender: TObject; AItems: TStrings; const AInput: string) of object;
+  TBCEditorCompletionProposalEvent = procedure(Sender: TObject; AItems: TStrings; const AInput: string; const AKey: Word; const AShift: TShiftState) of object;
+  TBCEditorCompletionProposalSelectedEvent = procedure(Sender: TObject; var ASelectedItem: string) of object;
+  TBCEditorCompletionProposalValidateEvent = procedure(ASender: TObject; Shift: TShiftState; EndToken: Char) of object;
 
   TBCEditorDropFilesEvent = procedure(ASender: TObject; APos: TPoint; AFiles: TStrings) of object;
 

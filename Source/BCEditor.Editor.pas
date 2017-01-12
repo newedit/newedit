@@ -66,6 +66,8 @@ type
     property OnChange;
     property OnClick;
     property OnCommandProcessed;
+    property OnCompletionProposalCanceled;
+    property OnCompletionProposalSelected;
     property OnContextHelp;
     property OnCreateFileStream;
     property OnCustomLineColors;

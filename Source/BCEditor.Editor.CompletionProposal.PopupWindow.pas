@@ -13,25 +13,27 @@ const
 {$endif}
 
 type
-  TBCEditorValidateEvent = procedure(ASender: TObject; Shift: TShiftState; EndToken: Char) of object;
-
   TBCEditorCompletionProposalPopupWindow = class(TBCEditorPopupWindow)
   strict private
     FAdjustCompletionStart: Boolean;
-    FItemIndexArray: array of Integer;
     FBitmapBuffer: TBitmap;
+    FCanFree: Boolean;
     FCaseSensitive: Boolean;
     FCompletionProposal: TBCEditorCompletionProposal;
     FCompletionStart: Integer;
-    FSelectedLine: Integer;
     FCurrentString: string;
     FFiltered: Boolean;
     FFormWidth: Integer;
     FItemHeight: Integer;
+    FItemIndexArray: array of Integer;
     FMargin: Integer;
     FMouseWheelAccumulator: Integer;
-    FOnValidate: TBCEditorValidateEvent;
+    FOnCanceled: TNotifyEvent;
+    FOnSelected: TBCEditorCompletionProposalSelectedEvent;
+    FOnValidate: TBCEditorCompletionProposalValidateEvent;
+    FSelectedLine: Integer;
     FTopLine: Integer;
+    FValueSet: Boolean;
     function GetItems: TStrings;
     procedure AddKeyHandlers;
     procedure EditorKeyDown(ASender: TObject; var AKey: Word; AShift: TShiftState);
@@ -58,10 +60,12 @@ type
     function GetCurrentInput: string;
     procedure Assign(ASource: TPersistent); override;
     procedure Execute(const ACurrentString: string; X, Y: Integer);
+    property CanFree: Boolean read FCanFree;
     property CurrentString: string read FCurrentString write SetCurrentString;
     property Items: TStrings read GetItems;
     property TopLine: Integer read FTopLine write SetTopLine;
-    property OnValidate: TBCEditorValidateEvent read FOnValidate write FOnValidate;
+    property OnCanceled: TNotifyEvent read FOnCanceled write FOnCanceled;
+    property OnSelected: TBCEditorCompletionProposalSelectedEvent read FOnSelected write FOnSelected;
   end;
 
 implementation
@@ -86,12 +90,21 @@ begin
   FItemHeight := 0;
   FMargin := 2;
 
-  OnValidate := HandleOnValidate;
+  FOnValidate := HandleOnValidate;
   OnDblClick := HandleDblClick;
+
+  FValueSet := False;
+
+  FCanFree := True;
 end;
 
 destructor TBCEditorCompletionProposalPopupWindow.Destroy;
 begin
+  FCanFree := False;
+  if not FValueSet and Assigned(FOnCanceled) then
+    FOnCanceled(Self);
+  FCanFree := True;
+
   RemoveKeyHandlers;
   FBitmapBuffer.Free;
   SetLength(FItemIndexArray, 0);
@@ -159,8 +172,8 @@ begin
     LEditor := Owner as TBCBaseEditor;
   case AKey of
     VK_RETURN, VK_TAB:
-      if Assigned(OnValidate) then
-        OnValidate(Self, AShift, BCEDITOR_NONE_CHAR);
+      if Assigned(FOnValidate) then
+        FOnValidate(Self, AShift, BCEDITOR_NONE_CHAR);
     VK_ESCAPE:
       Hide;
     VK_LEFT:
@@ -190,7 +203,7 @@ begin
               LChar := BCEDITOR_SPACE_CHAR;
 
             if IsWordBreakChar(LChar) then
-              Self.Hide
+              Hide
             else
               CurrentString := FCurrentString + LChar;
 
@@ -244,14 +257,14 @@ end;
 procedure TBCEditorCompletionProposalPopupWindow.EditorKeyPress(ASender: TObject; var AKey: Char);
 begin
   case AKey of
-    BCEDITOR_CARRIAGE_RETURN, BCEDITOR_ESCAPE:
+    BCEDITOR_CARRIAGE_RETURN:
       Hide;
     BCEDITOR_SPACE_CHAR .. High(Char):
       begin
         if not (cpoAutoInvoke in FCompletionProposal.Options) then
-          if (Owner as TBCBaseEditor).IsWordBreakChar(AKey) and Assigned(OnValidate) then
+          if (Owner as TBCBaseEditor).IsWordBreakChar(AKey) and Assigned(FOnValidate) then
             if AKey = BCEDITOR_SPACE_CHAR then
-              OnValidate(Self, [], BCEDITOR_NONE_CHAR);
+              FOnValidate(Self, [], BCEDITOR_NONE_CHAR);
         CurrentString := FCurrentString + AKey;
         if (cpoAutoInvoke in FCompletionProposal.Options) and (Length(FItemIndexArray) = 0) or
           (Pos(AKey, FCompletionProposal.CloseChars) <> 0) then
@@ -580,11 +593,18 @@ begin
       else
         LValue := SelectedText;
 
-      if SelectedText <> LValue then
+      FCanFree := False;
+      if Assigned(FOnSelected) then
+        FOnSelected(Self, LValue);
+      FCanFree := True;
+
+      FValueSet := SelectedText <> LValue;
+      if FValueSet then
         SelectedText := LValue;
 
       if CanFocus then
         SetFocus;
+
       EnsureCursorPositionVisible;
       TextCaretPosition := SelectionEndPosition;
       SelectionBeginPosition := TextCaretPosition;
@@ -597,8 +617,8 @@ end;
 
 procedure TBCEditorCompletionProposalPopupWindow.HandleDblClick(ASender: TObject);
 begin
-  if Assigned(OnValidate) then
-    OnValidate(Self, [], BCEDITOR_NONE_CHAR);
+  if Assigned(FOnValidate) then
+    FOnValidate(Self, [], BCEDITOR_NONE_CHAR);
   Hide;
 end;
 

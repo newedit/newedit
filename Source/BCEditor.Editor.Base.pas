@@ -134,6 +134,8 @@ type
     FOnCommandProcessed: TBCEditorProcessCommandEvent;
     FOnContextHelp: TBCEditorContextHelpEvent;
     FOnCreateFileStream: TBCEditorCreateFileStreamEvent;
+    FOnCompletionProposalCanceled: TNotifyEvent;
+    FOnCompletionProposalSelected: TBCEditorCompletionProposalSelectedEvent;
     FOnCustomLineColors: TBCEditorCustomLineColorsEvent;
     FOnCustomTokenAttribute: TBCEditorCustomTokenAttributeEvent;
     FOnDropFiles: TBCEditorDropFilesEvent;
@@ -457,7 +459,7 @@ type
     procedure DoBlockUnindent;
     procedure DoChange; virtual;
     procedure DoCopyToClipboard(const AText: string);
-    procedure DoExecuteCompletionProposal; virtual;
+    procedure DoExecuteCompletionProposal(const AKey: Word = 0; AShift: TShiftState = []); virtual;
     procedure DoKeyPressW(var AMessage: TWMKey);
     procedure DoOnCommandProcessed(ACommand: TBCEditorCommand; const AChar: Char; AData: Pointer);
     procedure DoOnLeftMarginClick(AButton: TMouseButton; AShift: TShiftState; X, Y: Integer);
@@ -692,6 +694,8 @@ type
     property OnCaretChanged: TBCEditorCaretChangedEvent read FOnCaretChanged write FOnCaretChanged;
     property OnChange: TNotifyEvent read FOnChange write FOnChange;
     property OnCommandProcessed: TBCEditorProcessCommandEvent read FOnCommandProcessed write FOnCommandProcessed;
+    property OnCompletionProposalCanceled: TNotifyEvent read FOnCompletionProposalCanceled write FOnCompletionProposalCanceled;
+    property OnCompletionProposalSelected: TBCEditorCompletionProposalSelectedEvent read FOnCompletionProposalSelected write FOnCompletionProposalSelected;
     property OnContextHelp: TBCEditorContextHelpEvent read FOnContextHelp write FOnContextHelp;
     property OnCreateFileStream: TBCEditorCreateFileStreamEvent read FOnCreateFileStream write FOnCreateFileStream;
     property OnCustomLineColors: TBCEditorCustomLineColorsEvent read FOnCustomLineColors write FOnCustomLineColors;
@@ -8175,7 +8179,7 @@ begin
   SetClipboardText(AText);
 end;
 
-procedure TBCBaseEditor.DoExecuteCompletionProposal;
+procedure TBCBaseEditor.DoExecuteCompletionProposal(const AKey: Word = 0; AShift: TShiftState = []);
 var
   LPoint: TPoint;
   LCurrentInput: string;
@@ -8190,12 +8194,14 @@ begin
   FCompletionProposalPopupWindow := TBCEditorCompletionProposalPopupWindow.Create(Self);
   with FCompletionProposalPopupWindow do
   begin
+    OnCanceled := FOnCompletionProposalCanceled;
+    OnSelected := FOnCompletionProposalSelected;
     Assign(FCompletionProposal);
     if cpoParseItemsFromText in FCompletionProposal.Options then
       SplitTextIntoWords(Items, False);
     LCurrentInput := GetCurrentInput;
     if Assigned(FOnBeforeCompletionProposalExecute) then
-      FOnBeforeCompletionProposalExecute(Self, Items, LCurrentInput);
+      FOnBeforeCompletionProposalExecute(Self, Items, LCurrentInput, AKey, AShift);
     Execute(LCurrentInput, LPoint.X, LPoint.Y);
   end;
 end;
@@ -8541,12 +8547,15 @@ begin
 end;
 
 procedure TBCBaseEditor.FreeCompletionProposalPopupWindow;
+var
+  LCompletionProposalPopupWindow: TBCEditorCompletionProposalPopupWindow;
 begin
-  if Assigned(FCompletionProposalPopupWindow) then
+  if Assigned(FCompletionProposalPopupWindow) and FCompletionProposalPopupWindow.CanFree then
   begin
-    FCompletionProposalPopupWindow.Hide;
-    FCompletionProposalPopupWindow.Free;
-    FCompletionProposalPopupWindow := nil;
+    LCompletionProposalPopupWindow := FCompletionProposalPopupWindow;
+    FCompletionProposalPopupWindow := nil; { Prevent WMKillFocus to free it again }
+    LCompletionProposalPopupWindow.Hide;
+    LCompletionProposalPopupWindow.Free;
   end;
 end;
 
@@ -8575,6 +8584,24 @@ var
   LTextPosition: TBCEditorTextPosition;
   LShortCutKey: Word;
   LShortCutShift: TShiftState;
+
+  function ExecuteCompletionProposal: Boolean;
+  begin
+    Result := False;
+
+    if (AShift = LShortCutShift) and (AKey = LShortCutKey) or (AKey <> LShortCutKey) and not (ssAlt in AShift) and
+      not (ssCtrl in AShift) and (cpoAutoInvoke in FCompletionProposal.Options) and Chr(AKey).IsLetter then
+    begin
+      DoExecuteCompletionProposal(LShortCutKey, LShortCutShift);
+      if not (cpoAutoInvoke in FCompletionProposal.Options) then
+      begin
+        AKey := 0;
+        Include(FStateFlags, sfIgnoreNextChar);
+        Result := True;
+      end;
+    end;
+  end;
+
 begin
   inherited;
 
@@ -8654,17 +8681,11 @@ begin
   if FCompletionProposal.Enabled and not Assigned(FCompletionProposalPopupWindow) then
   begin
     ShortCutToKey(FCompletionProposal.ShortCut, LShortCutKey, LShortCutShift);
-    if (AShift = LShortCutShift) and (AKey = LShortCutKey) or (AKey <> LShortCutKey) and not (ssAlt in AShift) and
-      not (ssCtrl in AShift) and (cpoAutoInvoke in FCompletionProposal.Options) and Chr(AKey).IsLetter then
-    begin
-      DoExecuteCompletionProposal;
-      if not (cpoAutoInvoke in FCompletionProposal.Options) then
-      begin
-        AKey := 0;
-        Include(FStateFlags, sfIgnoreNextChar);
-        Exit;
-      end;
-    end;
+    if ExecuteCompletionProposal then
+      Exit;
+    ShortCutToKey(FCompletionProposal.SecondaryShortCut, LShortCutKey, LShortCutShift);
+    if ExecuteCompletionProposal then
+      Exit;
   end;
 
   if FCodeFolding.Visible then

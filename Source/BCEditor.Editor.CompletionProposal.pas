@@ -17,6 +17,7 @@ type
     FFont: TFont;
     FOptions: TBCEditorCompletionProposalOptions;
     FOwner: TPersistent;
+    FSecondaryShortCut: TShortCut;
     FShortCut: TShortCut;
     FTrigger: TBCEditorCompletionProposalTrigger;
     FVisibleLines: Integer;
@@ -36,6 +37,7 @@ type
     property Enabled: Boolean read FEnabled write FEnabled default True;
     property Font: TFont read FFont write FFont;
     property Options: TBCEditorCompletionProposalOptions read FOptions write FOptions default [cpoFiltered, cpoParseItemsFromText];
+    property SecondaryShortCut: TShortCut read FSecondaryShortCut write FSecondaryShortCut;
     property ShortCut: TShortCut read FShortCut write FShortCut;
     property Trigger: TBCEditorCompletionProposalTrigger read FTrigger write FTrigger;
     property VisibleLines: Integer read FVisibleLines write FVisibleLines default 8;
@@ -89,6 +91,7 @@ begin
     Self.FEnabled := FEnabled;
     Self.FFont.Assign(FFont);
     Self.FOptions := FOptions;
+    Self.FSecondaryShortCut := FSecondaryShortCut;
     Self.FShortCut := FShortCut;
     Self.FTrigger.Assign(FTrigger);
     Self.FVisibleLines := FVisibleLines;
