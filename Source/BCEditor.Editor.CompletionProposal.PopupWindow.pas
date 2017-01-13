@@ -203,7 +203,7 @@ begin
               LChar := BCEDITOR_SPACE_CHAR;
 
             if IsWordBreakChar(LChar) then
-              Hide
+              Self.Hide
             else
               CurrentString := FCurrentString + LChar;
 
