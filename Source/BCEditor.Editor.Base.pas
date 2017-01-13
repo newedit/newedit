@@ -263,7 +263,6 @@ type
     function LeftSpaceCount(const ALine: string; AWantTabs: Boolean = False): Integer;
     function NextWordPosition(const ATextPosition: TBCEditorTextPosition): TBCEditorTextPosition; overload;
     function NextWordPosition: TBCEditorTextPosition; overload;
-    function PixelsToTextPosition(const X, Y: Integer): TBCEditorTextPosition;
     function PreviousWordPosition(const ATextPosition: TBCEditorTextPosition): TBCEditorTextPosition; overload;
     function PreviousWordPosition: TBCEditorTextPosition; overload;
     function RescanHighlighterRangesFrom(const AIndex: Integer): Integer;
@@ -545,6 +544,7 @@ type
     function IsTextPositionInSelection(const ATextPosition: TBCEditorTextPosition): Boolean;
     function IsWordBreakChar(const AChar: Char): Boolean;
     function IsWordChar(const AChar: Char): Boolean;
+    function PixelsToTextPosition(const X, Y: Integer): TBCEditorTextPosition;
     function ReplaceText(const ASearchText: string; const AReplaceText: string): Integer;
     function SearchStatus: string;
     function SplitTextIntoWords(AStringList: TStrings; const ACaseSensitive: Boolean): string;
