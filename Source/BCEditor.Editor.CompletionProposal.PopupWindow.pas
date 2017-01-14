@@ -27,7 +27,6 @@ type
     FItemHeight: Integer;
     FItemIndexArray: array of Integer;
     FMargin: Integer;
-    FMouseWheelAccumulator: Integer;
     FOnCanceled: TNotifyEvent;
     FOnSelected: TBCEditorCompletionProposalSelectedEvent;
     FOnValidate: TBCEditorCompletionProposalValidateEvent;
@@ -45,7 +44,6 @@ type
     procedure SetCurrentString(const AValue: string);
     procedure SetTopLine(const AValue: Integer);
     procedure UpdateScrollBar;
-    procedure WMMouseWheel(var AMessage: TMessage); message WM_MOUSEWHEEL;
     procedure WMVScroll(var AMessage: TWMScroll); message WM_VSCROLL;
   protected
     function CanResize(var AWidth, AHeight: Integer): Boolean; override;
@@ -59,6 +57,7 @@ type
 
     function GetCurrentInput: string;
     procedure Assign(ASource: TPersistent); override;
+    procedure MouseWheel(AShift: TShiftState; AWheelDelta: Integer; AMousePos: TPoint);
     procedure Execute(const ACurrentString: string; X, Y: Integer);
     property CanFree: Boolean read FCanFree;
     property CurrentString: string read FCurrentString write SetCurrentString;
@@ -432,26 +431,24 @@ begin
   end;
 end;
 
-procedure TBCEditorCompletionProposalPopupWindow.WMMouseWheel(var AMessage: TMessage);
+procedure TBCEditorCompletionProposalPopupWindow.MouseWheel(AShift: TShiftState; AWheelDelta: Integer; AMousePos: TPoint);
 var
-  Delta: Integer;
-  WheelClicks: Integer;
+  LLinesToScroll: Integer;
 begin
   if csDesigning in ComponentState then
     Exit;
 
-  if GetKeyState(VK_CONTROL) >= 0 then
-    Delta := Mouse.WheelScrollLines
+  if ssCtrl in aShift then
+    LLinesToScroll := FCompletionProposal.VisibleLines
   else
-    Delta := FCompletionProposal.VisibleLines;
+    LLinesToScroll := 1;
 
-  Inc(FMouseWheelAccumulator, Integer(AMessage.wParamHi));
-  WheelClicks := FMouseWheelAccumulator div WHEEL_DELTA;
-  FMouseWheelAccumulator := FMouseWheelAccumulator mod WHEEL_DELTA;
-  if (Delta = Integer(WHEEL_PAGESCROLL)) or (Delta > FCompletionProposal.VisibleLines) then
-    Delta := FCompletionProposal.VisibleLines;
+  if AWheelDelta > 0 then
+    TopLine := Max(0, TopLine - LLinesToScroll)
+  else
+    TopLine := Min(GetItems.Count - FCompletionProposal.VisibleLines, TopLine + LLinesToScroll);
 
-  TopLine := TopLine - (Delta * WheelClicks);
+  Invalidate;
 end;
 
 procedure TBCEditorCompletionProposalPopupWindow.Execute(const ACurrentString: string; X, Y: Integer);

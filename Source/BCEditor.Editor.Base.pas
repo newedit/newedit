@@ -7771,11 +7771,17 @@ var
   LWheelClicks: Integer;
   LLinesToScroll: Integer;
 begin
+  if Assigned(FCompletionProposalPopupWindow) then
+  begin
+    FCompletionProposalPopupWindow.MouseWheel(AShift, AWheelDelta, AMousePos);
+    Exit(False);
+  end;
+
   Result := inherited DoMouseWheel(AShift, AWheelDelta, AMousePos);
   if Result then
     Exit;
 
-  if GetKeyState(VK_CONTROL) < 0 then
+  if ssCtrl in aShift then
     LLinesToScroll := VisibleLines shr Ord(soHalfPage in FScroll.Options)
   else
     LLinesToScroll := 3;
