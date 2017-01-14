@@ -9501,7 +9501,7 @@ begin
     if FCaret.NonBlinking.Enabled or Assigned(FMultiCarets) and (FMultiCarets.Count > 0) and FDrawMultiCarets then
       DrawCaret;
 
-    if FCaret.MultiEdit.Enabled and (FMultiCaretPosition.Row <> -1) then
+    if not Assigned(FCompletionProposalPopupWindow) and FCaret.MultiEdit.Enabled and (FMultiCaretPosition.Row <> -1) then
       PaintCaretBlock(FMultiCaretPosition);
 
     if FRightMargin.Moving then
