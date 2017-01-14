@@ -347,7 +347,7 @@ end;
 
 procedure TBCEditorHighlighter.SetCurrentRange(AValue: Pointer);
 begin
-  FCurrentRange := TBCEditorRange(AValue);
+  FCurrentRange := TBCEditorRange(AValue)
 end;
 
 procedure TBCEditorHighlighter.AddKeywords(var AStringList: TStringList);

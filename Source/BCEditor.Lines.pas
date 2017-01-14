@@ -32,7 +32,6 @@ type
 const
   CSTRINGRECORDSIZE = SizeOf(TBCEditorStringRecord);
   CMAXSTRINGS = MaxInt div CSTRINGRECORDSIZE;
-  CNULLRANGE = TBCEditorLinesRange(-1);
 
 type
   TBCEditorLines = class;
@@ -494,7 +493,7 @@ begin
   begin
     Pointer(Value) := nil;
     Value := AValue;
-    Range := CNULLRANGE;
+    Range := nil;
     ExpandedLength := -1;
     Flags := [sfExpandedLengthUnknown];
     New(Attribute);
@@ -527,7 +526,7 @@ begin
         if Assigned(AStrings) then
           Value := AStrings[LIndex];
         Inc(LIndex);
-        Range := CNULLRANGE;
+        Range := nil;
         ExpandedLength := -1;
         Flags := [sfExpandedLengthUnknown];
         New(Attribute);
@@ -719,7 +718,7 @@ begin
         begin
           Pointer(Value) := nil;
           Value := AStrings[LIndex];
-          Range := CNULLRANGE;
+          Range := nil;
           ExpandedLength := -1;
           Flags := [sfExpandedLengthUnknown];
           New(Attribute);
@@ -908,7 +907,7 @@ begin
           Value := ''
         else
           SetString(Value, LPStartValue, LPValue - LPStartValue);
-        Range := CNULLRANGE;
+        Range := nil;
         ExpandedLength := -1;
         Flags := [sfExpandedLengthUnknown];
         New(Attribute);
