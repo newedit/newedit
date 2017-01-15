@@ -324,6 +324,7 @@ var
   LIndex, LTitleRow, LColumnIndex, LLeft: Integer;
   LColumnWidth, LItemIndex: Integer;
   LColumn: TBCEditorCompletionProposalColumn;
+  LRect: TRect;
 begin
   FBitmapBuffer.Width := ClientWidth;
   FBitmapBuffer.Height := ClientHeight;
@@ -337,13 +338,27 @@ begin
     { Title }
     LColumnWidth := 0;
     if FTitleVisible then
-    for LColumnIndex := 0 to FCompletionProposal.Columns.Count - 1 do
     begin
-      LColumn := FCompletionProposal.Columns[LColumnIndex];
-      Canvas.Font.Assign(LColumn.Title.Font);
-      if LColumn.Title.Visible then
-        Canvas.TextOut(FMargin + LColumnWidth, 0, LColumn.Title.Caption);
-      LColumnWidth := LColumnWidth + LColumn.Width;
+      LRect := ClientRect;
+      LRect.Height := FItemHeight;
+      for LColumnIndex := 0 to FCompletionProposal.Columns.Count - 1 do
+      begin
+        LColumn := FCompletionProposal.Columns[LColumnIndex];
+        Canvas.Brush.Color := LColumn.Title.Colors.Background;
+        LRect.Left := LColumnWidth;
+        LRect.Right := LColumnWidth + LColumn.Width;
+        Winapi.Windows.ExtTextOut(Canvas.Handle, 0, 0, ETO_OPAQUE, LRect, '', 0, nil);
+        Canvas.Font.Assign(LColumn.Title.Font);
+        if LColumn.Title.Visible then
+          Canvas.TextOut(FMargin + LColumnWidth, 0, LColumn.Title.Caption);
+        Canvas.Pen.Color := LColumn.Title.Colors.BottomBorder;
+        Canvas.MoveTo(LRect.Left, LRect.Bottom - 1);
+        Canvas.LineTo(LRect.Right, LRect.Bottom - 1);
+        Canvas.Pen.Color := LColumn.Title.Colors.RightBorder;
+        Canvas.MoveTo(LRect.Right - 1, LRect.Top - 1);
+        Canvas.LineTo(LRect.Right - 1, LRect.Bottom - 1);
+        LColumnWidth := LColumnWidth + LColumn.Width;
+      end;
     end;
     { Data }
     for LIndex := 0 to Min(GetVisibleLines, Length(FItemIndexArray) - 1) do
