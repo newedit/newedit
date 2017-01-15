@@ -3,39 +3,40 @@ unit BCEditor.Editor.CompletionProposal;
 interface
 
 uses
-  System.Classes, Vcl.Graphics, BCEditor.Editor.CompletionProposal.Colors, BCEditor.Editor.CompletionProposal.Columns,
-  BCEditor.Editor.CompletionProposal.Trigger, BCEditor.Types;
+  System.Classes, Vcl.Graphics, Vcl.Controls, BCEditor.Editor.CompletionProposal.Colors,
+  BCEditor.Editor.CompletionProposal.Columns, BCEditor.Editor.CompletionProposal.Trigger, BCEditor.Types;
 
 type
   TBCEditorCompletionProposal = class(TPersistent)
   strict private
     FCloseChars: string;
     FColors: TBCEditorCompletionProposalColors;
-    FColumns: TBCEditorProposalColumns;
+    FColumns: TBCEditorCompletionProposalColumns;
     FCompletionColumnIndex: Integer;
     FEnabled: Boolean;
-    FFont: TFont;
+    FImages: TImageList;
     FOptions: TBCEditorCompletionProposalOptions;
-    FOwner: TPersistent;
+    FOwner: TComponent;
     FSecondaryShortCut: TShortCut;
     FShortCut: TShortCut;
     FTrigger: TBCEditorCompletionProposalTrigger;
     FVisibleLines: Integer;
     FWidth: Integer;
+    procedure SetImages(const AValue: TImageList);
   protected
     function GetOwner: TPersistent; override;
   public
-    constructor Create(AOwner: TPersistent);
+    constructor Create(AOwner: TComponent);
     destructor Destroy; override;
     procedure Assign(ASource: TPersistent); override;
     procedure SetOption(const AOption: TBCEditorCompletionProposalOption; const AEnabled: Boolean);
   published
     property CloseChars: string read FCloseChars write FCloseChars;
     property Colors: TBCEditorCompletionProposalColors read FColors write FColors;
-    property Columns: TBCEditorProposalColumns read FColumns write FColumns;
+    property Columns: TBCEditorCompletionProposalColumns read FColumns write FColumns;
     property CompletionColumnIndex: Integer read FCompletionColumnIndex write FCompletionColumnIndex default 0;
     property Enabled: Boolean read FEnabled write FEnabled default True;
-    property Font: TFont read FFont write FFont;
+    property Images: TImageList read FImages write SetImages;
     property Options: TBCEditorCompletionProposalOptions read FOptions write FOptions default [cpoFiltered, cpoParseItemsFromText];
     property SecondaryShortCut: TShortCut read FSecondaryShortCut write FSecondaryShortCut;
     property ShortCut: TShortCut read FShortCut write FShortCut;
@@ -49,20 +50,17 @@ implementation
 uses
   Vcl.Menus;
 
-constructor TBCEditorCompletionProposal.Create(AOwner: TPersistent);
+constructor TBCEditorCompletionProposal.Create(AOwner: TComponent);
 begin
   inherited Create;
 
   FOwner := AOwner;
   FCloseChars := '()[]. ';
   FColors := TBCEditorCompletionProposalColors.Create;
-  FColumns := TBCEditorProposalColumns.Create(Self, TBCEditorProposalColumn);
+  FColumns := TBCEditorCompletionProposalColumns.Create(Self, TBCEditorCompletionProposalColumn);
   FColumns.Add; { default column }
   FCompletionColumnIndex := 0;
   FEnabled := True;
-  FFont := TFont.Create;
-  FFont.Name := 'Courier New';
-  FFont.Size := 8;
   FOptions := [cpoFiltered, cpoParseItemsFromText];
   FShortCut := Vcl.Menus.ShortCut(Ord(' '), [ssCtrl]);
   FTrigger := TBCEditorCompletionProposalTrigger.Create;
@@ -73,7 +71,6 @@ end;
 destructor TBCEditorCompletionProposal.Destroy;
 begin
   FColors.Free;
-  FFont.Free;
   FTrigger.Free;
   FColumns.Free;
 
@@ -89,7 +86,7 @@ begin
     Self.FColors.Assign(FColors);
     Self.FColumns.Assign(FColumns);
     Self.FEnabled := FEnabled;
-    Self.FFont.Assign(FFont);
+    Self.FImages := FImages;
     Self.FOptions := FOptions;
     Self.FSecondaryShortCut := FSecondaryShortCut;
     Self.FShortCut := FShortCut;
@@ -112,6 +109,16 @@ end;
 function TBCEditorCompletionProposal.GetOwner: TPersistent;
 begin
   Result := FOwner;
+end;
+
+procedure TBCEditorCompletionProposal.SetImages(const AValue: TImageList);
+begin
+  if FImages <> AValue then
+  begin
+    FImages := AValue;
+    if Assigned(FImages) then
+      FImages.FreeNotification(FOwner);
+  end;
 end;
 
 end.

@@ -763,7 +763,7 @@ uses
   BCEditor.Editor.LeftMargin.Border, BCEditor.Editor.LeftMargin.LineNumbers, BCEditor.Editor.Scroll.Hint,
   BCEditor.Editor.Search.Map, BCEditor.Editor.Undo.Item, BCEditor.Editor.Utils, BCEditor.Encoding, BCEditor.Language,
   BCEditor.Highlighter.Rules, BCEditor.Export.HTML, Vcl.Themes, BCEditor.StyleHooks, BCEditor.Search.Normal,
-  BCEditor.Search.RegularExpressions, BCEditor.Search.WildCard
+  BCEditor.Search.RegularExpressions, BCEditor.Search.WildCard, BCEditor.Editor.CompletionProposal.Columns
   {$if defined(USE_ALPHASKINS)}, Winapi.CommCtrl, sVCLUtils, sMessages, sConst, sSkinProps{$endif};
 
 type
@@ -8187,8 +8187,11 @@ end;
 
 procedure TBCBaseEditor.DoExecuteCompletionProposal(const AKey: Word = 0; AShift: TShiftState = []);
 var
+  LIndex: Integer;
   LPoint: TPoint;
   LCurrentInput: string;
+  LItems: TStrings;
+  LItem: TBCEditorCompletionProposalColumnItem;
 begin
   Assert(FCompletionProposal.CompletionColumnIndex < FCompletionProposal.Columns.Count);
 
@@ -8204,7 +8207,19 @@ begin
     OnSelected := FOnCompletionProposalSelected;
     Assign(FCompletionProposal);
     if cpoParseItemsFromText in FCompletionProposal.Options then
-      SplitTextIntoWords(Items, False);
+    begin
+      LItems := TStringList.Create;
+      try
+        SplitTextIntoWords(LItems, False);
+        for LIndex := 0 to LItems.Count - 1 do
+        begin
+          LItem := Items.Add;
+          LItem.Value := LItems[LIndex];
+        end;
+      finally
+        LItems.Free;
+      end;
+    end;
     LCurrentInput := GetCurrentInput;
     if Assigned(FOnBeforeCompletionProposalExecute) then
       FOnBeforeCompletionProposalExecute(Self, Items, LCurrentInput, AKey, AShift);

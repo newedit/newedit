@@ -4,7 +4,7 @@ interface
 
 uses
   Winapi.Windows, System.Classes, Vcl.Forms, Vcl.Graphics, Vcl.Controls, BCEditor.Highlighter.Attributes,
-  BCEditor.Consts, System.SysUtils;
+  BCEditor.Consts, System.SysUtils, BCEditor.Editor.CompletionProposal.Columns;
 
 type
   TBCEditorArrayOfString = array of string;
@@ -14,7 +14,7 @@ type
 
   TBCEditorCaretStyle = (csVerticalLine, csThinVerticalLine, csHorizontalLine, csThinHorizontalLine, csHalfBlock, csBlock);
 
-  TBCEditorCompletionProposalEvent = procedure(Sender: TObject; AItems: TStrings; const AInput: string; const AKey: Word; const AShift: TShiftState) of object;
+  TBCEditorCompletionProposalEvent = procedure(Sender: TObject; AItems: TBCEditorCompletionProposalColumnItems; const AInput: string; const AKey: Word; const AShift: TShiftState) of object;
   TBCEditorCompletionProposalSelectedEvent = procedure(Sender: TObject; var ASelectedItem: string) of object;
   TBCEditorCompletionProposalValidateEvent = procedure(ASender: TObject; Shift: TShiftState; EndToken: Char) of object;
 
