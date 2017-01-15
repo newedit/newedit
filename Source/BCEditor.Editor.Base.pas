@@ -7281,7 +7281,7 @@ var
         LScrollInfo.nPos := MulDiv(BCEDITOR_MAX_SCROLL_RANGE, FHorizontalScrollPosition, LHorizontalScrollMax);
       end;
 
-      ShowScrollBar(Handle, SB_HORZ, LScrollInfo.nMax > LScrollInfo.nPage);
+      ShowScrollBar(Handle, SB_HORZ, LHorizontalScrollMax > FScrollPageWidth);
       SetScrollInfo(Handle, SB_HORZ, LScrollInfo, True);
       EnableScrollBar(Handle, SB_HORZ, ESB_ENABLE_BOTH);
     end
