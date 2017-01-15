@@ -8188,7 +8188,7 @@ end;
 
 procedure TBCBaseEditor.DoExecuteCompletionProposal(const AKey: Word = 0; AShift: TShiftState = []);
 var
-  LIndex: Integer;
+  LIndex, LColumnIndex: Integer;
   LPoint: TPoint;
   LCurrentInput: string;
   LItems: TStrings;
@@ -8219,6 +8219,9 @@ begin
       begin
         LItem := Items.Add;
         LItem.Value := LItems[LIndex];
+        { Add empty items for columns }
+        for LColumnIndex := 1 to FCompletionProposal.Columns.Count - 1 do
+          FCompletionProposal.Columns[LColumnIndex].Items.Add;
       end;
     finally
       LItems.Free;
