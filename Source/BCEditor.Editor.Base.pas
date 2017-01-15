@@ -555,6 +555,7 @@ type
     function WordStart: TBCEditorTextPosition; overload;
     function WordStart(const ATextPosition: TBCEditorTextPosition): TBCEditorTextPosition; overload;
     procedure AddCaret(const ADisplayPosition: TBCEditorDisplayPosition);
+    procedure AddHighlighterKeywords(AStringList: TStrings);
     procedure AddKeyCommand(ACommand: TBCEditorCommand; AShift: TShiftState; AKey: Word;
       ASecondaryShift: TShiftState = []; ASecondaryKey: Word = 0);
     procedure AddKeyDownHandler(AHandler: TKeyEvent);
@@ -8206,20 +8207,23 @@ begin
     OnCanceled := FOnCompletionProposalCanceled;
     OnSelected := FOnCompletionProposalSelected;
     Assign(FCompletionProposal);
-    if cpoParseItemsFromText in FCompletionProposal.Options then
-    begin
-      LItems := TStringList.Create;
-      try
+
+    LItems := TStringList.Create;
+    try
+      if cpoParseItemsFromText in FCompletionProposal.Options then
         SplitTextIntoWords(LItems, False);
-        for LIndex := 0 to LItems.Count - 1 do
-        begin
-          LItem := Items.Add;
-          LItem.Value := LItems[LIndex];
-        end;
-      finally
-        LItems.Free;
+      if cpoAddHighlighterKeywords in FCompletionProposal.Options then
+        AddHighlighterKeywords(LItems);
+      Items.Clear;
+      for LIndex := 0 to LItems.Count - 1 do
+      begin
+        LItem := Items.Add;
+        LItem.Value := LItems[LIndex];
       end;
+    finally
+      LItems.Free;
     end;
+
     LCurrentInput := GetCurrentInput;
     if Assigned(FOnBeforeCompletionProposalExecute) then
       FOnBeforeCompletionProposalExecute(Self, Items, LCurrentInput, AKey, AShift);
@@ -13222,10 +13226,8 @@ end;
 function TBCBaseEditor.SplitTextIntoWords(AStringList: TStrings; const ACaseSensitive: Boolean): string;
 var
   LIndex, Line: Integer;
-  LChar: Char;
   LWord, LWordList: string;
   LStringList: TStringList;
-  LKeywordStringList: TStringList;
   LPText, LPKeyWord, LPBookmarkText: PChar;
   LOpenTokenSkipFoldRangeList: TList;
   LSkipOpenKeyChars, LSkipCloseKeyChars: TBCEditorCharSet;
@@ -13260,7 +13262,6 @@ begin
   Result := '';
   AddKeyChars;
   AStringList.Clear;
-  LKeywordStringList := TStringList.Create;
   LStringList := TStringList.Create;
   LOpenTokenSkipFoldRangeList := TList.Create;
   try
@@ -13351,7 +13352,25 @@ begin
         if Pos(LWord + BCEDITOR_CARRIAGE_RETURN + BCEDITOR_LINEFEED, LWordList) = 0 then { No duplicates }
           LWordList := LWordList + LWord + BCEDITOR_CARRIAGE_RETURN + BCEDITOR_LINEFEED;
     end;
-    { Add highlighter keywords }
+    LStringList.Text := LWordList;
+    LStringList.Sort;
+    AStringList.Assign(LStringList);
+  finally
+    LStringList.Free;
+    LOpenTokenSkipFoldRangeList.Free;
+  end;
+end;
+
+procedure TBCBaseEditor.AddHighlighterKeywords(AStringList: TStrings);
+var
+  LIndex: Integer;
+  LStringList, LKeywordStringList: TStringList;
+  LWord, LWordList: string;
+  LChar: Char;
+begin
+  LStringList := TStringList.Create;
+  LKeywordStringList := TStringList.Create;
+  try
     FHighlighter.AddKeywords(LKeywordStringList);
     for LIndex := 0 to LKeywordStringList.Count - 1 do
     begin
@@ -13364,13 +13383,12 @@ begin
             LWordList := LWordList + LWord + BCEDITOR_CARRIAGE_RETURN + BCEDITOR_LINEFEED;
       end;
     end;
-    LStringList.Text := LWordList;
+    LStringList.Text := LWordList + AStringList.Text;
     LStringList.Sort;
     AStringList.Assign(LStringList);
   finally
-    LStringList.Free;
-    LOpenTokenSkipFoldRangeList.Free;
     LKeywordStringList.Free;
+    LStringList.Free;
   end;
 end;
 

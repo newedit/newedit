@@ -161,6 +161,7 @@ type
 
   TBCEditorCompletionProposalOption = (
     cpoAutoInvoke,
+    cpoAddHighlighterKeywords,
     cpoCaseSensitive,
     cpoFiltered,
     cpoParseItemsFromText,

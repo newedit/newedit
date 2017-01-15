@@ -37,7 +37,7 @@ type
     property CompletionColumnIndex: Integer read FCompletionColumnIndex write FCompletionColumnIndex default 0;
     property Enabled: Boolean read FEnabled write FEnabled default True;
     property Images: TImageList read FImages write SetImages;
-    property Options: TBCEditorCompletionProposalOptions read FOptions write FOptions default [cpoFiltered, cpoParseItemsFromText];
+    property Options: TBCEditorCompletionProposalOptions read FOptions write FOptions default [cpoAddHighlighterKeywords, cpoFiltered, cpoParseItemsFromText];
     property SecondaryShortCut: TShortCut read FSecondaryShortCut write FSecondaryShortCut;
     property ShortCut: TShortCut read FShortCut write FShortCut;
     property Trigger: TBCEditorCompletionProposalTrigger read FTrigger write FTrigger;
@@ -61,7 +61,7 @@ begin
   FColumns.Add; { default column }
   FCompletionColumnIndex := 0;
   FEnabled := True;
-  FOptions := [cpoFiltered, cpoParseItemsFromText];
+  FOptions := [cpoAddHighlighterKeywords, cpoFiltered, cpoParseItemsFromText];
   FShortCut := Vcl.Menus.ShortCut(Ord(' '), [ssCtrl]);
   FTrigger := TBCEditorCompletionProposalTrigger.Create;
   FVisibleLines := 8;
