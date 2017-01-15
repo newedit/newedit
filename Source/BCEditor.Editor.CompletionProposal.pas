@@ -6,6 +6,9 @@ uses
   System.Classes, Vcl.Graphics, Vcl.Controls, BCEditor.Editor.CompletionProposal.Colors,
   BCEditor.Editor.CompletionProposal.Columns, BCEditor.Editor.CompletionProposal.Trigger, BCEditor.Types;
 
+const
+  BCEDITOR_COMPLETION_PROPOSAL_DEFAULT_OPTIONS = [cpoAddHighlighterKeywords, cpoFiltered, cpoParseItemsFromText];
+
 type
   TBCEditorCompletionProposal = class(TPersistent)
   strict private
@@ -37,7 +40,7 @@ type
     property CompletionColumnIndex: Integer read FCompletionColumnIndex write FCompletionColumnIndex default 0;
     property Enabled: Boolean read FEnabled write FEnabled default True;
     property Images: TImageList read FImages write SetImages;
-    property Options: TBCEditorCompletionProposalOptions read FOptions write FOptions default [cpoAddHighlighterKeywords, cpoFiltered, cpoParseItemsFromText];
+    property Options: TBCEditorCompletionProposalOptions read FOptions write FOptions default BCEDITOR_COMPLETION_PROPOSAL_DEFAULT_OPTIONS;
     property SecondaryShortCut: TShortCut read FSecondaryShortCut write FSecondaryShortCut;
     property ShortCut: TShortCut read FShortCut write FShortCut;
     property Trigger: TBCEditorCompletionProposalTrigger read FTrigger write FTrigger;
@@ -61,7 +64,7 @@ begin
   FColumns.Add; { default column }
   FCompletionColumnIndex := 0;
   FEnabled := True;
-  FOptions := [cpoAddHighlighterKeywords, cpoFiltered, cpoParseItemsFromText];
+  FOptions := BCEDITOR_COMPLETION_PROPOSAL_DEFAULT_OPTIONS;
   FShortCut := Vcl.Menus.ShortCut(Ord(' '), [ssCtrl]);
   FTrigger := TBCEditorCompletionProposalTrigger.Create;
   FVisibleLines := 8;

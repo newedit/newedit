@@ -8226,7 +8226,7 @@ begin
 
     LCurrentInput := GetCurrentInput;
     if Assigned(FOnBeforeCompletionProposalExecute) then
-      FOnBeforeCompletionProposalExecute(Self, Items, LCurrentInput, AKey, AShift);
+      FOnBeforeCompletionProposalExecute(Self, FCompletionProposal.Columns, LCurrentInput, AKey, AShift);
     Execute(LCurrentInput, LPoint.X, LPoint.Y);
   end;
 end;
