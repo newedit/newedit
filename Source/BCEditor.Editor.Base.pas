@@ -1476,7 +1476,7 @@ end;
 
 function TBCBaseEditor.GetHorizontalScrollMax: Integer;
 begin
-  Result := Max(FLines.GetLengthOfLongestLine * FPaintHelper.CharWidth, FScrollPageWidth);
+  Result := Max(Max(FLines.GetLengthOfLongestLine * FPaintHelper.CharWidth, FHorizontalScrollPosition), FScrollPageWidth);
   if soPastEndOfLine in FScroll.Options then
     Result := Result + FScrollPageWidth;
 end;
