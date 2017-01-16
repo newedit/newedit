@@ -49,9 +49,7 @@ type
     procedure UpdateScrollBar;
     procedure WMVScroll(var AMessage: TWMScroll); message WM_VSCROLL;
   protected
-    function CanResize(var AWidth, AHeight: Integer): Boolean; override;
     procedure Paint; override;
-    procedure Resize; override;
     procedure Hide; override;
     procedure MouseDown(AButton: TMouseButton; AShift: TShiftState; X, Y: Integer); override;
   public
@@ -61,7 +59,7 @@ type
     function GetCurrentInput: string;
     procedure Assign(ASource: TPersistent); override;
     procedure MouseWheel(AShift: TShiftState; AWheelDelta: Integer; AMousePos: TPoint);
-    procedure Execute(const ACurrentString: string; X, Y: Integer);
+    procedure Execute(const ACurrentString: string; const ALeft: Integer; const ATop: Integer);
     property CanFree: Boolean read FCanFree;
     property CurrentString: string read FCurrentString write SetCurrentString;
     property Items: TBCEditorCompletionProposalColumnItems read GetItems;
@@ -103,6 +101,9 @@ end;
 
 destructor TBCEditorCompletionProposalPopupWindow.Destroy;
 begin
+  FCompletionProposal.VisibleLines := ClientHeight div FItemHeight;
+  FCompletionProposal.Width := Width;
+
   FCanFree := False;
   if not FValueSet and Assigned(FOnCanceled) then
     FOnCanceled(Self);
@@ -135,6 +136,7 @@ begin
       Self.FBitmapBuffer.Canvas.Font.Assign(Font);
       Self.FItemHeight := TextHeight(FBitmapBuffer.Canvas, 'X');
       Self.FFormWidth := Width;
+      Self.Constraints.Assign(Constraints);
     end
   end
   else
@@ -167,7 +169,7 @@ end;
 
 function TBCEditorCompletionProposalPopupWindow.GetVisibleLines: Integer;
 begin
-  Result := FCompletionProposal.VisibleLines;
+  Result := ClientHeight div FItemHeight;
   if FTitleVisible then
     Dec(Result);
 end;
@@ -291,34 +293,6 @@ begin
   Invalidate;
 end;
 
-function TBCEditorCompletionProposalPopupWindow.CanResize(var AWidth, AHeight: Integer): Boolean;
-var
-  LVisibleLines: Integer;
-begin
-  Result := True;
-
-  if FItemHeight <> 0 then
-  begin
-    LVisibleLines := AHeight div FItemHeight;
-    if LVisibleLines < 1 then
-      LVisibleLines := 1;
-  end
-  else
-    LVisibleLines := 0;
-
-  FCompletionProposal.VisibleLines := LVisibleLines;
-end;
-
-procedure TBCEditorCompletionProposalPopupWindow.Resize;
-begin
-  inherited;
-
-  if FItemHeight <> 0 then
-    FCompletionProposal.VisibleLines := ClientHeight div FItemHeight;
-
-  Invalidate;
-end;
-
 procedure TBCEditorCompletionProposalPopupWindow.Paint;
 var
   LIndex, LTitleRow, LColumnIndex, LLeft: Integer;
@@ -326,12 +300,12 @@ var
   LColumn: TBCEditorCompletionProposalColumn;
   LRect: TRect;
 begin
-  FBitmapBuffer.Width := ClientWidth;
-  FBitmapBuffer.Height := ClientHeight;
   with FBitmapBuffer do
   begin
     Canvas.Brush.Color := FCompletionProposal.Colors.Background;
-    Winapi.Windows.ExtTextOut(Canvas.Handle, 0, 0, ETO_OPAQUE, ClientRect, '', 0, nil);
+    Height := 0;
+    Width := ClientWidth;
+    Height := ClientHeight;
     LTitleRow := 0;
     if FTitleVisible then
       Inc(LTitleRow);
@@ -496,7 +470,7 @@ begin
   Invalidate;
 end;
 
-procedure TBCEditorCompletionProposalPopupWindow.Execute(const ACurrentString: string; X, Y: Integer);
+procedure TBCEditorCompletionProposalPopupWindow.Execute(const ACurrentString: string; const ALeft: Integer; const ATop: Integer);
 var
   LPoint: TPoint;
 
@@ -505,8 +479,8 @@ var
     LWidth: Integer;
     LHeight: Integer;
   begin
-    LPoint.X := X - TextWidth(FBitmapBuffer.Canvas, ACurrentString);
-    LPoint.Y := Y;
+    LPoint.X := ALeft - TextWidth(FBitmapBuffer.Canvas, ACurrentString);
+    LPoint.Y := ATop;
 
     LWidth := FFormWidth;
     LHeight := FItemHeight * FCompletionProposal.VisibleLines + 2;

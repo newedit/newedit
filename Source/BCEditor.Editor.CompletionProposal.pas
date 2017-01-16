@@ -7,7 +7,7 @@ uses
   BCEditor.Editor.CompletionProposal.Columns, BCEditor.Editor.CompletionProposal.Trigger, BCEditor.Types;
 
 const
-  BCEDITOR_COMPLETION_PROPOSAL_DEFAULT_OPTIONS = [cpoAddHighlighterKeywords, cpoFiltered, cpoParseItemsFromText];
+  BCEDITOR_COMPLETION_PROPOSAL_DEFAULT_OPTIONS = [cpoAutoMaxConstraints, cpoAddHighlighterKeywords, cpoFiltered, cpoParseItemsFromText];
 
 type
   TBCEditorCompletionProposal = class(TPersistent)
@@ -16,6 +16,7 @@ type
     FColors: TBCEditorCompletionProposalColors;
     FColumns: TBCEditorCompletionProposalColumns;
     FCompletionColumnIndex: Integer;
+    FConstraints: TSizeConstraints;
     FEnabled: Boolean;
     FImages: TImageList;
     FOptions: TBCEditorCompletionProposalOptions;
@@ -38,6 +39,7 @@ type
     property Colors: TBCEditorCompletionProposalColors read FColors write FColors;
     property Columns: TBCEditorCompletionProposalColumns read FColumns write FColumns;
     property CompletionColumnIndex: Integer read FCompletionColumnIndex write FCompletionColumnIndex default 0;
+    property Constraints: TSizeConstraints read FConstraints write FConstraints;
     property Enabled: Boolean read FEnabled write FEnabled default True;
     property Images: TImageList read FImages write SetImages;
     property Options: TBCEditorCompletionProposalOptions read FOptions write FOptions default BCEDITOR_COMPLETION_PROPOSAL_DEFAULT_OPTIONS;
@@ -69,6 +71,9 @@ begin
   FTrigger := TBCEditorCompletionProposalTrigger.Create;
   FVisibleLines := 8;
   FWidth := 260;
+  FConstraints := TSizeConstraints.Create(nil);
+  FConstraints.MinWidth := 260;
+  FConstraints.MinHeight := 124;
 end;
 
 destructor TBCEditorCompletionProposal.Destroy;
@@ -76,6 +81,7 @@ begin
   FColors.Free;
   FTrigger.Free;
   FColumns.Free;
+  FConstraints.Free;
 
   inherited;
 end;

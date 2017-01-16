@@ -48,6 +48,7 @@ type
 {$endif}
     FCompletionProposal: TBCEditorCompletionProposal;
     FCompletionProposalPopupWindow: TBCEditorCompletionProposalPopupWindow;
+    FCompletionProposalResize: Boolean;
     FCompletionProposalResizeCursor: TCursor;
     FCompletionProposalTimer: TTimer;
     FCurrentMatchingPair: TBCEditorMatchingTokenResult;
@@ -9001,7 +9002,22 @@ begin
     if FMinimap.Visible then
       FMinimapBufferBitmap.Height := 0;
 
-    FreeCompletionProposalPopupWindow;
+    FCompletionProposalResize := False;
+    if Assigned(FCompletionProposalPopupWindow) and FCompletionProposalPopupWindow.Visible and
+      (cpoResizeable in FCompletionProposal.Options) and (FCompletionProposalResizeCursor <> crDefault) then
+    begin
+      FCompletionProposalPopupWindow.SetOriginalSize;
+      FCompletionProposalResize := True;
+      if cpoAutoMaxConstraints in FCompletionProposal.Options then
+      begin
+        FCompletionProposal.Constraints.MaxHeight := Height - FCompletionProposalPopupWindow.Width;
+        FCompletionProposal.Constraints.MaxWidth := Width - FCompletionProposalPopupWindow.Height;
+        FCompletionProposalPopupWindow.Constraints.Assign(FCompletionProposal.Constraints);
+      end;
+      Exit;
+    end
+    else
+      FreeCompletionProposalPopupWindow;
 
     if FCaret.MultiEdit.Enabled then
     begin
@@ -9250,6 +9266,22 @@ begin
       Exit;
   end;
 
+  if AShift = [] then
+    FCompletionProposalResize := False;
+
+  if FCompletionProposalResize then
+  begin
+    case FCompletionProposalResizeCursor of
+      crSizeNWSE:
+        FCompletionProposalPopupWindow.IncSize(X - FMouseDownX, Y - FMouseDownY);
+      crSizeWE:
+        FCompletionProposalPopupWindow.IncSize(X - FMouseDownX, 0);
+      crSizeNS:
+        FCompletionProposalPopupWindow.IncSize(0, Y - FMouseDownY);
+    end;
+    Exit;
+  end;
+
   if Assigned(FCompletionProposalPopupWindow) and FCompletionProposalPopupWindow.Visible and (cpoResizeable in FCompletionProposal.Options) then
     FCompletionProposalResizeCursor := GetCompletionProposalCursor(Point(X, Y));
 
@@ -9418,6 +9450,7 @@ var
 begin
   FMinimap.Clicked := False;
   FMinimap.Dragging := False;
+  FCompletionProposalResize := False;
 
   Exclude(FStateFlags, sfInSelection);
 
@@ -13373,6 +13406,7 @@ var
 begin
   LStringList := TStringList.Create;
   LKeywordStringList := TStringList.Create;
+  LWordList := AStringList.Text;
   try
     FHighlighter.AddKeywords(LKeywordStringList);
     for LIndex := 0 to LKeywordStringList.Count - 1 do
@@ -13386,7 +13420,7 @@ begin
             LWordList := LWordList + LWord + BCEDITOR_CARRIAGE_RETURN + BCEDITOR_LINEFEED;
       end;
     end;
-    LStringList.Text := LWordList + AStringList.Text;
+    LStringList.Text := LWordList;
     LStringList.Sort;
     AStringList.Assign(LStringList);
   finally
