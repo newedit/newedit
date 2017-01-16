@@ -148,7 +148,7 @@ end;
 
 procedure TBCEditorPopupWindow.WMEraseBkgnd(var AMessage: TMessage);
 begin
-  AMessage.Result := -1;
+  AMessage.Result := 1;
 end;
 
 {$if defined(USE_VCL_STYLES)}

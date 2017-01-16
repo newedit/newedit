@@ -8990,6 +8990,7 @@ var
   LRow, LRowCount: Integer;
   LMinimapLeft, LMinimapRight: Integer;
   LSelectedRow: Integer;
+  LPoint: TPoint;
 begin
   LSelectionAvailable := GetSelectionAvailable;
   LSelectedRow := GetSelectedRow(Y);
@@ -9010,8 +9011,11 @@ begin
       FCompletionProposalResize := True;
       if cpoAutoMaxConstraints in FCompletionProposal.Options then
       begin
-        FCompletionProposal.Constraints.MaxHeight := Height - FCompletionProposalPopupWindow.Width;
-        FCompletionProposal.Constraints.MaxWidth := Width - FCompletionProposalPopupWindow.Height;
+        LPoint.X := FCompletionProposalPopupWindow.Left;
+        LPoint.Y := FCompletionProposalPopupWindow.Top;
+        LPoint := ScreenToClient(LPoint);
+        FCompletionProposal.Constraints.MaxHeight := Height - LPoint.Y - GetSystemMetrics(SM_CYVSCROLL) - 5;
+        FCompletionProposal.Constraints.MaxWidth := Width - LPoint.X - GetSystemMetrics(SM_CYHSCROLL) - 5;
         FCompletionProposalPopupWindow.Constraints.Assign(FCompletionProposal.Constraints);
       end;
       Exit;
