@@ -8707,7 +8707,7 @@ begin
   if Assigned(FCompletionProposalPopupWindow) and not FCompletionProposalPopupWindow.Visible then
     FreeCompletionProposalPopupWindow;
 
-  if FCompletionProposal.Enabled and not Assigned(FCompletionProposalPopupWindow) then
+  if not ReadOnly and FCompletionProposal.Enabled and not Assigned(FCompletionProposalPopupWindow) then
   begin
     ShortCutToKey(FCompletionProposal.ShortCut, LShortCutKey, LShortCutShift);
     if ExecuteCompletionProposal then
