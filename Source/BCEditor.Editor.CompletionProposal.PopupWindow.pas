@@ -174,7 +174,6 @@ var
   LColumn: TBCEditorCompletionProposalColumn;
 begin
   Result := 0;
-  if FTitleVisible then
   for LColumnIndex := 0 to FCompletionProposal.Columns.Count - 1 do
   begin
     LColumn := FCompletionProposal.Columns[LColumnIndex];
