@@ -9,7 +9,7 @@ uses
 
 {$if defined(USE_VCL_STYLES)}
 const
-  CM_UPDATE_VCLSTYLE_SCROLLBARS= CM_BASE + 2050;
+  CM_UPDATE_VCLSTYLE_SCROLLBARS = CM_BASE + 2050;
 {$endif}
 
 type
@@ -597,6 +597,16 @@ var
     end;
   end;
 
+  procedure SetAutoConstraints;
+  begin
+    if cpoAutoConstraints in FCompletionProposal.Options then
+    begin
+      FCompletionProposal.Constraints.MinHeight := Height;
+      FCompletionProposal.Constraints.MinWidth := Width;
+      Constraints.Assign(FCompletionProposal.Constraints);
+    end;
+  end;
+
 var
   LIndex, LCount: Integer;
 begin
@@ -613,6 +623,7 @@ begin
     FTitleHeight := GetTitleHeight;
     CalculateFormPlacement;
     CalculateColumnWidths;
+    SetAutoConstraints;
     CurrentString := ACurrentString;
     if Length(FItemIndexArray) > 0 then
     begin

@@ -7,7 +7,7 @@ uses
   BCEditor.Editor.CompletionProposal.Columns, BCEditor.Editor.CompletionProposal.Trigger, BCEditor.Types;
 
 const
-  BCEDITOR_COMPLETION_PROPOSAL_DEFAULT_OPTIONS = [cpoAutoMaxConstraints, cpoAddHighlighterKeywords, cpoFiltered, cpoParseItemsFromText];
+  BCEDITOR_COMPLETION_PROPOSAL_DEFAULT_OPTIONS = [cpoAutoConstraints, cpoAddHighlighterKeywords, cpoFiltered, cpoParseItemsFromText];
 
 type
   TBCEditorCompletionProposal = class(TPersistent)
@@ -72,8 +72,6 @@ begin
   FVisibleLines := 8;
   FWidth := 260;
   FConstraints := TSizeConstraints.Create(nil);
-  FConstraints.MinWidth := 260;
-  FConstraints.MinHeight := 124;
 end;
 
 destructor TBCEditorCompletionProposal.Destroy;
