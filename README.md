@@ -1,4 +1,4 @@
-Latest release version <a href="https://github.com/bonecode/TBCEditor/releases">1.9.0</a>
+The latest release version <a href="https://github.com/bonecode/TBCEditor/releases">1.9.0</a>
 
 Use the Issues page to report bugs or send them directly to lasse@bonecode.com.
 
