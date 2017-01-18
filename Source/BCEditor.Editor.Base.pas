@@ -6326,6 +6326,16 @@ var
           begin
             LTokenAttributes := LTokenAttributes + UpCase(LPText^);
             Inc(LPText);
+            if CharInSet(LPText^, ['"', '''']) then
+            begin
+              LTokenAttributes := LTokenAttributes + UpCase(LPText^);
+              Inc(LPText);
+              while (LPText^ <> BCEDITOR_NONE_CHAR) and not CharInSet(LPText^, ['"', '''']) do
+              begin
+                LTokenAttributes := LTokenAttributes + UpCase(LPText^);
+                Inc(LPText);
+              end;
+            end;
           end;
 
           LOpenToken := '<' + LTokenName + LTokenAttributes + LPText^;
@@ -9036,7 +9046,7 @@ begin
     else
       FreeCompletionProposalPopupWindow;
 
-    if FCaret.MultiEdit.Enabled then
+    if FCaret.MultiEdit.Enabled and not FMouseOverURI then
     begin
       if ssCtrl in AShift then
       begin
