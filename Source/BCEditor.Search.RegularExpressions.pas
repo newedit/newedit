@@ -13,9 +13,9 @@ type
     FPattern: string;
     FPositions: TList;
   protected
-    function GetLength(AIndex: Integer): Integer; override;
+    function GetLength(const AIndex: Integer): Integer; override;
     function GetPattern: string; override;
-    function GetResult(AIndex: Integer): Integer; override;
+    function GetResult(const AIndex: Integer): Integer; override;
     function GetResultCount: Integer; override;
     procedure CaseSensitiveChanged; override;
     procedure SetPattern(const AValue: string); override;
@@ -94,7 +94,7 @@ begin
   FLengths.Clear;
 end;
 
-function TBCEditorRegexSearch.GetLength(AIndex: Integer): Integer;
+function TBCEditorRegexSearch.GetLength(const AIndex: Integer): Integer;
 begin
   Result := Integer(FLengths[AIndex]);
 end;
@@ -104,7 +104,7 @@ begin
   Result := FPattern;
 end;
 
-function TBCEditorRegexSearch.GetResult(AIndex: Integer): Integer;
+function TBCEditorRegexSearch.GetResult(const AIndex: Integer): Integer;
 begin
   Result := Integer(FPositions[AIndex]);
 end;

@@ -21,8 +21,8 @@ type
     FOnAddedUndo: TNotifyEvent;
     function GetCanUndo: Boolean;
     function GetItemCount: Integer;
-    function GetItems(AIndex: Integer): TBCEditorUndoItem;
-    procedure SetItems(AIndex: Integer; const AValue: TBCEditorUndoItem);
+    function GetItems(const AIndex: Integer): TBCEditorUndoItem;
+    procedure SetItems(const AIndex: Integer; const AValue: TBCEditorUndoItem);
   public
     constructor Create;
     destructor Destroy; override;
@@ -51,7 +51,7 @@ type
     property InsideRedo: Boolean read FInsideRedo write FInsideRedo default False;
     property InsideUndoBlock: Boolean read FInsideUndoBlock write FInsideUndoBlock default False;
     property ItemCount: Integer read GetItemCount;
-    property Items[AIndex: Integer]: TBCEditorUndoItem read GetItems write SetItems;
+    property Items[const AIndex: Integer]: TBCEditorUndoItem read GetItems write SetItems;
     property OnAddedUndo: TNotifyEvent read FOnAddedUndo write FOnAddedUndo;
   end;
 
@@ -262,12 +262,12 @@ begin
     AddChange(crGroupBreak, LDummyTextPosition, LDummyTextPosition, LDummyTextPosition, '', smNormal);
 end;
 
-function TBCEditorUndoList.GetItems(AIndex: Integer): TBCEditorUndoItem;
+function TBCEditorUndoList.GetItems(const AIndex: Integer): TBCEditorUndoItem;
 begin
   Result := TBCEditorUndoItem(FItems[AIndex]);
 end;
 
-procedure TBCEditorUndoList.SetItems(AIndex: Integer; const AValue: TBCEditorUndoItem);
+procedure TBCEditorUndoList.SetItems(const AIndex: Integer; const AValue: TBCEditorUndoItem);
 begin
   FItems[AIndex] := AValue;
 end;

@@ -699,7 +699,7 @@ end;
 
 procedure TBCEditorSection.SaveToStream(AStream: TStream);
 var
-  i, LCount: Integer;
+  LIndex, LCount: Integer;
   LCharset: TFontCharset;
   LColor: TColor;
   LHeight: Integer;
@@ -734,8 +734,8 @@ begin
     Write(LStyle, SizeOf(LStyle));
     LCount := Count;
     Write(LCount, SizeOf(LCount));
-    for i := 0 to LCount - 1 do
-      Get(i).SaveToStream(AStream);
+    for LIndex := 0 to LCount - 1 do
+      Get(LIndex).SaveToStream(AStream);
   end;
 end;
 

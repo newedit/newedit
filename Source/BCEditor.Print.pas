@@ -87,8 +87,7 @@ type
     procedure WriteLine(const AText: string);
     procedure WriteLineNumber;
   protected
-    procedure PrintLine(ALineNumber, APageNumber: Integer); virtual;
-    procedure PrintStatus(AStatus: TBCEditorPrintStatus; APageNumber: Integer; var AAbort: Boolean); virtual;
+    procedure PrintStatus(const AStatus: TBCEditorPrintStatus; const APageNumber: Integer; var AAbort: Boolean); virtual;
     property CharWidth: Integer read FCharWidth write SetCharWidth;
     property MaxLeftChar: Integer read FMaxLeftChar write SetMaxLeftChar;
   public
@@ -701,7 +700,8 @@ begin
               LSelectionLength := MaxInt;
             WriteLine(Copy(FLines[i], LSelectionStart, LSelectionLength));
           end;
-          PrintLine(i + 1, APageNumber);
+          if Assigned(FOnPrintLine) then
+            FOnPrintLine(Self, i + 1, APageNumber);
         end;
       end;
     end;
@@ -765,20 +765,13 @@ begin
   FPrinting := False;
 end;
 
-procedure TBCEditorPrint.PrintLine(ALineNumber, APageNumber: Integer);
-begin
-  if Assigned(FOnPrintLine) then
-    FOnPrintLine(Self, ALineNumber, APageNumber);
-end;
-
-procedure TBCEditorPrint.PrintStatus(AStatus: TBCEditorPrintStatus; APageNumber: Integer; var AAbort: Boolean);
+procedure TBCEditorPrint.PrintStatus(const AStatus: TBCEditorPrintStatus; const APageNumber: Integer; var AAbort: Boolean);
 begin
   AAbort := False;
   if Assigned(FOnPrintStatus) then
     FOnPrintStatus(Self, AStatus, APageNumber, AAbort);
-  if AAbort then
-    if FPrinting then
-      Printer.Abort;
+  if AAbort and FPrinting then
+    Printer.Abort;
 end;
 
 function TBCEditorPrint.GetPageCount: Integer;

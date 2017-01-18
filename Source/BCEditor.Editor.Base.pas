@@ -9038,8 +9038,13 @@ begin
         LPoint.X := FCompletionProposalPopupWindow.Left;
         LPoint.Y := FCompletionProposalPopupWindow.Top;
         LPoint := ScreenToClient(LPoint);
-        FCompletionProposal.Constraints.MaxHeight := Height - LPoint.Y - GetSystemMetrics(SM_CYVSCROLL) - 5;
-        FCompletionProposal.Constraints.MaxWidth := Width - LPoint.X - GetSystemMetrics(SM_CYHSCROLL) - 5;
+        with FCompletionProposal.Constraints do
+        begin
+          MinHeight := 0;
+          MinWidth := 0;
+          MaxHeight := Height - LPoint.Y - GetSystemMetrics(SM_CYVSCROLL) - 5;
+          MaxWidth := Width - LPoint.X - GetSystemMetrics(SM_CYHSCROLL) - 5;
+        end;
       end;
       Exit;
     end

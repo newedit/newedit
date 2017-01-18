@@ -23,9 +23,9 @@ type
     function GetFinished: Boolean;
     procedure InitShiftTable;
   protected
-    function GetLength(AIndex: Integer): Integer; override;
+    function GetLength(const AIndex: Integer): Integer; override;
     function GetPattern: string; override;
-    function GetResult(AIndex: Integer): Integer; override;
+    function GetResult(const AIndex: Integer): Integer; override;
     function GetResultCount: Integer; override;
     function TestWholeWord: Boolean;
     procedure CaseSensitiveChanged; override;
@@ -59,7 +59,7 @@ begin
   Result := (FRun >= FTheEnd) or (FPatternLength >= FTextLength);
 end;
 
-function TBCEditorNormalSearch.GetResult(AIndex: Integer): Integer;
+function TBCEditorNormalSearch.GetResult(const AIndex: Integer): Integer;
 begin
   Result := 0;
   if (AIndex >= 0) and (AIndex < FResults.Count) then
@@ -226,7 +226,7 @@ begin
   end;
 end;
 
-function TBCEditorNormalSearch.GetLength(AIndex: Integer): Integer;
+function TBCEditorNormalSearch.GetLength(const AIndex: Integer): Integer;
 begin
   Result := FPatternLength;
 end;
