@@ -2525,9 +2525,9 @@ begin
       Result := FTabs.Width;
     Result := Result * FPaintHelper.FontStock.CharWidth + (ALength - 1) * FPaintHelper.FontStock.CharWidth * FTabs.Width;
   end
-  {else
-  if FPaintHelper.FixedSizeFont and (Word(AToken[1]) < 256) then
-    Exit(FPaintHelper.FontStock.CharWidth * ALength)  }
+  else
+  if FPaintHelper.FixedSizeFont and ((FEncoding = System.SysUtils.TEncoding.ANSI) or (FEncoding = System.SysUtils.TEncoding.ASCII)) then
+    Exit(FPaintHelper.FontStock.CharWidth * ALength)
   else
   begin
     GetTextExtentPoint32(FPaintHelper.StockBitmap.Canvas.Handle, AToken, ALength, LSize);
