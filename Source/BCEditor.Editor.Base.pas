@@ -2161,6 +2161,7 @@ var
     LCharsBefore: Integer;
     LPToken: PChar;
     LTokenLength: Integer;
+    LLine: string;
   begin
     if not Visible then
       Exit;
@@ -2170,7 +2171,8 @@ var
       FHighlighter.ResetCurrentRange
     else
       FHighlighter.SetCurrentRange(FLines.Ranges[LCurrentLine - 2]);
-    FHighlighter.SetCurrentLine(FLines[LCurrentLine - 1]);
+    LLine := FLines[LCurrentLine - 1];
+    FHighlighter.SetCurrentLine(LLine);
     LWidth := 0;
     LLength := 0;
     LCharsBefore := 0;
@@ -2187,7 +2189,7 @@ var
         FPaintHelper.SetStyle(LHighlighterAttribute.FontStyles);
       LTokenWidth := GetTokenWidth(LTokenText, LTokenLength, LCharsBefore);
 
-      if LWidth + LTokenWidth > LMaxWidth then
+      if LTokenWidth > LMaxWidth then
       begin
         LTokenWidth := 0;
         LPToken := PChar(LTokenText);
@@ -2226,6 +2228,15 @@ var
         if LNextTokenText = '' then
           FHighlighter.Next;
         Continue;
+      end
+      else
+      if LWidth + LTokenWidth > LMaxWidth then
+      begin
+        FWordWrapLineLengths[LCacheLength] := LLength;
+        AddLineNumberIntoCache;
+        LLength := 0;
+        LWidth := 0;
+        Continue;
       end;
 
       Inc(LCharsBefore, GetTokenCharCount(LTokenText, LCharsBefore));
@@ -2233,8 +2244,11 @@ var
       Inc(LWidth, LTokenWidth);
       FHighlighter.Next;
     end;
-    FWordWrapLineLengths[LCacheLength] := LLength;
-    AddLineNumberIntoCache;
+    if (LLength > 0) or (LLine = '') then
+    begin
+      FWordWrapLineLengths[LCacheLength] := LLength;
+      AddLineNumberIntoCache;
+    end;
   end;
 
 begin
@@ -11925,7 +11939,7 @@ var
 
             if FWordWrap.Enabled then
             begin
-              if LLinePosition + LTokenLength > LLastColumn then
+              if LTokenLength > LLastColumn then
               begin
                 LNextTokenText := Copy(LTokenText, LLastColumn - LLinePosition + 1, LTokenLength);
                 LTokenText := Copy(LTokenText, 1, LLastColumn - LLinePosition);
@@ -11934,6 +11948,11 @@ var
                 PrepareToken;
                 LFirstColumn := 1;
                 LAddWrappedCount := True;
+                Break;
+              end;
+              if LLinePosition + LTokenLength > LLastColumn then
+              begin
+                LFirstColumn := 1;
                 Break;
               end;
             end
