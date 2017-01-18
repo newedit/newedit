@@ -11346,11 +11346,12 @@ var
       end;
     end
     else
+    if LText <> '' then
     begin
       SetDrawingColors(LSelected);
       LTokenLength := Length(LText);
       LTokenRect.Right := LTokenRect.Left + GetTokenWidth(LText, LTokenLength, LTokenHelper.ExpandedCharsBefore);
-      PaintToken(LText, LTokenLength);
+      PaintToken(LText, LTokenLength)
     end;
 
     if (not LSelected or LIsPartOfTokenSelected) and not AMinimap or AMinimap and (moShowSearchResults in FMinimap.Options) then
