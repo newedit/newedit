@@ -146,7 +146,10 @@
         <DCCReference Include="..\Source\BCEditor.Editor.CodeFolding.Regions.pas"/>
         <DCCReference Include="..\Source\BCEditor.Editor.CompletionProposal.pas"/>
         <DCCReference Include="..\Source\BCEditor.Editor.CompletionProposal.Colors.pas"/>
+				<DCCReference Include="..\Source\BCEditor.Editor.CompletionProposal.Columns.Items.pas"/>
         <DCCReference Include="..\Source\BCEditor.Editor.CompletionProposal.Columns.pas"/>
+        <DCCReference Include="..\Source\BCEditor.Editor.CompletionProposal.Columns.Title.pas"/>
+        <DCCReference Include="..\Source\BCEditor.Editor.CompletionProposal.Columns.Title.Colors.pas"/>
         <DCCReference Include="..\Source\BCEditor.Editor.CompletionProposal.PopupWindow.pas"/>
         <DCCReference Include="..\Source\BCEditor.Editor.CompletionProposal.Trigger.pas"/>
         <DCCReference Include="..\Source\BCEditor.Editor.DB.pas"/>
@@ -194,7 +197,7 @@
         <DCCReference Include="..\Source\BCEditor.Editor.Undo.pas"/>
         <DCCReference Include="..\Source\BCEditor.Editor.Undo.Item.pas"/>
         <DCCReference Include="..\Source\BCEditor.Editor.Undo.List.pas"/>
-				<DCCReference Include="..\Source\BCEditor.Editor.UnknownChars.pas"/>
+        <DCCReference Include="..\Source\BCEditor.Editor.UnknownChars.pas"/>
         <DCCReference Include="..\Source\BCEditor.Editor.Utils.pas"/>
         <DCCReference Include="..\Source\BCEditor.Editor.WordWrap.pas"/>
         <DCCReference Include="..\Source\BCEditor.Editor.WordWrap.Colors.pas"/>
@@ -220,7 +223,7 @@
         <DCCReference Include="..\Source\BCEditor.Print.PrinterInfo.pas"/>
         <DCCReference Include="..\Source\BCEditor.Print.Types.pas"/>
         <DCCReference Include="..\Source\BCEditor.Search.pas"/>
-				<DCCReference Include="..\Source\BCEditor.Search.Normal.pas"/>
+        <DCCReference Include="..\Source\BCEditor.Search.Normal.pas"/>
         <DCCReference Include="..\Source\BCEditor.Search.RegularExpressions.pas"/>
         <DCCReference Include="..\Source\BCEditor.Search.Wildcard.pas"/>
         <DCCReference Include="..\Source\BCEditor.StyleHooks.pas"/>
@@ -286,16 +289,7 @@
                         <Overwrite>true</Overwrite>
                     </Platform>
                 </DeployFile>
-                <DeployClass Name="DependencyModule">
-                    <Platform Name="Win32">
-                        <Operation>0</Operation>
-                        <Extensions>.dll;.bpl</Extensions>
-                    </Platform>
-                    <Platform Name="OSX32">
-                        <Operation>1</Operation>
-                        <Extensions>.dylib</Extensions>
-                    </Platform>
-                </DeployClass>
+                <DeployClass Name="ProjectiOSDeviceResourceRules"/>
                 <DeployClass Name="ProjectOSXResource">
                     <Platform Name="OSX32">
                         <RemoteDir>Contents\Resources</RemoteDir>
@@ -607,7 +601,16 @@
                         <Operation>1</Operation>
                     </Platform>
                 </DeployClass>
-                <DeployClass Name="ProjectiOSDeviceResourceRules"/>
+                <DeployClass Name="DependencyModule">
+                    <Platform Name="Win32">
+                        <Operation>0</Operation>
+                        <Extensions>.dll;.bpl</Extensions>
+                    </Platform>
+                    <Platform Name="OSX32">
+                        <Operation>1</Operation>
+                        <Extensions>.dylib</Extensions>
+                    </Platform>
+                </DeployClass>
                 <ProjectRoot Platform="iOSDevice64" Name="$(PROJECTNAME).app"/>
                 <ProjectRoot Platform="Win64" Name="$(PROJECTNAME)"/>
                 <ProjectRoot Platform="iOSDevice32" Name="$(PROJECTNAME).app"/>

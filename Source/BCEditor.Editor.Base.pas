@@ -765,7 +765,7 @@ uses
   BCEditor.Editor.LeftMargin.Border, BCEditor.Editor.LeftMargin.LineNumbers, BCEditor.Editor.Scroll.Hint,
   BCEditor.Editor.Search.Map, BCEditor.Editor.Undo.Item, BCEditor.Editor.Utils, BCEditor.Encoding, BCEditor.Language,
   BCEditor.Highlighter.Rules, BCEditor.Export.HTML, Vcl.Themes, BCEditor.StyleHooks, BCEditor.Search.Normal,
-  BCEditor.Search.RegularExpressions, BCEditor.Search.WildCard, BCEditor.Editor.CompletionProposal.Columns
+  BCEditor.Search.RegularExpressions, BCEditor.Search.WildCard, BCEditor.Editor.CompletionProposal.Columns.Items
   {$if defined(USE_ALPHASKINS)}, Winapi.CommCtrl, sVCLUtils, sMessages, sConst, sSkinProps{$endif};
 
 type

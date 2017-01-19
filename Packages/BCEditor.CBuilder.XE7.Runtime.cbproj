@@ -170,7 +170,16 @@
         <DelphiCompile Include="..\Source\BCEditor.Editor.CompletionProposal.Colors.pas">
             <BuildOrder>19</BuildOrder>
         </DelphiCompile>
+				<DelphiCompile Include="..\Source\BCEditor.Editor.CompletionProposal.Columns.items.pas">
+            <BuildOrder>20</BuildOrder>
+        </DelphiCompile>
         <DelphiCompile Include="..\Source\BCEditor.Editor.CompletionProposal.Columns.pas">
+            <BuildOrder>20</BuildOrder>
+        </DelphiCompile>
+				<DelphiCompile Include="..\Source\BCEditor.Editor.CompletionProposal.Columns.Title.Colors.pas">
+            <BuildOrder>20</BuildOrder>
+        </DelphiCompile>
+				<DelphiCompile Include="..\Source\BCEditor.Editor.CompletionProposal.Columns.Title.pas">
             <BuildOrder>20</BuildOrder>
         </DelphiCompile>
         <DelphiCompile Include="..\Source\BCEditor.Editor.CompletionProposal.PopupWindow.pas">

@@ -147,7 +147,10 @@
         <DCCReference Include="..\Source\BCEditor.Editor.CodeFolding.Ranges.pas"/>
         <DCCReference Include="..\Source\BCEditor.Editor.CompletionProposal.pas"/>
         <DCCReference Include="..\Source\BCEditor.Editor.CompletionProposal.Colors.pas"/>
+				<DCCReference Include="..\Source\BCEditor.Editor.CompletionProposal.Columns.Items.pas"/>
         <DCCReference Include="..\Source\BCEditor.Editor.CompletionProposal.Columns.pas"/>
+				<DCCReference Include="..\Source\BCEditor.Editor.CompletionProposal.Columns.Title.Colors.pas"/>
+				<DCCReference Include="..\Source\BCEditor.Editor.CompletionProposal.Columns.Title.pas"/>
         <DCCReference Include="..\Source\BCEditor.Editor.CompletionProposal.PopupWindow.pas"/>
         <DCCReference Include="..\Source\BCEditor.Editor.CompletionProposal.Trigger.pas"/>
         <DCCReference Include="..\Source\BCEditor.Editor.DB.pas"/>

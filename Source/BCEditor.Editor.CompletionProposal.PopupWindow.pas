@@ -4,7 +4,7 @@ interface
 
 uses
   Winapi.Messages, System.Classes, System.Types, Vcl.Forms, Vcl.Controls, Vcl.Graphics, BCEditor.Utils,
-  BCEditor.Types, BCEditor.Editor.CompletionProposal.Columns, BCEditor.Editor.PopupWindow,
+  BCEditor.Types, BCEditor.Editor.CompletionProposal.Columns.Items, BCEditor.Editor.PopupWindow,
   BCEditor.Editor.CompletionProposal;
 
 {$if defined(USE_VCL_STYLES)}
@@ -75,7 +75,7 @@ implementation
 
 uses
   Winapi.Windows, System.SysUtils, System.UITypes, BCEditor.Editor.Base, BCEditor.Editor.KeyCommands,
-  BCEditor.Editor.Utils, BCEditor.Consts, System.Math, Vcl.Dialogs
+  BCEditor.Editor.Utils, BCEditor.Consts, System.Math, Vcl.Dialogs, BCEditor.Editor.CompletionProposal.Columns
   {$if defined(USE_VCL_STYLES) or not defined(USE_VCL_STYLES) and not defined(USE_ALPHASKINS)}, Vcl.Themes{$endif};
 
 constructor TBCEditorCompletionProposalPopupWindow.Create(AOwner: TComponent);
