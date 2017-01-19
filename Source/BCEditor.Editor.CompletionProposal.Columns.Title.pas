@@ -51,6 +51,7 @@ begin
   with ASource as TBCEditorCompletionProposalColumnTitle do
   begin
     Self.FCaption := FCaption;
+    Self.FColors.Assign(FColors);
     Self.FFont.Assign(FFont);
     Self.FVisible := FVisible;
   end

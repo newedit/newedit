@@ -364,6 +364,11 @@ type
   );
   TBCEditorCodeFoldingOptions = set of TBCEditorCodeFoldingOption;
 
+  TBCEditorTokenInfoOption = (
+    tioAutoSize
+  );
+  TBCEditorTokenInfoOptions = set of TBCEditorTokenInfoOption;
+
   TBCEditorLeftMarginBorderStyle = (mbsNone, mbsMiddle, mbsRight);
 
   TBCEditorScrollHintFormat = (shfTopLineOnly, shfTopToBottom);
