@@ -569,7 +569,7 @@
                },
                {
                   "Type": "Float",
-                  "Symbols": ".0123456789",
+                  "Symbols": ".0123456789E",
                   "Attributes": {
                      "Element": "Number"
                   }
