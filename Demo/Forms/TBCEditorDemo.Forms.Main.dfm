@@ -134,13 +134,20 @@ inherited MainForm: TMainForm
       CompletionProposal.CloseChars = '()[]. '
       CompletionProposal.Columns = <
         item
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -12
+          Font.Name = 'Courier New'
+          Font.Style = []
+          Items = <>
+          Title.Font.Charset = DEFAULT_CHARSET
+          Title.Font.Color = clWindowText
+          Title.Font.Height = -12
+          Title.Font.Name = 'Courier New'
+          Title.Font.Style = []
         end>
-      CompletionProposal.Font.Charset = DEFAULT_CHARSET
-      CompletionProposal.Font.Color = clWindowText
-      CompletionProposal.Font.Height = -11
-      CompletionProposal.Font.Name = 'Courier New'
-      CompletionProposal.Font.Style = []
-      CompletionProposal.Options = [cpoFiltered, cpoParseItemsFromText, cpoResizeable]
+      CompletionProposal.Options = [cpoAutoConstraints, cpoAddHighlighterKeywords, cpoFiltered, cpoParseItemsFromText, cpoResizeable]
+      CompletionProposal.SecondaryShortCut = 0
       CompletionProposal.ShortCut = 16416
       CompletionProposal.Trigger.Chars = '.'
       CompletionProposal.Trigger.Enabled = False
@@ -467,13 +474,15 @@ inherited MainForm: TMainForm
     end
   end
   inherited SkinManager: TBCSkinManager
+    Effects.AllowAnimation = False
+    Effects.AllowAeroBluring = False
     Effects.AllowGlowing = False
     IsDefault = True
     MenuSupport.UseExtraLine = False
     Options.ChangeSysColors = True
     SkinInfo = 'N/A'
     ThirdParty.ThirdEdits = ' '#13#10'TBCEditorPrintPreview'#13#10
-    ThirdParty.ThirdVirtualTrees = 'TBCObjectInspector'#13#10
+    ThirdParty.ThirdVirtualTrees = 'TBCObjectInspector'#13#10'TVirtualDrawTree'#13#10
     Left = 166
     Top = 26
   end
@@ -603,6 +612,7 @@ inherited MainForm: TMainForm
     Top = 22
   end
   inherited SkinProvider: TsSkinProvider
+    AllowAnimation = False
     Left = 248
     Top = 26
   end

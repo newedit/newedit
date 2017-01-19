@@ -358,7 +358,7 @@ end;
 
 procedure TMainForm.PrintPreview;
 begin
-  with PrintPreviewDialog do
+  with PrintPreviewForm do
   begin
     InitializeEditorPrint(PrintPreview.EditorPrint);
     ShowModal;
