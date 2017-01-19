@@ -3,7 +3,7 @@
       "Info": {
          "General": {
             "Version": "2.0.0",
-            "Date": "05.01.2017",
+            "Date": "19.01.2017",
             "Sample": [
                "Simple text file with Universal Resource Identifier highlighting and opener (with Ctrl key).\r\n",
                "\r\n",
@@ -32,7 +32,7 @@
                   "Attributes": {
                      "Element": "String"
                   },
-                  "Delimiters": "%<>\\^{|}",
+                  "Delimiters": "%<>\\^{|}\"",
                   "Properties": {
                      "CloseOnTerm": true,
                      "CloseOnEndOfLine": true
@@ -47,7 +47,7 @@
                   "Attributes": {
                      "Element": "String"
                   },
-                  "Delimiters": "%<>\\^{|}",
+                  "Delimiters": "%<>\\^{|}\"",
                   "Properties": {
                      "CloseOnTerm": true,
                      "CloseOnEndOfLine": true
@@ -62,7 +62,7 @@
                   "Attributes": {
                      "Element": "String"
                   },
-                  "Delimiters": "%<>\\^{|}",
+                  "Delimiters": "%<>\\^{|}\"",
                   "Properties": {
                      "CloseOnTerm": true,
                      "CloseOnEndOfLine": true
@@ -77,7 +77,7 @@
                   "Attributes": {
                      "Element": "String"
                   },
-                  "Delimiters": "%<>\\^{|}",
+                  "Delimiters": "%<>\\^{|}\"",
                   "Properties": {
                      "CloseOnTerm": true,
                      "CloseOnEndOfLine": true
@@ -92,7 +92,7 @@
                   "Attributes": {
                      "Element": "String"
                   },
-                  "Delimiters": "%<>\\^{|}",
+                  "Delimiters": "%<>\\^{|}\"",
                   "Properties": {
                      "CloseOnTerm": true,
                      "CloseOnEndOfLine": true
@@ -107,7 +107,7 @@
                   "Attributes": {
                      "Element": "String"
                   },
-                  "Delimiters": "%<>\\^{|}",
+                  "Delimiters": "%<>\\^{|}\"",
                   "Properties": {
                      "CloseOnTerm": true,
                      "CloseOnEndOfLine": true
@@ -122,7 +122,7 @@
                   "Attributes": {
                      "Element": "String"
                   },
-                  "Delimiters": "%<>\\^{|}",
+                  "Delimiters": "%<>\\^{|}\"",
                   "Properties": {
                      "CloseOnTerm": true,
                      "CloseOnEndOfLine": true
@@ -137,7 +137,7 @@
                   "Attributes": {
                      "Element": "String"
                   },
-                  "Delimiters": "%<>\\^{|}",
+                  "Delimiters": "%<>\\^{|}\"",
                   "Properties": {
                      "CloseOnTerm": true,
                      "CloseOnEndOfLine": true
@@ -152,7 +152,7 @@
                   "Attributes": {
                      "Element": "String"
                   },
-                  "Delimiters": "%<>\\^{|}",
+                  "Delimiters": "%<>\\^{|}\"",
                   "Properties": {
                      "CloseOnTerm": true,
                      "CloseOnEndOfLine": true
@@ -167,7 +167,7 @@
                   "Attributes": {
                      "Element": "String"
                   },
-                  "Delimiters": "%<>\\^{|}",
+                  "Delimiters": "%<>\\^{|}\"",
                   "Properties": {
                      "CloseOnTerm": true,
                      "CloseOnEndOfLine": true
@@ -197,7 +197,7 @@
                   "Attributes": {
                      "Element": "String"
                   },
-                  "Delimiters": "%<>\\^{|}",
+                  "Delimiters": "%<>\\^{|}\"",
                   "Properties": {
                      "CloseOnTerm": true,
                      "CloseOnEndOfLine": true
