@@ -82,24 +82,21 @@ constructor TBCEditorCompletionProposalPopupWindow.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
 
+  FCanFree := True;
+  FCaseSensitive := False;
+  FFiltered := False;
+  FItemHeight := 0;
+  FMargin := 2;
+  FValueSet := False;
   Visible := False;
 
   AddKeyHandlers;
 
+  FItems := TStringList.Create;
   FBitmapBuffer := Vcl.Graphics.TBitmap.Create;
-  FFiltered := False;
-  FCaseSensitive := False;
-
-  FItemHeight := 0;
-  FMargin := 2;
 
   FOnValidate := HandleOnValidate;
   OnDblClick := HandleDblClick;
-
-  FValueSet := False;
-
-  FCanFree := True;
-  FItems := TStringList.Create;
 end;
 
 destructor TBCEditorCompletionProposalPopupWindow.Destroy;

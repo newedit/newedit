@@ -122,6 +122,7 @@ type
     property TabStop;
     property Tag;
     property TextEntryMode;
+    property TokenInfo;
     property Undo;
     property UnknownChars;
     property WantReturns;

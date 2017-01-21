@@ -14,7 +14,8 @@ uses
   BCEditor.Editor.Tabs, BCEditor.Editor.Undo, BCEditor.Editor.Undo.List, BCEditor.Editor.WordWrap,
   BCEditor.Editor.CodeFolding.Hint.Form, BCEditor.Highlighter, BCEditor.Highlighter.Attributes,
   BCEditor.KeyboardHandler, BCEditor.Lines, BCEditor.Search, BCEditor.PaintHelper, BCEditor.Editor.SyncEdit,
-  BCEditor.Utils, BCEditor.Editor.UnknownChars {$if defined(USE_ALPHASKINS)}, sCommonData, acSBUtils{$endif};
+  BCEditor.Editor.TokenInfo, BCEditor.Utils, BCEditor.Editor.UnknownChars, BCEditor.Editor.TokenInfo.PopupWindow
+  {$if defined(USE_ALPHASKINS)}, sCommonData, acSBUtils{$endif};
 
 const
   BCEDITOR_DEFAULT_OPTIONS = [eoAutoIndent, eoDragDropEditing];
@@ -192,6 +193,9 @@ type
     FSyncEdit: TBCEditorSyncEdit;
     FTabs: TBCEditorTabs;
     FTextEntryMode: TBCEditorTextEntryMode;
+    FTokenInfo: TBCEditorTokenInfo;
+    FTokenInfoPopupWindow: TBCEditorTokenInfoPopupWindow;
+    FTokenInfoTimer: TTimer;
     FTopLine: Integer;
     FUndo: TBCEditorUndo;
     FUndoList: TBCEditorUndoList;
@@ -351,6 +355,7 @@ type
     procedure MoveLineUp;
     procedure MultiCaretTimerHandler(ASender: TObject);
     procedure OnCodeFoldingDelayTimer(ASender: TObject);
+    procedure OnTokenInfoTimer(ASender: TObject);
     procedure OpenLink(const AURI: string; ARangeType: TBCEditorRangeType);
     procedure RemoveDuplicateMultiCarets;
     procedure RightMarginChanged(ASender: TObject);
@@ -392,6 +397,7 @@ type
     procedure SetTextCaretX(const AValue: Integer);
     procedure SetTextCaretY(const AValue: Integer);
     procedure SetTextEntryMode(const AValue: TBCEditorTextEntryMode);
+    procedure SetTokenInfo(const AValue: TBCEditorTokenInfo);
     procedure SetTopLine(const AValue: Integer);
     procedure SetUndo(const AValue: TBCEditorUndo);
     procedure SetUnknownChars(const AValue: TBCEditorUnknownChars);
@@ -472,6 +478,7 @@ type
     procedure DragOver(ASource: TObject; X, Y: Integer; AState: TDragState; var AAccept: Boolean); override;
     procedure FreeHintForm(var AForm: TBCEditorCodeFoldingHintForm);
     procedure FreeCompletionProposalPopupWindow;
+    procedure FreeTokenInfoPopupWindow;
     procedure HideCaret;
     procedure IncPaintLock;
     procedure KeyDown(var AKey: Word; AShift: TShiftState); override;
@@ -742,6 +749,7 @@ type
     property Text: string read GetText write SetText;
     property TextBetween[const ATextBeginPosition: TBCEditorTextPosition; const ATextEndPosition: TBCEditorTextPosition]: string read GetTextBetween write SetTextBetween;
     property TextEntryMode: TBCEditorTextEntryMode read FTextEntryMode write SetTextEntryMode default temInsert;
+    property TokenInfo: TBCEditorTokenInfo read FTokenInfo write SetTokenInfo;
     property TopLine: Integer read FTopLine write SetTopLine;
     property Undo: TBCEditorUndo read FUndo write SetUndo;
     property UndoList: TBCEditorUndoList read FUndoList;
@@ -968,6 +976,10 @@ begin
   { Sync edit }
   FSyncEdit := TBCEditorSyncEdit.Create;
   FSyncEdit.OnChange := SyncEditChanged;
+  { Token info }
+  FTokenInfo := TBCEditorTokenInfo.Create;
+  FTokenInfoTimer := TTimer.Create(Self);
+  FTokenInfoTimer.OnTimer := OnTokenInfoTimer;
   { LeftMargin }
   FLeftMargin := TBCEditorLeftMargin.Create(Self);
   FLeftMargin.OnChange := LeftMarginChanged;
@@ -1007,6 +1019,7 @@ begin
   if Assigned(FChainedEditor) or (FLines <> FOriginalLines) then
     RemoveChainedEditor;
   FreeCompletionProposalPopupWindow;
+  FreeTokenInfoPopupWindow;
   { Do not use FreeAndNil, it first nils and then frees causing problems with code accessing FHookedCommandHandlers
     while destruction }
   FHookedCommandHandlers.Free;
@@ -1044,6 +1057,8 @@ begin
   FMatchingPair.Free;
   FCompletionProposal.Free;
   FSyncEdit.Free;
+  FTokenInfoTimer.Free;
+  FTokenInfo.Free;
   if Assigned(FMinimapShadowAlphaByteArray) then
   begin
     FreeMem(FMinimapShadowAlphaByteArray);
@@ -5747,6 +5762,15 @@ begin
     RescanCodeFoldingRanges;
 end;
 
+procedure TBCBaseEditor.OnTokenInfoTimer(ASender: TObject);
+begin
+  FTokenInfoTimer.Enabled := False;
+
+  FreeTokenInfoPopupWindow;
+
+  FTokenInfoPopupWindow := TBCEditorTokenInfoPopupWindow.Create(Self);
+end;
+
 procedure TBCBaseEditor.OpenLink(const AURI: string; ARangeType: TBCEditorRangeType);
 var
   LURI: string;
@@ -6660,6 +6684,11 @@ begin
   end;
 end;
 
+procedure TBCBaseEditor.SetTokenInfo(const AValue: TBCEditorTokenInfo);
+begin
+  FTokenInfo.Assign(AValue);
+end;
+
 procedure TBCBaseEditor.SetTextEntryMode(const AValue: TBCEditorTextEntryMode);
 begin
   if FTextEntryMode <> AValue then
@@ -7473,6 +7502,7 @@ begin
   AMessage.Result := 0;
 
   FreeCompletionProposalPopupWindow;
+  FreeTokenInfoPopupWindow;
 
   inherited;
 
@@ -7567,6 +7597,8 @@ begin
   inherited;
 
   FreeCompletionProposalPopupWindow;
+  FreeTokenInfoPopupWindow;
+
   if FMultiCaretPosition.Row <> -1 then
   begin
     FMultiCaretPosition.Row := -1;
@@ -7710,6 +7742,7 @@ begin
   AMessage.Result := 0;
 
   FreeCompletionProposalPopupWindow;
+  FreeTokenInfoPopupWindow;
 
   case AMessage.ScrollCode of
     SB_TOP:
@@ -8612,6 +8645,19 @@ begin
   end;
 end;
 
+procedure TBCBaseEditor.FreeTokenInfoPopupWindow;
+var
+  LTokenInfoPopupWindow: TBCEditorTokenInfoPopupWindow;
+begin
+  if Assigned(FTokenInfoPopupWindow) then
+  begin
+    LTokenInfoPopupWindow := FTokenInfoPopupWindow;
+    FTokenInfoPopupWindow := nil; { Prevent WMKillFocus to free it again }
+    LTokenInfoPopupWindow.Hide;
+    LTokenInfoPopupWindow.Free;
+  end;
+end;
+
 procedure TBCBaseEditor.HideCaret;
 begin
   if sfCaretVisible in FStateFlags then
@@ -9296,6 +9342,14 @@ begin
 
     if Assigned(FMultiCarets) and (FMultiCarets.Count > 0) then
       Exit;
+  end;
+
+  FTokenInfoTimer.Enabled := False;
+  FreeTokenInfoPopupWindow;
+  if FTokenInfo.Enabled then
+  begin
+    FTokenInfoTimer.Interval := FTokenInfo.DelayInterval;
+    FTokenInfoTimer.Enabled := True;
   end;
 
   if AShift = [] then

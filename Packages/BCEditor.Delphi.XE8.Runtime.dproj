@@ -181,7 +181,7 @@
         <DCCReference Include="..\Source\BCEditor.Editor.Search.pas"/>
         <DCCReference Include="..\Source\BCEditor.Editor.Search.Highlighter.pas"/>
         <DCCReference Include="..\Source\BCEditor.Editor.Search.Highlighter.Colors.pas"/>
-				<DCCReference Include="..\Source\BCEditor.Editor.Search.InSelection.pas"/>
+        <DCCReference Include="..\Source\BCEditor.Editor.Search.InSelection.pas"/>
         <DCCReference Include="..\Source\BCEditor.Editor.Search.Map.pas"/>
         <DCCReference Include="..\Source\BCEditor.Editor.Search.Map.Colors.pas"/>
         <DCCReference Include="..\Source\BCEditor.Editor.Selection.pas"/>
@@ -193,10 +193,15 @@
         <DCCReference Include="..\Source\BCEditor.Editor.SyncEdit.pas"/>
         <DCCReference Include="..\Source\BCEditor.Editor.SyncEdit.Colors.pas"/>
         <DCCReference Include="..\Source\BCEditor.Editor.Tabs.pas"/>
+        <DCCReference Include="..\Source\BCEditor.Editor.TokenInfo.pas"/>
+        <DCCReference Include="..\Source\BCEditor.Editor.TokenInfo.Colors.pas"/>
+        <DCCReference Include="..\Source\BCEditor.Editor.TokenInfo.Title.pas"/>
+        <DCCReference Include="..\Source\BCEditor.Editor.TokenInfo.Title.Colors.pas"/>
+        <DCCReference Include="..\Source\BCEditor.Editor.TokenInfo.PopupWindow.pas"/>
         <DCCReference Include="..\Source\BCEditor.Editor.Undo.pas"/>
         <DCCReference Include="..\Source\BCEditor.Editor.Undo.Item.pas"/>
-				<DCCReference Include="..\Source\BCEditor.Editor.Undo.List.pas"/>
-				<DCCReference Include="..\Source\BCEditor.Editor.UnknownChars.pas"/>
+        <DCCReference Include="..\Source\BCEditor.Editor.Undo.List.pas"/>
+        <DCCReference Include="..\Source\BCEditor.Editor.UnknownChars.pas"/>
         <DCCReference Include="..\Source\BCEditor.Editor.Utils.pas"/>
         <DCCReference Include="..\Source\BCEditor.Editor.WordWrap.pas"/>
         <DCCReference Include="..\Source\BCEditor.Editor.WordWrap.Colors.pas"/>
