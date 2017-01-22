@@ -402,8 +402,10 @@ procedure TMainForm.FormCreate(Sender: TObject);
 begin
   inherited;
 
+  {$if CompilerVersion > 25}
   ObjectInspector.AddUnlistedProperties(['Ctl3D', 'CustomHint', 'Hint', 'HelpContext', 'HelpKeyword', 'HelpType',
     'ImeMode', 'ImeName', 'ParentColor', 'ParentCtl3D', 'ParentCustomHint', 'ParentFont', 'ParentShowHint', 'ShowHint']);
+  {$endif}
   ObjectInspector.InspectedObject := Editor;
   ObjectInspector.SkinManager := SkinManager;
 

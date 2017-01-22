@@ -64,6 +64,7 @@ inherited MainForm: TMainForm
       Margins.Right = 5
       Margins.Bottom = 5
       Align = alClient
+      DefaultNodeHeight = 13
       DragOperations = []
       EditDelay = 0
       Header.AutoSizeIndex = 1
@@ -184,6 +185,17 @@ inherited MainForm: TMainForm
       SpecialChars.Style = scsDot
       SyncEdit.ShortCut = 24650
       TabOrder = 0
+      TokenInfo.Enabled = True
+      TokenInfo.Font.Charset = DEFAULT_CHARSET
+      TokenInfo.Font.Color = clWindowText
+      TokenInfo.Font.Height = -11
+      TokenInfo.Font.Name = 'Courier New'
+      TokenInfo.Font.Style = []
+      TokenInfo.Title.Font.Charset = DEFAULT_CHARSET
+      TokenInfo.Title.Font.Color = clWindowText
+      TokenInfo.Title.Font.Height = -11
+      TokenInfo.Title.Font.Name = 'Courier New'
+      TokenInfo.Title.Font.Style = []
       WordWrap.Indicator.Bitmap.Data = {
         7E030000424D7E0300000000000036000000280000000F0000000E0000000100
         2000000000004803000000000000000000000000000000000000FF00FF00FF00
@@ -463,7 +475,7 @@ inherited MainForm: TMainForm
           Left = 342
           Top = 0
           Width = 3
-          Height = 21
+          Height = 13
           Margins.Left = 0
           Margins.Top = 0
           Margins.Bottom = 0
