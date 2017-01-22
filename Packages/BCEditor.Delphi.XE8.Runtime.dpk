@@ -110,7 +110,7 @@ contains
   BCEditor.Editor.TokenInfo.Colors in '..\Source\BCEditor.Editor.TokenInfo.Colors.pas',
   BCEditor.Editor.TokenInfo.Title in '..\Source\BCEditor.Editor.TokenInfo.Title.pas',
   BCEditor.Editor.TokenInfo.Title.Colors in '..\Source\BCEditor.Editor.TokenInfo.Title.Colors.pas',
-  BCEditor.Editor.TokenInfo.PopupWindow in '..\Source\BCEditor.Editor.TokenInfo.PopupWindow.pas'
+  BCEditor.Editor.TokenInfo.PopupWindow in '..\Source\BCEditor.Editor.TokenInfo.PopupWindow.pas',
   BCEditor.Editor.Undo in '..\Source\BCEditor.Editor.Undo.pas',
   BCEditor.Editor.Undo.Item in '..\Source\BCEditor.Editor.Undo.Item.pas',
   BCEditor.Editor.Undo.List in '..\Source\BCEditor.Editor.Undo.List.pas',
