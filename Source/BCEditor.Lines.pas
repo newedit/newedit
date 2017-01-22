@@ -800,7 +800,7 @@ procedure TBCEditorLines.Put(AIndex: Integer; const AValue: string);
 var
   LHasTabs: Boolean;
 begin
-  if ((AIndex = 0) and (FCount = 0)) or (FCount = AIndex) then
+  if (AIndex = 0) and (FCount = 0) or (FCount = AIndex) then
   begin
     Add(AValue);
     FList^[AIndex].Attribute^.LineState := lsModified;

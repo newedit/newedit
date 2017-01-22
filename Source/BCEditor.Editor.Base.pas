@@ -122,6 +122,7 @@ type
     FOnBeforeMarkPlaced: TBCEditorMarkEvent;
     FOnBeforeCompletionProposalExecute: TBCEditorCompletionProposalEvent;
     FOnBeforeDeleteMark: TBCEditorMarkEvent;
+    FOnBeforeTokenInfoExecute: TBCEditorTokenInfoEvent;
     FOnMarkPanelLinePaint: TBCEditorMarkPanelLinePaintEvent;
     FOnCaretChanged: TBCEditorCaretChangedEvent;
     FOnChange: TNotifyEvent;
@@ -196,6 +197,7 @@ type
     FTokenInfo: TBCEditorTokenInfo;
     FTokenInfoPopupWindow: TBCEditorTokenInfoPopupWindow;
     FTokenInfoTimer: TTimer;
+    FTokenInfoTokenRect: TRect;
     FTopLine: Integer;
     FUndo: TBCEditorUndo;
     FUndoList: TBCEditorUndoList;
@@ -327,6 +329,7 @@ type
     procedure DoToggleBookmark;
     procedure DoToggleMark;
     procedure DoToggleSelectedCase(const ACommand: TBCEditorCommand);
+    procedure DoTokenInfo;
     procedure DoTrimTrailingSpaces(const ATextLine: Integer);
     procedure DoWordLeft(const ACommand: TBCEditorCommand);
     procedure DoWordRight(const ACommand: TBCEditorCommand);
@@ -546,7 +549,7 @@ type
     function FindPrevious(const AHandleNotFound: Boolean = True): Boolean;
     function FindNext(const AHandleNotFound: Boolean = True): Boolean;
     function GetBookmark(const AIndex: Integer; var ATextPosition: TBCEditorTextPosition): Boolean;
-    function GetPositionOfMouse(out ATextPosition: TBCEditorTextPosition): Boolean;
+    function GetTextPositionOfMouse(out ATextPosition: TBCEditorTextPosition): Boolean;
     function GetWordAtPixels(const X, Y: Integer): string;
     function IsCommentChar(const AChar: Char): Boolean;
     function IsTextPositionInSelection(const ATextPosition: TBCEditorTextPosition): Boolean;
@@ -695,10 +698,11 @@ type
     property OnAfterDeleteBookmark: TNotifyEvent read FOnAfterDeleteBookmark write FOnAfterDeleteBookmark;
     property OnAfterDeleteMark: TNotifyEvent read FOnAfterDeleteMark write FOnAfterDeleteMark;
     property OnAfterLinePaint: TBCEditorLinePaintEvent read FOnAfterLinePaint write FOnAfterLinePaint;
+    property OnBeforeCompletionProposalExecute: TBCEditorCompletionProposalEvent read FOnBeforeCompletionProposalExecute write FOnBeforeCompletionProposalExecute;
+    property OnBeforeDeleteMark: TBCEditorMarkEvent read FOnBeforeDeleteMark write FOnBeforeDeleteMark;
     property OnBeforeMarkPanelPaint: TBCEditorMarkPanelPaintEvent read FOnBeforeMarkPanelPaint write FOnBeforeMarkPanelPaint;
     property OnBeforeMarkPlaced: TBCEditorMarkEvent read FOnBeforeMarkPlaced write FOnBeforeMarkPlaced;
-    property OnBeforeDeleteMark: TBCEditorMarkEvent read FOnBeforeDeleteMark write FOnBeforeDeleteMark;
-    property OnBeforeCompletionProposalExecute: TBCEditorCompletionProposalEvent read FOnBeforeCompletionProposalExecute write FOnBeforeCompletionProposalExecute;
+    property OnBeforeTokenInfoExecute: TBCEditorTokenInfoEvent read FOnBeforeTokenInfoExecute write FOnBeforeTokenInfoExecute;
     property OnMarkPanelLinePaint: TBCEditorMarkPanelLinePaintEvent read FOnMarkPanelLinePaint write FOnMarkPanelLinePaint;
     property OnCaretChanged: TBCEditorCaretChangedEvent read FOnCaretChanged write FOnCaretChanged;
     property OnChange: TNotifyEvent read FOnChange write FOnChange;
@@ -2459,7 +2463,7 @@ var
   LTextPosition: TBCEditorTextPosition;
 begin
   Result := '';
-  if GetPositionOfMouse(LTextPosition) then
+  if GetTextPositionOfMouse(LTextPosition) then
     Result := GetWordAtTextPosition(LTextPosition);
 end;
 
@@ -3147,10 +3151,10 @@ begin
       end
       else
       begin
-        while (Result.Char > 0) and not IsWordBreakChar(LLine[Result.Char]) do
+        while (Result.Char > 1) and not IsWordBreakChar(LLine[Result.Char]) do
           Dec(Result.Char);
 
-        if Result.Char > 0 then
+        if Result.Char > 1 then
           Inc(Result.Char)
       end;
     end;
@@ -4200,6 +4204,48 @@ begin
     end;
     if LWasSelectionAvailable or (ACommand < ecUpperCaseBlock) then
       TextCaretPosition := LOldCaretPosition;
+  end;
+end;
+
+procedure TBCBaseEditor.DoTokenInfo;
+
+  function MouseInTokenInfoRect: Boolean;
+  var
+    LPoint, LPointLeftTop, LPointRightBottom: TPoint;
+    LRect: TRect;
+  begin
+    Winapi.Windows.GetCursorPos(LPoint);
+    LRect := FTokenInfoTokenRect;
+    Result := PtInRect(LRect, LPoint);
+    if not Result then
+    begin
+      with FTokenInfoPopupWindow.ClientRect do
+      begin
+        LPointLeftTop := Point(Left, Top);
+        LPointRightBottom := Point(Left + Width, Top + Height);
+      end;
+      with FTokenInfoPopupWindow do
+      begin
+        LPointLeftTop := ClientToScreen(LPointLeftTop);
+        LPointRightBottom := ClientToScreen(LPointRightBottom);
+      end;
+      LRect := Rect(LPointLeftTop.X, LPointLeftTop.Y, LPointRightBottom.X, LPointRightBottom.Y);
+      Result := PtInRect(LRect, LPoint);
+    end;
+  end;
+
+begin
+  if Assigned(FTokenInfoPopupWindow) then
+  begin
+    if not MouseInTokenInfoRect then
+      FreeTokenInfoPopupWindow;
+  end
+  else
+  with FTokenInfoTimer do
+  begin
+    Enabled := False;
+    Interval := FTokenInfo.DelayInterval;
+    Enabled := True;
   end;
 end;
 
@@ -5763,12 +5809,48 @@ begin
 end;
 
 procedure TBCBaseEditor.OnTokenInfoTimer(ASender: TObject);
+var
+  LToken: string;
+  LPoint: TPoint;
+  LTextPosition, LPreviousTextPosition: TBCEditorTextPosition;
+  LSize: TSize;
+  LShowInfo: Boolean;
 begin
   FTokenInfoTimer.Enabled := False;
 
-  FreeTokenInfoPopupWindow;
+  if GetTextPositionOfMouse(LTextPosition) then
+  begin
+    LPreviousTextPosition := PreviousWordPosition(LTextPosition);
+    if LPreviousTextPosition.Line = LTextPosition.Line then
+      LTextPosition := LPreviousTextPosition
+    else
+      LTextPosition.Char := 1;
+    LToken := GetWordAtTextPosition(LTextPosition);
+    if LToken <> '' then
+    begin
+      FTokenInfoPopupWindow := TBCEditorTokenInfoPopupWindow.Create(Self);
+      with FTokenInfoPopupWindow do
+      begin
+        Assign(FTokenInfo);
 
-  FTokenInfoPopupWindow := TBCEditorTokenInfoPopupWindow.Create(Self);
+        LShowInfo := True;
+        if Assigned(FOnBeforeTokenInfoExecute) then
+          FOnBeforeTokenInfoExecute(Self, LToken, Content, TitleContent, LShowInfo);
+
+        if LShowInfo then
+        begin
+          LPoint := Self.ClientToScreen(DisplayPositionToPixels(TextToDisplayPosition(LTextPosition)));
+          FTokenInfoTokenRect.Left := LPoint.X;
+          FTokenInfoTokenRect.Top := LPoint.Y;
+          Inc(LPoint.Y, GetLineHeight);
+          FTokenInfoTokenRect.Bottom := LPoint.Y;
+          GetTextExtentPoint32(FPaintHelper.StockBitmap.Canvas.Handle, LToken, Length(LToken), LSize);
+          FTokenInfoTokenRect.Right := FTokenInfoTokenRect.Left + LSize.cx;
+          Execute(LPoint);
+        end;
+      end;
+    end;
+  end
 end;
 
 procedure TBCBaseEditor.OpenLink(const AURI: string; ARangeType: TBCEditorRangeType);
@@ -8288,7 +8370,7 @@ begin
     LCurrentInput := GetCurrentInput;
     if Assigned(FOnBeforeCompletionProposalExecute) then
       FOnBeforeCompletionProposalExecute(Self, FCompletionProposal.Columns, LCurrentInput, AKey, AShift);
-    Execute(LCurrentInput, LPoint.X, LPoint.Y);
+    Execute(LCurrentInput, LPoint);
   end;
 end;
 
@@ -8655,6 +8737,7 @@ begin
     FTokenInfoPopupWindow := nil; { Prevent WMKillFocus to free it again }
     LTokenInfoPopupWindow.Hide;
     LTokenInfoPopupWindow.Free;
+    FTokenInfoTokenRect.Empty;
   end;
 end;
 
@@ -9344,13 +9427,8 @@ begin
       Exit;
   end;
 
-  FTokenInfoTimer.Enabled := False;
-  FreeTokenInfoPopupWindow;
   if FTokenInfo.Enabled then
-  begin
-    FTokenInfoTimer.Interval := FTokenInfo.DelayInterval;
-    FTokenInfoTimer.Enabled := True;
-  end;
+    DoTokenInfo;
 
   if AShift = [] then
     FCompletionProposalResize := False;
@@ -13156,16 +13234,18 @@ begin
   end;
 end;
 
-function TBCBaseEditor.GetPositionOfMouse(out ATextPosition: TBCEditorTextPosition): Boolean;
+function TBCBaseEditor.GetTextPositionOfMouse(out ATextPosition: TBCEditorTextPosition): Boolean;
 var
   LCursorPoint: TPoint;
 begin
   Result := False;
+
   Winapi.Windows.GetCursorPos(LCursorPoint);
   LCursorPoint := ScreenToClient(LCursorPoint);
   if (LCursorPoint.X < 0) or (LCursorPoint.Y < 0) or (LCursorPoint.X > Self.Width) or (LCursorPoint.Y > Self.Height) then
     Exit;
   ATextPosition := PixelsToTextPosition(LCursorPoint.X, LCursorPoint.Y);
+
   Result := True;
 end;
 

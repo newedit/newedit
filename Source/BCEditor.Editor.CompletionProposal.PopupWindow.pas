@@ -16,7 +16,7 @@ type
   TBCEditorCompletionProposalPopupWindow = class(TBCEditorPopupWindow)
   strict private
     FAdjustCompletionStart: Boolean;
-    FBitmapBuffer: TBitmap;
+    FBitmapBuffer: Vcl.Graphics.TBitmap;
     FCanFree: Boolean;
     FCaseSensitive: Boolean;
     FCompletionProposal: TBCEditorCompletionProposal;
@@ -62,7 +62,7 @@ type
     function GetCurrentInput: string;
     procedure Assign(ASource: TPersistent); override;
     procedure MouseWheel(AShift: TShiftState; AWheelDelta: Integer; AMousePos: TPoint);
-    procedure Execute(const ACurrentString: string; const ALeft: Integer; const ATop: Integer);
+    procedure Execute(const ACurrentString: string; const APoint: TPoint);
     property CanFree: Boolean read FCanFree;
     property CurrentString: string read FCurrentString write SetCurrentString;
     property Items: TBCEditorCompletionProposalColumnItems read GetItems;
@@ -501,7 +501,7 @@ begin
   Invalidate;
 end;
 
-procedure TBCEditorCompletionProposalPopupWindow.Execute(const ACurrentString: string; const ALeft: Integer; const ATop: Integer);
+procedure TBCEditorCompletionProposalPopupWindow.Execute(const ACurrentString: string; const APoint: TPoint);
 var
   LPoint: TPoint;
 
@@ -510,8 +510,8 @@ var
     LWidth: Integer;
     LHeight: Integer;
   begin
-    LPoint.X := ALeft - TextWidth(FBitmapBuffer.Canvas, ACurrentString);
-    LPoint.Y := ATop;
+    LPoint.X := APoint.X - TextWidth(FBitmapBuffer.Canvas, ACurrentString);
+    LPoint.Y := APoint.Y;
 
     LWidth := FFormWidth;
     LHeight := FItemHeight * FCompletionProposal.VisibleLines + FTitleHeight + 2;
@@ -729,7 +729,9 @@ end;
 
 function TBCEditorCompletionProposalPopupWindow.GetItems: TBCEditorCompletionProposalColumnItems;
 begin
-  Result := FCompletionProposal.Columns[FCompletionProposal.CompletionColumnIndex].Items;
+  Result := nil;
+  if FCompletionProposal.CompletionColumnIndex <  FCompletionProposal.Columns.Count then
+    Result := FCompletionProposal.Columns[FCompletionProposal.CompletionColumnIndex].Items;
 end;
 
 procedure TBCEditorCompletionProposalPopupWindow.UpdateScrollBar;

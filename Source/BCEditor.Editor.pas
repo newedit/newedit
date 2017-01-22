@@ -57,10 +57,11 @@ type
     property OnAfterMarkPlaced;
     property OnAfterDeleteMark;
     property OnAfterLinePaint;
+    property OnBeforeCompletionProposalExecute;
+    property OnBeforeDeleteMark;
     property OnBeforeMarkPanelPaint;
     property OnBeforeMarkPlaced;
-    property OnBeforeDeleteMark;
-    property OnBeforeCompletionProposalExecute;
+    property OnBeforeTokenInfoExecute;
     property OnMarkPanelLinePaint;
     property OnCaretChanged;
     property OnChange;
