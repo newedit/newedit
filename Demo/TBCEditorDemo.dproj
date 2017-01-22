@@ -60,7 +60,7 @@
     <PropertyGroup Condition="'$(Base)'!=''">
         <Icon_MainIcon>EditBone_Icon.ico</Icon_MainIcon>
         <DCC_Define>USE_ALPHASKINS;$(DCC_Define)</DCC_Define>
-        <DCC_UnitSearchPath>$(BONECODE_ROOT)\Components\VirtualTree\Source;$(BONECODE_ROOT)\Components\BCEditor\Source;$(BONECODE_ROOT)\Components\BCComponents\Source;$(BONECODE_ROOT)\Components\BCControls\Source;$(BONECODE_ROOT)\Common\Source;$(BONECODE_ROOT)\Components\FastMM4;$(BONECODE_ROOT)\Components\EhLib\Common;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
+        <DCC_UnitSearchPath>$(BONECODE_ROOT)\Components\VirtualTree\Source;$(BONECODE_ROOT)\Components\BCEditor\Source;$(BONECODE_ROOT)\Components\BCComponents\Source;$(BONECODE_ROOT)\Components\BCControls\Source;$(BONECODE_ROOT)\Common\Source;$(BONECODE_ROOT)\Components\FastMM4;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
         <Manifest_File>$(BDS)\bin\default_app.manifest</Manifest_File>
         <VerInfo_Locale>1035</VerInfo_Locale>
         <VerInfo_Keys>CompanyName=;FileDescription=;FileVersion=1.0.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProductName=;ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
