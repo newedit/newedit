@@ -46,6 +46,7 @@ The latest update: 18.01.2017 19:16, UTC+02:00
 
 Demo source build requires 
 
+- Delphi Berlin
 - <a href="http://www.alphaskins.com/">AlphaSkins</a> (commercial) 
 - <a href="https://github.com/bonecode/Common">Common</a>
 - <a href="https://github.com/bonecode/Components/tree/master/BCControls">BCControls</a>
