@@ -1,6 +1,8 @@
 Demo source build requires
 
-Delphi Berlin
-AlphaSkins (commercial)
-Common
-BCControls
+- Delphi Berlin
+- BCEditor
+- AlphaSkins (commercial)
+- BCComponents
+- BCControls
+- Common
