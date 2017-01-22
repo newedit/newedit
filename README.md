@@ -44,13 +44,6 @@ TBCEditor Control Demo v. 2.0.0 (dev).
 
 The latest update: 18.01.2017 19:16, UTC+02:00
 
-Demo source build requires 
-
-- Delphi Berlin
-- <a href="http://www.alphaskins.com/">AlphaSkins</a> (commercial) 
-- <a href="https://github.com/bonecode/Common">Common</a>
-- <a href="https://github.com/bonecode/Components/tree/master/BCControls">BCControls</a>
-
 <h3>Documentation</h3>
 
 Documentation will be written after the project stabilizes and dust settles. This project is developed in my spare time without sources of income and as long as this is the case there is no timetable for anything. 
