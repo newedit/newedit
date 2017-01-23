@@ -983,6 +983,7 @@ begin
   { Token info }
   FTokenInfo := TBCEditorTokenInfo.Create;
   FTokenInfoTimer := TTimer.Create(Self);
+  FTokenInfoTimer.Enabled := False;
   FTokenInfoTimer.OnTimer := OnTokenInfoTimer;
   { LeftMargin }
   FLeftMargin := TBCEditorLeftMargin.Create(Self);
