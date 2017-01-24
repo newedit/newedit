@@ -1,16 +1,30 @@
 unit BCEditor.Editor.TokenInfo.PopupWindow;
 
+{
+  Supported tags in contents:
+
+  <a href="Reference">Link text</a>
+  <b>Bold text</b>
+  <i>Italic text</i>
+}
+
 interface
 
 uses
-  System.Classes, System.Types, Vcl.Graphics, BCEditor.Editor.PopupWindow;
+  System.Classes, System.Types, Vcl.Graphics, BCEditor.Lines, BCEditor.Editor.PopupWindow, BCEditor.Editor.TokenInfo;
 
 type
+  TBCEditorTokenInfoEvent = procedure(ASender: TObject; const AToken: string; AContent: TBCEditorLines; ATitleContent: TBCEditorLines; var AShowInfo: Boolean) of object;
+
   TBCEditorTokenInfoPopupWindow = class(TBCEditorPopupWindow)
   strict private
     FBitmapBuffer: Vcl.Graphics.TBitmap;
-    FContent: TStrings;
-    FTitleContent: TStrings;
+    FContent: TBCEditorLines;
+    FContentTextTokensList: TList;
+    FTitleContent: TBCEditorLines;
+    FTitleContentTextTokensList: TList;
+    FTokenInfo: TBCEditorTokenInfo;
+    procedure ParseText(AText: TBCEditorLines; ATokens: TList; AFont: TFont);
   protected
     procedure Paint; override;
   public
@@ -19,32 +33,64 @@ type
 
     procedure Assign(ASource: TPersistent); override;
     procedure Execute(const APoint: TPoint);
-    property Content: TStrings read FContent write FContent;
-    property TitleContent: TStrings read FTitleContent write FTitleContent;
+    property Content: TBCEditorLines read FContent write FContent;
+    property TitleContent: TBCEditorLines read FTitleContent write FTitleContent;
   end;
 
 implementation
 
 uses
-  BCEditor.Editor.TokenInfo;
+  BCEditor.Consts;
+
+type
+  TBCEditorTokenInfoTextStyle = (tsBold, tsItalic, tsReference);
+  TBCEditorTokenInfoTextStyles = set of TBCEditorTokenInfoTextStyle;
+
+  TBCEditorTokenInfoTextToken = record
+    Value: string;
+    Styles: TBCEditorTokenInfoTextStyles;
+    Rect: TRect;
+    Reference: string;
+  end;
+  PBCEditorTokenInfoTextToken = ^TBCEditorTokenInfoTextToken;
+
+{ TBCEditorTokenInfoPopupWindow }
 
 constructor TBCEditorTokenInfoPopupWindow.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
 
-  FContent := TStringList.Create;
-  FTitleContent := TStringList.Create;
+  FContent := TBCEditorLines.Create(nil);
+  FContentTextTokensList := TList.Create;
+
+  FTitleContent := TBCEditorLines.Create(nil);
+  FTitleContentTextTokensList := TList.Create;
 
   FBitmapBuffer := Vcl.Graphics.TBitmap.Create;
 
+  // TODO remove these
   Width := 300;
   Height := 300;
 end;
 
 destructor TBCEditorTokenInfoPopupWindow.Destroy;
+var
+  LIndex: Integer;
 begin
   FContent.Free;
+
+  for LIndex := FContentTextTokensList.Count - 1 downto 0 do
+    Dispose(PBCEditorTokenInfoTextToken(FContentTextTokensList.Items[LIndex]));
+  FContentTextTokensList.Clear;
+  FContentTextTokensList.Free;
+
   FTitleContent.Free;
+
+  for LIndex := FTitleContentTextTokensList.Count - 1 downto 0 do
+    Dispose(PBCEditorTokenInfoTextToken(FTitleContentTextTokensList.Items[LIndex]));
+  FTitleContentTextTokensList.Clear;
+  FTitleContentTextTokensList.Free;
+
   FBitmapBuffer.Free;
 
   inherited Destroy;
@@ -53,10 +99,13 @@ end;
 procedure TBCEditorTokenInfoPopupWindow.Assign(ASource: TPersistent);
 begin
   if ASource is TBCEditorTokenInfo then
-  with ASource as TBCEditorTokenInfo do
   begin
-    // TODO
+    FTokenInfo := ASource as TBCEditorTokenInfo;
+    with FTokenInfo do
+    begin
+      // TODO
 
+    end
   end
   else
     inherited Assign(ASource);
@@ -64,7 +113,9 @@ end;
 
 procedure TBCEditorTokenInfoPopupWindow.Execute(const APoint: TPoint);
 begin
-  // TODO: ParseContent;
+  ParseText(FContent, FContentTextTokensList, FTokenInfo.Font);
+  ParseText(FTitleContent, FTitleContentTextTokensList, FTokenInfo.Title.Font);
+
   Show(APoint);
 end;
 
@@ -78,6 +129,133 @@ begin
     Height := ClientHeight;
   end;
   Canvas.Draw(0, 0, FBitmapBuffer);
+end;
+
+procedure TBCEditorTokenInfoPopupWindow.ParseText(AText: TBCEditorLines; ATokens: TList; AFont: TFont);
+const
+  TOKEN_REFERENCE = 0;
+  TOKEN_BOLD = 1;
+  TOKEN_ITALIC = 2;
+  OPEN_TOKENS: array of string = ['<A HREF="', '<B>', '<I>'];
+  CLOSE_TOKENS: array of string = ['</A>', '</B>', '</I>'];
+var
+  LIndex: Integer;
+  LPText, LPToken, LPBookmark: PChar;
+  LPTextToken: PBCEditorTokenInfoTextToken;
+  LCurrentValue: string;
+  LCurrentStyles: TBCEditorTokenInfoTextStyles;
+  LCurrentRect: TRect;
+  LCurrentReference: string;
+  LTextHeight: Integer;
+
+  procedure ClearCurrentValue;
+  begin
+    LCurrentValue := '';
+    LCurrentStyles := [];
+    LCurrentReference := '';
+  end;
+
+  procedure AddTextToken;
+  begin
+    New(LPTextToken);
+    LPTextToken^.Value := LCurrentValue;
+    LPTextToken^.Styles := LCurrentStyles;
+    LCurrentRect.Right := LCurrentRect.Left + FBitmapBuffer.Canvas.TextWidth(LCurrentValue);
+    LPTextToken^.Rect := LCurrentRect;
+    LPTextToken^.Reference := LCurrentReference;
+    ATokens.Add(LPTextToken);
+    ClearCurrentValue;
+    LCurrentRect.Left := LCurrentRect.Right;
+  end;
+
+  procedure NextLine;
+  begin
+    AddTextToken;
+    LCurrentRect.Left := 0;
+    Inc(LCurrentRect.Top, LTextHeight);
+    Inc(LCurrentRect.Bottom, LTextHeight);
+  end;
+
+begin
+  FBitmapBuffer.Canvas.Font.Assign(AFont);
+  LTextHeight := FBitmapBuffer.Canvas.TextHeight('X');
+  LCurrentRect.Left := 0;
+  LCurrentRect.Top := 0;
+  LCurrentRect.Bottom := LTextHeight;
+  LPText := PChar(AText.Text);
+  ClearCurrentValue;
+  while LPText^ <> BCEDITOR_NONE_CHAR do
+  begin
+    if LPText^ = '<' then
+    begin
+      for LIndex := 0 to Length(OPEN_TOKENS) - 1 do
+      begin
+        LPToken := PChar(OPEN_TOKENS[LIndex]);
+        LPBookmark := LPText;
+        while (LPText^ <> BCEDITOR_NONE_CHAR) and (LPToken^ <> BCEDITOR_NONE_CHAR) and (UpCase(LPText^) = LPToken^) do
+        begin
+          Inc(LPText);
+          Inc(LPToken);
+        end;
+        if LPToken^ = BCEDITOR_NONE_CHAR then
+        begin
+          if LCurrentValue <> '' then
+            AddTextToken;
+
+          case LIndex of
+            TOKEN_REFERENCE:
+              begin
+                while (LPText^ <> BCEDITOR_NONE_CHAR) and (LPText^ <> '"') do
+                begin
+                  LCurrentReference := LCurrentReference + LPText^;
+                  Inc(LPText);
+                end;
+                Inc(LPText); // '>'
+                Include(LCurrentStyles, tsReference);
+              end;
+            TOKEN_BOLD:
+              Include(LCurrentStyles, tsBold);
+            TOKEN_ITALIC:
+              Include(LCurrentStyles, tsItalic);
+          end;
+          Break;
+        end
+        else
+          LPText := LPBookmark;
+      end;
+
+      for LIndex := 0 to Length(CLOSE_TOKENS) - 1 do
+      begin
+        LPToken := PChar(CLOSE_TOKENS[LIndex]);
+        LPBookmark := LPText;
+        while (LPText^ <> BCEDITOR_NONE_CHAR) and (LPToken^ <> BCEDITOR_NONE_CHAR) and (UpCase(LPText^) = LPToken^) do
+        begin
+          Inc(LPText);
+          Inc(LPToken);
+        end;
+        if LPToken^ = BCEDITOR_NONE_CHAR then
+        begin
+          if LCurrentValue <> '' then
+            AddTextToken;
+          Break;
+        end
+        else
+          LPText := LPBookmark;
+      end;
+    end;
+
+    if LPText^ = BCEDITOR_CARRIAGE_RETURN then
+    begin
+      if LCurrentValue <> '' then
+        AddTextToken;
+      NextLine;
+      Inc(LPText, 2);
+      Continue;
+    end;
+
+    LCurrentValue := LCurrentValue + LPText^;
+    Inc(LPText);
+  end;
 end;
 
 end.

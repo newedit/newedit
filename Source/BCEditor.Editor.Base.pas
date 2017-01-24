@@ -12573,17 +12573,17 @@ var
   var
     LTextCaretPosition: TBCEditorTextPosition;
 
-    function CountLines(P: PChar): Integer;
+    function CountLines(APText: PChar): Integer;
     begin
       Result := 0;
-      while P^ <> BCEDITOR_NONE_CHAR do
+      while APText^ <> BCEDITOR_NONE_CHAR do
       begin
-        if P^ = BCEDITOR_CARRIAGE_RETURN then
-          Inc(P);
-        if P^ = BCEDITOR_LINEFEED then
-          Inc(P);
+        if APText^ = BCEDITOR_CARRIAGE_RETURN then
+          Inc(APText);
+        if APText^ = BCEDITOR_LINEFEED then
+          Inc(APText);
         Inc(Result);
-        P := GetEndOfLine(P);
+        APText := GetEndOfLine(APText);
       end;
     end;
 

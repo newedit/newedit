@@ -18,8 +18,6 @@ type
   TBCEditorCompletionProposalSelectedEvent = procedure(Sender: TObject; var ASelectedItem: string) of object;
   TBCEditorCompletionProposalValidateEvent = procedure(ASender: TObject; Shift: TShiftState; EndToken: Char) of object;
 
-  TBCEditorTokenInfoEvent = procedure(ASender: TObject; const AToken: string; AContent: TStrings; ATitleContent: TStrings; var AShowInfo: Boolean) of object;
-
   TBCEditorDropFilesEvent = procedure(ASender: TObject; APos: TPoint; AFiles: TStrings) of object;
 
   TBCEditorPaintEvent = procedure(ASender: TObject; ACanvas: TCanvas) of object;
