@@ -166,7 +166,8 @@ type
     cpoCaseSensitive,
     cpoFiltered,
     cpoParseItemsFromText,
-    cpoResizeable
+    cpoResizeable,
+    cpoUseHighlighterColumnFont
   );
   TBCEditorCompletionProposalOptions = set of TBCEditorCompletionProposalOption;
 

@@ -7,7 +7,8 @@ uses
   BCEditor.Editor.CompletionProposal.Columns, BCEditor.Editor.CompletionProposal.Trigger, BCEditor.Types;
 
 const
-  BCEDITOR_COMPLETION_PROPOSAL_DEFAULT_OPTIONS = [cpoAutoConstraints, cpoAddHighlighterKeywords, cpoFiltered, cpoParseItemsFromText];
+  BCEDITOR_COMPLETION_PROPOSAL_DEFAULT_OPTIONS = [cpoAutoConstraints, cpoAddHighlighterKeywords, cpoFiltered,
+    cpoParseItemsFromText, cpoUseHighlighterColumnFont];
 
 type
   TBCEditorCompletionProposal = class(TPersistent)
