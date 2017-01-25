@@ -360,6 +360,8 @@ begin
         Canvas.LineTo(LRect.Right - 1, LRect.Bottom - 1);
         LColumnWidth := LColumnWidth + LColumn.Width;
       end;
+      LRect.Right := ClientRect.Right;
+      LRect.Left := 0;
       LRect.Top := LRect.Bottom;
       LRect.Bottom := LRect.Top + FItemHeight;
     end;
