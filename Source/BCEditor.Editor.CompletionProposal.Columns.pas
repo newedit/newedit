@@ -49,6 +49,7 @@ implementation
 constructor TBCEditorCompletionProposalColumn.Create(ACollection: TCollection);
 begin
   inherited;
+
   FAutoWidth := True;
   FFont := TFont.Create;
   FFont.Name := 'Courier New';
