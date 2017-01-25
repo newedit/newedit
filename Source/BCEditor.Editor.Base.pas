@@ -147,6 +147,7 @@ type
     FOnLinesDeleted: TStringListChangeEvent;
     FOnLinesInserted: TStringListChangeEvent;
     FOnLinesPutted: TStringListChangeEvent;
+    FOnModified: TNotifyEvent;
     FOnPaint: TBCEditorPaintEvent;
     FOnProcessCommand: TBCEditorProcessCommandEvent;
     FOnProcessUserCommand: TBCEditorProcessCommandEvent;
@@ -719,6 +720,7 @@ type
     property OnLinesDeleted: TStringListChangeEvent read FOnLinesDeleted write FOnLinesDeleted;
     property OnLinesInserted: TStringListChangeEvent read FOnLinesInserted write FOnLinesInserted;
     property OnLinesPutted: TStringListChangeEvent read FOnLinesPutted write FOnLinesPutted;
+    property OnModified: TNotifyEvent read FOnModified write FOnModified;
     property OnPaint: TBCEditorPaintEvent read FOnPaint write FOnPaint;
     property OnProcessCommand: TBCEditorProcessCommandEvent read FOnProcessCommand write FOnProcessCommand;
     property OnProcessUserCommand: TBCEditorProcessCommandEvent read FOnProcessUserCommand write FOnProcessUserCommand;
@@ -6847,7 +6849,11 @@ begin
   if FModified <> AValue then
   begin
     FModified := AValue;
-    if (uoGroupUndo in FUndo.Options) and (not AValue) and UndoList.CanUndo then
+
+    if AValue and Assigned(FOnModified) then
+      FOnModified(Self);
+
+    if (uoGroupUndo in FUndo.Options) and UndoList.CanUndo and not AValue then
       FUndoList.AddGroupBreak;
 
     if not FModified then

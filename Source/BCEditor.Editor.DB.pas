@@ -105,6 +105,7 @@ type
     property OnKeyUp;
     property OnLeftMarginClick;
     property OnLoadData;
+    property OnModified;
     property OnMouseDown;
     property OnMouseMove;
     property OnMouseUp;
