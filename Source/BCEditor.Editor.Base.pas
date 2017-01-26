@@ -7357,7 +7357,8 @@ end;
 
 procedure TBCBaseEditor.UpdateModifiedStatus;
 begin
-  SetModified(UndoList.ChangeCount > 0);
+  SetModified((UndoList.ChangeCount > 0) and
+    not (UndoList.LastChangeReason in [crCaret, crSelection, crNothing, crGroupBreak]));
 end;
 
 procedure TBCBaseEditor.UpdateScrollBars;
