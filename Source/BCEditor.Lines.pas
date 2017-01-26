@@ -110,7 +110,7 @@ type
     procedure SaveToStream(AStream: TStream; AEncoding: TEncoding = nil); override;
     procedure TrimTrailingSpaces(AIndex: Integer);
     procedure LoadFromBuffer(var ABuffer: TBytes; AEncoding: TEncoding = nil);
-    procedure Sort(const ABeginLine: Integer = -1; const AEndLine: Integer = -1); virtual;
+    procedure Sort(const ABeginLine: Integer; const AEndLine: Integer); virtual;
     procedure LoadFromStrings(var AStrings: TStringList);
     property Attributes[AIndex: Integer]: PBCEditorLineAttribute read GetAttributes write PutAttributes;
     property CaseSensitive: Boolean read FCaseSensitive write FCaseSensitive default False;
@@ -611,24 +611,16 @@ begin
   Result := AList.CompareStrings(AList.List[AIndex1].Value, AList.List[AIndex2].Value);
 end;
 
-procedure TBCEditorLines.Sort(const ABeginLine: Integer = -1; const AEndLine: Integer = -1);
+procedure TBCEditorLines.Sort(const ABeginLine: Integer; const AEndLine: Integer);
 begin
   CustomSort(ABeginLine, AEndLine, StringListCompareStrings);
 end;
 
 procedure TBCEditorLines.CustomSort(const ABeginLine: Integer; const AEndLine: Integer;
   ACompare: TBCEditorStringListSortCompare);
-var
-  LBeginLine, LEndLine: Integer;
 begin
-  LBeginLine := ABeginLine;
-  LEndLine := AEndLine;
-  if LBeginLine = -1 then
-    LBeginLine := 0;
-  if LEndLine = -1 then
-    LEndLine := FCount - 1;
   if FCount > 1 then
-    QuickSort(LBeginLine, LEndLine, ACompare);
+    QuickSort(ABeginLine, AEndLine, ACompare);
 end;
 
 procedure TBCEditorLines.ExchangeItems(AIndex1, AIndex2: Integer);

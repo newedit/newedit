@@ -15245,25 +15245,52 @@ end;
 
 procedure TBCBaseEditor.Sort(const ASortOrder: TBCEditorSortOrder = soAsc; const ACaseSensitive: Boolean = False);
 var
-  LBeginLine, LEndLine: Integer;
+  LBeginPosition, LEndPosition: TBCEditorTextPosition;
+  LText: string;
+  LSelectionAvailable: Boolean;
+  LTextCaretPosition: TBCEditorTextPosition;
 begin
+  LTextCaretPosition := TextCaretPosition;
   FLines.CaseSensitive := ACaseSensitive;
   FLines.SortOrder := ASortOrder;
   if ASortOrder = soRandom then
     Randomize;
-  LBeginLine := -1;
-  LEndLine := -1;
-  if GetSelectionAvailable then
+  LBeginPosition.Line := 0;
+  LEndPosition.Line := FLines.Count - 1;
+  LText := FLines.Text;
+  LSelectionAvailable := GetSelectionAvailable;
+  if LSelectionAvailable then
   begin
-    LBeginLine := GetSelectionBeginPosition.Line;
-    LEndLine := GetSelectionEndPosition.Line;
+    LBeginPosition.Line := GetSelectionBeginPosition.Line;
+    LEndPosition.Line := GetSelectionEndPosition.Line;
+    LText := SelectedText;
   end;
-  FLines.Sort(LBeginLine, LEndLine);
-  FSelectionBeginPosition.Char := 1;
-  FSelectionEndPosition.Char := FLines.StringLength(LEndLine) + 1;
-  Invalidate;
+  LBeginPosition.Char := 1;
+  LEndPosition.Char := FLines.StringLength(LEndPosition.Line) + 1;
+
+  FUndoList.BeginBlock;
+  if not LSelectionAvailable then
+    FUndoList.AddChange(crSelection, LTextCaretPosition, LTextCaretPosition, LTextCaretPosition, '', FSelection.ActiveMode);
+  FUndoList.AddChange(crDelete, LTextCaretPosition, LBeginPosition, LEndPosition, LText, FSelection.ActiveMode);
+
+  FLines.Sort(LBeginPosition.Line, LEndPosition.Line);
+
+  LEndPosition.Char := FLines.StringLength(LEndPosition.Line) + 1;
+
+  FUndoList.AddChange(crInsert, LTextCaretPosition, LBeginPosition, LEndPosition, '', FSelection.ActiveMode);
+
+  if LSelectionAvailable then
+  begin
+    FSelectionBeginPosition.Char := 1;
+    FSelectionEndPosition.Char := LEndPosition.Char;
+  end;
+
+  FUndoList.EndBlock;
+
   if FCodeFolding.Visible then
     RescanCodeFoldingRanges;
+
+  Invalidate;
 end;
 
 procedure TBCBaseEditor.ToggleBookmark(const AIndex: Integer = -1);
