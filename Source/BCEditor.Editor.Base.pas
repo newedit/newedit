@@ -15259,6 +15259,8 @@ begin
     LEndLine := GetSelectionEndPosition.Line;
   end;
   FLines.Sort(LBeginLine, LEndLine);
+  FSelectionBeginPosition.Char := 1;
+  FSelectionEndPosition.Char := FLines.StringLength(LEndLine) + 1;
   Invalidate;
   if FCodeFolding.Visible then
     RescanCodeFoldingRanges;
