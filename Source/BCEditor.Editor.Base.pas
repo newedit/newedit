@@ -315,6 +315,7 @@ type
     procedure DoLeftMarginAutoSize;
     procedure DoLineBreak;
     procedure DoLineComment;
+    procedure DoModified(Sender: TObject);
     procedure DoPageLeftOrRight(const ACommand: TBCEditorCommand);
     procedure DoPageTopOrBottom(const ACommand: TBCEditorCommand);
     procedure DoPageUpOrDown(const ACommand: TBCEditorCommand);
@@ -416,7 +417,6 @@ type
     procedure UndoRedoAdded(ASender: TObject);
     procedure UpdateFoldRanges(const ACurrentLine: Integer; const ALineCount: Integer); overload;
     procedure UpdateFoldRanges(AFoldRanges: TBCEditorCodeFoldingRanges; const ALineCount: Integer); overload;
-    procedure UpdateModifiedStatus;
     procedure UpdateScrollBars;
     procedure UpdateWordWrap(const AValue: Boolean);
     procedure WMCaptureChanged(var AMessage: TMessage); message WM_CAPTURECHANGED;
@@ -894,6 +894,7 @@ begin
   FUndo := TBCEditorUndo.Create;
   FUndoList := TBCEditorUndoList.Create;
   FUndoList.OnAddedUndo := UndoRedoAdded;
+  FUndoList.OnModified := DoModified;
   FOriginalUndoList := FUndoList;
   FRedoList := TBCEditorUndoList.Create;
   FRedoList.OnAddedUndo := UndoRedoAdded;
@@ -4661,6 +4662,12 @@ begin
   end;
 end;
 
+procedure TBCBaseEditor.DoModified(Sender: TObject);
+begin
+  if Assigned(FOnModified) then
+    FOnModified(Sender);
+end;
+
 procedure TBCBaseEditor.DoPageLeftOrRight(const ACommand: TBCEditorCommand);
 var
   LVisibleChars: Integer;
@@ -6850,9 +6857,6 @@ begin
   begin
     FModified := AValue;
 
-    if AValue and Assigned(FOnModified) then
-      FOnModified(Self);
-
     if (uoGroupUndo in FUndo.Options) and UndoList.CanUndo and not AValue then
       FUndoList.AddGroupBreak;
 
@@ -7302,7 +7306,7 @@ begin
   if ASender = FUndoList then
     LUndoItem := FUndoList.PeekItem;
 
-  UpdateModifiedStatus;
+  SetModified(UndoList.ChangeCount > 0);
 
   if not FUndoList.InsideRedo and Assigned(LUndoItem) and not (LUndoItem.ChangeReason in [crCaret, crGroupBreak]) then
     FRedoList.Clear;
@@ -7353,12 +7357,6 @@ begin
     UpdateFoldRanges(LCodeFoldingRange.SubCodeFoldingRanges, ALineCount);
     LCodeFoldingRange.MoveBy(ALineCount);
   end;
-end;
-
-procedure TBCBaseEditor.UpdateModifiedStatus;
-begin
-  SetModified((UndoList.ChangeCount > 0) and
-    not (UndoList.LastChangeReason in [crCaret, crSelection, crNothing, crGroupBreak]));
 end;
 
 procedure TBCBaseEditor.UpdateScrollBars;
@@ -14948,7 +14946,6 @@ procedure TBCBaseEditor.DoRedo;
       finally
         LRedoItem.Free;
       end;
-      UpdateModifiedStatus;
     end;
   end;
 

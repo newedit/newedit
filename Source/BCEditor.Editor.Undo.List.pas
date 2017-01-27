@@ -19,6 +19,7 @@ type
     FItems: TList;
     FLockCount: Integer;
     FOnAddedUndo: TNotifyEvent;
+    FOnModified: TNotifyEvent;
     function GetCanUndo: Boolean;
     function GetItemCount: Integer;
     function GetItems(const AIndex: Integer): TBCEditorUndoItem;
@@ -53,6 +54,7 @@ type
     property ItemCount: Integer read GetItemCount;
     property Items[const AIndex: Integer]: TBCEditorUndoItem read GetItems write SetItems;
     property OnAddedUndo: TNotifyEvent read FOnAddedUndo write FOnAddedUndo;
+    property OnModified: TNotifyEvent read FOnModified write FOnModified;
   end;
 
 implementation
@@ -113,8 +115,16 @@ begin
   if FLockCount = 0 then
   begin
     FChanged := AReason in BCEDITOR_MODIFYING_CHANGE_REASONS;
+
     if FChanged then
+    begin
+      if ChangeCount = 0 then
+        if Assigned(FOnModified) then
+          FOnModified(Self);
+
       Inc(FChangeCount);
+    end;
+
     LNewItem := TBCEditorUndoItem.Create;
     with LNewItem do
     begin
