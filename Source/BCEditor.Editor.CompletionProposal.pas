@@ -3,7 +3,7 @@ unit BCEditor.Editor.CompletionProposal;
 interface
 
 uses
-  System.Classes, Vcl.Graphics, Vcl.Controls, BCEditor.Editor.CompletionProposal.Colors,
+  System.Classes, Vcl.Graphics, Vcl.Controls, Vcl.ImgList, BCEditor.Editor.CompletionProposal.Colors,
   BCEditor.Editor.CompletionProposal.Columns, BCEditor.Editor.CompletionProposal.Trigger, BCEditor.Types;
 
 const
@@ -19,7 +19,7 @@ type
     FCompletionColumnIndex: Integer;
     FConstraints: TSizeConstraints;
     FEnabled: Boolean;
-    FImages: TImageList;
+    FImages: TCustomImageList;
     FOptions: TBCEditorCompletionProposalOptions;
     FOwner: TComponent;
     FSecondaryShortCut: TShortCut;
@@ -27,7 +27,7 @@ type
     FTrigger: TBCEditorCompletionProposalTrigger;
     FVisibleLines: Integer;
     FWidth: Integer;
-    procedure SetImages(const AValue: TImageList);
+    procedure SetImages(const AValue: TCustomImageList);
   protected
     function GetOwner: TPersistent; override;
   public
@@ -42,7 +42,7 @@ type
     property CompletionColumnIndex: Integer read FCompletionColumnIndex write FCompletionColumnIndex default 0;
     property Constraints: TSizeConstraints read FConstraints write FConstraints;
     property Enabled: Boolean read FEnabled write FEnabled default True;
-    property Images: TImageList read FImages write SetImages;
+    property Images: TCustomImageList read FImages write SetImages;
     property Options: TBCEditorCompletionProposalOptions read FOptions write FOptions default BCEDITOR_COMPLETION_PROPOSAL_DEFAULT_OPTIONS;
     property SecondaryShortCut: TShortCut read FSecondaryShortCut write FSecondaryShortCut;
     property ShortCut: TShortCut read FShortCut write FShortCut;
@@ -119,7 +119,7 @@ begin
   Result := FOwner;
 end;
 
-procedure TBCEditorCompletionProposal.SetImages(const AValue: TImageList);
+procedure TBCEditorCompletionProposal.SetImages(const AValue: TCustomImageList);
 begin
   if FImages <> AValue then
   begin

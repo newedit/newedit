@@ -133,11 +133,11 @@ end;
 
 procedure TBCEditorTokenInfoPopupWindow.ParseText(AText: TBCEditorLines; ATokens: TList; AFont: TFont);
 const
-  TOKEN_REFERENCE = 0;
-  TOKEN_BOLD = 1;
-  TOKEN_ITALIC = 2;
-  OPEN_TOKENS: array of string = ['<A HREF="', '<B>', '<I>'];
-  CLOSE_TOKENS: array of string = ['</A>', '</B>', '</I>'];
+  CTOKEN_REFERENCE = 0;
+  CTOKEN_BOLD = 1;
+  CTOKEN_ITALIC = 2;
+  COpenTokens: array of string = ['<A HREF="', '<B>', '<I>'];
+  CCloseTokens: array of string = ['</A>', '</B>', '</I>'];
 var
   LIndex: Integer;
   LPText, LPToken, LPBookmark: PChar;
@@ -147,6 +147,7 @@ var
   LCurrentRect: TRect;
   LCurrentReference: string;
   LTextHeight: Integer;
+  LMaxWidth: Integer;
 
   procedure ClearCurrentValue;
   begin
@@ -161,6 +162,8 @@ var
     LPTextToken^.Value := LCurrentValue;
     LPTextToken^.Styles := LCurrentStyles;
     LCurrentRect.Right := LCurrentRect.Left + FBitmapBuffer.Canvas.TextWidth(LCurrentValue);
+    if LCurrentRect.Right > LMaxWidth then
+      LMaxWidth := LCurrentRect.Right;
     LPTextToken^.Rect := LCurrentRect;
     LPTextToken^.Reference := LCurrentReference;
     ATokens.Add(LPTextToken);
@@ -178,6 +181,7 @@ var
 
 begin
   FBitmapBuffer.Canvas.Font.Assign(AFont);
+  LMaxWidth := 0;
   LTextHeight := FBitmapBuffer.Canvas.TextHeight('X');
   LCurrentRect.Left := 0;
   LCurrentRect.Top := 0;
@@ -188,9 +192,9 @@ begin
   begin
     if LPText^ = '<' then
     begin
-      for LIndex := 0 to Length(OPEN_TOKENS) - 1 do
+      for LIndex := 0 to Length(COpenTokens) - 1 do
       begin
-        LPToken := PChar(OPEN_TOKENS[LIndex]);
+        LPToken := PChar(COpenTokens[LIndex]);
         LPBookmark := LPText;
         while (LPText^ <> BCEDITOR_NONE_CHAR) and (LPToken^ <> BCEDITOR_NONE_CHAR) and (UpCase(LPText^) = LPToken^) do
         begin
@@ -203,7 +207,7 @@ begin
             AddTextToken;
 
           case LIndex of
-            TOKEN_REFERENCE:
+            CTOKEN_REFERENCE:
               begin
                 while (LPText^ <> BCEDITOR_NONE_CHAR) and (LPText^ <> '"') do
                 begin
@@ -213,9 +217,9 @@ begin
                 Inc(LPText); // '>'
                 Include(LCurrentStyles, tsReference);
               end;
-            TOKEN_BOLD:
+            CTOKEN_BOLD:
               Include(LCurrentStyles, tsBold);
-            TOKEN_ITALIC:
+            CTOKEN_ITALIC:
               Include(LCurrentStyles, tsItalic);
           end;
           Break;
@@ -224,9 +228,9 @@ begin
           LPText := LPBookmark;
       end;
 
-      for LIndex := 0 to Length(CLOSE_TOKENS) - 1 do
+      for LIndex := 0 to Length(CCloseTokens) - 1 do
       begin
-        LPToken := PChar(CLOSE_TOKENS[LIndex]);
+        LPToken := PChar(CCloseTokens[LIndex]);
         LPBookmark := LPText;
         while (LPText^ <> BCEDITOR_NONE_CHAR) and (LPToken^ <> BCEDITOR_NONE_CHAR) and (UpCase(LPText^) = LPToken^) do
         begin
