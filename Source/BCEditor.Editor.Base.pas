@@ -9327,19 +9327,22 @@ begin
     end
   end;
 
-  if (AButton = mbMiddle) and not FMouseMoveScrolling then
+  if soWheelClickMove in FScroll.Options then
   begin
-    FMouseMoveScrolling := True;
-    FMouseMoveScrollingPoint := Point(X, Y);
-    Invalidate;
-    Exit;
-  end
-  else
-  if FMouseMoveScrolling then
-  begin
-    FMouseMoveScrolling := False;
-    Invalidate;
-    Exit;
+    if (AButton = mbMiddle) and not FMouseMoveScrolling then
+    begin
+      FMouseMoveScrolling := True;
+      FMouseMoveScrollingPoint := Point(X, Y);
+      Invalidate;
+      Exit;
+    end
+    else
+    if FMouseMoveScrolling then
+    begin
+      FMouseMoveScrolling := False;
+      Invalidate;
+      Exit;
+    end;
   end;
 
   if not (sfWaitForDragging in FStateFlags) then
@@ -9738,7 +9741,7 @@ begin
     if FRightMargin.Moving then
       PaintRightMarginMove;
 
-    if FMouseMoveScrolling and (soWheelClickMove in FScroll.Options) then
+    if FMouseMoveScrolling then
       PaintMouseMoveScrollPoint;
 
     { Left margin and code folding }
