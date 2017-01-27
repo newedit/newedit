@@ -315,7 +315,6 @@ type
     procedure DoLeftMarginAutoSize;
     procedure DoLineBreak;
     procedure DoLineComment;
-    procedure DoModified(Sender: TObject);
     procedure DoPageLeftOrRight(const ACommand: TBCEditorCommand);
     procedure DoPageTopOrBottom(const ACommand: TBCEditorCommand);
     procedure DoPageUpOrDown(const ACommand: TBCEditorCommand);
@@ -894,7 +893,6 @@ begin
   FUndo := TBCEditorUndo.Create;
   FUndoList := TBCEditorUndoList.Create;
   FUndoList.OnAddedUndo := UndoRedoAdded;
-  FUndoList.OnModified := DoModified;
   FOriginalUndoList := FUndoList;
   FRedoList := TBCEditorUndoList.Create;
   FRedoList.OnAddedUndo := UndoRedoAdded;
@@ -4662,12 +4660,6 @@ begin
   end;
 end;
 
-procedure TBCBaseEditor.DoModified(Sender: TObject);
-begin
-  if Assigned(FOnModified) then
-    FOnModified(Sender);
-end;
-
 procedure TBCBaseEditor.DoPageLeftOrRight(const ACommand: TBCEditorCommand);
 var
   LVisibleChars: Integer;
@@ -6857,6 +6849,10 @@ begin
   begin
     FModified := AValue;
 
+    if (UndoList.Changed or (UndoList.ItemCount = 0)) and AValue then
+      if Assigned(FOnModified) then
+        FOnModified(Self);
+
     if (uoGroupUndo in FUndo.Options) and UndoList.CanUndo and not AValue then
       FUndoList.AddGroupBreak;
 
@@ -7306,7 +7302,8 @@ begin
   if ASender = FUndoList then
     LUndoItem := FUndoList.PeekItem;
 
-  SetModified(UndoList.ChangeCount > 0);
+  if UndoList.Changed or (UndoList.ItemCount = 0) then
+    SetModified(UndoList.ChangeCount > 0);
 
   if not FUndoList.InsideRedo and Assigned(LUndoItem) and not (LUndoItem.ChangeReason in [crCaret, crGroupBreak]) then
     FRedoList.Clear;
