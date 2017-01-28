@@ -136,8 +136,6 @@ const
   CTOKEN_REFERENCE = 0;
   CTOKEN_BOLD = 1;
   CTOKEN_ITALIC = 2;
-  COpenTokens: array of string = ['<A HREF="', '<B>', '<I>'];
-  CCloseTokens: array of string = ['</A>', '</B>', '</I>'];
 var
   LIndex: Integer;
   LPText, LPToken, LPBookmark: PChar;
@@ -148,6 +146,18 @@ var
   LCurrentReference: string;
   LTextHeight: Integer;
   LMaxWidth: Integer;
+  LOpenTokens: array [0..2] of string;
+  LCloseTokens: array [0..2] of string;
+
+  procedure AddTokens;
+  begin
+    LOpenTokens[0] := '<A HREF="';
+    LOpenTokens[1] := '<B>';
+    LOpenTokens[2] := '<I>';
+    LCloseTokens[0] := '</A>';
+    LCloseTokens[1] := '</B>';
+    LCloseTokens[2] := '</I>';
+  end;
 
   procedure ClearCurrentValue;
   begin
@@ -180,6 +190,7 @@ var
   end;
 
 begin
+  AddTokens;
   FBitmapBuffer.Canvas.Font.Assign(AFont);
   LMaxWidth := 0;
   LTextHeight := FBitmapBuffer.Canvas.TextHeight('X');
@@ -192,9 +203,9 @@ begin
   begin
     if LPText^ = '<' then
     begin
-      for LIndex := 0 to Length(COpenTokens) - 1 do
+      for LIndex := 0 to Length(LOpenTokens) - 1 do
       begin
-        LPToken := PChar(COpenTokens[LIndex]);
+        LPToken := PChar(LOpenTokens[LIndex]);
         LPBookmark := LPText;
         while (LPText^ <> BCEDITOR_NONE_CHAR) and (LPToken^ <> BCEDITOR_NONE_CHAR) and (UpCase(LPText^) = LPToken^) do
         begin
@@ -228,9 +239,9 @@ begin
           LPText := LPBookmark;
       end;
 
-      for LIndex := 0 to Length(CCloseTokens) - 1 do
+      for LIndex := 0 to Length(LCloseTokens) - 1 do
       begin
-        LPToken := PChar(CCloseTokens[LIndex]);
+        LPToken := PChar(LCloseTokens[LIndex]);
         LPBookmark := LPText;
         while (LPText^ <> BCEDITOR_NONE_CHAR) and (LPToken^ <> BCEDITOR_NONE_CHAR) and (UpCase(LPText^) = LPToken^) do
         begin
