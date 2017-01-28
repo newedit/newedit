@@ -259,10 +259,10 @@ end;
 
 procedure TBCEditorUndoList.AddGroupBreak;
 var
-  LDummyTextPosition: TBCEditorTextPosition;
+  LTextPosition: TBCEditorTextPosition;
 begin
   if (LastChangeBlockNumber = 0) and (LastChangeReason <> crGroupBreak) then
-    AddChange(crGroupBreak, LDummyTextPosition, LDummyTextPosition, LDummyTextPosition, '', smNormal);
+    AddChange(crGroupBreak, LTextPosition, LTextPosition, LTextPosition, '', smNormal);
 end;
 
 function TBCEditorUndoList.GetItems(const AIndex: Integer): TBCEditorUndoItem;

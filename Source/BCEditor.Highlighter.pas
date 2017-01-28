@@ -10,6 +10,7 @@ uses
 type
   TBCEditorHighlighter = class(TObject)
   strict private
+    FAllDelimiters: TBCEditorCharSet;
     FAttributes: TStringList;
     FBeginningOfLine: Boolean;
     FCodeFoldingRangeCount: Integer;
@@ -142,6 +143,8 @@ begin
 
   FTemporaryCurrentTokens := TList.Create;
 
+  FAllDelimiters := BCEDITOR_DEFAULT_DELIMITERS + BCEDITOR_ABSOLUTE_DELIMITERS;
+
   FLoading := False;
 end;
 
@@ -266,10 +269,10 @@ begin
       FCurrentToken := FCurrentRange.DefaultToken;
 
       if Ord(FCurrentLine[FRunPosition - 1]) < 256 then
-      while (Ord(FCurrentLine[FRunPosition]) < 256) and not CharInSet(FCurrentLine[FRunPosition], FCurrentRange.Delimiters) do
+      while (Ord(FCurrentLine[FRunPosition]) < 256) and not CharInSet(FCurrentLine[FRunPosition], FAllDelimiters) do
         Inc(FRunPosition)
       else
-      while (Ord(FCurrentLine[FRunPosition]) > 255) and not CharInSet(FCurrentLine[FRunPosition], FCurrentRange.Delimiters) do
+      while (Ord(FCurrentLine[FRunPosition]) > 255) and not CharInSet(FCurrentLine[FRunPosition], FAllDelimiters) do
         Inc(FRunPosition)
     end
     else
