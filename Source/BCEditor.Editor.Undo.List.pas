@@ -211,7 +211,8 @@ begin
   begin
     Result := FItems[LIndex];
     FItems.Delete(LIndex);
-    if Result.ChangeReason in BCEDITOR_MODIFYING_CHANGE_REASONS then
+    FChanged := Result.ChangeReason in BCEDITOR_MODIFYING_CHANGE_REASONS;
+    if FChanged then
       Dec(FChangeCount);
   end;
 end;

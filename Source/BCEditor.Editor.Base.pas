@@ -6849,9 +6849,8 @@ begin
   begin
     FModified := AValue;
 
-    if (UndoList.Changed or (UndoList.ItemCount = 0)) and AValue then
-      if Assigned(FOnModified) then
-        FOnModified(Self);
+    if AValue and Assigned(FOnModified) then
+      FOnModified(Self);
 
     if (uoGroupUndo in FUndo.Options) and UndoList.CanUndo and not AValue then
       FUndoList.AddGroupBreak;
