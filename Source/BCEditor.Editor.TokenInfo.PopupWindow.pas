@@ -21,6 +21,8 @@ type
     FBitmapBuffer: Vcl.Graphics.TBitmap;
     FContent: TBCEditorLines;
     FContentTextTokensList: TList;
+    FMaxHeight: Integer;
+    FMaxWidth: Integer;
     FTitleContent: TBCEditorLines;
     FTitleContentTextTokensList: TList;
     FTokenInfo: TBCEditorTokenInfo;
@@ -40,7 +42,7 @@ type
 implementation
 
 uses
-  BCEditor.Consts;
+  BCEditor.Types, BCEditor.Consts;
 
 type
   TBCEditorTokenInfoTextStyle = (tsBold, tsItalic, tsReference);
@@ -67,10 +69,6 @@ begin
   FTitleContentTextTokensList := TList.Create;
 
   FBitmapBuffer := Vcl.Graphics.TBitmap.Create;
-
-  // TODO remove these
-  Width := 300;
-  Height := 300;
 end;
 
 destructor TBCEditorTokenInfoPopupWindow.Destroy;
@@ -103,8 +101,11 @@ begin
     FTokenInfo := ASource as TBCEditorTokenInfo;
     with FTokenInfo do
     begin
-      // TODO
-
+      if not (tioAutoSize in Options) then
+      begin
+        Self.Width := Width;
+        Self.Height := Height;
+      end;
     end
   end
   else
@@ -113,8 +114,17 @@ end;
 
 procedure TBCEditorTokenInfoPopupWindow.Execute(const APoint: TPoint);
 begin
+  FMaxHeight := 0;
+  FMaxWidth := 0;
   ParseText(FContent, FContentTextTokensList, FTokenInfo.Font);
   ParseText(FTitleContent, FTitleContentTextTokensList, FTokenInfo.Title.Font);
+
+  if tioAutoSize in FTokenInfo.Options then
+  begin
+    // TODO if height goes over the bottom, show scroll bar
+    Height := FMaxHeight;
+    Width := FMaxWidth;
+  end;
 
   Show(APoint);
 end;
@@ -123,7 +133,7 @@ procedure TBCEditorTokenInfoPopupWindow.Paint;
 begin
   with FBitmapBuffer do
   begin
-    Canvas.Brush.Color := clRed;
+    Canvas.Brush.Color := FTokenInfo.Colors.Background;
     Height := 0;
     Width := ClientWidth;
     Height := ClientHeight;
@@ -145,7 +155,6 @@ var
   LCurrentRect: TRect;
   LCurrentReference: string;
   LTextHeight: Integer;
-  LMaxWidth: Integer;
   LOpenTokens: array [0..2] of string;
   LCloseTokens: array [0..2] of string;
 
@@ -172,8 +181,8 @@ var
     LPTextToken^.Value := LCurrentValue;
     LPTextToken^.Styles := LCurrentStyles;
     LCurrentRect.Right := LCurrentRect.Left + FBitmapBuffer.Canvas.TextWidth(LCurrentValue);
-    if LCurrentRect.Right > LMaxWidth then
-      LMaxWidth := LCurrentRect.Right;
+    if LCurrentRect.Right > FMaxWidth then
+      FMaxWidth := LCurrentRect.Right;
     LPTextToken^.Rect := LCurrentRect;
     LPTextToken^.Reference := LCurrentReference;
     ATokens.Add(LPTextToken);
@@ -185,6 +194,7 @@ var
   begin
     AddTextToken;
     LCurrentRect.Left := 0;
+    Inc(FMaxHeight, LTextHeight);
     Inc(LCurrentRect.Top, LTextHeight);
     Inc(LCurrentRect.Bottom, LTextHeight);
   end;
@@ -192,7 +202,6 @@ var
 begin
   AddTokens;
   FBitmapBuffer.Canvas.Font.Assign(AFont);
-  LMaxWidth := 0;
   LTextHeight := FBitmapBuffer.Canvas.TextHeight('X');
   LCurrentRect.Left := 0;
   LCurrentRect.Top := 0;

@@ -11556,6 +11556,7 @@ var
           LTokenRect.Right := Min(LTokenRect.Left + (LLineSelectionStart - LLastColumn) * FPaintHelper.CharWidth, LLineRect.Right);
           FillRect(LTokenRect);
         end;
+
         if (LTokenRect.Right < LLineRect.Right) and (LLineSelectionEnd > LLastColumn) then
         begin
           SetDrawingColors(True);
@@ -11567,13 +11568,20 @@ var
           LTokenRect.Right := Min(LTokenRect.Left + LTokenLength * FPaintHelper.CharWidth, LLineRect.Right);
           FillRect(LTokenRect);
         end;
+
         if LTokenRect.Right < LLineRect.Right then
         begin
           SetDrawingColors(False);
           LTokenRect.Left := LTokenRect.Right;
           LTokenRect.Right := LLineRect.Right;
           FillRect(LTokenRect);
-        end
+        end;
+
+        if LTokenRect.Right = LLineRect.Right then
+        begin
+          SetDrawingColors(False);
+          FillRect(LTokenRect);
+        end;
       end;
     end;
   end;
