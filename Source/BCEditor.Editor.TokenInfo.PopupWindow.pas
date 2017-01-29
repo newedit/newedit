@@ -151,12 +151,12 @@ var
 
   procedure AddTokens;
   begin
-    LOpenTokens[0] := '<A HREF="';
-    LOpenTokens[1] := '<B>';
-    LOpenTokens[2] := '<I>';
-    LCloseTokens[0] := '</A>';
-    LCloseTokens[1] := '</B>';
-    LCloseTokens[2] := '</I>';
+    LOpenTokens[CTOKEN_REFERENCE] := '<A HREF="';
+    LOpenTokens[CTOKEN_BOLD] := '<B>';
+    LOpenTokens[CTOKEN_ITALIC] := '<I>';
+    LCloseTokens[CTOKEN_REFERENCE] := '</A>';
+    LCloseTokens[CTOKEN_BOLD] := '</B>';
+    LCloseTokens[CTOKEN_ITALIC] := '</I>';
   end;
 
   procedure ClearCurrentValue;

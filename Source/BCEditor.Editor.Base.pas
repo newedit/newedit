@@ -8795,6 +8795,14 @@ begin
     Exit;
   end;
 
+  if FCaret.MultiEdit.Enabled and Assigned(FMultiCarets) and (FMultiCarets.Count > 0) then
+    if (AKey = BCEDITOR_CARRIAGE_RETURN_KEY) or (AKey = BCEDITOR_ESCAPE_KEY) then
+    begin
+      FreeMultiCarets;
+      Invalidate;
+      Exit;
+    end;
+
   if FSyncEdit.Enabled then
   begin
     if FSyncEdit.Active then
