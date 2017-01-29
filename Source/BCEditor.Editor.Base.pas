@@ -13259,6 +13259,9 @@ begin
     Exit;
   ATextPosition := PixelsToTextPosition(LCursorPoint.X, LCursorPoint.Y);
 
+  if (ATextPosition.Line = FLines.Count - 1) and (ATextPosition.Char > FLines.StringLength(FLines.Count - 1)) then
+    Exit;
+
   Result := True;
 end;
 
