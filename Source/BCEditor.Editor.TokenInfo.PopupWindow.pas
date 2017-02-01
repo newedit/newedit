@@ -42,7 +42,7 @@ type
 implementation
 
 uses
-  BCEditor.Types, BCEditor.Consts;
+  BCEditor.Types, BCEditor.Consts, System.UITypes;
 
 type
   TBCEditorTokenInfoTextStyle = (tsBold, tsItalic, tsReference);
@@ -130,6 +130,25 @@ begin
 end;
 
 procedure TBCEditorTokenInfoPopupWindow.Paint;
+var
+  LIndex: Integer;
+  LPTextToken: PBCEditorTokenInfoTextToken;
+  LPreviousStyles: TBCEditorTokenInfoTextStyles;
+  LLeft, LTop, LPreviousTop: Integer;
+  LText: string;
+
+  procedure PaintToken;
+  begin
+    Canvas.Font.Style := [];
+    if tsBold in LPTextToken^.Styles then
+      Canvas.Font.Style :=  Canvas.Font.Style + [fsBold];
+    if tsItalic in LPTextToken^.Styles then
+      Canvas.Font.Style :=  Canvas.Font.Style + [fsItalic];
+    if tsReference in LPTextToken^.Styles then
+      Canvas.Font.Style :=  Canvas.Font.Style + [fsUnderline];
+    Canvas.TextOut(LLeft, LTop, LText);
+  end;
+
 begin
   with FBitmapBuffer do
   begin
@@ -137,6 +156,46 @@ begin
     Height := 0;
     Width := ClientWidth;
     Height := ClientHeight;
+    LLeft := 0;
+    LTop := 0;
+
+    if FTitleContentTextTokensList.Count > 0 then
+    begin
+      Canvas.Brush.Color := FTokenInfo.Title.Colors.Background;
+
+      LPTextToken := PBCEditorTokenInfoTextToken(FTitleContentTextTokensList[0]);
+      LPreviousStyles := LPTextToken^.Styles;
+      LPreviousTop := LPTextToken^.Rect.Top;
+      for LIndex := 0 to FTitleContentTextTokensList.Count - 1 do
+      begin
+        Canvas.Font.Assign(FTokenInfo.Title.Font);
+        if tsReference in LPTextToken^.Styles then
+          Canvas.Font.Color := FTokenInfo.Title.Colors.Reference;
+
+        LPTextToken := PBCEditorTokenInfoTextToken(FTitleContentTextTokensList[LIndex]);
+        if (LPreviousStyles <> LPTextToken^.Styles) or (LPreviousTop <> LPTextToken^.Rect.Top) then
+        begin
+          PaintToken;
+          LText := '';
+          LLeft := LPTextToken^.Rect.Right;
+          LTop := LPTextToken^.Rect.Top;
+        end;
+        LPreviousStyles := LPTextToken^.Styles;
+        LPreviousTop :=  LPTextToken^.Rect.Top;
+        LText := LText + LPTextToken^.Value;
+      end;
+    end;
+
+    if FContentTextTokensList.Count > 0 then
+    begin
+      Canvas.Brush.Color := FTokenInfo.Colors.Background;
+      Canvas.Font.Assign(FTokenInfo.Font);
+      for LIndex := 0 to FContentTextTokensList.Count - 1 do
+      begin
+
+
+      end;
+    end;
   end;
   Canvas.Draw(0, 0, FBitmapBuffer);
 end;
