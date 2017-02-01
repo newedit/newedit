@@ -31,12 +31,12 @@ type
 
   TBCEditorCaretChangedEvent = procedure(ASender: TObject; X, Y: Integer) of object;
 
-  TBCEditorMarkPanelPaintEvent = procedure(ASender: TObject; ACanvas: TCanvas; ARect: TRect; AFirstLine: Integer; ALastLine: Integer) of object;
-  TBCEditorMarkPanelLinePaintEvent = procedure(ASender: TObject; ACanvas: TCanvas; ARect: TRect; ALineNumber: Integer) of object;
+  TBCEditorMarkPanelPaintEvent = procedure(ASender: TObject; ACanvas: TCanvas; const ARect: TRect; const AFirstLine: Integer; const ALastLine: Integer) of object;
+  TBCEditorMarkPanelLinePaintEvent = procedure(ASender: TObject; ACanvas: TCanvas; const ARect: TRect; const ALineNumber: Integer) of object;
 
-  TBCEditorLinePaintEvent = procedure(ASender: TObject; ACanvas: TCanvas; ARect: TRect; ALineNumber: Integer; const AIsMinimapLine: Boolean) of object;
+  TBCEditorLinePaintEvent = procedure(ASender: TObject; ACanvas: TCanvas; const ARect: TRect; const ALineNumber: Integer; const AIsMinimapLine: Boolean) of object;
 
-  TBCEditorCustomLineColorsEvent = procedure(ASender: TObject; ALine: Integer; var AUseColors: Boolean;
+  TBCEditorCustomLineColorsEvent = procedure(ASender: TObject; const ALine: Integer; var AUseColors: Boolean;
     var AForeground: TColor; var ABackground: TColor) of object;
 
   TBCEditorTokenAddon = (taNone, taDoubleUnderline, taUnderline, taWaveLine);

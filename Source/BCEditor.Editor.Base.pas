@@ -336,7 +336,6 @@ type
     procedure DoWordRight(const ACommand: TBCEditorCommand);
     procedure DragMinimap(const Y: Integer);
     procedure DrawCaret;
-    procedure FillRect(const ARect: TRect);
     procedure SearchAll(const ASearchText: string = '');
     procedure FindWords(const AWord: string; AList: TList; ACaseSensitive: Boolean; AWholeWordsOnly: Boolean);
     procedure FontChanged(ASender: TObject);
@@ -605,6 +604,7 @@ type
     procedure ExecuteCommand(ACommand: TBCEditorCommand; AChar: Char; AData: Pointer); virtual;
     procedure ExportToHTML(const AFileName: string; const ACharSet: string = ''; AEncoding: System.SysUtils.TEncoding = nil); overload;
     procedure ExportToHTML(AStream: TStream; const ACharSet: string = ''; AEncoding: System.SysUtils.TEncoding = nil); overload;
+    procedure FillRect(const ARect: TRect);
     procedure FindAll;
     procedure FoldAll(const AFromLineNumber: Integer = -1; const AToLineNumber: Integer = -1);
     procedure FoldAllByLevel(const AFromLevel: Integer; const AToLevel: Integer);
