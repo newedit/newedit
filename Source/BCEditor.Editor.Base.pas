@@ -864,11 +864,11 @@ begin
   FCaret.OnChange := CaretChanged;
   { Text buffer }
   FLines := TBCEditorLines.Create(Self);
-  FLines.OnBeforeSetText := BeforeSetText;
-  FLines.OnAfterSetText := AfterSetText;
   FOriginalLines := FLines;
   with FLines do
   begin
+    OnBeforeSetText := BeforeSetText;
+    OnAfterSetText := AfterSetText;
     OnChange := LinesChanged;
     OnChanging := LinesChanging;
     OnCleared := LinesCleared;
@@ -14871,7 +14871,7 @@ procedure TBCBaseEditor.LoadFromFile(const AFileName: string; AEncoding: System.
 var
   LFileStream: TFileStream;
 begin
-  LFileStream := TFileStream.Create(AFileName, fmOpenRead);
+  LFileStream := TFileStream.Create(AFileName, fmOpenRead or fmShareDenyNone);
   try
     LoadFromStream(LFileStream, AEncoding);
   finally
@@ -14886,11 +14886,14 @@ var
   LWordWrapEnabled: Boolean;
 begin
   FEncoding := nil;
-  ClearMatchingPair;
   LWordWrapEnabled := FWordWrap.Enabled;
   FWordWrap.Enabled := False;
-  ClearCodeFolding;
-  ClearBookmarks;
+  if Assigned(Parent) then
+  begin
+    ClearMatchingPair;
+    ClearCodeFolding;
+    ClearBookmarks;
+  end;
   { Read file into buffer }
   SetLength(LBuffer, AStream.Size);
   AStream.ReadBuffer(Pointer(LBuffer)^, Length(LBuffer));
@@ -14912,6 +14915,10 @@ begin
   end;
 
   FLines.LoadFromBuffer(LBuffer, Encoding);
+
+  if not Assigned(Parent) then
+    Exit;
+
   CreateLineNumbersCache(True);
 
   if CanFocus then

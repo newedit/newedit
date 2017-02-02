@@ -46,7 +46,7 @@ type
 implementation
 
 uses
-  System.Character, BCEditor.Consts, BCEditor.Language;
+  System.Character, BCEditor.Consts, BCEditor.Language, Winapi.Windows;
 
 constructor TBCEditorNormalSearch.Create;
 begin
@@ -205,6 +205,7 @@ begin
     Found := Next;
   end;
   Result := FResults.Count;
+  SetLength(FTextToSearch, 0);
 end;
 
 function TBCEditorNormalSearch.FindFirst(const AText: string): Integer;
@@ -215,10 +216,9 @@ begin
   FTextLength := Length(AText);
   if FTextLength >= FPatternLength then
   begin
-    if CaseSensitive then
-      FTextToSearch := AText
-    else
-      FTextToSearch := AnsiLowerCase(AText);
+    FTextToSearch := AText;
+    if not CaseSensitive then
+      CharLowerBuff(PChar(FTextToSearch), FTextLength);
     FOrigin := PChar(FTextToSearch);
     FTheEnd := FOrigin + FTextLength;
     FRun := FOrigin - 1;
