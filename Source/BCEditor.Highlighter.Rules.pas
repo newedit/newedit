@@ -117,6 +117,7 @@ type
     FStringCaseFunct: TBCEditorStringCaseFunction;
     FSymbolList: TBCEditorAbstractParserArray;
     FTokens: TList;
+    FUseDelimitersForText: Boolean;
     function GetKeyList(AIndex: Integer): TBCEditorKeyList;
     function GetKeyListCount: Integer;
     function GetRange(AIndex: Integer): TBCEditorRange;
@@ -165,6 +166,7 @@ type
     property StringCaseFunct: TBCEditorStringCaseFunction read FStringCaseFunct;
     property SymbolList: TBCEditorAbstractParserArray read FSymbolList;
     property Tokens[AIndex: Integer]: TBCEditorToken read GetToken;
+    property UseDelimitersForText: Boolean read FUseDelimitersForText write FUseDelimitersForText;
   end;
 
 implementation

@@ -380,6 +380,8 @@ begin
           ARange.CloseOnTerm := LPropertiesObject.B['CloseOnTerm'];
           ARange.SkipWhitespace := LPropertiesObject.B['SkipWhitespace'];
           ARange.CloseParent := LPropertiesObject.B['CloseParent'];
+          ARange.UseDelimitersForText := LPropertiesObject.B['UseDelimitersForText'];
+
           LAlternativeCloseArray := LPropertiesObject['AlternativeClose'].ArrayValue;
           if LAlternativeCloseArray.Count > 0 then
           begin
@@ -660,6 +662,8 @@ procedure TBCEditorHighlighterImportJSON.ImportCodeFoldingOptions(ACodeFoldingRe
 var
   LCodeFoldingObject: TJsonObject;
 begin
+  FHighlighter.MatchingPairHighlight := True;
+
   if ACodeFoldingObject.Contains('Options') then
   begin
     LCodeFoldingObject := ACodeFoldingObject['Options'].ObjectValue;

@@ -206,6 +206,7 @@ var
   LParser: TBCEditorAbstractParser;
   LKeyword: PChar;
   LCloseParent: Boolean;
+  LDelimiters: TBCEditorCharSet;
 begin
   while FTemporaryCurrentTokens.Count > 0 do
   begin
@@ -268,11 +269,16 @@ begin
     begin
       FCurrentToken := FCurrentRange.DefaultToken;
 
+      if FCurrentRange.UseDelimitersForText then
+        LDelimiters := FCurrentRange.Delimiters
+      else
+        LDelimiters := FAllDelimiters;
+
       if Ord(FCurrentLine[FRunPosition - 1]) < 256 then
-      while (Ord(FCurrentLine[FRunPosition]) < 256) and not CharInSet(FCurrentLine[FRunPosition], FAllDelimiters) do
+      while (Ord(FCurrentLine[FRunPosition]) < 256) and not CharInSet(FCurrentLine[FRunPosition], LDelimiters) do
         Inc(FRunPosition)
       else
-      while (Ord(FCurrentLine[FRunPosition]) > 255) and not CharInSet(FCurrentLine[FRunPosition], FAllDelimiters) do
+      while (Ord(FCurrentLine[FRunPosition]) > 255) and not CharInSet(FCurrentLine[FRunPosition], LDelimiters) do
         Inc(FRunPosition)
     end
     else
