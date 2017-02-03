@@ -5837,7 +5837,7 @@ begin
       begin
         Assign(FTokenInfo);
 
-        LShowInfo := True;
+        LShowInfo := False;
         if Assigned(FOnBeforeTokenInfoExecute) then
           FOnBeforeTokenInfoExecute(Self, LToken, Content, TitleContent, LShowInfo);
 
