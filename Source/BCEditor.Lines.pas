@@ -705,19 +705,17 @@ begin
     begin
       SetCapacity(AStrings.Capacity);
       for LIndex := 0 to FCount - 1 do
+      with FList^[LIndex] do
       begin
-        with FList^[LIndex] do
-        begin
-          Pointer(Value) := nil;
-          Value := AStrings[LIndex];
-          Range := nil;
-          ExpandedLength := -1;
-          Flags := [sfExpandedLengthUnknown];
-          New(Attribute);
-          Attribute^.Foreground := clNone;
-          Attribute^.Background := clNone;
-          Attribute^.LineState := lsNone;
-        end;
+        Pointer(Value) := nil;
+        Value := AStrings[LIndex];
+        Range := nil;
+        ExpandedLength := -1;
+        Flags := [sfExpandedLengthUnknown];
+        New(Attribute);
+        Attribute^.Foreground := clNone;
+        Attribute^.Background := clNone;
+        Attribute^.LineState := lsNone;
       end;
     end;
     AStrings.Clear;
