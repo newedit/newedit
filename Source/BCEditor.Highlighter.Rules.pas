@@ -459,7 +459,7 @@ var
 begin
   Result := nil;
 
-  for LIndex := 0 to FTokens.Count - 1 do
+  for LIndex := FTokens.Count - 1 downto 0 do
   begin
     LToken := TBCEditorToken(FTokens.Items[LIndex]);
     if LToken.Symbol = AString then
