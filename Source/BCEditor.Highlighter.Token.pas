@@ -32,8 +32,8 @@ type
   TBCEditorMultiToken = class(TBCEditorAbstractToken)
   strict private
     FSymbols: TStringList;
-    function GetSymbol(AIndex: Integer): string;
-    procedure SetSymbol(AIndex: Integer; const ASymbol: string);
+    function GetSymbol(const AIndex: Integer): string;
+    procedure SetSymbol(const AIndex: Integer; const ASymbol: string);
   public
     constructor Create; reintroduce; overload;
     constructor Create(AHighlighterAttribute: TBCEditorHighlighterAttribute); reintroduce; overload;
@@ -43,8 +43,8 @@ type
     function AddSymbol(const ASymbol: string): Integer;
     function SymbolCount: Integer;
     procedure Clear;
-    procedure DeleteSymbol(AIndex: Integer);
-    property Symbols[Aindex: Integer]: string read GetSymbol write SetSymbol;
+    procedure DeleteSymbol(const AIndex: Integer);
+    property Symbols[const AIndex: Integer]: string read GetSymbol write SetSymbol;
   end;
 
   TBCEditorToken = class(TBCEditorAbstractToken)
@@ -52,7 +52,6 @@ type
     FClosingToken: TBCEditorToken;
     FSymbol: string;
     FTemporary: Boolean;
-    function GetSymbol: string;
   public
     constructor Create; overload;
     constructor Create(AHighlighterAttribute: TBCEditorHighlighterAttribute); overload;
@@ -60,7 +59,7 @@ type
     constructor Create(AMultiToken: TBCEditorMultiToken; AIndex: Integer); overload;
 
     procedure Clear;
-    property Symbol: string read GetSymbol write FSymbol;
+    property Symbol: string read FSymbol write FSymbol;
     property ClosingToken: TBCEditorToken read FClosingToken write FClosingToken;
     property Temporary: Boolean read FTemporary write FTemporary;
   end;
@@ -74,8 +73,8 @@ type
     FNextNodes: TBCEditorTokenNodeList;
     FToken: TBCEditorToken;
   public
-    constructor Create(AChar: Char; AToken: TBCEditorToken; ABreakType: TBCEditorBreakType); overload;
-    constructor Create(AChar: Char); overload;
+    constructor Create(const AChar: Char; const AToken: TBCEditorToken; const ABreakType: TBCEditorBreakType); overload;
+    constructor Create(const AChar: Char); overload;
     destructor Destroy; override;
 
     property Char: Char read FChar write FChar;
@@ -91,13 +90,13 @@ type
     constructor Create;
     destructor Destroy; override;
 
-    function FindNode(AChar: Char): TBCEditorTokenNode;
+    function FindNode(const AChar: Char): TBCEditorTokenNode;
     function GetCount: Integer;
-    function GetNode(AIndex: Integer): TBCEditorTokenNode;
+    function GetNode(const AIndex: Integer): TBCEditorTokenNode;
     procedure AddNode(ANode: TBCEditorTokenNode);
-    procedure SetNode(AIndex: Integer; AValue: TBCEditorTokenNode);
+    procedure SetNode(const AIndex: Integer; const AValue: TBCEditorTokenNode);
     property Count: Integer read GetCount;
-    property Nodes[Aindex: Integer]: TBCEditorTokenNode read GetNode write SetNode;
+    property Nodes[const Aindex: Integer]: TBCEditorTokenNode read GetNode write SetNode;
   end;
 
 implementation
@@ -175,20 +174,20 @@ begin
   FSymbols.Clear;
 end;
 
-procedure TBCEditorMultiToken.DeleteSymbol(AIndex: Integer);
+procedure TBCEditorMultiToken.DeleteSymbol(const AIndex: Integer);
 begin
   if (AIndex > -1) and (AIndex < FSymbols.Count) then
     FSymbols.Delete(AIndex)
 end;
 
-function TBCEditorMultiToken.GetSymbol(AIndex: Integer): string;
+function TBCEditorMultiToken.GetSymbol(const AIndex: Integer): string;
 begin
   Result := '';
   if (AIndex > -1) and (AIndex < FSymbols.Count) then
     Result := FSymbols[AIndex]
 end;
 
-procedure TBCEditorMultiToken.SetSymbol(AIndex: Integer; const ASymbol: string);
+procedure TBCEditorMultiToken.SetSymbol(const AIndex: Integer; const ASymbol: string);
 begin
   if (AIndex > -1) and (AIndex < FSymbols.Count) then
     FSymbols[AIndex] := ASymbol
@@ -225,11 +224,6 @@ begin
   Symbol := AMultiToken.Symbols[AIndex];
 end;
 
-function TBCEditorToken.GetSymbol: string;
-begin
-  Result := FSymbol;
-end;
-
 procedure TBCEditorToken.Clear;
 begin
   Symbol := '';
@@ -237,15 +231,16 @@ end;
 
 { TBCEditorTokenNode }
 
-constructor TBCEditorTokenNode.Create(AChar: Char);
+constructor TBCEditorTokenNode.Create(const AChar: Char);
 begin
   inherited Create;
+
   FChar := AChar;
   FNextNodes := TBCEditorTokenNodeList.Create;
   FToken := nil;
 end;
 
-constructor TBCEditorTokenNode.Create(AChar: Char; AToken: TBCEditorToken; ABreakType: TBCEditorBreakType);
+constructor TBCEditorTokenNode.Create(const AChar: Char; const AToken: TBCEditorToken; const ABreakType: TBCEditorBreakType);
 begin
   Create(AChar);
   FBreakType := ABreakType;
@@ -279,7 +274,7 @@ begin
   FNodeList.Add(ANode);
 end;
 
-function TBCEditorTokenNodeList.FindNode(AChar: Char): TBCEditorTokenNode;
+function TBCEditorTokenNodeList.FindNode(const AChar: Char): TBCEditorTokenNode;
 var
   LIndex: Integer;
   LTokenNode: TBCEditorTokenNode;
@@ -298,12 +293,12 @@ begin
   Result := FNodeList.Count;
 end;
 
-function TBCEditorTokenNodeList.GetNode(AIndex: Integer): TBCEditorTokenNode;
+function TBCEditorTokenNodeList.GetNode(const AIndex: Integer): TBCEditorTokenNode;
 begin
   Result := TBCEditorTokenNode(FNodeList[AIndex]);
 end;
 
-procedure TBCEditorTokenNodeList.SetNode(AIndex: Integer; AValue: TBCEditorTokenNode);
+procedure TBCEditorTokenNodeList.SetNode(const AIndex: Integer; const AValue: TBCEditorTokenNode);
 begin
   if AIndex < FNodeList.Count then
     TBCEditorTokenNode(FNodeList[AIndex]).Free;

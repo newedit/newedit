@@ -141,7 +141,7 @@ type
     procedure Clear;
     procedure Prepare(AParent: TBCEditorRange);
     procedure Reset;
-    procedure SetDelimiters(ADelimiters: TBCEditorCharSet);
+    procedure SetDelimiters(const ADelimiters: TBCEditorCharSet);
     property AlternativeCloseArray: TBCEditorArrayOfString read FAlternativeCloseArray write FAlternativeCloseArray;
     property AlternativeCloseArrayCount: Integer read FAlternativeCloseArrayCount write SetAlternativeCloseArrayCount;
     property OpenBeginningOfLine: Boolean read FOpenBeginningOfLine write FOpenBeginningOfLine;
@@ -529,7 +529,7 @@ begin
   FCloseToken.BreakType := ACloseTokenBreakType;
 end;
 
-procedure TBCEditorRange.SetDelimiters(ADelimiters: TBCEditorCharSet);
+procedure TBCEditorRange.SetDelimiters(const ADelimiters: TBCEditorCharSet);
 var
   LIndex: Integer;
 begin
