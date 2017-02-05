@@ -290,6 +290,32 @@ begin
   end;
 end;
 
+{
+var
+  LTokenNode: TBCEditorTokenNode;
+  LLow, LHigh, LMiddle: Integer;
+begin
+  Result := nil;
+
+  LLow := 0;
+  LHigh := FNodeList.Count - 1;
+
+  while LLow <= LHigh do
+  begin
+    LMiddle := LLow + (LHigh - LLow) shr 1;
+
+    LTokenNode := TBCEditorTokenNode(FNodeList.List[LMiddle]);
+
+    if LTokenNode.Char = AChar then
+      Exit(LTokenNode)
+    else
+    if LTokenNode.Char < AChar then
+      LLow := LMiddle + 1
+    else
+      LHigh := LMiddle - 1;
+  end;
+end;}
+
 function TBCEditorTokenNodeList.GetCount: Integer;
 begin
   Result := FNodeList.Count;

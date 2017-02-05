@@ -436,10 +436,27 @@ end;
 procedure TBCEditorRange.AddToken(const AToken: TBCEditorToken);
 var
   LToken: TBCEditorToken;
+  LLow, LHigh, LMiddle, LCompare: Integer;
 begin
-  LToken := FindToken(AToken.Symbol);
-  if not Assigned(LToken) then
-    FTokens.Add(AToken);
+  LLow := 0;
+  LHigh := FTokens.Count - 1;
+
+  while LLow <= LHigh do
+  begin
+    LMiddle := LLow + (LHigh - LLow) shr 1;
+    LToken := TBCEditorToken(FTokens.Items[LMiddle]);
+    LCompare := CompareStr(LToken.Symbol, AToken.Symbol);
+
+    if LCompare < 0 then
+      LLow := LMiddle + 1
+    else
+    if LCompare > 0 then
+      LHigh := LMiddle - 1
+    else
+      Exit;
+  end;
+
+  FTokens.Insert(LLow, AToken);
 end;
 
 function TBCEditorRange.FindToken(const AString: string): TBCEditorToken;
@@ -561,31 +578,6 @@ begin
   end;
 end;
 
-procedure QuickSortTokenList(AList: TList; const ALowerPosition, AUpperPosition: Integer);
-var
-  LIndex, LMiddlePosition: Integer;
-  LPivotValue: string;
-begin
-  if ALowerPosition < AUpperPosition then
-  begin
-    LPivotValue := TBCEditorToken(AList[ALowerPosition]).Symbol;
-    LMiddlePosition := ALowerPosition;
-
-    for LIndex := ALowerPosition + 1 to AUpperPosition do
-    begin
-      if TBCEditorToken(AList[LIndex]).Symbol < LPivotValue then
-      begin
-        Inc(LMiddlePosition);
-        AList.Exchange(LIndex, LMiddlePosition);
-      end;
-    end;
-    AList.Exchange(ALowerPosition, LMiddlePosition);
-
-    QuickSortTokenList(AList, ALowerPosition, LMiddlePosition - 1);
-    QuickSortTokenList(AList, LMiddlePosition + 1, AUpperPosition);
-  end;
-end;
-
 procedure TBCEditorRange.Prepare(AParent: TBCEditorRange);
 var
   LIndex, LIndex2: Integer;
@@ -670,7 +662,7 @@ begin
     end;
   end;
 
-  QuickSortTokenList(FTokens, 0, FTokens.Count - 1);
+  //QuickSortTokenList(FTokens, 0, FTokens.Count - 1);
 
   if Assigned(FTokens) then
   for LIndex := 0 to FTokens.Count - 1 do
