@@ -5839,7 +5839,7 @@ begin
 
         LShowInfo := False;
         if Assigned(FOnBeforeTokenInfoExecute) then
-          FOnBeforeTokenInfoExecute(Self, LToken, Content, TitleContent, LShowInfo);
+          FOnBeforeTokenInfoExecute(Self, LTextPosition, LToken, Content, TitleContent, LShowInfo);
 
         if LShowInfo then
         begin

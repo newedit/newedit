@@ -17,7 +17,6 @@ type
     FEnabled: Boolean;
     FFont: TFont;
     FHeight: Integer;
-    FMargins: TMargins;
     FOptions: TBCEditorTokenInfoOptions;
     FTitle: TBCEditorTokenInfoTitle;
     FWidth: Integer;
@@ -32,7 +31,6 @@ type
     property Enabled: Boolean read FEnabled write FEnabled default False;
     property Font: TFont read FFont write SetFont;
     property Height: Integer read FHeight write FHeight default 0;
-    property Margins: TMargins read FMargins write FMargins;
     property Options: TBCEditorTokenInfoOptions read FOptions write FOptions default BCEDITOR_TOKEN_INFO_DEFAULT_OPTIONS;
     property Title: TBCEditorTokenInfoTitle read FTitle write FTitle;
     property Width: Integer read FWidth write FWidth default 0;
@@ -51,9 +49,6 @@ begin
   FFont.Name := 'Courier New';
   FFont.Size := 8;
   FHeight := 0;
-  FMargins := TMargins.Create(nil);
-  FMargins.Left := 3;
-  FMargins.Right := 3;
   FOptions := BCEDITOR_TOKEN_INFO_DEFAULT_OPTIONS;
   FTitle := TBCEditorTokenInfoTitle.Create;
   FWidth := 0;
@@ -64,7 +59,6 @@ begin
   FColors.Free;
   FFont.Free;
   FTitle.Free;
-  FMargins.Free;
 
   inherited;
 end;
