@@ -662,8 +662,6 @@ begin
     end;
   end;
 
-  //QuickSortTokenList(FTokens, 0, FTokens.Count - 1);
-
   if Assigned(FTokens) then
   for LIndex := 0 to FTokens.Count - 1 do
   begin
