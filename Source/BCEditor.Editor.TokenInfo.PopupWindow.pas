@@ -48,7 +48,7 @@ type
 implementation
 
 uses
-  Winapi.Windows, BCEditor.Consts, System.UITypes;
+  Winapi.Windows, BCEditor.Consts, BCEditor.Utils, System.UITypes;
 
 const
   MARGIN_LEFT = 3;
@@ -332,7 +332,7 @@ begin
     begin
       LPToken := PChar(LOpenTokens[LIndex]);
       LPBookmark := LPText;
-      while (LPText^ <> BCEDITOR_NONE_CHAR) and (LPToken^ <> BCEDITOR_NONE_CHAR) and (UpCase(LPText^) = LPToken^) do
+      while (LPText^ <> BCEDITOR_NONE_CHAR) and (LPToken^ <> BCEDITOR_NONE_CHAR) and (CaseUpper(LPText^) = LPToken^) do
       begin
         Inc(LPText);
         Inc(LPToken);
@@ -369,7 +369,7 @@ begin
     begin
       LPToken := PChar(LCloseTokens[LIndex]);
       LPBookmark := LPText;
-      while (LPText^ <> BCEDITOR_NONE_CHAR) and (LPToken^ <> BCEDITOR_NONE_CHAR) and (UpCase(LPText^) = LPToken^) do
+      while (LPText^ <> BCEDITOR_NONE_CHAR) and (LPToken^ <> BCEDITOR_NONE_CHAR) and (CaseUpper(LPText^) = LPToken^) do
       begin
         Inc(LPText);
         Inc(LPToken);

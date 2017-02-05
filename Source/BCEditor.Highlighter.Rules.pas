@@ -89,7 +89,7 @@ type
 
   TBCEditorAbstractParserArray = array [AnsiChar] of TBCEditorAbstractParser;
 
-  TBCEditorCaseFunction = function(AChar: Char): Char;
+  TBCEditorCaseFunction = function(const AChar: Char): Char;
   TBCEditorStringCaseFunction = function(const AString: string): string;
 
   TBCEditorRange = class(TBCEditorRule)
@@ -173,16 +173,6 @@ implementation
 
 uses
   BCEditor.Utils, System.Types;
-
-function CaseNone(AChar: Char): Char;
-begin
-  Result := AChar;
-end;
-
-function StringCaseNone(const AString: string): string;
-begin
-  Result := AString;
-end;
 
 { TBCEditorParser }
 
@@ -454,16 +444,28 @@ end;
 
 function TBCEditorRange.FindToken(const AString: string): TBCEditorToken;
 var
-  LIndex: Integer;
   LToken: TBCEditorToken;
+  LLow, LHigh, LMiddle, LCompare: Integer;
 begin
   Result := nil;
 
-  for LIndex := FTokens.Count - 1 downto 0 do
+  LLow := 0;
+  LHigh := FTokens.Count - 1;
+
+  while LLow <= LHigh do
   begin
-    LToken := TBCEditorToken(FTokens.Items[LIndex]);
-    if LToken.Symbol = AString then
-      Exit(LToken);
+    LMiddle := LLow + (LHigh - LLow) shr 1;
+
+    LToken := TBCEditorToken(FTokens.Items[LMiddle]);
+    LCompare := CompareStr(LToken.Symbol, AString);
+
+    if LCompare = 0 then
+      Exit(LToken)
+    else
+    if LCompare < 0 then
+      LLow := LMiddle + 1
+    else
+      LHigh := LMiddle - 1;
   end;
 end;
 
@@ -549,13 +551,13 @@ begin
   FCaseSensitive := AValue;
   if not AValue then
   begin
-    FCaseFunct := UpCase;
+    FCaseFunct := CaseUpper;
     FStringCaseFunct := AnsiUpperCase;
   end
   else
   begin
     FCaseFunct := CaseNone;
-    FStringCaseFunct := StringCaseNone;
+    FStringCaseFunct := CaseStringNone;
   end;
 end;
 

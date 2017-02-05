@@ -2584,7 +2584,7 @@ var
     LPCommentAtCursor := PChar(LCommentAtCursor);
 
     while (LPComment^ <> BCEDITOR_NONE_CHAR) and (LPCommentAtCursor^ <> BCEDITOR_NONE_CHAR) and
-      (UpCase(LPCommentAtCursor^) = LPComment^) do
+      (CaseUpper(LPCommentAtCursor^) = LPComment^) do
     begin
       Inc(LPComment);
       Inc(LPCommentAtCursor);
@@ -2645,7 +2645,7 @@ var
     function AreKeywordsSame(APKeyword: PChar): Boolean;
     begin
       while (APKeyword^ <> BCEDITOR_NONE_CHAR) and (LPWordAtCursor^ <> BCEDITOR_NONE_CHAR) and
-        (UpCase(LPWordAtCursor^) = APKeyword^) do
+        (CaseUpper(LPWordAtCursor^) = APKeyword^) do
       begin
         Inc(APKeyword);
         Inc(LPWordAtCursor);
@@ -2794,7 +2794,7 @@ begin
           { Check if the open keyword found }
           LPKeyWord := PChar(LFoldRegionItem.OpenToken);
           while (LPText^ <> BCEDITOR_NONE_CHAR) and (LPKeyWord^ <> BCEDITOR_NONE_CHAR) and
-            (UpCase(LPText^) = LPKeyWord^) do
+            (CaseUpper(LPText^) = LPKeyWord^) do
           begin
             Inc(LPText);
             Inc(LPKeyWord);
@@ -2815,7 +2815,7 @@ begin
           LPKeyWord := PChar(LFoldRegionItem.CloseToken);
 
           while (LPText^ <> BCEDITOR_NONE_CHAR) and (LPKeyWord^ <> BCEDITOR_NONE_CHAR) and
-            (UpCase(LPText^) = LPKeyWord^) do
+            (CaseUpper(LPText^) = LPKeyWord^) do
           begin
             Inc(LPText);
             Inc(LPKeyWord);
@@ -5308,7 +5308,7 @@ var
     if ACaseSensitive then
       Result := APChar1^ = APChar2^
     else
-      Result := UpCase(APChar1^) = UpCase(APChar2^)
+      Result := CaseUpper(APChar1^) = CaseUpper(APChar2^)
   end;
 
   function IsWholeWord(FirstChar, LastChar: PChar): Boolean;
@@ -6087,7 +6087,7 @@ var
       Exit;
 
     if LOpenTokenFoldRangeList.Count > 0 then
-      if CharInSet(UpCase(LPText^), FHighlighter.FoldCloseKeyChars) then
+      if CharInSet(CaseUpper(LPText^), FHighlighter.FoldCloseKeyChars) then
       begin
         LIndexDecrease := 1;
         {$if defined(VER250)}
@@ -6105,7 +6105,7 @@ var
           LPBookmarkText := LPText;
           { Check if the close keyword found }
           while (LPText^ <> BCEDITOR_NONE_CHAR) and (LPKeyWord^ <> BCEDITOR_NONE_CHAR) and
-            (UpCase(LPText^) = LPKeyWord^) do
+            (CaseUpper(LPText^) = LPKeyWord^) do
           begin
             Inc(LPText);
             Inc(LPKeyWord);
@@ -6136,7 +6136,7 @@ var
                     LPKeyWord := PChar(LCodeFoldingRangeLast.RegionItem.CloseToken);
                     LPText := LPBookmarkText;
                     while (LPText^ <> BCEDITOR_NONE_CHAR) and (LPKeyWord^ <> BCEDITOR_NONE_CHAR) and
-                      (UpCase(LPText^) = LPKeyWord^) do
+                      (CaseUpper(LPText^) = LPKeyWord^) do
                     begin
                       Inc(LPText);
                       Inc(LPKeyWord);
@@ -6175,7 +6175,7 @@ var
 
     if LOpenTokenSkipFoldRangeList.Count <> 0 then
       Exit;
-    if CharInSet(UpCase(LPText^), FHighlighter.FoldOpenKeyChars) then
+    if CharInSet(CaseUpper(LPText^), FHighlighter.FoldOpenKeyChars) then
     begin
       LCodeFoldingRange := nil;
       if LOpenTokenFoldRangeList.Count > 0 then
@@ -6198,7 +6198,7 @@ var
                 LPBookmarkText := LPText;
                 { Check if open keyword found }
                 while (LPText^ <> BCEDITOR_NONE_CHAR) and (LPKeyWord^ <> BCEDITOR_NONE_CHAR) and
-                  ((UpCase(LPText^) = LPKeyWord^) or (LPText^ = BCEDITOR_SPACE_CHAR) or
+                  ((CaseUpper(LPText^) = LPKeyWord^) or (LPText^ = BCEDITOR_SPACE_CHAR) or
                   (LPText^ = BCEDITOR_TAB_CHAR) or (LPText^ = BCEDITOR_SUBSTITUTE_CHAR)) do
                 begin
                   if ((LPKeyWord^ = BCEDITOR_SPACE_CHAR) or (LPKeyWord^ = BCEDITOR_TAB_CHAR) or (LPKeyWord^ = BCEDITOR_SUBSTITUTE_CHAR)) or
@@ -6216,25 +6216,25 @@ var
               end;
           end;
           { First word after newline }
-          if UpCase(LPText^) = PChar(LRegionItem.OpenToken)^ then { If first character match }
+          if CaseUpper(LPText^) = PChar(LRegionItem.OpenToken)^ then { If first character match }
           begin
             LPKeyWord := PChar(LRegionItem.OpenToken);
             LPBookmarkText := LPText;
             { Check if open keyword found }
             while (LPText^ <> BCEDITOR_NONE_CHAR) and (LPKeyWord^ <> BCEDITOR_NONE_CHAR) and
-              (UpCase(LPText^) = LPKeyWord^) do
+              (CaseUpper(LPText^) = LPKeyWord^) do
             begin
               Inc(LPText);
               Inc(LPKeyWord);
             end;
 
             if LRegionItem.OpenTokenCanBeFollowedBy <> '' then
-              if UpCase(LPText^) = PChar(LRegionItem.OpenTokenCanBeFollowedBy)^ then
+              if CaseUpper(LPText^) = PChar(LRegionItem.OpenTokenCanBeFollowedBy)^ then
               begin
                 LPTempText := LPText;
                 LPTempKeyWord := PChar(LRegionItem.OpenTokenCanBeFollowedBy);
                 while (LPTempText^ <> BCEDITOR_NONE_CHAR) and (LPTempKeyWord^ <> BCEDITOR_NONE_CHAR) and
-                  (UpCase(LPTempText^) = LPTempKeyWord^) do
+                  (CaseUpper(LPTempText^) = LPTempKeyWord^) do
                 begin
                   Inc(LPTempText);
                   Inc(LPTempKeyWord);
@@ -6258,10 +6258,10 @@ var
                     begin
                       LPKeyWord := PChar(LRegionItem.SkipIfFoundAfterOpenTokenArray[LArrayIndex]);
                       LPBookmarkText2 := LPText;
-                      if UpCase(LPText^) = LPKeyWord^ then { If first character match }
+                      if CaseUpper(LPText^) = LPKeyWord^ then { If first character match }
                       begin
                         while (LPText^ <> BCEDITOR_NONE_CHAR) and (LPKeyWord^ <> BCEDITOR_NONE_CHAR) and
-                          (UpCase(LPText^) = LPKeyWord^) do
+                          (CaseUpper(LPText^) = LPKeyWord^) do
                         begin
                           Inc(LPText);
                           Inc(LPKeyWord);
@@ -6327,7 +6327,7 @@ var
     Result := False;
     if LOpenTokenSkipFoldRangeList.Count <> 0 then
       Exit;
-    LChar := UpCase(LPText^);
+    LChar := CaseUpper(LPText^);
     LPBookmarkText := LPText;
     for LIndex := 1 to Highlighter.CodeFoldingRangeCount - 1 do { First (0) is the default range }
     begin
@@ -6338,7 +6338,7 @@ var
         LPKeyWord := PChar(LCodeFoldingRegion.OpenToken);
         { Check if open keyword found }
         while (LPText^ <> BCEDITOR_NONE_CHAR) and (LPKeyWord^ <> BCEDITOR_NONE_CHAR) and
-          (UpCase(LPText^) = LPKeyWord^) do
+          (CaseUpper(LPText^) = LPKeyWord^) do
         begin
           Inc(LPText);
           Inc(LPKeyWord);
@@ -6362,7 +6362,7 @@ var
   begin
     if LOpenTokenSkipFoldRangeList.Count <> 0 then
       Exit;
-    LChar := UpCase(LPText^);
+    LChar := CaseUpper(LPText^);
     LPBookmarkText := LPText;
     for LIndex := 1 to Highlighter.CodeFoldingRangeCount - 1 do { First (0) is the default range }
     begin
@@ -6373,7 +6373,7 @@ var
         LPKeyWord := PChar(LCodeFoldingRegion.CloseToken);
         { Check if close keyword found }
         while (LPText^ <> BCEDITOR_NONE_CHAR) and (LPKeyWord^ <> BCEDITOR_NONE_CHAR) and
-          (UpCase(LPText^) = LPKeyWord^) do
+          (CaseUpper(LPText^) = LPKeyWord^) do
         begin
           Inc(LPText);
           Inc(LPKeyWord);
@@ -6427,22 +6427,22 @@ var
           LTokenName := '';
           while (LPText^ <> BCEDITOR_NONE_CHAR) and not CharInSet(LPText^, [' ', '>']) do
           begin
-            LTokenName := LTokenName + UpCase(LPText^);
+            LTokenName := LTokenName + CaseUpper(LPText^);
             Inc(LPText);
           end;
           LTokenAttributes := '';
           if LPText^ = ' ' then
           while (LPText^ <> BCEDITOR_NONE_CHAR) and not CharInSet(LPText^, ['/', '>']) do
           begin
-            LTokenAttributes := LTokenAttributes + UpCase(LPText^);
+            LTokenAttributes := LTokenAttributes + CaseUpper(LPText^);
             Inc(LPText);
             if CharInSet(LPText^, ['"', '''']) then
             begin
-              LTokenAttributes := LTokenAttributes + UpCase(LPText^);
+              LTokenAttributes := LTokenAttributes + CaseUpper(LPText^);
               Inc(LPText);
               while (LPText^ <> BCEDITOR_NONE_CHAR) and not CharInSet(LPText^, ['"', '''']) do
               begin
-                LTokenAttributes := LTokenAttributes + UpCase(LPText^);
+                LTokenAttributes := LTokenAttributes + CaseUpper(LPText^);
                 Inc(LPText);
               end;
             end;
@@ -11823,7 +11823,7 @@ var
           begin
             LPToken := PChar(LTokenText);
             LPWord := PChar(LWordAtSelection);
-            while (LPToken^ <> BCEDITOR_NONE_CHAR) and (LPWord^ <> BCEDITOR_NONE_CHAR) and (UpCase(LPToken^) = UpCase(LPWord^)) do
+            while (LPToken^ <> BCEDITOR_NONE_CHAR) and (LPWord^ <> BCEDITOR_NONE_CHAR) and (CaseUpper(LPToken^) = CaseUpper(LPWord^)) do
             begin
               Inc(LPToken);
               Inc(LPWord);

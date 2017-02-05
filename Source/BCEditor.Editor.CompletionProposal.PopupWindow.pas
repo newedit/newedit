@@ -431,9 +431,9 @@ procedure TBCEditorCompletionProposalPopupWindow.SetCurrentString(const AValue: 
     LCompareString := Copy(GetItems[AIndex].Value, 1, Length(AValue));
 
     if FCaseSensitive then
-      Result := WideCompareStr(LCompareString, AValue) = 0
+      Result := CompareStr(LCompareString, AValue) = 0
     else
-      Result := WideCompareText(LCompareString, AValue) = 0;
+      Result := CompareStr(LCompareString, AValue) = 0;
   end;
 
   procedure RecalcList;

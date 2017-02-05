@@ -5,6 +5,9 @@ interface
 uses
   Winapi.Windows, System.Math, System.Classes, Vcl.Graphics, System.UITypes, BCEditor.Consts, BCEditor.Types;
 
+function CaseNone(const AChar: Char): Char;
+function CaseStringNone(const AString: string): string;
+function CaseUpper(const AChar: Char): Char;
 function ColorToHex(const AColor: TColor): string;
 function ConvertTabs(const ALine: string; ATabWidth: Integer; var AHasTabs: Boolean; const AColumns: Boolean): string;
 function IsCombiningDiacriticalMark(const AChar: Char): Boolean;
@@ -21,6 +24,25 @@ implementation
 
 uses
   Vcl.Forms, Vcl.Dialogs, System.SysUtils, System.Character;
+
+function CaseNone(const AChar: Char): Char;
+begin
+  Result := AChar;
+end;
+
+function CaseStringNone(const AString: string): string;
+begin
+  Result := AString;
+end;
+
+function CaseUpper(const AChar: Char): Char;
+begin
+  Result := AChar;
+  case AChar of
+    'a'..'z':
+      Result := Char(Word(AChar) and $FFDF);
+  end;
+end;
 
 function ColorToHex(const AColor: TColor): string;
 begin
