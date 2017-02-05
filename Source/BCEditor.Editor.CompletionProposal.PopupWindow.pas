@@ -376,13 +376,11 @@ begin
         Canvas.Brush.Color := FCompletionProposal.Colors.SelectedBackground;
         Canvas.Pen.Color := FCompletionProposal.Colors.SelectedBackground;
         Canvas.Rectangle(LRect);
-        Canvas.Font.Color := FCompletionProposal.Colors.SelectedText;
       end
       else
       begin
         Canvas.Brush.Color := FCompletionProposal.Colors.Background;
         Canvas.Pen.Color := FCompletionProposal.Colors.Background;
-        Canvas.Font.Color := FCompletionProposal.Colors.Foreground;
       end;
       LColumnWidth := 0;
       for LColumnIndex := 0 to FCompletionProposal.Columns.Count - 1 do
@@ -390,6 +388,12 @@ begin
         LItemIndex := FItemIndexArray[TopLine + LIndex];
         LColumn := FCompletionProposal.Columns[LColumnIndex];
         Canvas.Font.Assign(LColumn.Font);
+
+        if LIndex + TopLine = FSelectedLine then
+          Canvas.Font.Color := FCompletionProposal.Colors.SelectedText
+        else
+          Canvas.Font.Color := FCompletionProposal.Colors.Foreground;
+
         if LItemIndex < LColumn.Items.Count then
         begin
           LLeft := 0;
