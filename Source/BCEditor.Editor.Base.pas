@@ -778,8 +778,8 @@ uses
   BCEditor.Editor.LeftMargin.Border, BCEditor.Editor.LeftMargin.LineNumbers, BCEditor.Editor.Scroll.Hint,
   BCEditor.Editor.Search.Map, BCEditor.Editor.Undo.Item, BCEditor.Editor.Utils, BCEditor.Encoding, BCEditor.Language,
   BCEditor.Highlighter.Rules, BCEditor.Export.HTML, Vcl.Themes, BCEditor.StyleHooks, BCEditor.Search.Normal,
-  BCEditor.Search.RegularExpressions, BCEditor.Search.WildCard, BCEditor.Editor.CompletionProposal.Columns.Items
-  {$if defined(USE_ALPHASKINS)}, Winapi.CommCtrl, sVCLUtils, sMessages, sConst, sSkinProps{$endif};
+  BCEditor.Search.RegularExpressions, BCEditor.Search.WildCard, BCEditor.Editor.CompletionProposal.Columns.Items,
+  System.RegularExpressions{$if defined(USE_ALPHASKINS)}, Winapi.CommCtrl, sVCLUtils, sMessages, sConst, sSkinProps{$endif};
 
 type
   TBCEditorAccessWinControl = class(TWinControl);
@@ -13341,6 +13341,8 @@ var
   end;
 
   procedure ReplaceSelectedText;
+  var
+    LOptions: TRegExOptions;
   begin
     if LIsDeleteLine then
     begin
@@ -13348,7 +13350,19 @@ var
       ExecuteCommand(ecDeleteLine, 'Y', nil);
     end
     else
-      SelectedText := AReplaceText;
+    if FSearch.Engine = seNormal then
+      SelectedText := AReplaceText
+    else
+    begin
+      LOptions := [roMultiLine];
+      {$if CompilerVersion > 26}
+      Include(LOptions, roNotEmpty);
+      {$endif}
+      if not (roCaseSensitive in FReplace.Options) then
+        Include(LOptions, roIgnoreCase);
+
+      SelectedText := TRegEx.Replace(SelectedText, ASearchText, AReplaceText, LOptions);
+    end;
   end;
 
 begin
