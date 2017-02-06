@@ -9011,11 +9011,7 @@ begin
   begin
     LIndex := Max(LIndex, 1);
     if FLines.Count > 0 then
-    begin
-      LRunner := RescanHighlighterRangesFrom(LIndex - 1);
-      if LRunner = LIndex - 1 then
-        RescanHighlighterRangesFrom(LIndex - 1);
-    end;
+      RescanHighlighterRangesFrom(LIndex);
   end;
 
   CreateLineNumbersCache(True);

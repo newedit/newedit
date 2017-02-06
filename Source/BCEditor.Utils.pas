@@ -14,7 +14,7 @@ function IsCombiningDiacriticalMark(const AChar: Char): Boolean;
 function DeleteWhitespace(const AText: string): string;
 function MessageDialog(const AMessage: string; ADlgType: TMsgDlgType; AButtons: TMsgDlgButtons): Integer;
 function MiddleColor(AColor1, AColor2: TColor): TColor;
-function MinMax(AValue, AMinValue, AMaxValue: Integer): Integer;
+function MinMax(const AValue, AMinValue, AMaxValue: Integer): Integer;
 function TextWidth(ACanvas: TCanvas; const AText: string): Integer;
 function TextHeight(ACanvas: TCanvas; const AText: string): Integer;
 procedure ClearList(var AList: TList);
@@ -160,10 +160,12 @@ begin
   end;
 end;
 
-function MinMax(AValue, AMinValue, AMaxValue: Integer): Integer;
+function MinMax(const AValue, AMinValue, AMaxValue: Integer): Integer;
+var
+  LValue: Integer;
 begin
-  AValue := Min(AValue, AMaxValue);
-  Result := Max(AValue, AMinValue);
+  LValue := Min(AValue, AMaxValue);
+  Result := Max(LValue, AMinValue);
 end;
 
 function GetHasTabs(ALine: PChar; var ACharsBefore: Integer): Boolean;
