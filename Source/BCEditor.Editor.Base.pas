@@ -8979,7 +8979,6 @@ end;
 
 procedure TBCBaseEditor.LinesDeleted(ASender: TObject; const AIndex: Integer; const ACount: Integer);
 var
-  LRunner: Integer;
   LIndex: Integer;
 
   procedure UpdateMarks(AMarkList: TBCEditorMarkList);
