@@ -101,7 +101,8 @@ end;
 
 destructor TBCEditorCompletionProposalPopupWindow.Destroy;
 begin
-  FCompletionProposal.VisibleLines := ClientHeight div FItemHeight;
+  if FItemHeight <> 0 then
+    FCompletionProposal.VisibleLines := ClientHeight div FItemHeight;
   FCompletionProposal.Width := Width;
 
   FCanFree := False;
