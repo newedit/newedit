@@ -81,6 +81,7 @@ type
     FLeftMargin: TBCEditorLeftMargin;
     FLeftMarginWidth: Integer;
     FLeftMarginCharWidth: Integer;
+    FLineBreakLength: Integer;
     FLineNumbersCache: array of Integer;
     FLineNumbersCount: Integer;
     FLines: TBCEditorLines;
@@ -213,6 +214,9 @@ type
     FWordWrapLineLengths: array of Integer;
     function AllWhiteUpToTextPosition(const ATextPosition: TBCEditorTextPosition; const ALine: string; const ALength: Integer): Boolean;
     function AreTextPositionsEqual(const ATextPosition1: TBCEditorTextPosition; const ATextPosition2: TBCEditorTextPosition): Boolean;
+    function CharIndexToTextPosition(const ACharIndex: Integer): TBCEditorTextPosition; overload;
+    function CharIndexToTextPosition(const ACharIndex: Integer; const ATextBeginPosition: TBCEditorTextPosition;
+      const ACountLineBreak: Boolean = True): TBCEditorTextPosition; overload;
     function CodeFoldingCollapsableFoldRangeForLine(const ALine: Integer): TBCEditorCodeFoldingRange;
     function CodeFoldingFoldRangeForLineTo(const ALine: Integer): TBCEditorCodeFoldingRange;
     function CodeFoldingLineInsideRange(const ALine: Integer): TBCEditorCodeFoldingRange;
@@ -252,6 +256,7 @@ type
     function GetSelectionAvailable: Boolean;
     function GetSelectionBeginPosition: TBCEditorTextPosition;
     function GetSelectionEndPosition: TBCEditorTextPosition;
+    function GetSelectionStart: Integer;
     function GetText: string;
     function GetTextBetween(const ATextBeginPosition: TBCEditorTextPosition; const ATextEndPosition: TBCEditorTextPosition): string;
     function GetTextCaretPosition: TBCEditorTextPosition;
@@ -274,10 +279,10 @@ type
     function PreviousWordPosition(const ATextPosition: TBCEditorTextPosition): TBCEditorTextPosition; overload;
     function PreviousWordPosition: TBCEditorTextPosition; overload;
     function RescanHighlighterRangesFrom(const AIndex: Integer): Integer;
-    function RowColumnToCharIndex(const ATextPosition: TBCEditorTextPosition): Integer;
     function ShortCutPressed: Boolean;
     function StringWordEnd(const ALine: string; AStart: Integer): Integer;
     function StringWordStart(const ALine: string; AStart: Integer): Integer;
+    function TextPositionToCharIndex(const ATextPosition: TBCEditorTextPosition): Integer;
     function WordWrapWidth: Integer;
     procedure ActiveLineChanged(ASender: TObject);
     procedure AfterSetText(ASender: TObject);
@@ -392,6 +397,8 @@ type
     procedure SetSelection(const AValue: TBCEditorSelection);
     procedure SetSelectionBeginPosition(const AValue: TBCEditorTextPosition);
     procedure SetSelectionEndPosition(const AValue: TBCEditorTextPosition);
+    procedure SetSelectionLength(const AValue: Integer);
+    procedure SetSelectionStart(const AValue: Integer);
     procedure SetSpecialChars(const AValue: TBCEditorSpecialChars);
     procedure SetSyncEdit(const AValue: TBCEditorSyncEdit);
     procedure SetTabs(const AValue: TBCEditorTabs);
@@ -744,6 +751,8 @@ type
     property SelectionAvailable: Boolean read GetSelectionAvailable;
     property SelectionBeginPosition: TBCEditorTextPosition read GetSelectionBeginPosition write SetSelectionBeginPosition;
     property SelectionEndPosition: TBCEditorTextPosition read GetSelectionEndPosition write SetSelectionEndPosition;
+    property SelectionLength: Integer read GetSelectionLength write SetSelectionLength;
+    property SelectionStart: Integer read GetSelectionStart write SetSelectionStart;
     property SelectedText: string read GetSelectedText write SetSelectedText;
 {$if defined(USE_ALPHASKINS)}
     property SkinData: TsScrollWndData read FCommonData write FCommonData;
@@ -842,6 +851,7 @@ begin
   FURIOpener := False;
   FReplaceLock := False;
   FMultiCaretPosition.Row := -1;
+  FLineBreakLength := Length(SLineBreak);
 
   { Code folding }
   FAllCodeFoldingRanges := TBCEditorAllCodeFoldingRanges.Create;
@@ -1117,6 +1127,39 @@ function TBCBaseEditor.AreTextPositionsEqual(const ATextPosition1: TBCEditorText
   const ATextPosition2: TBCEditorTextPosition): Boolean;
 begin
   Result := (ATextPosition1.Line = ATextPosition2.Line) and (ATextPosition1.Char = ATextPosition2.Char);
+end;
+
+function TBCBaseEditor.CharIndexToTextPosition(const ACharIndex: Integer): TBCEditorTextPosition;
+begin
+  Result := CharIndexToTextPosition(ACharIndex, GetTextPosition(0, 0));
+end;
+
+function TBCBaseEditor.CharIndexToTextPosition(const ACharIndex: Integer;
+  const ATextBeginPosition: TBCEditorTextPosition; const ACountLineBreak: Boolean = True): TBCEditorTextPosition;
+var
+  LIndex, LCharIndex, LBeginChar: Integer;
+  LLineLength: Integer;
+begin
+  Result.Line := ATextBeginPosition.Line;
+  LBeginChar := ATextBeginPosition.Char;
+  LCharIndex := ACharIndex;
+  for LIndex := ATextBeginPosition.Line to FLines.Count do
+  begin
+    LLineLength := Length(FLines[LIndex]) - LBeginChar;
+    if ACountLineBreak then
+      Inc(FLineBreakLength);
+    if LCharIndex < LLineLength then
+    begin
+      Result.Char := LBeginChar + LCharIndex;
+      Break;
+    end
+    else
+    begin
+      Inc(Result.Line);
+      Dec(LCharIndex, LLineLength);
+    end;
+    LBeginChar := 0;
+  end;
 end;
 
 function TBCBaseEditor.CodeFoldingCollapsableFoldRangeForLine(const ALine: Integer): TBCEditorCodeFoldingRange;
@@ -2004,11 +2047,11 @@ function TBCBaseEditor.GetSelectedText: string;
           begin
             { Calculate total length of result string }
             LTotalLength := Max(0, Length(Lines[LFirstLine]) - LColumnFrom + 1);
-            Inc(LTotalLength, Length(SLineBreak));
+            Inc(LTotalLength, FLineBreakLength);
             for LLine := LFirstLine + 1 to LLastLine - 1 do
             begin
               Inc(LTotalLength, Length(Lines[LLine]));
-              Inc(LTotalLength, Length(SLineBreak));
+              Inc(LTotalLength, FLineBreakLength);
             end;
             Inc(LTotalLength, LColumnTo - 1);
 
@@ -2039,7 +2082,7 @@ function TBCBaseEditor.GetSelectedText: string;
           if LColumnFrom > LColumnTo then
             SwapInt(LColumnFrom, LColumnTo);
 
-          LTotalLength := ((LColumnTo - LColumnFrom) + Length(SLineBreak)) * (LLastLine - LFirstLine + 1);
+          LTotalLength := ((LColumnTo - LColumnFrom) + FLineBreakLength) * (LLastLine - LFirstLine + 1);
           SetLength(Result, LTotalLength);
           LPResult := PChar(Result);
 
@@ -2056,10 +2099,10 @@ function TBCBaseEditor.GetSelectedText: string;
             LRightCharPosition := DisplayToTextPosition(LDisplayPosition).Char;
             LTrimCount := CopyPaddedAndForward(LLineText, LLeftCharPosition, LRightCharPosition - LLeftCharPosition,
               LPResult);
-            LTotalLength := LTotalLength + (LRightCharPosition - LLeftCharPosition) - LTrimCount + Length(SLineBreak);
+            LTotalLength := LTotalLength + (LRightCharPosition - LLeftCharPosition) - LTrimCount + FLineBreakLength;
             CopyAndForward(SLineBreak, 1, MaxInt, LPResult);
           end;
-          SetLength(Result, Max(LTotalLength - Length(SLineBreak), 0));
+          SetLength(Result, Max(LTotalLength - FLineBreakLength, 0));
         end;
     end;
   end;
@@ -2119,9 +2162,14 @@ begin
   Result := Max(1, Min(TopLine + Y div GetLineHeight, FLineNumbersCount));
 end;
 
+function TBCBaseEditor.GetSelectionStart: Integer;
+begin
+  Result := TextPositionToCharIndex(SelectionBeginPosition);
+end;
+
 function TBCBaseEditor.GetText: string;
 begin
-  if (csDestroying in ComponentState) then
+  if csDestroying in ComponentState then
     Result := ''
   else
     Result := FLines.Text;
@@ -3193,7 +3241,7 @@ begin
   Dec(Result);
 end;
 
-function TBCBaseEditor.RowColumnToCharIndex(const ATextPosition: TBCEditorTextPosition): Integer;
+function TBCBaseEditor.TextPositionToCharIndex(const ATextPosition: TBCEditorTextPosition): Integer;
 var
   LIndex: Integer;
   LTextPosition: TBCEditorTextPosition;
@@ -5254,7 +5302,7 @@ begin
   if LSearchAllCount > 0 then
   begin
     LLine := 0;
-    LCurrentLineLength := FLines.StringLength(LLine) + Length(sLineBreak);
+    LCurrentLineLength := FLines.StringLength(LLine) + FLineBreakLength;
     LTextPosition := 0;
     while (LLine < FLines.Count) and (LResultIndex < LSearchAllCount) do
     begin
@@ -5276,7 +5324,7 @@ begin
           begin
             Dec(LEndTextPosition.Char, LLength);
             Inc(LTempLine);
-            LLength := FLines.StringLength(LTempLine) + Length(sLineBreak);
+            LLength := FLines.StringLength(LTempLine) + FLineBreakLength;
             LEndTextPosition.Line := LTempLine;
           end;
 
@@ -5293,7 +5341,7 @@ begin
       end;
       Inc(LLine);
       Inc(LTextPosition, LCurrentLineLength);
-      LCurrentLineLength := FLines.StringLength(LLine) + Length(sLineBreak);
+      LCurrentLineLength := FLines.StringLength(LLine) + FLineBreakLength;
     end;
   end;
 end;
@@ -7006,6 +7054,16 @@ begin
   end;
 end;
 
+procedure TBCBaseEditor.SetSelectionLength(const AValue: Integer);
+begin
+  SelectionEndPosition := CharIndexToTextPosition(AValue, SelectionBeginPosition, False);
+end;
+
+procedure TBCBaseEditor.SetSelectionStart(const AValue: Integer);
+begin
+  SelectionBeginPosition := CharIndexToTextPosition(AValue);
+end;
+
 procedure TBCBaseEditor.SetSpecialChars(const AValue: TBCEditorSpecialChars);
 begin
   FSpecialChars.Assign(AValue);
@@ -7973,7 +8031,7 @@ end;
 function TBCBaseEditor.GetSelectionLength: Integer;
 begin
   if GetSelectionAvailable then
-    Result := RowColumnToCharIndex(SelectionEndPosition) - RowColumnToCharIndex(SelectionBeginPosition)
+    Result := TextPositionToCharIndex(SelectionEndPosition) - TextPositionToCharIndex(SelectionBeginPosition)
   else
     Result := 0;
 end;
