@@ -361,6 +361,7 @@ type
     procedure OnTokenInfoTimer(ASender: TObject);
     procedure OpenLink(const AURI: string; ARangeType: TBCEditorRangeType);
     procedure RemoveDuplicateMultiCarets;
+    procedure ReplaceChanged(AEvent: TBCEditorReplaceChanges);
     procedure RightMarginChanged(ASender: TObject);
     procedure ScrollChanged(ASender: TObject);
     procedure ScrollTimerHandler(ASender: TObject);
@@ -953,6 +954,7 @@ begin
   FSearch.OnChange := SearchChanged;
   AssignSearchEngine;
   FReplace := TBCEditorReplace.Create;
+  FReplace.OnChange := ReplaceChanged;
   { Scroll }
   FScroll := TBCEditorScroll.Create;
   FScroll.OnChange := ScrollChanged;
@@ -5898,6 +5900,17 @@ begin
           FMultiCarets.Delete(LIndex2);
         end;
       end;
+end;
+
+procedure TBCBaseEditor.ReplaceChanged(AEvent: TBCEditorReplaceChanges);
+begin
+  case AEvent of
+    rcEngineUpdate:
+      begin
+        MoveCaretToBOF;
+        AssignSearchEngine;
+      end;
+  end;
 end;
 
 procedure TBCBaseEditor.RightMarginChanged(ASender: TObject);

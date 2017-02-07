@@ -114,6 +114,11 @@ type
   );
   TBCEditorSearchChangeEvent = procedure(Event: TBCEditorSearchChanges) of object;
 
+  TBCEditorReplaceChanges = (
+    rcEngineUpdate
+  );
+  TBCEditorReplaceChangeEvent = procedure(Event: TBCEditorReplaceChanges) of object;
+
   TBCEditorSearchOption = (
     soBeepIfStringNotFound,
     soCaseSensitive,
