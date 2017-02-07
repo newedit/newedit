@@ -291,6 +291,9 @@ begin
     VK_DELETE:
       if Assigned(LEditor) then
         LEditor.CommandProcessor(ecDeleteChar, BCEDITOR_NONE_CHAR, nil);
+    VK_F1..VK_F12:
+      if Assigned(LEditor) then
+        LEditor.OnKeyDown(Self, AKey, AShift);
   end;
   AKey := 0;
   Invalidate;
