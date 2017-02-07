@@ -630,6 +630,8 @@ begin
     CurrentString := ACurrentString;
     if Length(FItemIndexArray) > 0 then
     begin
+      if cpoShowShadow in FCompletionProposal.Options then
+        ActivateDropShadow(Handle);
       UpdateScrollBar;
       Show(LPoint);
     end;

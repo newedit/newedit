@@ -5,6 +5,7 @@ interface
 uses
   Winapi.Windows, System.Math, System.Classes, Vcl.Graphics, System.UITypes, BCEditor.Consts, BCEditor.Types;
 
+function ActivateDropShadow(const AHandle: THandle): Boolean;
 function CaseNone(const AChar: Char): Char;
 function CaseStringNone(const AString: string): string;
 function CaseUpper(const AChar: Char): Char;
@@ -23,7 +24,36 @@ procedure FreeList(var AList: TList);
 implementation
 
 uses
-  Vcl.Forms, Vcl.Dialogs, System.SysUtils, System.Character;
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, System.SysUtils, System.Character;
+
+function ActivateDropShadow(const AHandle: THandle): Boolean;
+
+  function IsXP: Boolean;
+  begin
+    Result := (Win32Platform = VER_PLATFORM_WIN32_NT) and
+      CheckWin32Version(5, 1);
+  end;
+
+const
+  SPI_SETDROPSHADOW = $1025;
+  CS_DROPSHADOW = $00020000;
+
+var
+  NewLong: Cardinal;
+  B: Boolean;
+begin
+  B := True;
+  if IsXP and SystemParametersInfo(SPI_SETDROPSHADOW, 0, @B, 0) then
+  begin
+    NewLong := GetClassLong(AHandle, GCL_STYLE);
+    NewLong := NewLong or CS_DROPSHADOW;
+
+    Result := SetClassLong(AHandle, GCL_STYLE, NewLong) <> 0;
+    if Result then
+      SendMessage(AHandle, CM_RECREATEWND, 0, 0);
+  end else
+    Result := False;
+end;
 
 function CaseNone(const AChar: Char): Char;
 begin

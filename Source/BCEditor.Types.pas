@@ -172,6 +172,7 @@ type
     cpoFiltered,
     cpoParseItemsFromText,
     cpoResizeable,
+    cpoShowShadow,
     cpoUseHighlighterColumnFont
   );
   TBCEditorCompletionProposalOptions = set of TBCEditorCompletionProposalOption;
