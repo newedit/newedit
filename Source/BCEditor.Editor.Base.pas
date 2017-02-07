@@ -281,7 +281,7 @@ type
     function WordWrapWidth: Integer;
     procedure ActiveLineChanged(ASender: TObject);
     procedure AfterSetText(ASender: TObject);
-    procedure AssignSearchEngine;
+    procedure AssignSearchEngine(const AEngine: TBCEditorSearchEngine);
     procedure BeforeSetText(ASender: TObject);
     procedure BookmarkListChange(ASender: TObject);
     procedure CaretChanged(ASender: TObject);
@@ -952,7 +952,7 @@ begin
   { Search }
   FSearch := TBCEditorSearch.Create;
   FSearch.OnChange := SearchChanged;
-  AssignSearchEngine;
+  AssignSearchEngine(FSearch.Engine);
   FReplace := TBCEditorReplace.Create;
   FReplace.OnChange := ReplaceChanged;
   { Scroll }
@@ -3217,14 +3217,14 @@ begin
   end;
 end;
 
-procedure TBCBaseEditor.AssignSearchEngine;
+procedure TBCBaseEditor.AssignSearchEngine(const AEngine: TBCEditorSearchEngine);
 begin
   if Assigned(FSearchEngine) then
   begin
     FSearchEngine.Free;
     FSearchEngine := nil;
   end;
-  case FSearch.Engine of
+  case AEngine of
     seNormal:
       FSearchEngine := TBCEditorNormalSearch.Create;
     seRegularExpression:
@@ -5908,7 +5908,7 @@ begin
     rcEngineUpdate:
       begin
         MoveCaretToBOF;
-        AssignSearchEngine;
+        AssignSearchEngine(FReplace.Engine);
       end;
   end;
 end;
@@ -6675,7 +6675,7 @@ begin
     scEngineUpdate:
       begin
         MoveCaretToBOF;
-        AssignSearchEngine;
+        AssignSearchEngine(FSearch.Engine);
       end;
     scSearch:
       if FSearch.Enabled then
@@ -13363,7 +13363,7 @@ var
       ExecuteCommand(ecDeleteLine, 'Y', nil);
     end
     else
-    if FSearch.Engine = seNormal then
+    if FReplace.Engine = seNormal then
       SelectedText := AReplaceText
     else
     begin
